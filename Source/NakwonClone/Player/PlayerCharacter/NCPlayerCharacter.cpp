@@ -4,6 +4,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "NakwonClone/Common/NCGameplayTags.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
@@ -11,7 +13,9 @@ ANCPlayerCharacter::ANCPlayerCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 400.0f;       
 	CameraBoom->bUsePawnControlRotation = true; 
-
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 10.0f;
+	
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
@@ -47,6 +51,46 @@ void ANCPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 		{
 			EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANCPlayerCharacter::Look);
 		}
+		if (SprintAction)
+		{
+			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &ANCPlayerCharacter::StartSprint);
+			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ANCPlayerCharacter::StopSprint);
+		}
+		if (WalkAction)
+		{
+			EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ANCPlayerCharacter::ToggleWalk);
+		}
+		if (JumpAction)
+		{
+			EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+			EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		}
+		if (CrouchAction)
+		{
+			EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ANCPlayerCharacter::ToggleCrouch);
+		}
+	}
+}
+
+void ANCPlayerCharacter::Server_SetGait_Implementation(FGameplayTag NewGaitTag)
+{
+	CurrentGaitTag = NewGaitTag;
+	ApplyMovementData(CurrentGaitTag);
+}
+
+void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceTag)
+{
+	CurrentStanceTag = NewStanceTag;
+
+	if (CurrentStanceTag == NCCharacter::Crouch)
+	{
+		Crouch();
+		ApplyMovementData(CurrentStanceTag);
+	}
+	else
+	{
+		UnCrouch();
+		ApplyMovementData(CurrentGaitTag);
 	}
 }
 
@@ -78,4 +122,49 @@ void ANCPlayerCharacter::Look(const FInputActionValue& Value)
         
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void ANCPlayerCharacter::StartSprint()
+{
+	CurrentGaitTag = NCCharacter::Sprint;
+	ApplyMovementData(CurrentGaitTag);
+	Server_SetGait(CurrentGaitTag);
+}
+
+void ANCPlayerCharacter::StopSprint()
+{
+	CurrentGaitTag = NCCharacter::Jog;
+	ApplyMovementData(CurrentGaitTag);
+	Server_SetGait(CurrentGaitTag);
+}
+
+void ANCPlayerCharacter::ToggleWalk()
+{
+	if (CurrentGaitTag == NCCharacter::Walk)
+	{
+		CurrentGaitTag = NCCharacter::Jog;
+	}
+	else
+	{
+		CurrentGaitTag = NCCharacter::Walk;
+	}
+	ApplyMovementData(CurrentGaitTag);
+	Server_SetGait(CurrentGaitTag);
+}
+
+void ANCPlayerCharacter::ToggleCrouch()
+{
+	if (CurrentStanceTag == NCCharacter::Crouch) 
+	{
+		UnCrouch(); 
+		CurrentStanceTag = NCCharacter::Stand;
+		ApplyMovementData(CurrentGaitTag);
+	}
+	else
+	{
+		Crouch();
+		CurrentStanceTag = NCCharacter::Crouch;
+		ApplyMovementData(CurrentStanceTag);
+	}
+	Server_SetStance(CurrentStanceTag);
 }

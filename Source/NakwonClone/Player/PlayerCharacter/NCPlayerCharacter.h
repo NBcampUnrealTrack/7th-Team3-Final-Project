@@ -29,6 +29,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 protected:
+	UFUNCTION(Server, Reliable)
+	void Server_SetGait(FGameplayTag NewGaitTag);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_SetStance(FGameplayTag NewStanceTag);
+	
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
@@ -44,6 +51,24 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> LookAction;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* SprintAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* WalkAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* JumpAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* CrouchAction;
+
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	
+	void StartSprint();
+	void StopSprint();
+	
+	void ToggleWalk();
+	void ToggleCrouch();
 };

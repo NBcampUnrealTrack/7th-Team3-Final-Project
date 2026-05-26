@@ -7,4 +7,7 @@ UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Jog, "Character.State.Jog");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Sprint, "Character.State.Sprint");
 
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Attacking, "Character.Action.Attacking");
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Stand, "Character.State.Standing");
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Landed, "Character.State.Landed");
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Crouch, "Character.State.Crouch");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Dead, "Character.State.Dead");
