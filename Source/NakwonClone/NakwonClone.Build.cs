@@ -18,7 +18,11 @@ public class NakwonClone : ModuleRules
 			"GameplayTags",
 			"OnlineSubsystem",
 			"OnlineSubsystemSteam",
-			"OnlineSubsystemUtils"
+			"OnlineSubsystemUtils",
+      "UMG", 
+      "Slate", 
+      "SlateCore",
+      "AIModule"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
