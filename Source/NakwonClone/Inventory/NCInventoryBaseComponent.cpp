@@ -101,6 +101,31 @@ bool UNCInventoryBaseComponent::AddItem(FGameplayTag ItemTypeTag, int32 Quantity
 	return RemainingQuantity == 0;
 }
 
+bool UNCInventoryBaseComponent::RemoveItem(int32 SlotIndex, int32 Quantity)
+{
+	if (!GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+	if (Quantity <= 0 || !Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty())
+	{
+		return false;
+	}
+
+	if (Items[SlotIndex].Quantity >= Quantity)
+	{
+		Items[SlotIndex].Quantity -= Quantity;
+
+		if (Items[SlotIndex].Quantity == 0)
+		{
+			Items[SlotIndex].ItemTypeTag = FGameplayTag::EmptyTag;
+		}
+        
+		return true;
+	}
+	return false;
+}
+
 bool UNCInventoryBaseComponent::FindEmptySlot(int32& OutSlotIndex) const
 {
 	for (int32 i = 0; i < Items.Num(); i++)

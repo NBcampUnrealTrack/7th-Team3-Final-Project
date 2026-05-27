@@ -37,6 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	virtual bool AddItem(FGameplayTag ItemTypeTag, int32 Quantity);
 	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	virtual bool RemoveItem(int32 SlotIndex, int32 Quantity);
+	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	bool FindEmptySlot(int32& OutSlotIndex) const;
 	
