@@ -39,12 +39,7 @@ bool UNCInventoryBaseComponent::AddItem(FGameplayTag ItemTypeTag, int32 Quantity
 		return false;
 	}
 	
-	if (Quantity <= 0)
-	{
-		return false;
-	}
-	
-	if (!ItemDataTable)
+	if (Quantity <= 0 || !ItemDataTable || !ItemTypeTag.IsValid())
 	{
 		return false;
 	}
@@ -57,18 +52,53 @@ bool UNCInventoryBaseComponent::AddItem(FGameplayTag ItemTypeTag, int32 Quantity
 		return false;
 	}
 	
-	// todo : 아이템 스택 로직 구현
+	int32 RemainingQuantity = Quantity;
 	
-	int32 EmptySlotIndex;
-	if (FindEmptySlot(EmptySlotIndex))
+	if (ItemData->MaxStackSize > 1)
 	{
-		Items[EmptySlotIndex].ItemTypeTag = ItemTypeTag;
-		Items[EmptySlotIndex].Quantity = Quantity;
-		
-		return true;
+		int32 StackableSlotIndex;
+		while (RemainingQuantity > 0 && FindStackableSlot(ItemTypeTag, ItemData->MaxStackSize, StackableSlotIndex))
+		{
+			int32 RoomInSlot = ItemData->MaxStackSize - Items[StackableSlotIndex].Quantity;
+
+			if (RemainingQuantity <= RoomInSlot)
+			{
+				Items[StackableSlotIndex].Quantity += RemainingQuantity;
+				RemainingQuantity = 0;
+			}
+			else
+			{
+				Items[StackableSlotIndex].Quantity = ItemData->MaxStackSize;
+				RemainingQuantity -= RoomInSlot;
+			}
+		}
 	}
 	
-	return false;
+	while (RemainingQuantity > 0)
+	{
+		int32 EmptySlotIndex;
+		if (FindEmptySlot(EmptySlotIndex))
+		{
+			Items[EmptySlotIndex].ItemTypeTag = ItemTypeTag;
+
+			if (RemainingQuantity <= ItemData->MaxStackSize)
+			{
+				Items[EmptySlotIndex].Quantity = RemainingQuantity;
+				RemainingQuantity = 0;
+			}
+			else
+			{
+				Items[EmptySlotIndex].Quantity = ItemData->MaxStackSize;
+				RemainingQuantity -= ItemData->MaxStackSize;
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return RemainingQuantity == 0;
 }
 
 bool UNCInventoryBaseComponent::FindEmptySlot(int32& OutSlotIndex) const
@@ -76,6 +106,20 @@ bool UNCInventoryBaseComponent::FindEmptySlot(int32& OutSlotIndex) const
 	for (int32 i = 0; i < Items.Num(); i++)
 	{
 		if (Items[i].IsEmpty())
+		{
+			OutSlotIndex = i;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool UNCInventoryBaseComponent::FindStackableSlot(FGameplayTag ItemTypeTag, int32 MaxStackSize,
+	int32& OutSlotIndex) const
+{
+	for (int32 i = 0; i < Items.Num(); i++)
+	{
+		if (Items[i].ItemTypeTag == ItemTypeTag && Items[i].Quantity < MaxStackSize)
 		{
 			OutSlotIndex = i;
 			return true;

@@ -24,7 +24,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory)
 	FIntPoint GridSize;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inventory)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Replicated, Category = Inventory)
 	TArray<FInventorySlot> Items;
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
@@ -39,4 +39,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	bool FindEmptySlot(int32& OutSlotIndex) const;
+	
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	bool FindStackableSlot(FGameplayTag ItemTypeTag, int32 MaxStackSize, int32& OutSlotIndex) const;
 };
