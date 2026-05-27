@@ -24,8 +24,9 @@ protected:
 	UFUNCTION()
 	virtual void NativeConstruct() override;
 	
-	void OnStaminaBarChanged(float CurrentStamina, float MaxStamina);
-	void OnAssistanceStaminaBarChanged();
+	UFUNCTION()
+	void UpdateStaminaBar(float CurrentStamina, float MaxStamina);
+	void UpdateAssistanceStaminaBar();
 	
 	FTimerHandle OnStaminaBarTimerHandle;
 };
