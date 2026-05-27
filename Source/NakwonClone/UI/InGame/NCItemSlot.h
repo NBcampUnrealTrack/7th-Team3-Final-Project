@@ -40,7 +40,11 @@ protected:
 	UFUNCTION()
 	virtual void NativeConstruct() override;
 	
-	void OnLeftSlotImageChanged(UTexture2D* ItemIcon);
-	void OnRightSlotImageChanged(UTexture2D* ItemIcon);
+	UFUNCTION()
+	void UpdateLeftSlotImage(UTexture2D* ItemIcon);
+	
+	UFUNCTION()
+	void UpdateRightSlotImage(UTexture2D* ItemIcon);
+	
 	void UpdateSlotHighlight();
 };

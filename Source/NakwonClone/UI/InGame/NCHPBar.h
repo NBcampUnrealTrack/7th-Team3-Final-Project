@@ -17,5 +17,6 @@ protected:
 	UFUNCTION()
 	void NativeConstruct();
 	
-	void OnHPChanged(float CurrentHP, float MaxHP);
+	UFUNCTION()
+	void UpdateHP(float CurrentHP, float MaxHP);
 };

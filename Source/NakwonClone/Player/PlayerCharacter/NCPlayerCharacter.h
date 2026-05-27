@@ -12,6 +12,12 @@ class UInputAction;
 
 struct FInputActionValue;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHPChanged, float, CurrentHP, float, MaxHP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaBarChanged, float, CurrentStamina, float, MaxStamina);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotImageChanged, UTexture2D*, ItemIcon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCitizenRankTextChanged, int32, CitizenRank);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLevelTextChanged, int32, CharacterLevel);
+
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
 {
@@ -22,6 +28,25 @@ public:
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	
+	UPROPERTY()
+	FOnHPChanged OnHPChanged;
+	
+	UPROPERTY()
+	FOnStaminaBarChanged OnStaminaBarChanged;
+	
+	UPROPERTY()
+	FOnSlotImageChanged OnLeftSlotImageChanged;
+	
+	UPROPERTY()
+	FOnSlotImageChanged OnRightSlotImageChanged;
+	
+	UPROPERTY()
+	FOnCitizenRankTextChanged OnCitizenRankTextChanged;
+	
+	UPROPERTY()
+	FOnLevelTextChanged OnLevelTextChanged;
+	
 protected:
 	virtual void BeginPlay() override;
 	
