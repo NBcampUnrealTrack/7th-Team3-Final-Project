@@ -24,9 +24,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory)
 	FIntPoint GridSize;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inventory)
 	TArray<FInventorySlot> Items;
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	virtual void InitializeInventory();
+	
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inventory)
+	TObjectPtr<class UDataTable> ItemDataTable;
+	
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	virtual bool AddItem(FGameplayTag ItemTypeTag, int32 Quantity);
+	
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	bool FindEmptySlot(int32& OutSlotIndex) const;
 };
