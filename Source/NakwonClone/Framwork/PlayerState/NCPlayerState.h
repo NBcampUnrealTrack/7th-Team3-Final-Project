@@ -18,6 +18,8 @@ class NAKWONCLONE_API ANCPlayerState : public APlayerState
 	GENERATED_BODY()
 	
 public:
+	ANCPlayerState();
+	
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_LifeStateTag, BlueprintReadOnly)
@@ -31,6 +33,15 @@ public:
 	
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	float MaxHP;
+	
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	float CurrentStemina;
+	
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	float MaxStemina;
+	
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	FGameplayTag PlayerState;
 	
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bHost;

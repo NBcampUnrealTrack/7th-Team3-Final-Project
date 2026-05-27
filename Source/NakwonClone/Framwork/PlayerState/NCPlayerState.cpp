@@ -4,6 +4,17 @@
 #include "NCPlayerState.h"
 
 #include "Net/UnrealNetwork.h"
+#include "NakwonClone/Common/NCGameplayTags.h"
+
+ANCPlayerState::ANCPlayerState()
+{
+	MaxHP = 100.f;
+	CurrentHP = MaxHP;
+	MaxStemina = 100.f;
+	CurrentStemina = MaxStemina;
+	
+	PlayerState = NCCharacter::Alive;
+}
 
 void ANCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -12,6 +23,8 @@ void ANCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(ANCPlayerState, LifeStateTag);
 	DOREPLIFETIME(ANCPlayerState, CurrentHP);
 	DOREPLIFETIME(ANCPlayerState, MaxHP);
+	DOREPLIFETIME(ANCPlayerState, CurrentStemina);
+	DOREPLIFETIME(ANCPlayerState, MaxStemina);
 	DOREPLIFETIME(ANCPlayerState, bHost);
 	DOREPLIFETIME(ANCPlayerState, TeamIndex);
 }

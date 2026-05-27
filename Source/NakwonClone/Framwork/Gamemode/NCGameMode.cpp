@@ -65,29 +65,29 @@ void ANCGameMode::PostLogin(APlayerController* NewPlayer)
 	ANCGameState* GS = Cast<ANCGameState>(GetWorld()->GetGameState());
 	if (GS)
 	{
-		// todo : 게임 스테이트에 플레이어 추가
-		// todo : 플레이어 수 +1
+		GS->ConnectedPlayerCount++;
+		GS->AlivePlayerCount++;
 	}
 	
-	if (bStartSession == false && bInviteFriend == false)
+	ANCPlayerState* PS = NewPlayer->GetPlayerState<ANCPlayerState>();
+	if (PS)
 	{
-		bStartSession = true;
-
-		JoinSession();
+		PS->MaxHP = 100.f;
+		PS->CurrentHP = PS->MaxHP;
+		PS->LifeStateTag = NCCharacter::Alive;
+		PS->bHost = (GS && GS->ConnectedPlayerCount == 1);
 	}
-	else if (!bStartSession && bInviteFriend == true)
-	{
-		bStartSession = true;
-		bJoinSessionDuo = true;
-		
-		JoinSession();
-	}
-	
 }
 
 void ANCGameMode::Logout(AController* Exiting)
 {
 	Super::Logout(Exiting);
+	
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (GS)
+	{
+		GS->ConnectedPlayerCount--;
+	}
 }
 
 void ANCGameMode::StartMatch()
@@ -97,6 +97,17 @@ void ANCGameMode::StartMatch()
 
 void ANCGameMode::EndMatch(bool bClear)
 {
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (!GS) return;
+
+	if (bClear)
+	{
+		GS->CurrentGameStateTag = NCGameState::GameClear;
+	}
+	else
+	{
+		GS->CurrentGameStateTag = NCGameState::GameOver;
+	}
 }
 
 void ANCGameMode::JoinSession()
@@ -143,18 +154,51 @@ void ANCGameMode::KickFriend(APlayerController* TargetPlayer)
 
 void ANCGameMode::HandlePlayerDowned(ANCPlayerState* PlayerState)
 {
+	if (!PlayerState) return;
+	
+	PlayerState->LifeStateTag = NCCharacter::Downed;
+	
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (GS)
+	{
+		GS->AlivePlayerCount--;
+	}
+
+	CheckAllPlayersDead();
 }
 
 void ANCGameMode::HandlePlayerRevived(ANCPlayerState* PlayerState)
 {
+	if (!PlayerState) return;
+
+	PlayerState->LifeStateTag = NCCharacter::Alive;
+	PlayerState->CurrentHP = PlayerState->MaxHP * 0.5f; // 50% HP로 부활
+
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (GS)
+	{
+		GS->AlivePlayerCount++;
+	}
 }
 
 void ANCGameMode::HandlePlayerDead(ANCPlayerState* PlayerState)
 {
+	if (!PlayerState) return;
+
+	PlayerState->LifeStateTag = NCCharacter::Dead;
+
+	CheckAllPlayersDead();
 }
 
 void ANCGameMode::CheckAllPlayersDead()
 {
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (!GS) return;
+
+	if (GS->AlivePlayerCount <= 0)
+	{
+		EndMatch(false); // 전멸 → 게임오버
+	}
 }
 
 void ANCGameMode::SetMatchTimerHandle()

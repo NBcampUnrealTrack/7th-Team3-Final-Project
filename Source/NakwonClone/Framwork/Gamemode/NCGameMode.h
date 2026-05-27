@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
+#include "NakwonClone/Framwork/GameState/NCGameState.h"
+#include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
+#include "NakwonClone/Common/NCGameplayTags.h"
+
 #include "NCGameMode.generated.h"
 
 /**
@@ -26,11 +30,12 @@ public:
 	void StartMatch();
 	void EndMatch(bool bClear);
 	
+	// 보류
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void JoinSession();
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void LeaveSession();
-	
+	// 보류
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToTitle();
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
