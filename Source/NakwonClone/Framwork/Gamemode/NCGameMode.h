@@ -19,7 +19,12 @@ public:
 	~ANCGameMode();
 	
 	virtual void BeginPlay() override;
-	virtual void PostLogin(APlayerController *NewPlayer) override;
+	
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
+	
+	void StartMatch();
+	void EndMatch(bool bClear);
 	
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void JoinSession();
@@ -34,8 +39,11 @@ public:
 	void InviteFriend(APlayerController* TargetPlayer);
 	void KickFriend(APlayerController* TargetPlayer);
 
-	void HandlePlayerDowned();  // todo : 플레이어 스테이트 정의하고 파라미터에 넣기
-	void HandlePlayerRevived(); // todo : 플레이어 스테이트 정의하고 파라미터에 넣기
+	void HandlePlayerDowned(ANCPlayerState* PlayerState);
+	void HandlePlayerRevived(ANCPlayerState* PlayerState);
+	void HandlePlayerDead(ANCPlayerState* PlayerState);
+	
+	void CheckAllPlayersDead();
 	
 	FTimerHandle MatchTimerHandle;
 	

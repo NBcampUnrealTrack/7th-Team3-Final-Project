@@ -85,6 +85,20 @@ void ANCGameMode::PostLogin(APlayerController* NewPlayer)
 	
 }
 
+void ANCGameMode::Logout(AController* Exiting)
+{
+	Super::Logout(Exiting);
+}
+
+void ANCGameMode::StartMatch()
+{
+	Super::StartMatch();
+}
+
+void ANCGameMode::EndMatch(bool bClear)
+{
+}
+
 void ANCGameMode::JoinSession()
 {
 	// todo : 게임 스테이트의 변수 바꿀것 있는지 확인하기 (GamePhase 등)
@@ -127,11 +141,19 @@ void ANCGameMode::KickFriend(APlayerController* TargetPlayer)
 {
 }
 
-void ANCGameMode::HandlePlayerDowned()
+void ANCGameMode::HandlePlayerDowned(ANCPlayerState* PlayerState)
 {
 }
 
-void ANCGameMode::HandlePlayerRevived()
+void ANCGameMode::HandlePlayerRevived(ANCPlayerState* PlayerState)
+{
+}
+
+void ANCGameMode::HandlePlayerDead(ANCPlayerState* PlayerState)
+{
+}
+
+void ANCGameMode::CheckAllPlayersDead()
 {
 }
 
