@@ -11,6 +11,17 @@ UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Stand, "Character.State.Standing");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Landed, "Character.State.Landed");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Crouch, "Character.State.Crouch");
 
-UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Alive, "Character.State.Alive");;
-UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Downed, "Character.State.Downed");;
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Alive, "Character.State.Alive");
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Downed, "Character.State.Downed");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Dead, "Character.State.Dead");
+
+// 게임 상태
+UE_DEFINE_GAMEPLAY_TAG(NCGameState::Title, "GameState.State.Title");
+UE_DEFINE_GAMEPLAY_TAG(NCGameState::Lobby, "GameState.State.Lobby");
+UE_DEFINE_GAMEPLAY_TAG(NCGameState::GameStart, "GameState.State.GameStart");
+UE_DEFINE_GAMEPLAY_TAG(NCGameState::GameOver, "GameState.State.GameOver");
+UE_DEFINE_GAMEPLAY_TAG(NCGameState::GameClear, "GameState.State.Clear");
+	
+// 싱글, 멀티 여부
+UE_DEFINE_GAMEPLAY_TAG(NCGameState::SinglePlay, "GameState.State.SinglePlay");
+UE_DEFINE_GAMEPLAY_TAG(NCGameState::MultiPlay, "GameState.State.MultiPlay");
