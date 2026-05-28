@@ -12,5 +12,5 @@ class NAKWONCLONE_API UBTService_UpdateRotation : public UBTService
 {
 	GENERATED_BODY()
 public:
-	UBTService_UpdateRotation();
+	// UBTService_UpdateRotation();
 };
