@@ -27,7 +27,7 @@ void UNCGameInstance::CreateListenSession()
 
 	FOnlineSessionSettings Settings;
 	Settings.bIsLANMatch = false;
-	Settings.bUsesPresence = true;		// Steam 친구 목록에 현재 상태 표시 (초대에 필수)
+	Settings.bUsesPresence = true; // Steam 친구 목록에 현재 상태 표시 (초대에 필수)
 	Settings.bAllowInvites = true;
 	Settings.bShouldAdvertise = true;
 	Settings.NumPublicConnections = 4;

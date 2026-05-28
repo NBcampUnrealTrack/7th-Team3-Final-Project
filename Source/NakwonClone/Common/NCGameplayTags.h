@@ -43,7 +43,7 @@ namespace NCCharacter
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dead);
 };
 
-namespace NCGameState
+namespace NCGameStateTags
 {
 	// 게임 상태
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Title);

@@ -27,15 +27,14 @@ public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 	
-	void StartMatch();
+	virtual void StartMatch() override;
 	void EndMatch(bool bClear);
 	
-	// 보류
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void JoinSession();
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void LeaveSession();
-	// 보류
+	
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToTitle();
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
@@ -54,6 +53,8 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void SetMatchTimerHandle();
+	
+	void TimerTick();
 
 private:
 	bool bInviteFriend = false;
