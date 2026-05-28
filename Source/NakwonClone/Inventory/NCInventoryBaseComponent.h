@@ -6,6 +6,7 @@
 
 #include "NCInventoryBaseComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NAKWONCLONE_API UNCInventoryBaseComponent : public UActorComponent
@@ -15,16 +16,20 @@ class NAKWONCLONE_API UNCInventoryBaseComponent : public UActorComponent
 public:
 	UNCInventoryBaseComponent();
 
+	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+	FOnInventoryUpdated OnInventoryUpdated;
 protected:
 	virtual void BeginPlay() override;
 	
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UFUNCTION()
+	virtual void OnRep_Items();
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory)
 	FIntPoint GridSize;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Replicated, Category = Inventory)
+	UPROPERTY(ReplicatedUsing = OnRep_Items, EditAnywhere, BlueprintReadOnly, Category = Inventory)
 	TArray<FInventorySlot> Items;
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)

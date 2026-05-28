@@ -27,6 +27,11 @@ void UNCInventoryBaseComponent::GetLifetimeReplicatedProps(TArray<class FLifetim
 	DOREPLIFETIME(UNCInventoryBaseComponent, Items);
 }
 
+void UNCInventoryBaseComponent::OnRep_Items()
+{
+	OnInventoryUpdated.Broadcast();
+}
+
 void UNCInventoryBaseComponent::InitializeInventory()
 {
 	int32 TotalSlots = GridSize.X * GridSize.Y;	
@@ -100,6 +105,11 @@ bool UNCInventoryBaseComponent::AddItem(FGameplayTag ItemTypeTag, int32 Quantity
 		}
 	}
 
+	if (RemainingQuantity != Quantity)
+	{
+		OnInventoryUpdated.Broadcast();
+	}
+	
 	return RemainingQuantity == 0;
 }
 
@@ -123,6 +133,8 @@ bool UNCInventoryBaseComponent::RemoveItem(int32 SlotIndex, int32 Quantity)
 			Items[SlotIndex].ItemTypeTag = FGameplayTag::EmptyTag;
 		}
         
+		OnInventoryUpdated.Broadcast();
+		
 		return true;
 	}
 	return false;
