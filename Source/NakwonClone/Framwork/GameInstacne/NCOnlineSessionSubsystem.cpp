@@ -1,7 +1,8 @@
-
+﻿
 #include "NCOnlineSessionSubsystem.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "Kismet/GameplayStatics.h"
 
 void UNCOnlineSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -92,14 +93,33 @@ void UNCOnlineSessionSubsystem::DestroyCurrentSession()
 
 FString UNCOnlineSessionSubsystem::GetSessionOwnerName(int32 Index) const
 {
+	if (!LastSearchResults.IsValidIndex(Index))
+	{
+		return TEXT("");
+	}
+
+	return LastSearchResults[Index].Session.OwningUserName;
 }
 
 int32 UNCOnlineSessionSubsystem::GetSessionOpenConnections(int32 Index) const
 {
+	if (!LastSearchResults.IsValidIndex(Index))
+	{
+		return 0;
+	}
+
+	return LastSearchResults[Index].Session.NumOpenPublicConnections;
 }
 
-IOnlineSessionPtr UNCOnlineSessionSubsystem::GetSessionInterface()
+IOnlineSessionPtr UNCOnlineSessionSubsystem::GetSessionInterface() const
 {
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if (!OnlineSubsystem)
+	{
+		return nullptr;
+	}
+
+	return OnlineSubsystem->GetSessionInterface();
 }
 
 void UNCOnlineSessionSubsystem::OnCreateSessionComplete(FName SessionName, bool bSuccessful)

@@ -1,4 +1,4 @@
-#include "NCPlayerInventoryComponent.h"
+﻿#include "NCPlayerInventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "NakwonClone/Item/NCItemActor.h"
 
@@ -149,8 +149,8 @@ bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
 	return RemoveItem(SlotIndex, DropQuantity);
 }
 
-bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
-{
-	
-}
-
+//bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
+//{
+//	return false;
+//}
+//
