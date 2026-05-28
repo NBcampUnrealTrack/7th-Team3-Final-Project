@@ -1,5 +1,6 @@
 #include "NCPlayerInventoryComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "NakwonClone/Item/NCItemActor.h"
 
 UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 {
@@ -133,8 +134,12 @@ bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
         
 		AActor* DroppedItem = GetWorld()->SpawnActor<AActor>(BaseItemActorClass, SpawnLocation, SpawnRotation, SpawnParams);
-		
-		// TODO: DroppedItem에 ItemTag와 DropQuantity 정보를 넘겨 바닥에 떨어진 아이템이 어떤아이템이고 몇개인지 기억하게 만드는 로직 추가 필요
+
+		ANCItemActor* SpawnedItemActor = Cast<ANCItemActor>(DroppedItem);
+		if (SpawnedItemActor)
+		{
+			SpawnedItemActor->InitializeItemData(ItemTag, DropQuantity);
+		}
 	}
 	
 	// 임시 디버그
