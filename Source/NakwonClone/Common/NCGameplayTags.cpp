@@ -11,6 +11,10 @@ UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Stand, "Character.State.Standing");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Landed, "Character.State.Landed");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Crouch, "Character.State.Crouch");
 
+UE_DEFINE_GAMEPLAY_TAG(NCItemType::Equipment, "ItemType.Equipment")
+UE_DEFINE_GAMEPLAY_TAG(NCItemType::Consumable, "ItemType.Consumable")
+UE_DEFINE_GAMEPLAY_TAG(NCItemType::Material, "ItemType.Material")
+
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Alive, "Character.State.Alive");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Downed, "Character.State.Downed");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Dead, "Character.State.Dead");
