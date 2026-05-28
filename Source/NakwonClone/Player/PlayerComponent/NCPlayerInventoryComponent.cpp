@@ -149,3 +149,8 @@ bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
 	return RemoveItem(SlotIndex, DropQuantity);
 }
 
+bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
+{
+	
+}
+
