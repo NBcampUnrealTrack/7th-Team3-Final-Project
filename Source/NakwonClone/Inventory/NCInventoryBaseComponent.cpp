@@ -5,6 +5,8 @@ UNCInventoryBaseComponent::UNCInventoryBaseComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	GridSize = FIntPoint(5,4);
+	
+	SetIsReplicatedByDefault(true);
 }
 
 
