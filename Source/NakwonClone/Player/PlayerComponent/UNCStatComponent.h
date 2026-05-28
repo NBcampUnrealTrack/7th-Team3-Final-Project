@@ -5,8 +5,8 @@
 #include "NakwonClone/Player/PlayerData/NCPlayerStatData.h"
 #include "UNCStatComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHPChanged, float, OldHP, float, NewHP);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDead);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNCOnHPChanged, float, OldHP, float, NewHP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNCOnDead);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NAKWONCLONE_API UNCStatComponent : public UActorComponent
@@ -35,10 +35,10 @@ public:
 
 public:
 	UPROPERTY(BlueprintAssignable)
-	FOnHPChanged OnHPChanged;
+	FNCOnHPChanged OnHPChanged;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnDead OnDead;
+	FNCOnDead OnDead;
 
 private:
 	UFUNCTION()

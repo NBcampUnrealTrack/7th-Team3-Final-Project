@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -36,10 +36,10 @@ public:
 	void DestroyCurrentSession();
 	
 	// bp UI에서 검색 완료 이벤트를 받을 때 사용
-	UFUNCTION(BlueprintAssignable, Category = "Session")
+	UPROPERTY(BlueprintAssignable, Category = "Session")
 	FNCOnFindSessionsComplete OnFindSessionsCompleteEvent;
 	
-	UFUNCTION(BlueprintAssignable, Category = "Session")
+	UPROPERTY(BlueprintAssignable, Category = "Session")
 	FNCOnJoinSessionComplete OnJoinSessionCompleteEvent;
 	
 	// UI에서 방 목록 표시용 - host 이름, 인원
@@ -53,7 +53,7 @@ public:
 	int32 GetSessionOpenConnections(int32 Index) const;
 	
 private:
-	IOnlineSessionPtr GetSessionInterface(); const;
+	IOnlineSessionPtr GetSessionInterface() const;
 	
 	// steam이 자동 호출하는 함수들
 	void OnCreateSessionComplete(FName SessionName, bool bSuccessful);

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "NativeGameplayTags.h"
@@ -50,7 +50,7 @@ namespace NCItemType
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Material);
 };
 
-namespace NCGameState
+namespace NCGameStateTags
 {
 	// 게임 상태
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Title);
