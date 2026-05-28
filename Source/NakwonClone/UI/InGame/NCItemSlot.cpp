@@ -1,4 +1,6 @@
 ﻿#include "NCItemSlot.h"
+
+#include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
 void UNCItemSlot::NativeConstruct()
@@ -9,8 +11,13 @@ void UNCItemSlot::NativeConstruct()
 	
 	if (PlayerCharacter)
 	{
-		PlayerCharacter->OnLeftSlotImageChanged.AddDynamic(this, &UNCItemSlot::UpdateLeftSlotImage);
-		PlayerCharacter->OnRightSlotImageChanged.AddDynamic(this, &UNCItemSlot::UpdateRightSlotImage);
+		ANCPlayerState* PlayerState = Cast<ANCPlayerState>(PlayerCharacter->GetPlayerState());
+		
+		if (PlayerState)
+		{
+			PlayerState->OnLeftSlotImageChanged.AddDynamic(this, &UNCItemSlot::UpdateLeftSlotImage);
+			PlayerState->OnRightSlotImageChanged.AddDynamic(this, &UNCItemSlot::UpdateRightSlotImage);
+		}
 	}
 }
 

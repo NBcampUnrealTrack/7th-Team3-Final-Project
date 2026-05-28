@@ -9,9 +9,12 @@
 
 #include "NCPlayerState.generated.h"
 
-/**
- * 
- */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHPChanged, float, CurrentHP, float, MaxHP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaBarChanged, float, CurrentStamina, float, MaxStamina);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotImageChanged, UTexture2D*, ItemIcon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCitizenRankTextChanged, int32, CitizenRank);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLevelTextChanged, int32, CharacterLevel);
+
 UCLASS()
 class NAKWONCLONE_API ANCPlayerState : public APlayerState
 {
@@ -35,10 +38,10 @@ public:
 	float MaxHP;
 	
 	UPROPERTY(Replicated, BlueprintReadOnly)
-	float CurrentStemina;
+	float CurrentStamina;
 	
 	UPROPERTY(Replicated, BlueprintReadOnly)
-	float MaxStemina;
+	float MaxStamina;
 	
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	FGameplayTag PlayerState;
@@ -49,4 +52,22 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	int32 TeamIndex; // 멀티로 확장 시
 	
+public:
+	UPROPERTY()
+	FOnHPChanged OnHPChanged;
+	
+	UPROPERTY()
+	FOnStaminaBarChanged OnStaminaBarChanged;
+	
+	UPROPERTY()
+	FOnSlotImageChanged OnLeftSlotImageChanged;
+	
+	UPROPERTY()
+	FOnSlotImageChanged OnRightSlotImageChanged;
+	
+	UPROPERTY()
+	FOnCitizenRankTextChanged OnCitizenRankTextChanged;
+	
+	UPROPERTY()
+	FOnLevelTextChanged OnLevelTextChanged;
 };

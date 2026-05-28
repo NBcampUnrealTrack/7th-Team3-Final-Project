@@ -1,4 +1,6 @@
 ﻿#include "NCCitizenRankText.h"
+
+#include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
 void UNCCitizenRankText::NativeConstruct()
@@ -9,7 +11,12 @@ void UNCCitizenRankText::NativeConstruct()
 	
 	if (PlayerCharacter)
 	{
-		PlayerCharacter->OnCitizenRankTextChanged.AddDynamic(this, &UNCCitizenRankText::UpdateCitizenRankText);
+		ANCPlayerState* PlayerState = Cast<ANCPlayerState>(PlayerCharacter->GetPlayerState());
+		
+		if (PlayerState)
+		{
+			PlayerState->OnCitizenRankTextChanged.AddDynamic(this, &UNCCitizenRankText::UpdateCitizenRankText);
+		}
 	}
 }
 

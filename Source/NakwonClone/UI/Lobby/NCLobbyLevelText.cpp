@@ -1,4 +1,6 @@
 ﻿#include "NCLobbyLevelText.h"
+
+#include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
 void UNCLobbyLevelText::NativeConstruct()
@@ -9,7 +11,12 @@ void UNCLobbyLevelText::NativeConstruct()
 	
 	if (PlayerCharacter)
 	{
-		PlayerCharacter->OnLevelTextChanged.AddDynamic(this, &UNCLobbyLevelText::UpdateLevelText);
+		ANCPlayerState* PlayerState = Cast<ANCPlayerState>(PlayerCharacter->GetPlayerState());
+		
+		if (PlayerState)
+		{
+			PlayerState->OnLevelTextChanged.AddDynamic(this, &UNCLobbyLevelText::UpdateLevelText);
+		}
 	}
 }
 
