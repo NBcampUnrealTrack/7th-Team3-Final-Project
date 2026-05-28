@@ -5,6 +5,7 @@
 
 #include "NCPlayerInventoryComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuickSlotUpdated);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NAKWONCLONE_API UNCPlayerInventoryComponent : public UNCInventoryBaseComponent
@@ -14,11 +15,21 @@ class NAKWONCLONE_API UNCPlayerInventoryComponent : public UNCInventoryBaseCompo
 public:
 	UNCPlayerInventoryComponent();
 
+	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+	FOnQuickSlotUpdated OnQuickSlotUpdated;
+	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
     
 	virtual void InitializeInventory() override;
+	
+	UFUNCTION()
+	virtual void OnRep_QuickSlots();
+	
 public:
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Inventory|QuickSlot")
+	UPROPERTY(ReplicatedUsing = OnRep_QuickSlots, EditAnywhere, BlueprintReadOnly, Category = "Inventory|QuickSlot")
 	TArray<FInventorySlot> QuickSlots;
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
+	virtual bool UseItem(int32 SlotIndex);
 };
