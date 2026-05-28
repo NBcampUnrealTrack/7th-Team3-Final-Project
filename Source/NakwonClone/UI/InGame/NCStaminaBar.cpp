@@ -1,13 +1,19 @@
 ﻿#include "NCStaminaBar.h"
+#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
 void UNCStaminaBar::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	// 캐릭터 델리게이트 연결
+	ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetOwningPlayerPawn());
+	
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->OnStaminaBarChanged.AddDynamic(this, &UNCStaminaBar::UpdateStaminaBar);
+	}
 }
 
-void UNCStaminaBar::OnStaminaBarChanged(float CurrentStamina, float MaxStamina)
+void UNCStaminaBar::UpdateStaminaBar(float CurrentStamina, float MaxStamina)
 {
 	if (StaminaProgressBar && AssistanceStaminaProgressBar)
 	{
@@ -25,14 +31,14 @@ void UNCStaminaBar::OnStaminaBarChanged(float CurrentStamina, float MaxStamina)
 		GetWorld()->GetTimerManager().SetTimer(
 			OnStaminaBarTimerHandle,
 			this,
-			&UNCStaminaBar::OnAssistanceStaminaBarChanged,
+			&UNCStaminaBar::UpdateAssistanceStaminaBar,
 			0.1f,
 			false
 		);
 	}
 }
 
-void UNCStaminaBar::OnAssistanceStaminaBarChanged()
+void UNCStaminaBar::UpdateAssistanceStaminaBar()
 {
 	// ANCPlayerCharacter* Player = Cast<ANCPlayerCharacter>(GetOwningPlayer());
 	

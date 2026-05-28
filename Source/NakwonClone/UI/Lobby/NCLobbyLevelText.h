@@ -25,5 +25,6 @@ protected:
 	UFUNCTION()
 	virtual void NativeConstruct() override;
 	
-	void OnTimerTextChanged();
+	UFUNCTION()
+	void UpdateLevelText(int32 CharacterLevel);
 };

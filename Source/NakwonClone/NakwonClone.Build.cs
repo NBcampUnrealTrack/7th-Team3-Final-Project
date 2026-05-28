@@ -19,10 +19,11 @@ public class NakwonClone : ModuleRules
 			"OnlineSubsystem",
 			"OnlineSubsystemSteam",
 			"OnlineSubsystemUtils",
-      "UMG", 
-      "Slate", 
-      "SlateCore",
-      "AIModule"
+			"UMG",
+			"Slate",
+			"SlateCore",
+			"AIModule",
+			"NavigationSystem",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

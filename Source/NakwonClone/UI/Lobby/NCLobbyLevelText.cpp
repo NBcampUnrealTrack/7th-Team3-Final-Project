@@ -1,16 +1,22 @@
 ﻿#include "NCLobbyLevelText.h"
+#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
 void UNCLobbyLevelText::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	// 캐릭터 델리게이트 연결
+	ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetOwningPlayerPawn());
+	
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->OnLevelTextChanged.AddDynamic(this, &UNCLobbyLevelText::UpdateLevelText);
+	}
 }
 
-void UNCLobbyLevelText::OnTimerTextChanged()
+void UNCLobbyLevelText::UpdateLevelText(int32 CharacterLevel)
 {
 	if (LevelText)
 	{
-		//LevelText->SetText();
+		LevelText->SetText(FText::AsNumber(CharacterLevel));
 	}
 }

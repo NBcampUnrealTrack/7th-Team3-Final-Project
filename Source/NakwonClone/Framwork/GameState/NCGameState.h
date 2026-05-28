@@ -4,13 +4,38 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+
+#include "NakwonClone/Common/NCGameplayTags.h"
+
 #include "NCGameState.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class NAKWONCLONE_API ANCGameState : public AGameState
 {
 	GENERATED_BODY()
+	
+public:
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	int32 ConnectedPlayerCount;
+	
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	int32 AlivePlayerCount;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentGameStateTag, BlueprintReadOnly, Category="GameFlow")
+	FGameplayTag CurrentGameStateTag;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_MatchTime, BlueprintReadOnly)
+	float RemainingMatchTime;
+	
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UFUNCTION()
+	void OnRep_CurrentGameStateTag(); // UI 갱신용
+	
+	UFUNCTION()
+	void OnRep_MatchTime();
+	
+
+	
 };

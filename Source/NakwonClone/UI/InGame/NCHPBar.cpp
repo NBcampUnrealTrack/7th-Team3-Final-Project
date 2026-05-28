@@ -1,13 +1,19 @@
 #include "NCHPBar.h"
+#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
 void UNCHPBar::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	// 캐릭터 델리게이트 연결
+	ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetOwningPlayerPawn());
+	
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->OnHPChanged.AddDynamic(this, &UNCHPBar::UpdateHP);
+	}
 }
 
-void UNCHPBar::OnHPChanged(float CurrentHP, float MaxHP)
+void UNCHPBar::UpdateHP(float CurrentHP, float MaxHP)
 {
 	if (HPProgressBar)
 	{

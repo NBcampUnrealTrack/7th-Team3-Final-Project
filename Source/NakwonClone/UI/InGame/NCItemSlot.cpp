@@ -1,13 +1,20 @@
 ﻿#include "NCItemSlot.h"
+#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
 void UNCItemSlot::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	// 캐릭터 델리게이트 연결
+	ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetOwningPlayerPawn());
+	
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->OnLeftSlotImageChanged.AddDynamic(this, &UNCItemSlot::UpdateLeftSlotImage);
+		PlayerCharacter->OnRightSlotImageChanged.AddDynamic(this, &UNCItemSlot::UpdateRightSlotImage);
+	}
 }
 
-void UNCItemSlot::OnLeftSlotImageChanged(UTexture2D* ItemIcon)
+void UNCItemSlot::UpdateLeftSlotImage(UTexture2D* ItemIcon)
 {
 	if (LeftSlotImage)
 	{
@@ -28,7 +35,7 @@ void UNCItemSlot::OnLeftSlotImageChanged(UTexture2D* ItemIcon)
 	// }
 }
 
-void UNCItemSlot::OnRightSlotImageChanged(UTexture2D* ItemIcon)
+void UNCItemSlot::UpdateRightSlotImage(UTexture2D* ItemIcon)
 {
 	if (RightSlotImage)
 	{
