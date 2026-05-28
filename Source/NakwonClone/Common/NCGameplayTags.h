@@ -43,7 +43,14 @@ namespace NCCharacter
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dead);
 };
 
-namespace NCGameStateTags
+namespace NCItemType
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Consumable);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Material);
+};
+
+namespace NCGameState
 {
 	// 게임 상태
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Title);
