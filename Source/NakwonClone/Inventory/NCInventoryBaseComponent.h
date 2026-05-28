@@ -45,9 +45,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	virtual bool RemoveItem(int32 SlotIndex, int32 Quantity);
 	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	virtual bool MoveItem(int32 FromIndex, int32 ToIndex);
+	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	bool FindEmptySlot(int32& OutSlotIndex) const;
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	bool FindStackableSlot(FGameplayTag ItemTypeTag, int32 MaxStackSize, int32& OutSlotIndex) const;
+	
+protected:
+	bool SwapSlots(int32 IndexA, int32 IndexB);
+	bool CombineSlots(int32 SourceIndex, int32 TargetIndex);
 };
