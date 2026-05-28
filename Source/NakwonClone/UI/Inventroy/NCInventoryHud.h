@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "NCInventroySlot.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/UniformGridPanel.h"
 #include "NCInventoryHud.generated.h"
@@ -16,6 +17,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UUniformGridPanel* InventoryGrid;
 	
-	// UPROPERTY(EditDefaultsOnly, Category = "Inventory")
-	// TSubclassOf<UNCInventroySlot> SlotClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
+	TSubclassOf<UNCInventroySlot> SlotClass;
 };

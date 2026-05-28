@@ -1,4 +1,6 @@
 ﻿#include "NCStaminaBar.h"
+
+#include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
 void UNCStaminaBar::NativeConstruct()
@@ -9,7 +11,12 @@ void UNCStaminaBar::NativeConstruct()
 	
 	if (PlayerCharacter)
 	{
-		PlayerCharacter->OnStaminaBarChanged.AddDynamic(this, &UNCStaminaBar::UpdateStaminaBar);
+		ANCPlayerState* PlayerState = Cast<ANCPlayerState>(PlayerCharacter->GetPlayerState());
+		
+		if (PlayerState)
+		{
+			PlayerState->OnStaminaBarChanged.AddDynamic(this, &UNCStaminaBar::UpdateStaminaBar);
+		}
 	}
 }
 

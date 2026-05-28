@@ -1,4 +1,6 @@
 #include "NCHPBar.h"
+
+#include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
 void UNCHPBar::NativeConstruct()
@@ -9,7 +11,12 @@ void UNCHPBar::NativeConstruct()
 	
 	if (PlayerCharacter)
 	{
-		PlayerCharacter->OnHPChanged.AddDynamic(this, &UNCHPBar::UpdateHP);
+		ANCPlayerState* PlayerState = Cast<ANCPlayerState>(PlayerCharacter->GetPlayerState());
+		
+		if (PlayerState)
+		{
+			PlayerState->OnHPChanged.AddDynamic(this, &UNCHPBar::UpdateHP);
+		}
 	}
 }
 

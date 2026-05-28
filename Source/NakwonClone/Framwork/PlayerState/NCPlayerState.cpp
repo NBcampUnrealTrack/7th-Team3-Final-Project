@@ -10,8 +10,8 @@ ANCPlayerState::ANCPlayerState()
 {
 	MaxHP = 100.f;
 	CurrentHP = MaxHP;
-	MaxStemina = 100.f;
-	CurrentStemina = MaxStemina;
+	MaxStamina = 100.f;
+	CurrentStamina = MaxStamina;
 	
 	PlayerState = NCCharacter::Alive;
 }
@@ -23,8 +23,8 @@ void ANCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(ANCPlayerState, LifeStateTag);
 	DOREPLIFETIME(ANCPlayerState, CurrentHP);
 	DOREPLIFETIME(ANCPlayerState, MaxHP);
-	DOREPLIFETIME(ANCPlayerState, CurrentStemina);
-	DOREPLIFETIME(ANCPlayerState, MaxStemina);
+	DOREPLIFETIME(ANCPlayerState, CurrentStamina);
+	DOREPLIFETIME(ANCPlayerState, MaxStamina);
 	DOREPLIFETIME(ANCPlayerState, bHost);
 	DOREPLIFETIME(ANCPlayerState, TeamIndex);
 }
