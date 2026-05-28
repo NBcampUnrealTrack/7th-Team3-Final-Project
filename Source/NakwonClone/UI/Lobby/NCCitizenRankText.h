@@ -11,6 +11,12 @@ class NAKWONCLONE_API UNCCitizenRankText : public UUserWidget
 	GENERATED_BODY()
 	
 protected:
+	UFUNCTION()
+	virtual void NativeConstruct() override;
+	
+	UFUNCTION()
+	void UpdateCitizenRankText(int32 CitizenRank);
+	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* CitizenRankText;
 };

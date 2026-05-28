@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
+#include "NakwonClone/Framwork/GameState/NCGameState.h"
+#include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
+#include "NakwonClone/Common/NCGameplayTags.h"
+
 #include "NCGameMode.generated.h"
 
 /**
@@ -19,13 +23,19 @@ public:
 	~ANCGameMode();
 	
 	virtual void BeginPlay() override;
-	virtual void PostLogin(APlayerController *NewPlayer) override;
 	
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
+	
+	void StartMatch();
+	void EndMatch(bool bClear);
+	
+	// 보류
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void JoinSession();
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void LeaveSession();
-	
+	// 보류
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToTitle();
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
@@ -34,8 +44,11 @@ public:
 	void InviteFriend(APlayerController* TargetPlayer);
 	void KickFriend(APlayerController* TargetPlayer);
 
-	void HandlePlayerDowned();  // todo : 플레이어 스테이트 정의하고 파라미터에 넣기
-	void HandlePlayerRevived(); // todo : 플레이어 스테이트 정의하고 파라미터에 넣기
+	void HandlePlayerDowned(ANCPlayerState* PlayerState);
+	void HandlePlayerRevived(ANCPlayerState* PlayerState);
+	void HandlePlayerDead(ANCPlayerState* PlayerState);
+	
+	void CheckAllPlayersDead();
 	
 	FTimerHandle MatchTimerHandle;
 	

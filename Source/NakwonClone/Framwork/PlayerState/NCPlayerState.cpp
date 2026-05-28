@@ -2,3 +2,34 @@
 
 
 #include "NCPlayerState.h"
+
+#include "Net/UnrealNetwork.h"
+#include "NakwonClone/Common/NCGameplayTags.h"
+
+ANCPlayerState::ANCPlayerState()
+{
+	MaxHP = 100.f;
+	CurrentHP = MaxHP;
+	MaxStemina = 100.f;
+	CurrentStemina = MaxStemina;
+	
+	PlayerState = NCCharacter::Alive;
+}
+
+void ANCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ANCPlayerState, LifeStateTag);
+	DOREPLIFETIME(ANCPlayerState, CurrentHP);
+	DOREPLIFETIME(ANCPlayerState, MaxHP);
+	DOREPLIFETIME(ANCPlayerState, CurrentStemina);
+	DOREPLIFETIME(ANCPlayerState, MaxStemina);
+	DOREPLIFETIME(ANCPlayerState, bHost);
+	DOREPLIFETIME(ANCPlayerState, TeamIndex);
+}
+
+void ANCPlayerState::OnRep_LifeStateTag()
+{
+	// todo : UI 갱신 로직 추가
+}
