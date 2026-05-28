@@ -45,19 +45,19 @@ protected:
 	UStaticMeshComponent* BodyMesh;
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* PatrolMaterial;		// 순찰 중 (파랑)
+	UMaterialInterface* PatrolMaterial;		// 순찰 (파랑)
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* AlertMaterial;		// 감지 후 정지 (노랑)
+	UMaterialInterface* StoptMaterial;		// 정지 (하양)
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* ChaseMaterial;		// 추적 중 (빨강)
+	UMaterialInterface* ChaseMaterial;		// 추적 (초록)
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* AttackMaterial;		// 공격 중 (주황)
+	UMaterialInterface* AttackMaterial;		// 공격 (빨강)
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* DeadMaterial;		// 사망 (회색)
+	UMaterialInterface* DeadMaterial;		// 사망 (검정)
 #pragma endregion
 	
 public:

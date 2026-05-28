@@ -60,7 +60,7 @@ void AVGMonsterWalker::SetMonsterState(EMonsterState NewState)
 		TargetMaterial = PatrolMaterial;
 		break;
 	case EMonsterState::Stop:
-		TargetMaterial = AlertMaterial;
+		TargetMaterial = StoptMaterial;
 		break;
 	case EMonsterState::Chase:
 		TargetMaterial = ChaseMaterial;
