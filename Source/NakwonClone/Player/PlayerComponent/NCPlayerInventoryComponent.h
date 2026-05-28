@@ -38,4 +38,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory|QuickSlot")
 	virtual bool UseQuickSlot(int32 QuickSlotIndex);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
+	virtual bool DropItem(int32 SlotIndex, int32 Quantity);
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Drop")
+	TSubclassOf<class AActor> BaseItemActorClass;
 };

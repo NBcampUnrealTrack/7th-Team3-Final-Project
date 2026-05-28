@@ -105,3 +105,42 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 	return true;
 }
 
+bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
+{
+	if (!GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+	
+	if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty() || Quantity <= 0)
+	{
+		return false;
+	}
+	
+	FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
+	
+	int32 DropQuantity = FMath::Min(Quantity, Items[SlotIndex].Quantity);
+	
+	AActor* OwnerActor = GetOwner();
+	FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
+	
+	SpawnLocation.Z -= 20.0f; 
+	FRotator SpawnRotation = OwnerActor->GetActorRotation();
+	
+	if (BaseItemActorClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+        
+		AActor* DroppedItem = GetWorld()->SpawnActor<AActor>(BaseItemActorClass, SpawnLocation, SpawnRotation, SpawnParams);
+		
+		// TODO: DroppedItem에 ItemTag와 DropQuantity 정보를 넘겨 바닥에 떨어진 아이템이 어떤아이템이고 몇개인지 기억하게 만드는 로직 추가 필요
+	}
+	
+	// 임시 디버그
+	FString DebugMsg = FString::Printf(TEXT("%s 아이템 %d개 드롭"), *ItemTag.ToString(), DropQuantity);
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMsg);
+	
+	return RemoveItem(SlotIndex, DropQuantity);
+}
+
