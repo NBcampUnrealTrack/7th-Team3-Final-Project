@@ -140,6 +140,49 @@ bool UNCInventoryBaseComponent::RemoveItem(int32 SlotIndex, int32 Quantity)
 	return false;
 }
 
+bool UNCInventoryBaseComponent::MoveItem(int32 FromIndex, int32 ToIndex)
+{
+	if (!GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+	
+	if (FromIndex == ToIndex || !Items.IsValidIndex(FromIndex) || !Items.IsValidIndex(ToIndex) || Items[FromIndex].IsEmpty())
+	{
+		return false;
+	}
+	
+	bool bSuccess = false;
+	
+	if (Items[ToIndex].IsEmpty())
+	{
+		Items[ToIndex] = Items[FromIndex];
+        
+		Items[FromIndex].ItemTypeTag = FGameplayTag::EmptyTag;
+		Items[FromIndex].Quantity = 0;
+        
+		bSuccess = true;
+	}
+	else
+	{
+		if (Items[ToIndex].ItemTypeTag == Items[FromIndex].ItemTypeTag)
+		{
+			bSuccess = CombineSlots(FromIndex, ToIndex);
+		}
+		else
+		{
+			bSuccess = SwapSlots(ToIndex, FromIndex);
+		}
+	}
+	
+	if (bSuccess)
+	{
+		OnInventoryUpdated.Broadcast();
+	}
+
+	return bSuccess;
+}
+
 bool UNCInventoryBaseComponent::FindEmptySlot(int32& OutSlotIndex) const
 {
 	for (int32 i = 0; i < Items.Num(); i++)
@@ -165,4 +208,49 @@ bool UNCInventoryBaseComponent::FindStackableSlot(FGameplayTag ItemTypeTag, int3
 		}
 	}
 	return false;
+}
+
+bool UNCInventoryBaseComponent::SwapSlots(int32 IndexA, int32 IndexB)
+{
+	FInventorySlot TempSlot = Items[IndexA];
+	Items[IndexA] = Items[IndexB];
+	Items[IndexB] = TempSlot;
+    
+	return true;
+}
+
+bool UNCInventoryBaseComponent::CombineSlots(int32 SourceIndex, int32 TargetIndex)
+{
+	if (!ItemDataTable)
+	{
+		return false;
+	}
+	
+	FItemData* ItemData = ItemDataTable->FindRow<FItemData>(Items[SourceIndex].ItemTypeTag.GetTagName(), TEXT("CombineItem"));
+	if (!ItemData)
+	{
+		return false;
+	}
+	
+	int32 RoomInTarget = ItemData->MaxStackSize - Items[TargetIndex].Quantity;
+	if (RoomInTarget <= 0)
+	{
+		return false;
+	}
+	
+	if (Items[SourceIndex].Quantity <= RoomInTarget)
+	{
+		Items[TargetIndex].Quantity += Items[SourceIndex].Quantity;
+		
+		Items[SourceIndex].ItemTypeTag = FGameplayTag::EmptyTag;
+		Items[SourceIndex].Quantity = 0;
+	}
+
+	else
+	{
+		Items[TargetIndex].Quantity = ItemData->MaxStackSize;
+		Items[SourceIndex].Quantity -= RoomInTarget;
+	}
+	
+	return true;
 }
