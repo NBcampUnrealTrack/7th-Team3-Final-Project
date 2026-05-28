@@ -11,11 +11,10 @@ public class NakwonClone : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core", 
-			"CoreUObject", 
-			"Engine", 
+			"CoreUObject",
+			"Engine",
 			"InputCore", 
 			"EnhancedInput", 
-			"GameplayTags",
 			"OnlineSubsystem",
 			"OnlineSubsystemSteam",
 			"OnlineSubsystemUtils",
@@ -24,6 +23,9 @@ public class NakwonClone : ModuleRules
 			"SlateCore",
 			"AIModule",
 			"NavigationSystem",
+			"GameplayAbilities",
+			"GameplayTasks",
+			"GameplayTags",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

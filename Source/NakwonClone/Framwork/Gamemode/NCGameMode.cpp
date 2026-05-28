@@ -84,15 +84,29 @@ void ANCGameMode::Logout(AController* Exiting)
 	Super::Logout(Exiting);
 	
 	ANCGameState* GS = GetGameState<ANCGameState>();
-	if (GS)
+	APlayerController* PC = Cast<APlayerController>(Exiting);
+	if (!GS || !PC) return;
+	
+	GS->ConnectedPlayerCount--;
+	
+	ANCPlayerState* PS = PC->GetPlayerState<ANCPlayerState>();
+	if (PS && PS->LifeStateTag == NCCharacter::Alive)
 	{
-		GS->ConnectedPlayerCount--;
+		GS->AlivePlayerCount--;
+		CheckAllPlayersDead();
 	}
 }
 
 void ANCGameMode::StartMatch()
 {
 	Super::StartMatch();
+	
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (!GS) return;
+	
+	GS->CurrentGameStateTag = NCGameStateTags::GameStart;
+	
+	SetMatchTimerHandle();
 }
 
 void ANCGameMode::EndMatch(bool bClear)
@@ -102,12 +116,14 @@ void ANCGameMode::EndMatch(bool bClear)
 
 	if (bClear)
 	{
-		GS->CurrentGameStateTag = NCGameState::GameClear;
+		GS->CurrentGameStateTag = NCGameStateTags::GameClear;
 	}
 	else
 	{
-		GS->CurrentGameStateTag = NCGameState::GameOver;
+		GS->CurrentGameStateTag = NCGameStateTags::GameOver;
 	}
+	
+	// 타이틀, 로비로 이동은 UI 버튼 활성화로 구현
 }
 
 void ANCGameMode::JoinSession()
@@ -130,18 +146,21 @@ void ANCGameMode::LeaveSession() // todo : 게임 페이즈 파라미터 추가
 	
 	// todo : 게임 스테이트 변수 수정
 	
-	
 	GetWorldTimerManager().ClearAllTimersForObject(this);
 }
 
 void ANCGameMode::MoveToTitle()
 {
-	// todo : 타이틀로 이동 로직 구현
+	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
+	
+	GetWorld()->ServerTravel(""); // todo : 타이틀 경로 추가 예시-("/Game/Maps/TitleMap?listen")
 }
 
 void ANCGameMode::MoveToLobby()
 {
-	// todo : 로비로 이동 로직 구현
+	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
+	
+	GetWorld()->ServerTravel("");	// todo : 로비 경로 추가
 }
 
 void ANCGameMode::InviteFriend(APlayerController* TargetPlayer)
@@ -164,6 +183,7 @@ void ANCGameMode::HandlePlayerDowned(ANCPlayerState* PlayerState)
 		GS->AlivePlayerCount--;
 	}
 
+	// todo : 실제 다운 상태 구현 함수 호출
 	CheckAllPlayersDead();
 }
 
@@ -179,6 +199,7 @@ void ANCGameMode::HandlePlayerRevived(ANCPlayerState* PlayerState)
 	{
 		GS->AlivePlayerCount++;
 	}
+	// todo : 소생 구현 함수 호출
 }
 
 void ANCGameMode::HandlePlayerDead(ANCPlayerState* PlayerState)
@@ -188,6 +209,7 @@ void ANCGameMode::HandlePlayerDead(ANCPlayerState* PlayerState)
 	PlayerState->LifeStateTag = NCCharacter::Dead;
 
 	CheckAllPlayersDead();
+	// todo : 사망 구현 함수(팀원 시점 관전)
 }
 
 void ANCGameMode::CheckAllPlayersDead()
@@ -203,4 +225,30 @@ void ANCGameMode::CheckAllPlayersDead()
 
 void ANCGameMode::SetMatchTimerHandle()
 {
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (!GS) return;
+
+	GS->RemainingMatchTime = 900.f; // 15분
+	
+	GetWorldTimerManager().SetTimer(
+		MatchTimerHandle,
+		this,
+		&ANCGameMode::TimerTick,
+		1.f,
+		true // 반복 여부
+	);
+}
+
+void ANCGameMode::TimerTick()
+{
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (!GS) return;
+	
+	GS->RemainingMatchTime--;
+	
+	if (GS->RemainingMatchTime <= 0.f)
+	{
+		GetWorldTimerManager().ClearTimer(MatchTimerHandle);
+		EndMatch(false);
+	}
 }
