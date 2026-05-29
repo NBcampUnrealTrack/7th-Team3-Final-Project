@@ -4,6 +4,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"  // 추가 함
 #include "NakwonClone/Common/NCGameplayTags.h"
+#include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
@@ -17,10 +18,12 @@ ANCPlayerCharacter::ANCPlayerCharacter()
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     FollowCamera->bUsePawnControlRotation = false;
-    
+  
+    PlayerInventory = CreateDefaultSubobject<UNCPlayerInventoryComponent>(TEXT("PlayerInventory"));
     // --- 추가된 부분 ---
     // AttributeSet 생성 및 ASC에 자동 등록
     PlayerAttributeSet = CreateDefaultSubobject<UVGPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
+
 }
 
 void ANCPlayerCharacter::BeginPlay()

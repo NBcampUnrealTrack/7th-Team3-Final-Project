@@ -39,6 +39,24 @@ void UNCInventoryBaseComponent::InitializeInventory()
 	Items.Init(FInventorySlot(), TotalSlots);
 }
 
+bool UNCInventoryBaseComponent::GetItemDataByTag(FGameplayTag ItemTag, FItemData& OutItemData) const
+{
+	if (!ItemDataTable || !ItemTag.IsValid())
+	{
+		return false;
+	}
+	
+	FItemData* FoundData = ItemDataTable->FindRow<FItemData>(ItemTag.GetTagName(), TEXT("GetItemData_Helper"));
+    
+	if (FoundData)
+	{
+		OutItemData = *FoundData;
+		return true;
+	}
+
+	return false;
+}
+
 bool UNCInventoryBaseComponent::AddItem(FGameplayTag ItemTypeTag, int32 Quantity)
 {
 	if (!GetOwner()->HasAuthority())

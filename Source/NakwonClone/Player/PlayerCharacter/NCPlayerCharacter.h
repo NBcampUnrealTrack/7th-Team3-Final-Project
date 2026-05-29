@@ -6,6 +6,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UNCPlayerInventoryComponent;
 class UVGPlayerAttributeSet;  // 추가 함
 
 UCLASS()
@@ -17,6 +18,7 @@ public:
 	ANCPlayerCharacter();
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventory; }
 	
 protected:
 	virtual void BeginPlay() override;
@@ -46,4 +48,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FollowCamera;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Inventory")
+	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventory;
 };

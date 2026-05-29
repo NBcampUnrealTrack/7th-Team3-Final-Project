@@ -6,6 +6,7 @@
 #include "NCPlayerInventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuickSlotUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemUsedSignature, FGameplayTag, UsedItemTag);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NAKWONCLONE_API UNCPlayerInventoryComponent : public UNCInventoryBaseComponent
@@ -17,6 +18,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
 	FOnQuickSlotUpdated OnQuickSlotUpdated;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+	FOnItemUsedSignature OnItemUsed;
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -45,6 +49,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Drop")
 	TSubclassOf<class AActor> BaseItemActorClass;
 	
-	//UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
-	////virtual bool LootItem(class ANCItemActor* ItemToLoot);
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
+	virtual bool LootItem(class ANCItemActor* ItemToLoot);
 };
