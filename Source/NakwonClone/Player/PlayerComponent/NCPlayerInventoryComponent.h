@@ -45,6 +45,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Drop")
 	TSubclassOf<class AActor> BaseItemActorClass;
 	
-	//UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
-	////virtual bool LootItem(class ANCItemActor* ItemToLoot);
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
+	virtual bool LootItem(class ANCItemActor* ItemToLoot);
 };

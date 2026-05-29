@@ -149,8 +149,23 @@ bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
 	return RemoveItem(SlotIndex, DropQuantity);
 }
 
-//bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
-//{
-//	return false;
-//}
-//
+bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
+{
+	if (!GetOwner()->HasAuthority() || !ItemToLoot)
+	{
+		return false;
+	}
+	
+	FGameplayTag LootTag = ItemToLoot->ItemTypeTag; 
+	int32 LootQuantity = ItemToLoot->Quantity;
+	
+	bool bAdded = AddItem(LootTag, LootQuantity);
+	
+	if (bAdded)
+	{
+		ItemToLoot->Destroy();
+		return true;
+	}
+	
+	return false;
+}
