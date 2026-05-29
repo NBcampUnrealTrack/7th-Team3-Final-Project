@@ -34,9 +34,6 @@ public:
 	void MoveToTitle();
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToLobby();
-	
-	void InviteFriend(APlayerController* TargetPlayer);
-	void KickFriend(APlayerController* TargetPlayer);
 
 	void HandlePlayerDowned(ANCPlayerState* PlayerState);
 	void HandlePlayerRevived(ANCPlayerState* PlayerState);
