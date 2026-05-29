@@ -39,6 +39,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inventory)
 	TObjectPtr<class UDataTable> ItemDataTable;
 	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Inventory|Helper")
+    bool GetItemDataByTag(FGameplayTag ItemTag, FItemData& OutItemData) const;
+	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	virtual bool AddItem(FGameplayTag ItemTypeTag, int32 Quantity);
 	
