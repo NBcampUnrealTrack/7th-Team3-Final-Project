@@ -2,11 +2,12 @@
 
 
 #include "VGMonsterCharacterBase.h"
+#include "AbilitySystemComponent.h"
 
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	// 자식 클래스는 반드시 AI 컨트롤러를 장착하도록 강제
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -15,13 +16,18 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+	
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+}
+
+UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
 }
 
 void AVGMonsterCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	CurrentHealth = MaxHealth;
 
 	UE_LOG(LogTemp, Warning, TEXT("[MonsterBase] BeginPlay 호출됨: %s"), *GetName());
 
@@ -35,11 +41,11 @@ void AVGMonsterCharacterBase::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[MonsterBase] AIController 캐스팅 성공: %s"), *AIController->GetName());
 	}
-}
-
-void AVGMonsterCharacterBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+	
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
 }
 
 void AVGMonsterCharacterBase::TakeDamage_Monster(float DamageAmount)

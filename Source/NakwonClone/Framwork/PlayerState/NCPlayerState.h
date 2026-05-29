@@ -14,6 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaBarChanged, float, Curren
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotImageChanged, UTexture2D*, ItemIcon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCitizenRankTextChanged, int32, CitizenRank);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLevelTextChanged, int32, CharacterLevel);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLifeStateChanged, FGameplayTag, LifeStateTag);
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerState : public APlayerState
@@ -31,20 +32,23 @@ public:
 	UFUNCTION()
 	void OnRep_LifeStateTag();
 	
-	UPROPERTY(Replicated, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentHP, BlueprintReadOnly)
 	float CurrentHP;
+	
+	UFUNCTION()
+	void OnRep_CurrentHP();
 	
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	float MaxHP;
 	
-	UPROPERTY(Replicated, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentStemina, BlueprintReadOnly)
 	float CurrentStamina;
+	
+	UFUNCTION()
+	void OnRep_CurrentStemina();
 	
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	float MaxStamina;
-	
-	UPROPERTY(Replicated, BlueprintReadOnly)
-	FGameplayTag PlayerState;
 	
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bHost;
@@ -70,4 +74,7 @@ public:
 	
 	UPROPERTY()
 	FOnLevelTextChanged OnLevelTextChanged;
+	
+	UPROPERTY()
+	FOnLifeStateChanged OnLifeStateChanged;
 };

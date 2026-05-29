@@ -31,17 +31,9 @@ public:
 	void EndMatch(bool bClear);
 	
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
-	void JoinSession();
-	UFUNCTION(BlueprintCallable, Category = "GameFlow")
-	void LeaveSession();
-	
-	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToTitle();
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToLobby();
-	
-	void InviteFriend(APlayerController* TargetPlayer);
-	void KickFriend(APlayerController* TargetPlayer);
 
 	void HandlePlayerDowned(ANCPlayerState* PlayerState);
 	void HandlePlayerRevived(ANCPlayerState* PlayerState);
@@ -55,12 +47,4 @@ public:
 	void SetMatchTimerHandle();
 	
 	void TimerTick();
-
-private:
-	bool bInviteFriend = false;
-	
-	bool bJoinSessionSingle = false;
-	bool bJoinSessionDuo = false;
-	
-	bool bStartSession = false;
 };

@@ -9,7 +9,7 @@ UBTService_UpdateRotation::UBTService_UpdateRotation()
 	NodeName = "Update Rotation";
 	
 	// BT Service 실행 간격 (초)
-	Interval = 0.1f;
+	Interval = 0.3f;
 }
 
 void UBTService_UpdateRotation::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)

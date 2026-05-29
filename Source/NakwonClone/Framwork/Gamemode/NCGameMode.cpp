@@ -3,7 +3,7 @@
 
 #include "NCGameMode.h"
 #include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
-// #include "NakwonClone/Player/PlayerController/NCPlayerController.h"
+#include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 
 #include "NakwonClone/Framwork/GameState/NCGameState.h"
 
@@ -11,9 +11,9 @@ ANCGameMode::ANCGameMode()
 {
 	GameStateClass = ANCGameState::StaticClass();
 	PlayerStateClass = ANCPlayerState::StaticClass();
-	// PlayerControllerClass = ANCPlayerController::StaticClass(); // todo : NCPlayerController 맞는지 확인
+	PlayerControllerClass = ANCPlayerController::StaticClass();
 	
-	// 플레이어 기본 캐릭터 지정
+	// todo : 플레이어 기본 캐릭터 지정
 }
 
 ANCGameMode::~ANCGameMode()
@@ -25,7 +25,6 @@ void ANCGameMode::BeginPlay()
 	Super::BeginPlay();
 	
 	// todo : 아이템, 좀비 스폰 포인트 추가 (배열, UGamePlayStatics::GetAllActorsOfClass(~~))
-
 	/* 월드의 SpawnPoint를 순회하면서 스폰 로직 활성화
 	TArray<AActor*> ItemFoundVolumes;
 	TArray<AActor*> ZombieFoundVolumes;
@@ -123,52 +122,23 @@ void ANCGameMode::EndMatch(bool bClear)
 		GS->CurrentGameStateTag = NCGameStateTags::GameOver;
 	}
 	
-	// 타이틀, 로비로 이동은 UI 버튼 활성화로 구현
-}
-
-void ANCGameMode::JoinSession()
-{
-	// todo : 게임 스테이트의 변수 바꿀것 있는지 확인하기 (GamePhase 등)
-	
-	if (bStartSession && bJoinSessionSingle)
-	{
-		// todo : 싱글 플레이(Stand Alone)	
-	}
-	else if (bStartSession && bJoinSessionDuo)
-	{
-		// todo : 서버 트레블 실행(Listen Server)
-	}
-}
-
-void ANCGameMode::LeaveSession() // todo : 게임 페이즈 파라미터 추가
-{
-	bStartSession = false;
-	
-	// todo : 게임 스테이트 변수 수정
-	
-	GetWorldTimerManager().ClearAllTimersForObject(this);
+	// PlayerController 작업 완료 후 추가 예정
+	// 모든 플레이어에게 게임오버/클리어 알림
+	// for (FConstPlayerControllerIterator It = ...) { PC->Client_OnGameEnd(bClear); }
 }
 
 void ANCGameMode::MoveToTitle()
 {
 	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
 	
-	GetWorld()->ServerTravel(""); // todo : 타이틀 경로 추가 예시-("/Game/Maps/TitleMap?listen")
+	GetWorld()->ServerTravel("/Content/Maps/L_TitleAndLobby?listen"); // todo : 타이틀 경로 추가 예시-("/Game/Maps/TitleMap?listen")
 }
 
 void ANCGameMode::MoveToLobby()
 {
 	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
 	
-	GetWorld()->ServerTravel("");	// todo : 로비 경로 추가
-}
-
-void ANCGameMode::InviteFriend(APlayerController* TargetPlayer)
-{
-}
-
-void ANCGameMode::KickFriend(APlayerController* TargetPlayer)
-{
+	GetWorld()->ServerTravel("/Content/Maps/L_TitleAndLobby?listen");
 }
 
 void ANCGameMode::HandlePlayerDowned(ANCPlayerState* PlayerState)
@@ -183,7 +153,10 @@ void ANCGameMode::HandlePlayerDowned(ANCPlayerState* PlayerState)
 		GS->AlivePlayerCount--;
 	}
 
-	// todo : 실제 다운 상태 구현 함수 호출
+	// todo : PlayerController 작업 완료 후 추가 예정
+	// ANCPlayerController* PC = Cast<ANCPlayerController>(PlayerState->GetOwner());
+	// if (PC) PC->Client_OnPlayerDowned();
+	
 	CheckAllPlayersDead();
 }
 

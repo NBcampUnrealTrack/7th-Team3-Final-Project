@@ -1,4 +1,5 @@
 #pragma once
+
 #include "CoreMinimal.h"
 #include "NCBaseCharacter.h"
 #include "NCPlayerCharacter.generated.h"
@@ -6,6 +7,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UNCPlayerInventoryComponent;
+class UVGPlayerAttributeSet;  // 추가 함
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
@@ -20,6 +22,12 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	
+#pragma region 추가된 부분 GAS
+protected:
+	UPROPERTY()
+	TObjectPtr<UVGPlayerAttributeSet> PlayerAttributeSet;
+#pragma endregion
 
 public:
 	void StartSprint();
