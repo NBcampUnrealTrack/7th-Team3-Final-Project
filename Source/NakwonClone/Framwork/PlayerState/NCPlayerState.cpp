@@ -13,7 +13,7 @@ ANCPlayerState::ANCPlayerState()
 	MaxStamina = 100.f;
 	CurrentStamina = MaxStamina;
 	
-	PlayerState = NCCharacter::Alive;
+	LifeStateTag = NCCharacter::Alive;
 }
 
 void ANCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -31,5 +31,15 @@ void ANCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 
 void ANCPlayerState::OnRep_LifeStateTag()
 {
-	// todo : UI 갱신 로직 추가
+	OnLifeStateChanged.Broadcast(LifeStateTag);
+}
+
+void ANCPlayerState::OnRep_CurrentHP()
+{
+	OnHPChanged.Broadcast(CurrentHP, MaxHP);
+}
+
+void ANCPlayerState::OnRep_CurrentStemina()
+{
+	OnHPChanged.Broadcast(CurrentStamina, MaxStamina);
 }
