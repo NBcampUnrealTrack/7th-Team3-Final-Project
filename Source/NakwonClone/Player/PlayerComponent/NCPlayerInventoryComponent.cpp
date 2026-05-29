@@ -97,13 +97,37 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 	
 	FGameplayTag ItemTag = QuickSlots[QuickSlotIndex].ItemTypeTag;
 	
-	// 임시 디버그
-	FString DebugMsg = FString::Printf(TEXT("%d번 퀵슬롯 사용 태그: %s"), QuickSlotIndex + 1, *ItemTag.ToString());
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, DebugMsg);
+	if (ItemTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Consumable"))))
+	{
+		QuickSlots[QuickSlotIndex].Quantity -= 1;
+        
+		if (QuickSlots[QuickSlotIndex].Quantity <= 0)
+		{
+			QuickSlots[QuickSlotIndex].ItemTypeTag = FGameplayTag::EmptyTag;
+			QuickSlots[QuickSlotIndex].Quantity = 0;
+		}
+
+		OnQuickSlotUpdated.Broadcast();
+
+		OnItemUsed.Broadcast(ItemTag);
+
+		FString DebugMsg = FString::Printf(TEXT("[소모품 사용] %s (남은 수량: %d)"), *ItemTag.ToString(), QuickSlots[QuickSlotIndex].Quantity);
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
+
+		return true;
+	}
 	
-	// TODO : 무기 장착 로직, 소모품 차감 로직 연동
+	else if (ItemTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Equipment"))))
+	{
+		OnItemUsed.Broadcast(ItemTag);
+
+		FString DebugMsg = FString::Printf(TEXT("[무기 장착] %s"), *ItemTag.ToString());
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMsg);
+
+		return true;
+	}
 	
-	return true;
+	return false;
 }
 
 bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
