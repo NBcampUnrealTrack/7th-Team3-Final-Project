@@ -22,7 +22,17 @@ ANCBaseCharacter::ANCBaseCharacter()
     CurrentActionTag = FGameplayTag::EmptyTag;
 
     StatComponent = CreateDefaultSubobject<UNCStatComponent>(TEXT("StatComponent"));
+    
+    // --- 추가된 부분 GAS ---
+    AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 }
+
+// --- 추가된 부분 ---
+UAbilitySystemComponent* ANCBaseCharacter::GetAbilitySystemComponent() const
+{
+    return AbilitySystemComponent;
+}
+/// --- 여기까지 ---
 
 void ANCBaseCharacter::BeginPlay()
 {
