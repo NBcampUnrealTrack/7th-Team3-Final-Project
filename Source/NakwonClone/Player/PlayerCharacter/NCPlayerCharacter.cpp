@@ -3,6 +3,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
+#include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
@@ -16,6 +17,8 @@ ANCPlayerCharacter::ANCPlayerCharacter()
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     FollowCamera->bUsePawnControlRotation = false;
+    
+    PlayerInventory = CreateDefaultSubobject<UNCPlayerInventoryComponent>(TEXT("PlayerInventory"));
 }
 
 void ANCPlayerCharacter::BeginPlay()
