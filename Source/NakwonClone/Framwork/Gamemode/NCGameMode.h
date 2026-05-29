@@ -31,11 +31,6 @@ public:
 	void EndMatch(bool bClear);
 	
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
-	void JoinSession();
-	UFUNCTION(BlueprintCallable, Category = "GameFlow")
-	void LeaveSession();
-	
-	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToTitle();
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToLobby();
@@ -55,12 +50,4 @@ public:
 	void SetMatchTimerHandle();
 	
 	void TimerTick();
-
-private:
-	bool bInviteFriend = false;
-	
-	bool bJoinSessionSingle = false;
-	bool bJoinSessionDuo = false;
-	
-	bool bStartSession = false;
 };

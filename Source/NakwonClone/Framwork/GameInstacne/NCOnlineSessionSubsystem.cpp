@@ -89,6 +89,14 @@ void UNCOnlineSessionSubsystem::JoinSessionByIndex(int32 Index)
 
 void UNCOnlineSessionSubsystem::DestroyCurrentSession()
 {
+	IOnlineSessionPtr Session = GetSessionInterface();
+	if (!Session) return;
+	
+	Session->OnDestroySessionCompleteDelegates.AddUObject(
+		this,
+		&UNCOnlineSessionSubsystem::OnDestroySessionComplete);
+	
+	Session->DestroySession(NAME_GameSession);
 }
 
 FString UNCOnlineSessionSubsystem::GetSessionOwnerName(int32 Index) const
@@ -185,9 +193,30 @@ void UNCOnlineSessionSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoin
 
 void UNCOnlineSessionSubsystem::OnDestroySessionComplete(FName SessionName, bool bSuccessful)
 {
+	IOnlineSessionPtr Sessions = GetSessionInterface();
+	if (!Sessions) return;
+	
+	Sessions->ClearOnDestroySessionCompleteDelegates(this);
+	
+	// 세션 파괴 후 검색 결과 초기화
+	LastSearchResults.Empty();
+	LastSearch.Reset();
 }
 
-void UNCOnlineSessionSubsystem::OnInviteAccepted(bool bSuccessful, int32 LocalUserNum,
-	TSharedPtr<const FUniqueNetId> UserId, const FOnlineSessionSearchResult& InviteResult)
+void UNCOnlineSessionSubsystem::OnInviteAccepted(
+	bool bSuccessful, 
+	int32 LocalUserNum,
+	TSharedPtr<const FUniqueNetId> UserId,
+	const FOnlineSessionSearchResult& InviteResult)
 {
+	if (!bSuccessful) return;
+	
+	IOnlineSessionPtr Sessions = GetSessionInterface();
+	if (!Sessions) return;
+	
+	Sessions->OnJoinSessionCompleteDelegates.AddUObject(
+		this,
+		&UNCOnlineSessionSubsystem::OnJoinSessionComplete);
+	
+	Sessions->JoinSession(0, NAME_GameSession, InviteResult);
 }
