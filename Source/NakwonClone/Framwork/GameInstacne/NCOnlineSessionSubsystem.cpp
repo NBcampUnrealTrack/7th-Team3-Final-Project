@@ -36,7 +36,7 @@ void UNCOnlineSessionSubsystem::HostSession(int32 NumPublicConnections)
 	Settings.NumPublicConnections = NumPublicConnections;
 	Settings.bAllowJoinInProgress = false; // 게임 시작 후 참가 불가
 	Settings.bShouldAdvertise = true;      // 스팀에 방 검색 허용
-	Settings.bUsesPresence = true;         // 친구 목록에 표시?
+	Settings.bUsesPresence = true;         // 친구 목록 표시
 	Settings.bAllowInvites = true;         // 친구 초대 허용
 	Settings.bAllowJoinViaPresence = true; // 친구 통해 참가 허용
 	Settings.bUseLobbiesIfAvailable = true;// 스팀 로비 API 사용
