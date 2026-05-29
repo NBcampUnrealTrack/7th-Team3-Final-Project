@@ -18,6 +18,7 @@ public class NakwonClone : ModuleRules
 			"OnlineSubsystem",
 			"OnlineSubsystemSteam",
 			"OnlineSubsystemUtils",
+			"Steamworks",
 			"UMG",
 			"Slate",
 			"SlateCore",

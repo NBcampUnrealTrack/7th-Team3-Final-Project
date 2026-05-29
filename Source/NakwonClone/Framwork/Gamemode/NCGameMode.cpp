@@ -131,14 +131,14 @@ void ANCGameMode::MoveToTitle()
 {
 	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
 	
-	GetWorld()->ServerTravel(""); // todo : 타이틀 경로 추가 예시-("/Game/Maps/TitleMap?listen")
+	GetWorld()->ServerTravel("/Content/Maps/L_TitleAndLobby?listen"); // todo : 타이틀 경로 추가 예시-("/Game/Maps/TitleMap?listen")
 }
 
 void ANCGameMode::MoveToLobby()
 {
 	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
 	
-	GetWorld()->ServerTravel("");	// todo : 로비 경로 추가
+	GetWorld()->ServerTravel("/Content/Maps/L_TitleAndLobby?listen");
 }
 
 void ANCGameMode::HandlePlayerDowned(ANCPlayerState* PlayerState)
