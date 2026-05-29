@@ -1,17 +1,18 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
 #include "NCInventroySlot.h"
 #include "NakwonClone/Inventory/NCInventoryBaseComponent.h"
-#include "Blueprint/UserWidget.h"
 #include "Components/UniformGridPanel.h"
-#include "NCInventoryHud.generated.h"
+#include "NCPlayerInventoryHud.generated.h"
 
 UCLASS()
-class NAKWONCLONE_API UNCInventoryHud : public UUserWidget
+class NAKWONCLONE_API UNCPlayerInventoryHud : public UUserWidget
 {
 	GENERATED_BODY()
 	
+		
 protected:
 	virtual void NativeConstruct() override;
 	
@@ -22,7 +23,7 @@ protected:
 	void UpdateItemSlot();
 	
 	UPROPERTY(meta = (BindWidget))
-	UUniformGridPanel* InventoryGrid;
+	UUniformGridPanel* PlayerInventoryGrid;
 	
 	UPROPERTY()
 	TObjectPtr<UNCInventoryBaseComponent> InventoryComp;

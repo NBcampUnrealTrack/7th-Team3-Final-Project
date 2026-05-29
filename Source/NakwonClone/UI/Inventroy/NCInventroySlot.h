@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
 #include "NCInventroySlot.generated.h"
 
 UCLASS()
@@ -13,6 +15,15 @@ protected:
 	UFUNCTION()
 	virtual void NativeConstruct() override;
 	
+public:
 	UFUNCTION()
-	void UpdateItemSlot(UTexture2D* ItemIcon);
+	void SetSlotData(int32 InIndex, FGameplayTag InTag, int32 InQuantity);
+	
+	UPROPERTY(meta = (BindWidget))
+	UImage* ItemImage;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ItemCountText;
+	
+	int32 SlotIndex;
 };
