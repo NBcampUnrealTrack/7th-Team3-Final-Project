@@ -5,22 +5,29 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
+#include "AbilitySystemInterface.h"
 #include "VGMonsterCharacterBase.generated.h"
 
 UCLASS()
-class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter
+class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
 	AVGMonsterCharacterBase();
+	
+#pragma region ASC
+public:
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+protected:
+	UPROPERTY(VisibleAnywhere, Category = "GAS")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+#pragma endregion
 
 protected:
 	virtual void BeginPlay() override;
 
 public:
-	virtual void Tick(float DeltaTime) override;
-
 	// 스탯 (추후 확장)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Stats")
 	float MaxHealth = 100.f;

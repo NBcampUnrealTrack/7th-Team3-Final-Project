@@ -3,17 +3,31 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "GameplayTagContainer.h"
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
 #include "NCBaseCharacter.generated.h"
 
 class UNCStatComponent;
 
+
 UCLASS()
-class NAKWONCLONE_API ANCBaseCharacter : public ACharacter
+class NAKWONCLONE_API ANCBaseCharacter : public ACharacter, public IAbilitySystemInterface 
 {
 	GENERATED_BODY()
 
 public:
 	ANCBaseCharacter();
+	
+#pragma region 추가된 부분 GAS
+public:
+	// IAbilitySystemInterface 구현
+	// IAbilitySystemInterface : GAS가 제공하는 인터페이스
+	// 이걸 상속 받아야 GAS 시스템이 해당 액터에 ASC를 갖고 있는지 판별 가능
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+#pragma endregion
 
 protected:
 	virtual void BeginPlay() override;
