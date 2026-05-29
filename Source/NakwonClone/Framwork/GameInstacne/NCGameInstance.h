@@ -10,7 +10,4 @@ UCLASS()
 class NAKWONCLONE_API UNCGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
-
-public:
-
 };
