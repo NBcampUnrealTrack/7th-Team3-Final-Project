@@ -15,4 +15,9 @@ public:
 	UBTTask_Attack();
 	
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	
+private:
+	// 에디터에서 GE_Attack 에셋 할당
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<class UGameplayEffect> AttackEffectClass;
 };

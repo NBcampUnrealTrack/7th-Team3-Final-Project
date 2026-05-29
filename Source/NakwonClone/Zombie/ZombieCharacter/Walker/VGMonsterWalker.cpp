@@ -2,6 +2,7 @@
 
 #include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 
 AVGMonsterWalker::AVGMonsterWalker()
 {
@@ -26,6 +27,8 @@ AVGMonsterWalker::AVGMonsterWalker()
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
 	}
+	
+	MonsterAttributeSet = CreateDefaultSubobject<UVGMonsterAttributeSet>(TEXT("MonsterAttributeSet"));
 }
 
 void AVGMonsterWalker::BeginPlay()
@@ -40,12 +43,6 @@ void AVGMonsterWalker::BeginPlay()
 	
 	// 시작 시 순찰 상태로 초기화
 	SetMonsterState(EMonsterState::Patrol);
-}
-
-void AVGMonsterWalker::TakeDamage_Monster(float DamageAmount)
-{
-	// Walker 고유 피격 반응 (예: 피격 시 잠깐 멈추는 등 추후 확장)
-	Super::TakeDamage_Monster(DamageAmount);
 }
 
 void AVGMonsterWalker::SetMonsterState(EMonsterState NewState)
