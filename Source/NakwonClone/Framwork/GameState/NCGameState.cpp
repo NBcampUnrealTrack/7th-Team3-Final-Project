@@ -17,7 +17,7 @@ void ANCGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 void ANCGameState::OnRep_CurrentGameStateTag()
 {
-	// todo : UI갱신?(필요 없을듯?)
+	// todo : UI갱신?
 }
 
 void ANCGameState::OnRep_MatchTime()

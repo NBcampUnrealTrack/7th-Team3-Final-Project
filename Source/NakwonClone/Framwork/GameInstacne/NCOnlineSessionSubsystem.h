@@ -6,11 +6,14 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "OnlineSessionSettings.h"
+#include "Interfaces/OnlineFriendsInterface.h"
 #include "NCOnlineSessionSubsystem.generated.h"
 
 // 블루프린트에서 받을 수 있는 델리게이트 선언
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNCOnFindSessionsComplete, bool, bSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNCOnJoinSessionComplete, bool, bSuccessful);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNCOnInviteSent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNCOnFriendsListLoaded, bool, bSuccessful, int32, FriendCount);
 
 UCLASS()
 class NAKWONCLONE_API UNCOnlineSessionSubsystem : public UGameInstanceSubsystem
@@ -52,8 +55,34 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Session")
 	int32 GetSessionOpenConnections(int32 Index) const;
 	
+public:
+	UFUNCTION(BlueprintCallable, Category = "Session|Friend")
+	void ShowInviteOverlay();
+	
+	UFUNCTION(BlueprintCallable, Category = "Session|Friend")
+	void LoadFriendsList();
+	
+	UFUNCTION(BlueprintCallable, Category = "Session|Friend")
+	void SendInviteToFriend(int32 FriendIndex);
+	
+	UFUNCTION(BlueprintCallable, Category = "Session|Friend")
+	FString GetFriendName(int32 Index) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Session|Friend")
+	bool IsFriendOnline(int32 Index) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Session|Friend")
+	int32 GetFriendsCount() const { return CachedFriends.Num(); }
+	
+	UPROPERTY(BlueprintAssignable, Category = "Session|Friend")
+	FNCOnFriendsListLoaded OnFriendsListLoadedEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "Session|Friend")
+	FNCOnInviteSent OnInviteSentEvent;
+
 private:
 	IOnlineSessionPtr GetSessionInterface() const;
+	IOnlineFriendsPtr GetFriendsInterface() const;
 	
 	// steam이 자동 호출하는 함수들
 	void OnCreateSessionComplete(FName SessionName, bool bSuccessful);
@@ -65,8 +94,14 @@ private:
 		int32 LocalUserNum,
 		TSharedPtr<const FUniqueNetId> UserId,
 		const FOnlineSessionSearchResult& InviteResult);
+	void OnReadFriendsListComplete(
+		int32 LocalUserNum,
+		bool bWasSuccessful,
+		const FString& ListName, 
+		const FString& ErrorStr);
 	
 	// 검색 결과
 	TSharedPtr<FOnlineSessionSearch> LastSearch;
 	TArray<FOnlineSessionSearchResult> LastSearchResults;
+	TArray<TSharedRef<FOnlineFriend>> CachedFriends;
 };
