@@ -1,4 +1,4 @@
-#include "NCItemActor.h"
+﻿#include "NCItemActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -25,6 +25,12 @@ void ANCItemActor::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 	
 	DOREPLIFETIME(ANCItemActor, ItemTypeTag);
 	DOREPLIFETIME(ANCItemActor, Quantity);
+}
+
+// 자식 클래스에서 오버라이드
+void ANCItemActor::UseItem(ACharacter* User)
+{
+	
 }
 
 void ANCItemActor::InitializeItemData(FGameplayTag InTag, int32 InQuantity)
