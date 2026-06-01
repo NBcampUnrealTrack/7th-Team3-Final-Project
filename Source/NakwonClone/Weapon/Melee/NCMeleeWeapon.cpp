@@ -1,18 +1,12 @@
 ﻿#include "NCMeleeWeapon.h"
-#include "Components/BoxComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
-
+#include "DrawDebugHelpers.h"
 
 ANCMeleeWeapon::ANCMeleeWeapon()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
     bReplicates = true;
-
-    HitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("HitBox"));
-    HitBox->SetupAttachment(WeaponMesh);
-    HitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    HitBox->OnComponentBeginOverlap.AddDynamic(this, &ANCMeleeWeapon::OnHitBoxOverlap);
 }
 
 void ANCMeleeWeapon::BeginPlay()
@@ -20,10 +14,15 @@ void ANCMeleeWeapon::BeginPlay()
     Super::BeginPlay();
 }
 
-void ANCMeleeWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void ANCMeleeWeapon::Tick(float DeltaTime)
 {
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(ANCMeleeWeapon, bHitBoxEnabled);
+    Super::Tick(DeltaTime);
+
+    //서버에서만 트레이스 실행
+    if (HasAuthority() && bIsTracing)
+    {
+        PerformTrace();
+    }
 }
 
 void ANCMeleeWeapon::InitFromDataTable(FName RowName)
@@ -36,39 +35,85 @@ void ANCMeleeWeapon::InitFromDataTable(FName RowName)
     if (Data)
     {
         CurrentWeaponData = *Data;
-        HitBox->SetBoxExtent(CurrentWeaponData.HitBoxExtent);
     }
 }
 
-void ANCMeleeWeapon::EnableHitBox()
+void ANCMeleeWeapon::StartTrace()
 {
+    //AnimNotify는 서버에서만 실행되도록
     if (!HasAuthority()) return;
-    bHitBoxEnabled = true;
-    HitBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+    HitActors.Empty();
+    bIsTracing = true;
+
+    //첫 프레임 위치 초기화
+    PreviousStart = WeaponMesh->GetSocketLocation(FName("WeaponStart"));
+    PreviousEnd   = WeaponMesh->GetSocketLocation(FName("WeaponEnd"));
 }
 
-void ANCMeleeWeapon::DisableHitBox()
+void ANCMeleeWeapon::EndTrace()
 {
     if (!HasAuthority()) return;
-    bHitBoxEnabled = false;
-    HitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    bIsTracing = false;
+    HitActors.Empty();
 }
 
-void ANCMeleeWeapon::OnHitBoxOverlap(
-    UPrimitiveComponent* OverlappedComponent,
-    AActor* OtherActor,
-    UPrimitiveComponent* OtherComp,
-    int32 OtherBodyIndex,
-    bool bFromSweep,
-    const FHitResult& SweepResult)
+void ANCMeleeWeapon::PerformTrace()
 {
-    if (!HasAuthority()) return;
-    if (OtherActor == GetOwner()) return;
+    FVector CurrentStart = WeaponMesh->GetSocketLocation(FName("WeaponStart"));
+    FVector CurrentEnd   = WeaponMesh->GetSocketLocation(FName("WeaponEnd"));
 
-    if (ANCBaseCharacter* Target = Cast<ANCBaseCharacter>(OtherActor))
+    for (int32 i = 0; i <= 3; i++)
     {
-        Server_ApplyDamage(Target);
+        float Alpha = i / 3.f;
+
+        FVector PrevPoint    = FMath::Lerp(PreviousStart, PreviousEnd, Alpha);
+        FVector CurrentPoint = FMath::Lerp(CurrentStart, CurrentEnd, Alpha);
+
+        TArray<FHitResult> HitResults;
+        FCollisionShape Sphere = FCollisionShape::MakeSphere(6.f);
+
+        bool bHit = GetWorld()->SweepMultiByChannel(
+            HitResults,
+            PrevPoint,
+            CurrentPoint,
+            FQuat::Identity,
+            ECC_Pawn,
+            Sphere
+        );
+
+        if (bHit)
+        {
+            for (FHitResult& Hit : HitResults)
+            {
+                AActor* HitActor = Hit.GetActor();
+                if (!HitActor) continue;
+                if (HitActor == GetOwner()) continue;
+                if (HitActors.Contains(HitActor)) continue;
+
+                if (ANCBaseCharacter* Target = Cast<ANCBaseCharacter>(HitActor))
+                {
+                    HitActors.Add(HitActor);
+                    Server_ApplyDamage(Target);
+                }
+            }
+        }
     }
+
+    //디버그를 모든 클라이언트에서 보이도록 Multicast
+    Multicast_DrawDebug(CurrentStart, CurrentEnd);
+
+    PreviousStart = CurrentStart;
+    PreviousEnd   = CurrentEnd;
+}
+
+//모든 클라이언트에서 디버그 라인 표시
+void ANCMeleeWeapon::Multicast_DrawDebug_Implementation(FVector Start, FVector End)
+{
+#if WITH_EDITOR
+    DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.1f, 0, 1.f);
+#endif
 }
 
 void ANCMeleeWeapon::Server_ApplyDamage_Implementation(ANCBaseCharacter* Target)
@@ -77,7 +122,7 @@ void ANCMeleeWeapon::Server_ApplyDamage_Implementation(ANCBaseCharacter* Target)
     if (!DamageEffectClass) return;
 
     UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
-    UAbilitySystemComponent* SourceASC = GetOwner() ? 
+    UAbilitySystemComponent* SourceASC = GetOwner() ?
         Cast<ANCBaseCharacter>(GetOwner())->GetAbilitySystemComponent() : nullptr;
 
     if (TargetASC && SourceASC)

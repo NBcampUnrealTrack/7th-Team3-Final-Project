@@ -18,16 +18,16 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void Tick(float DeltaTime) override;
 
 public:
 	void InitFromDataTable(FName RowName);
 
 	UFUNCTION(BlueprintCallable)
-	void EnableHitBox();
+	void StartTrace();
 
 	UFUNCTION(BlueprintCallable)
-	void DisableHitBox();
+	void EndTrace();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
@@ -35,26 +35,24 @@ protected:
 
 	FNCMeleeWeaponData CurrentWeaponData;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TObjectPtr<class UBoxComponent> HitBox;
-
 	//GAS
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
 private:
-	UFUNCTION()
-	void OnHitBoxOverlap(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult);
-
 	UFUNCTION(Server, Reliable)
 	void Server_ApplyDamage(ANCBaseCharacter* Target);
 
-	UPROPERTY(Replicated)
-	bool bHitBoxEnabled = false;
+	void PerformTrace();
+
+	//디버그를 모든 클라이언트에서 보여주기 위한 Multicast
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_DrawDebug(FVector Start, FVector End);
+
+	bool bIsTracing = false;
+
+	FVector PreviousStart;
+	FVector PreviousEnd;
+
+	TArray<TObjectPtr<AActor>> HitActors;
 };
