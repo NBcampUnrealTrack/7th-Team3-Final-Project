@@ -40,7 +40,7 @@ EBTNodeResult::Type UBTTask_FindPatrolLocation::ExecuteTask(UBehaviorTreeCompone
 				RandomLocation.Location);
 			
 			AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(OwnerComp.GetAIOwner()->GetPawn());
-			if (Walker) Walker->SetMonsterState(EMonsterState::Patrol);
+			if (Walker) Walker->SetMonsterState(EMonsterState::Move);
 			
 			return EBTNodeResult::Succeeded;
 		}
