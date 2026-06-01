@@ -2,8 +2,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"  // 추가 함
-#include "NakwonClone/Common/NCGameplayTags.h"
+#include "NakwonClone/Weapon/NCWeaponBase.h"
+#include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
@@ -20,23 +20,16 @@ ANCPlayerCharacter::ANCPlayerCharacter()
     FollowCamera->bUsePawnControlRotation = false;
   
     PlayerInventory = CreateDefaultSubobject<UNCPlayerInventoryComponent>(TEXT("PlayerInventory"));
-    // --- 추가된 부분 ---
-    // AttributeSet 생성 및 ASC에 자동 등록
-    PlayerAttributeSet = CreateDefaultSubobject<UVGPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
-
+    
 }
 
 void ANCPlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
     
-    // --- 추가된 부분 ---
-    // AttributeSet 초기화
+    //AttributeSet 초기화
     if (AbilitySystemComponent)
     {
-        // (Owner, Avatar)
-        // Owner : ASC를 실제로 소유하는 액터 (데이터 관리 주체)
-        // Avatar : ASC가 물리적으로 붙어 있는 액터 (실제 게임 월드에서 활동하는 주체)
         AbilitySystemComponent->InitAbilityActorInfo(this, this);
     }
 }
@@ -106,4 +99,41 @@ void ANCPlayerCharacter::ToggleCrouch()
         ApplyMovementData(CurrentStanceTag);
     }
     Server_SetStance(CurrentStanceTag);
+}
+
+void ANCPlayerCharacter::EquipWeapon(TSubclassOf<ANCWeaponBase> WeaponClass)
+{
+    if (!HasAuthority()) return;
+    if (!WeaponClass) return;
+
+    //기존 무기 해제
+    if (CurrentWeapon)
+    {
+        CurrentWeapon->DetachFromCharacter();
+        CurrentWeapon->Destroy();
+        CurrentWeapon = nullptr;
+    }
+
+    //새 무기 스폰
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+    SpawnParams.Instigator = this;
+
+    CurrentWeapon = GetWorld()->SpawnActor<ANCWeaponBase>(
+        WeaponClass, FTransform::Identity, SpawnParams);
+
+    if (CurrentWeapon)
+    {
+        CurrentWeapon->AttachToCharacter(GetMesh(), FName("weapon_r"));
+    }
+}
+
+void ANCPlayerCharacter::UnEquipWeapon()
+{
+    if (!HasAuthority()) return;
+    if (!CurrentWeapon) return;
+
+    CurrentWeapon->DetachFromCharacter();
+    CurrentWeapon->Destroy();
+    CurrentWeapon = nullptr;
 }

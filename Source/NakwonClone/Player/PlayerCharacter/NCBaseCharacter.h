@@ -3,31 +3,23 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "GameplayTagContainer.h"
-#include "AbilitySystemInterface.h"
-#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"  // 추가
 #include "NCBaseCharacter.generated.h"
 
 class UNCStatComponent;
-
+class UAbilitySystemComponent;
+class UVGPlayerAttributeSet;
 
 UCLASS()
-class NAKWONCLONE_API ANCBaseCharacter : public ACharacter, public IAbilitySystemInterface 
+class NAKWONCLONE_API ANCBaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
 	ANCBaseCharacter();
-	
-#pragma region 추가된 부분 GAS
-public:
-	// IAbilitySystemInterface 구현
-	// IAbilitySystemInterface : GAS가 제공하는 인터페이스
-	// 이걸 상속 받아야 GAS 시스템이 해당 액터에 ASC를 갖고 있는지 판별 가능
+
+	// GAS 인터페이스
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
-	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-#pragma endregion
 
 protected:
 	virtual void BeginPlay() override;
@@ -43,6 +35,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category = "State")
 	FGameplayTag CurrentActionTag;
 
+	// TODO: GAS 완전 전환 후 제거
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
 	TObjectPtr<UNCStatComponent> StatComponent;
 
@@ -52,6 +45,13 @@ public:
 	virtual void Landed(const FHitResult& Hit) override;
 
 protected:
+	//GAS
+	UPROPERTY(VisibleAnywhere, Category = "GAS")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY()
+	TObjectPtr<UVGPlayerAttributeSet> PlayerAttributeSet;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
 	class UDataTable* MovementDataTable;
 
