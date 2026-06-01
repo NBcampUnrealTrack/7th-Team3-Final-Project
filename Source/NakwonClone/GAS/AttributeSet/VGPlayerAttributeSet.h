@@ -51,6 +51,11 @@ public:
 	FGameplayAttributeData MaxInfection;
 	ATTRIBUTE_ACCESSORS(UVGPlayerAttributeSet, MaxInfection)
 
+	// 크레딧
+	UPROPERTY(BlueprintReadOnly, Category = "Stats")
+	FGameplayAttributeData Credits;
+	ATTRIBUTE_ACCESSORS(UVGPlayerAttributeSet, Credits)
+
 	// 스탯이 변경되기 전 호출 (값 클램핑)
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	
