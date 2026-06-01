@@ -23,7 +23,7 @@ protected:
 	void UpdateItemSlot();
 	
 	UPROPERTY(meta = (BindWidget))
-	UUniformGridPanel* PlayerInventoryGrid;
+	TObjectPtr<UUniformGridPanel> PlayerInventoryGrid;
 	
 	UPROPERTY()
 	TObjectPtr<UNCInventoryBaseComponent> InventoryComp;

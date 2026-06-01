@@ -1,13 +1,16 @@
 ﻿#include "NCPlayerInventoryHud.h"
 #include "NCInventroySlot.h"
 #include "NakwonClone/Inventory/NCInventoryType.h"
+#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
+#include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
+#include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 
 void UNCPlayerInventoryHud::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	int32 Columns = 5;  // 열
-	int32 Rows = 4;     // 행
+	int32 Columns = InventoryComp->GridSize.X;  // 열
+	int32 Rows = InventoryComp->GridSize.Y;     // 행
 	
 	for (int32 i = 0; i < Columns * Rows; i++)
 	{
