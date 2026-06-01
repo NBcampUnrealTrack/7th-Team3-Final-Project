@@ -42,8 +42,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FollowCamera;
 
+	// 하상빈 추가
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Inventory")
 	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventory;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Interaction")
+	TObjectPtr<class UNCInteractionComponent> InteractionComponent;
 	
 public:
 	//무기 장착
