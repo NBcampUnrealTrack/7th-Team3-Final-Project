@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 #include "CoreMinimal.h"
@@ -32,4 +32,8 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	void InitializeItemData(FGameplayTag InTag, int32 InQuantity);
+
+	// 아이템 사용
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	virtual void UseItem(class ACharacter* User);
 };

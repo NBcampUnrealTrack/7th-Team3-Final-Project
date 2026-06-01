@@ -50,6 +50,14 @@ namespace NCItemType
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Material);
 };
 
+namespace NCItemTag
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Eating);  // 음식 아이템
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Heal);    // 회복 아이템
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Credit);  // 크레딧
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest);   // 퀘스트 아이템
+};
+
 namespace NCGameStateTags
 {
 	// 게임 상태

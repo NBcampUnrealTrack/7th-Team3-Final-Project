@@ -3,7 +3,10 @@
 #include "CoreMinimal.h"
 #include "NakwonClone/Weapon/NCWeaponBase.h"
 #include "NakwonClone/Player/PlayerData/NCWeaponData.h"
+#include "GameplayEffect.h"
 #include "NCMeleeWeapon.generated.h"
+
+class ANCBaseCharacter;
 
 UCLASS()
 class NAKWONCLONE_API ANCMeleeWeapon : public ANCWeaponBase
@@ -35,6 +38,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<class UBoxComponent> HitBox;
 
+	//GAS
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|GAS")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
+
 private:
 	UFUNCTION()
 	void OnHitBoxOverlap(
@@ -45,7 +52,6 @@ private:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
-	// TODO: GAS 전환 시 → GameplayEffect 적용으로 대체
 	UFUNCTION(Server, Reliable)
 	void Server_ApplyDamage(ANCBaseCharacter* Target);
 
