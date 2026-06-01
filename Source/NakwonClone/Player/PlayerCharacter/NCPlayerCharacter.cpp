@@ -1,10 +1,12 @@
 #include "NCPlayerCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Common/NCGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NakwonClone/Weapon/NCWeaponBase.h"
 #include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
+#include "Player/PlayerComponent/NCInteractionComponent.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
@@ -19,8 +21,9 @@ ANCPlayerCharacter::ANCPlayerCharacter()
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     FollowCamera->bUsePawnControlRotation = false;
   
+    // 하상빈 추가
     PlayerInventory = CreateDefaultSubobject<UNCPlayerInventoryComponent>(TEXT("PlayerInventory"));
-    
+    InteractionComponent = CreateDefaultSubobject<UNCInteractionComponent>(TEXT("InteractionComponent"));
 }
 
 void ANCPlayerCharacter::BeginPlay()

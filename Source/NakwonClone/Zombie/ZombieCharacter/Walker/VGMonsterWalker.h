@@ -8,14 +8,16 @@
 #include "VGMonsterWalker.generated.h"
 
 class UVGMonsterAttributeSet;
+class UAnimMontage;
 
 UENUM(BlueprintType)
 enum class EMonsterState : uint8
 {
-	Patrol,
+	Move,
 	Stop,
 	Chase,
 	Attack,
+	Hit,
 	Dead
 };
 
@@ -39,24 +41,24 @@ protected:
 	float WalkSpeed = 100.f;
 #pragma endregion
 
-#pragma region 큐브 시각화
-	UPROPERTY(VisibleAnywhere, Category = "Monster|Visual")
-	UStaticMeshComponent* BodyMesh;
-
-	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* PatrolMaterial;		// 순찰 (파랑)
-
-	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* StoptMaterial;		// 정지 (하양)
-
-	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* ChaseMaterial;		// 추적 (초록)
-
-	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* AttackMaterial;		// 공격 (빨강)
-
-	UPROPERTY(EditAnywhere, Category = "Monster|Visual")
-	UMaterialInterface* DeadMaterial;		// 사망 (검정)
+#pragma region 애니메이션
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TObjectPtr<UAnimMontage> AnimMove;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TObjectPtr<UAnimMontage> AnimStop;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TObjectPtr<UAnimMontage> AnimChase;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TObjectPtr<UAnimMontage> AnimHit;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TObjectPtr<UAnimMontage> AnimDead;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TObjectPtr<UAnimMontage> AnimAttack;
 #pragma endregion
 	
 public:

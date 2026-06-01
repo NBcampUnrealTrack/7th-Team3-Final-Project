@@ -6,21 +6,6 @@
 
 AVGMonsterWalker::AVGMonsterWalker()
 {
-	// 큐브 메시 컴포넌트 생성
-	BodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BodyMesh"));
-	BodyMesh->SetupAttachment(GetRootComponent());
-	
-	BodyMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
-	BodyMesh->CanCharacterStepUpOn = ECB_No;
-	BodyMesh->SetCanEverAffectNavigation(false);
-
-	// 기본 큐브 메시 할당 (UE 기본 제공 에셋)
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
-	if (CubeMesh.Succeeded())
-	{
-		BodyMesh->SetStaticMesh(CubeMesh.Object);
-	}
-
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
@@ -42,36 +27,37 @@ void AVGMonsterWalker::BeginPlay()
 	}
 	
 	// 시작 시 순찰 상태로 초기화
-	SetMonsterState(EMonsterState::Patrol);
+	SetMonsterState(EMonsterState::Move);
 }
 
 void AVGMonsterWalker::SetMonsterState(EMonsterState NewState)
 {
-	if (!BodyMesh) return;
-
-	UMaterialInterface* TargetMaterial = nullptr;
+	UAnimMontage* TargetMontage = nullptr;
 
 	switch (NewState)
 	{
-	case EMonsterState::Patrol:
-		TargetMaterial = PatrolMaterial;
+	case EMonsterState::Move:
+		TargetMontage = AnimMove;
 		break;
 	case EMonsterState::Stop:
-		TargetMaterial = StoptMaterial;
+		TargetMontage = AnimStop;
 		break;
 	case EMonsterState::Chase:
-		TargetMaterial = ChaseMaterial;
+		TargetMontage = AnimChase;
+		break;
+	case EMonsterState::Hit:
+		TargetMontage = AnimHit;
 		break;
 	case EMonsterState::Attack:
-		TargetMaterial = AttackMaterial;
+		TargetMontage = AnimAttack;
 		break;
 	case EMonsterState::Dead:
-		TargetMaterial = DeadMaterial;
+		TargetMontage = AnimDead;
 		break;
 	}
-
-	if (TargetMaterial)
+	
+	if (TargetMontage)
 	{
-		BodyMesh->SetMaterial(0, TargetMaterial);
+		PlayAnimMontage(TargetMontage);
 	}
 }

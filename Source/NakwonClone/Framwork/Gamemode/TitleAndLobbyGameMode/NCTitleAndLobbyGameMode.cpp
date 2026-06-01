@@ -7,3 +7,8 @@ ANCTitleAndLobbyGameMode::ANCTitleAndLobbyGameMode()
 {
 	DefaultPawnClass = nullptr;
 }
+
+void ANCTitleAndLobbyGameMode::MoveToGameLevel()
+{
+	GetWorld()->ServerTravel("/Game/Maps/L_MVP?listen");
+}
