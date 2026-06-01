@@ -29,7 +29,9 @@ private:
 	void Jump();
 	void StopJump();
 	void ToggleCrouch();
-
+	// 하상빈 추가
+	void Interact();
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
@@ -51,4 +53,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> CrouchAction;
+	
+	// 하상빈 추가
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> InteractAction;
 };

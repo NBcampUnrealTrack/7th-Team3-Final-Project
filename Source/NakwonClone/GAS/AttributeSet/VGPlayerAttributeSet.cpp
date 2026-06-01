@@ -12,6 +12,7 @@ UVGPlayerAttributeSet::UVGPlayerAttributeSet()
 	InitMaxStamina(100.f);
 	InitInfection(0.f);
 	InitMaxInfection(100.f);
+	InitCredits(0.f);
 }
 
 void UVGPlayerAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -31,6 +32,10 @@ void UVGPlayerAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxInfection());
 	}
+	if (Attribute == GetCreditsAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.f);
+	}
 }
 
 void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -45,5 +50,9 @@ void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		{
 			UE_LOG(LogTemp, Warning, TEXT("[PlayerAS] 사망"));
 		}
+	}
+	if (Data.EvaluatedData.Attribute == GetCreditsAttribute())
+	{
+		UE_LOG(LogTemp, Log, TEXT("[Credits] 현재 크레딧: %.0f"), GetCredits());
 	}
 }

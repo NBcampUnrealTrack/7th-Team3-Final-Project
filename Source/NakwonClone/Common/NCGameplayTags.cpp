@@ -1,4 +1,4 @@
-#include "NCGameplayTags.h"
+﻿#include "NCGameplayTags.h"
 
 // 양식: UE_DEFINE_GAMEPLAY_TAG(네임스페이스::변수명, "에디터에_보여질_태그_이름");
 
@@ -14,6 +14,11 @@ UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Crouch, "Character.State.Crouch");
 UE_DEFINE_GAMEPLAY_TAG(NCItemType::Equipment, "ItemType.Equipment")
 UE_DEFINE_GAMEPLAY_TAG(NCItemType::Consumable, "ItemType.Consumable")
 UE_DEFINE_GAMEPLAY_TAG(NCItemType::Material, "ItemType.Material")
+
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Eating, "Item.Consumable.Eating")
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Heal, "Item.Consumable.Heal")
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Credit, "Item.Currency.Credit")
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Quest, "Item.Currency.Quest")
 
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Alive, "Character.State.Alive");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Downed, "Character.State.Downed");

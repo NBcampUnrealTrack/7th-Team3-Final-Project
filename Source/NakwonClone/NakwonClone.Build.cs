@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
 
@@ -7,8 +7,10 @@ public class NakwonClone : ModuleRules
 	public NakwonClone(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-	
-		PublicDependencyModuleNames.AddRange(new string[]
+
+        PublicIncludePaths.Add("NakwonClone");
+
+        PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core", 
 			"CoreUObject",

@@ -7,7 +7,6 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UNCPlayerInventoryComponent;
-class UVGPlayerAttributeSet;  // 추가 함
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
@@ -19,15 +18,9 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventory; }
-	
+
 protected:
 	virtual void BeginPlay() override;
-	
-#pragma region 추가된 부분 GAS
-protected:
-	UPROPERTY()
-	TObjectPtr<UVGPlayerAttributeSet> PlayerAttributeSet;
-#pragma endregion
 
 public:
 	void StartSprint();
@@ -48,7 +41,24 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FollowCamera;
-	
+
+	// 하상빈 추가
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Inventory")
 	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventory;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Interaction")
+	TObjectPtr<class UNCInteractionComponent> InteractionComponent;
+	
+public:
+	//무기 장착
+	UFUNCTION(BlueprintCallable)
+	void EquipWeapon(TSubclassOf<ANCWeaponBase> WeaponClass);
+
+	//무기 해제
+	UFUNCTION(BlueprintCallable)
+	void UnEquipWeapon();
+
+protected:
+	//현재 장착된 무기
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<ANCWeaponBase> CurrentWeapon;
 };

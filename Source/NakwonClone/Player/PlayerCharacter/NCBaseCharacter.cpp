@@ -3,6 +3,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NakwonClone/Player/PlayerData/NCPlayerMovementData.h"
 #include "NakwonClone/Player/PlayerComponent/UNCStatComponent.h"
+#include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"
+#include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ANCBaseCharacter::ANCBaseCharacter()
@@ -21,22 +23,31 @@ ANCBaseCharacter::ANCBaseCharacter()
     CurrentStanceTag = NCCharacter::Stand;
     CurrentActionTag = FGameplayTag::EmptyTag;
 
+    //TODO: GAS 완전 전환 후 제거
     StatComponent = CreateDefaultSubobject<UNCStatComponent>(TEXT("StatComponent"));
-    
-    // --- 추가된 부분 GAS ---
+
+    //GAS
     AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+    AbilitySystemComponent->SetIsReplicated(true);
+    AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+    
+    PlayerAttributeSet = CreateDefaultSubobject<UVGPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
 }
 
-// --- 추가된 부분 ---
 UAbilitySystemComponent* ANCBaseCharacter::GetAbilitySystemComponent() const
 {
     return AbilitySystemComponent;
 }
-/// --- 여기까지 ---
 
 void ANCBaseCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (AbilitySystemComponent)
+        if (AbilitySystemComponent)
+        {
+            AbilitySystemComponent->InitAbilityActorInfo(this, this);
+        }
 }
 
 void ANCBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
