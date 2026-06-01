@@ -4,11 +4,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
+#include "NakwonClone/Common/NCInteractableInterface.h"
 
 #include "NCItemActor.generated.h"
 
 UCLASS()
-class NAKWONCLONE_API ANCItemActor : public AActor
+class NAKWONCLONE_API ANCItemActor : public AActor, public INCInteractableInterface
 {
 	GENERATED_BODY()
 
@@ -36,4 +37,11 @@ public:
 	// 아이템 사용
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	virtual void UseItem(class ACharacter* User);
+	
+public:
+	virtual void Interact_Implementation(AActor* Interactor) override;
+    
+	virtual bool CanInteract_Implementation(AActor* Interactor) override;
+    
+	virtual FText GetInteractPrompt_Implementation() override;
 };
