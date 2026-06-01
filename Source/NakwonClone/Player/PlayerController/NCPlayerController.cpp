@@ -3,6 +3,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
+#include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 
 ANCPlayerController::ANCPlayerController()
 {
@@ -51,6 +52,11 @@ void ANCPlayerController::SetupInputComponent()
 
         if (CrouchAction)
             EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &ANCPlayerController::ToggleCrouch);
+        
+        if (InteractAction)
+        {
+            EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &ANCPlayerController::Interact);
+        }
     }
 }
 
@@ -111,4 +117,15 @@ void ANCPlayerController::ToggleCrouch()
 {
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
         PC->ToggleCrouch();
+}
+
+void ANCPlayerController::Interact()
+{
+    if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetPawn()))
+    {
+        if (UNCInteractionComponent* InteractionComp = PlayerCharacter->FindComponentByClass<UNCInteractionComponent>())
+        {
+            InteractionComp->Interact();
+        }
+    }
 }

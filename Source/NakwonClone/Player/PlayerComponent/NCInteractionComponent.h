@@ -32,7 +32,7 @@ private:
 	float InteractionCheckInterval = 0.1f;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Settings")
-	float InteractionTraceDistance = 500.0f;
+	float InteractionSearchRadius = 200.0f;
 	
 	UPROPERTY()
 	AActor* CurrentInteractableTarget = nullptr;

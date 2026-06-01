@@ -29,7 +29,7 @@ public:
 	FGameplayTag ItemTypeTag;
 	
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Data")
-	int32 Quantity;
+	int32 Quantity = 1;
 	
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	void InitializeItemData(FGameplayTag InTag, int32 InQuantity);

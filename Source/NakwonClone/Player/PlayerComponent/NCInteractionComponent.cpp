@@ -2,6 +2,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "Engine/OverlapResult.h"
 #include "NakwonClone/Common/NCInteractableInterface.h"
 
 UNCInteractionComponent::UNCInteractionComponent()
@@ -42,65 +43,62 @@ void UNCInteractionComponent::UpdateInteractableTarget()
 		return;
 	}
 	
-	APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController());
-	if (!PC || !PC->PlayerCameraManager)
-	{
-		return;
-	}
+	FVector SearchLocation = OwnerCharacter->GetActorLocation();
 	
-	FVector TraceStart = PC->PlayerCameraManager->GetCameraLocation();
-	FVector TraceForward = PC->PlayerCameraManager->GetCameraRotation().Vector();
-	FVector TraceEnd = TraceStart + (TraceForward * InteractionTraceDistance);
+	FCollisionShape RadarSphere = FCollisionShape::MakeSphere(InteractionSearchRadius);
 	
-	FHitResult HitResult;
+	TArray<FOverlapResult> OverlapResults; 
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(OwnerCharacter);
 	
-	FCollisionShape Sphere = FCollisionShape::MakeSphere(15.0f);
+	bool bHit = GetWorld()->OverlapMultiByChannel(
+		OverlapResults,
+		SearchLocation,
+		FQuat::Identity,
+		ECC_Visibility,
+		RadarSphere,
+		QueryParams
+	);
 	
-	bool bHit = GetWorld()->SweepSingleByChannel(
-		HitResult, 
-        TraceStart, 
-        TraceEnd, 
-        FQuat::Identity, 
-        ECC_Visibility,
-        Sphere, 
-        QueryParams
-    );
+	AActor* ClosestTarget = nullptr;
+	float MinDistance = InteractionSearchRadius + 1.0f;
 	
-	AActor* NewTarget = nullptr;
-	
-	if (bHit && HitResult.GetActor())
+	if (bHit)
 	{
-		AActor* HitActor = HitResult.GetActor();
-		
-		float DistanceToCharacter = FVector::Dist(OwnerCharacter->GetActorLocation(), HitResult.ImpactPoint);
-		float MaxReachDistance = 250.0f;
-		
-		if (DistanceToCharacter <= MaxReachDistance)
+		for (const FOverlapResult& Result : OverlapResults)
 		{
-			if (HitActor->Implements<UNCInteractableInterface>())
+			AActor* HitActor = Result.GetActor();
+            
+			if (HitActor && HitActor->Implements<UNCInteractableInterface>())
 			{
 				if (INCInteractableInterface::Execute_CanInteract(HitActor, OwnerCharacter))
 				{
-					NewTarget = HitActor;
+					float Distance = FVector::Dist(SearchLocation, HitActor->GetActorLocation());
+                    
+					if (Distance < MinDistance)
+					{
+						MinDistance = Distance;
+						ClosestTarget = HitActor;
+					}
 				}
 			}
 		}
 	}
 	
-	if (NewTarget != CurrentInteractableTarget)
+	if (ClosestTarget != CurrentInteractableTarget)
 	{
 		if (CurrentInteractableTarget)
 		{
 			SetHighlight(CurrentInteractableTarget, false);
 		}
-		CurrentInteractableTarget = NewTarget;
-		
+
+		CurrentInteractableTarget = ClosestTarget;
+
 		if (CurrentInteractableTarget)
 		{
 			SetHighlight(CurrentInteractableTarget, true);
 		}
+
 		OnInteractTargetChanged.Broadcast(CurrentInteractableTarget);
 	}
 }
