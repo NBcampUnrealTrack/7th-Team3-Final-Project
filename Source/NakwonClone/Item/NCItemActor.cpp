@@ -61,6 +61,15 @@ FText ANCItemActor::GetInteractPrompt_Implementation()
 	return FText::FromString(TEXT("아이템 줍기"));
 }
 
+void ANCItemActor::ToggleHighlight_Implementation(bool bHighlight)
+{
+	if (ItemMesh) 
+	{
+		ItemMesh->SetRenderCustomDepth(bHighlight);
+		ItemMesh->SetCustomDepthStencilValue(1);
+	}
+}
+
 void ANCItemActor::InitializeItemData(FGameplayTag InTag, int32 InQuantity)
 {
 	if (HasAuthority())

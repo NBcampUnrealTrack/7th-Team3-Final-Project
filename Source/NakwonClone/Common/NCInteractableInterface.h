@@ -26,5 +26,8 @@ public:
 	bool CanInteract(AActor* Interactor);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	void ToggleHighlight(bool bHighlight);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
 	FText GetInteractPrompt();
 };

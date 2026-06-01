@@ -44,4 +44,6 @@ public:
 	virtual bool CanInteract_Implementation(AActor* Interactor) override;
     
 	virtual FText GetInteractPrompt_Implementation() override;
+	
+	virtual void ToggleHighlight_Implementation(bool bHighlight) override;
 };
