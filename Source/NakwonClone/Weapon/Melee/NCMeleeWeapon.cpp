@@ -2,7 +2,7 @@
 #include "Components/BoxComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
-#include "NakwonClone/Player/PlayerComponent/UNCStatComponent.h"
+
 
 ANCMeleeWeapon::ANCMeleeWeapon()
 {
@@ -71,13 +71,25 @@ void ANCMeleeWeapon::OnHitBoxOverlap(
     }
 }
 
-// TODO: GAS 전환 시 → ApplyGameplayEffectToTarget으로 대체
 void ANCMeleeWeapon::Server_ApplyDamage_Implementation(ANCBaseCharacter* Target)
 {
     if (!Target) return;
+    if (!DamageEffectClass) return;
 
-    if (UNCStatComponent* StatComp = Target->StatComponent)
+    UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
+    UAbilitySystemComponent* SourceASC = GetOwner() ? 
+        Cast<ANCBaseCharacter>(GetOwner())->GetAbilitySystemComponent() : nullptr;
+
+    if (TargetASC && SourceASC)
     {
-        StatComp->ApplyDamage(CurrentWeaponData.Damage);
+        FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
+        FGameplayEffectSpecHandle EffectSpec = SourceASC->MakeOutgoingSpec(
+            DamageEffectClass, 1.0f, EffectContext);
+
+        if (EffectSpec.IsValid())
+        {
+            SourceASC->ApplyGameplayEffectSpecToTarget(
+                *EffectSpec.Data.Get(), TargetASC);
+        }
     }
 }
