@@ -62,7 +62,7 @@ void UNCOnlineSessionSubsystem::FindSessions(int32 MaxResult)
 	LastSearch->MaxSearchResults = MaxResult;
 	LastSearch->bIsLanQuery = false;
 	
-	// steam presence 기반으로마나 검색(열려있는 방만 뜨도록)
+	// steam presence 기반으로만 검색(열려있는 방만 뜨도록)
 	LastSearch->QuerySettings.Set(
 		FName(TEXT("PRESENCESEARCH")),
 		true,

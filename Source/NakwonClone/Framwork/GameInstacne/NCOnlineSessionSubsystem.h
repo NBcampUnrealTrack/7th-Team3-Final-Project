@@ -15,7 +15,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNCOnJoinSessionComplete, bool, bSuc
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNCOnInviteSent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNCOnFriendsListLoaded, bool, bSuccessful, int32, FriendCount);
 
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class NAKWONCLONE_API UNCOnlineSessionSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
