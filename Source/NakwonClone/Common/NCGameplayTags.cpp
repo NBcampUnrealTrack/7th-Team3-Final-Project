@@ -10,6 +10,7 @@ UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Attacking, "Character.Action.Attacking");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Stand, "Character.State.Standing");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Landed, "Character.State.Landed");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Crouch, "Character.State.Crouch");
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::InventoryOpen, "Character.State.InventoryOpen");
 
 UE_DEFINE_GAMEPLAY_TAG(NCItemType::Equipment, "ItemType.Equipment")
 UE_DEFINE_GAMEPLAY_TAG(NCItemType::Consumable, "ItemType.Consumable")
