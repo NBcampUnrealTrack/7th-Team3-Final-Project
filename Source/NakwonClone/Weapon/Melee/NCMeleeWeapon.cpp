@@ -1,4 +1,6 @@
 ﻿#include "NCMeleeWeapon.h"
+
+#include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
 #include "DrawDebugHelpers.h"
