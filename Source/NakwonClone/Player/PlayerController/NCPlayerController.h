@@ -40,6 +40,8 @@ private:
 	void Interact();
 	void ToggleInventory();
 	
+	bool bIsInventoryOpen = false; 
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
@@ -67,7 +69,4 @@ protected:
 	TObjectPtr<UInputAction> InteractAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> InventoryAction;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsInventoryOpen = false;
 };
