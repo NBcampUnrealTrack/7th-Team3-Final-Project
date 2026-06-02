@@ -132,31 +132,32 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 
 bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
 {
-	if (!GetOwner()->HasAuthority())
-	{
-		return false;
-	}
-	
+	Server_DropItem(SlotIndex, Quantity); 
+	return true;
+}
+
+void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex, int32 Quantity)
+{
 	if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty() || Quantity <= 0)
 	{
-		return false;
+		return;
 	}
-	
+
 	FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
-	
+
 	int32 DropQuantity = FMath::Min(Quantity, Items[SlotIndex].Quantity);
-	
+
 	AActor* OwnerActor = GetOwner();
 	FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
-	
+
 	SpawnLocation.Z -= 20.0f; 
 	FRotator SpawnRotation = OwnerActor->GetActorRotation();
-	
+
 	if (BaseItemActorClass)
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-        
+
 		AActor* DroppedItem = GetWorld()->SpawnActor<AActor>(BaseItemActorClass, SpawnLocation, SpawnRotation, SpawnParams);
 
 		ANCItemActor* SpawnedItemActor = Cast<ANCItemActor>(DroppedItem);
@@ -165,19 +166,24 @@ bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
 			SpawnedItemActor->InitializeItemData(ItemTag, DropQuantity);
 		}
 	}
-	
-	// 임시 디버그
-	FString DebugMsg = FString::Printf(TEXT("%s 아이템 %d개 드롭"), *ItemTag.ToString(), DropQuantity);
+
+	FString DebugMsg = FString::Printf(TEXT("[Server] %s 아이템 %d개 드롭"), *ItemTag.ToString(), DropQuantity);
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMsg);
-	
-	return RemoveItem(SlotIndex, DropQuantity);
-}
+
+	RemoveItem(SlotIndex, DropQuantity);
+} 
 
 bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
 {
+	Server_LootItem(ItemToLoot); 
+	return true;
+}
+
+void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemActor* ItemToLoot)
+{
 	if (!GetOwner()->HasAuthority() || !ItemToLoot)
 	{
-		return false;
+		return;
 	}
 	
 	FGameplayTag LootTag = ItemToLoot->ItemTypeTag; 
@@ -188,8 +194,6 @@ bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
 	if (bAdded)
 	{
 		ItemToLoot->Destroy();
-		return true;
+		return;
 	}
-	
-	return false;
 }

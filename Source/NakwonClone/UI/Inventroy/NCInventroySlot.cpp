@@ -10,6 +10,8 @@ void UNCInventroySlot::NativeConstruct()
 void UNCInventroySlot::SetSlotData(int32 InIndex, FGameplayTag InTag, int32 InQuantity)
 {
 	SlotIndex = InIndex;
+	ItemTag = InTag;
+	Quantity = InQuantity;
 	
 	if (InTag.IsValid())
 	{

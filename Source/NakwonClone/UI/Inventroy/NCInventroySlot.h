@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
@@ -16,7 +17,7 @@ protected:
 	virtual void NativeConstruct() override;
 	
 public:
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetSlotData(int32 InIndex, FGameplayTag InTag, int32 InQuantity);
 	
 	UPROPERTY(meta = (BindWidget))
@@ -25,5 +26,12 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ItemCountText;
 	
+	UPROPERTY(BlueprintReadWrite)
 	int32 SlotIndex;
+	
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayTag ItemTag;
+	
+	UPROPERTY(BlueprintReadOnly)
+	int32 Quantity;
 };
