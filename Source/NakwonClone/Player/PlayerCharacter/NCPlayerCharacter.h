@@ -17,8 +17,12 @@ public:
 	ANCPlayerCharacter();
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	
+	// 하상빈 추가
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventory; }
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+	FGameplayTagContainer StateTags;
+	
 protected:
 	virtual void BeginPlay() override;
 

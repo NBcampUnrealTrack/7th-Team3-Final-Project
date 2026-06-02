@@ -8,6 +8,9 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 
+//하상빈 추가
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryToggledSignature, bool, bIsOpen);
+
 UCLASS()
 class NAKWONCLONE_API ANCPlayerController : public APlayerController
 {
@@ -16,10 +19,14 @@ class NAKWONCLONE_API ANCPlayerController : public APlayerController
 public:
 	ANCPlayerController();
 
+	//하상빈 추가
+	UPROPERTY(BlueprintAssignable, Category = "UI|Inventory")
+	FOnInventoryToggledSignature OnInventoryToggled;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
-
+	
 private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -31,6 +38,7 @@ private:
 	void ToggleCrouch();
 	// 하상빈 추가
 	void Interact();
+	void ToggleInventory();
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -57,4 +65,9 @@ protected:
 	// 하상빈 추가
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> InteractAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> InventoryAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsInventoryOpen = false;
 };

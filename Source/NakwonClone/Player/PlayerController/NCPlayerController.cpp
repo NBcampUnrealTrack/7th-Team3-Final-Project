@@ -2,6 +2,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 
@@ -56,6 +57,10 @@ void ANCPlayerController::SetupInputComponent()
         if (InteractAction)
         {
             EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &ANCPlayerController::Interact);
+        }
+        if (InventoryAction)
+        {
+            EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &ANCPlayerController::ToggleInventory);
         }
     }
 }
@@ -128,4 +133,37 @@ void ANCPlayerController::Interact()
             InteractionComp->Interact();
         }
     }
+}
+
+void ANCPlayerController::ToggleInventory()
+{
+    bIsInventoryOpen = !bIsInventoryOpen;
+
+    ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetPawn());
+    
+    if (bIsInventoryOpen)
+    {
+        bShowMouseCursor = true;
+        FInputModeGameAndUI InputMode;
+        InputMode.SetHideCursorDuringCapture(false);
+        SetInputMode(InputMode);
+        
+        if (PlayerCharacter)
+        {
+            PlayerCharacter->StateTags.AddTag(NCCharacter::InventoryOpen);
+        }
+    }
+    else
+    {
+        bShowMouseCursor = false;
+        FInputModeGameOnly InputMode;
+        SetInputMode(InputMode);
+        
+        if (PlayerCharacter)
+        {
+            PlayerCharacter->StateTags.RemoveTag(NCCharacter::InventoryOpen);
+        }
+    }
+
+    OnInventoryToggled.Broadcast(bIsInventoryOpen);
 }
