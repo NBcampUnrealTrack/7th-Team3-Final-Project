@@ -2,12 +2,33 @@
 
 
 #include "VGMonsterAttributeSet.h"
+#include "GameplayEffectExtension.h"
 
 UVGMonsterAttributeSet::UVGMonsterAttributeSet()
 {
 	InitHealth(300.f);
 	InitDamage(8.f);
 	InitBiteInfection(30.f);
+}
+
+void UVGMonsterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
+
+	// Health 어트리뷰트가 변경됐을 때만 처리
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		if (GetHealth() <= 0.f)
+		{
+			// 사망
+			OnDead.Broadcast();
+		}
+		else
+		{
+			// 피격
+			OnHitReceived.Broadcast(); 
+		}
+	}
 }
 
 void UVGMonsterAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
