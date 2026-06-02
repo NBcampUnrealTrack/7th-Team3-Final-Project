@@ -8,18 +8,6 @@
 void UNCPlayerInventoryHud::NativeConstruct()
 {
 	Super::NativeConstruct();
-	
-	int32 Columns = InventoryComp->GridSize.X;  // 열
-	int32 Rows = InventoryComp->GridSize.Y;     // 행
-	
-	for (int32 i = 0; i < Columns * Rows; i++)
-	{
-		UNCInventroySlot* ItemSlot = CreateWidget<UNCInventroySlot>(GetWorld(), SlotClass);
-		
-		PlayerInventoryGrid->AddChildToUniformGrid(ItemSlot, i / Columns, i % Columns);
-		
-		SlotWidgets.Add(ItemSlot);
-	}
 }
 
 void UNCPlayerInventoryHud::InitWithInventory(UNCInventoryBaseComponent* InInventory)
@@ -27,9 +15,21 @@ void UNCPlayerInventoryHud::InitWithInventory(UNCInventoryBaseComponent* InInven
 	if (!InInventory) return;
 	
 	InventoryComp = InInventory;
-
-	InventoryComp->OnInventoryUpdated.AddDynamic(
-		this, &UNCPlayerInventoryHud::UpdateItemSlot);
+	
+	int32 Columns = InventoryComp->GridSize.X;  // 열
+	int32 Rows = InventoryComp->GridSize.Y;     // 행
+	
+	PlayerInventoryGrid->ClearChildren();
+	SlotWidgets.Empty();
+	
+	for (int32 i = 0; i < Columns * Rows; i++)
+	{
+		UNCInventroySlot* ItemSlot = CreateWidget<UNCInventroySlot>(GetWorld(), SlotClass);
+		PlayerInventoryGrid->AddChildToUniformGrid(ItemSlot, i / Columns, i % Columns);
+		SlotWidgets.Add(ItemSlot);
+	}
+	
+	InventoryComp->OnInventoryUpdated.AddDynamic(this, &UNCPlayerInventoryHud::UpdateItemSlot);
 
 	UpdateItemSlot();
 }
@@ -38,7 +38,14 @@ void UNCPlayerInventoryHud::UpdateItemSlot()
 {
 	for (int32 i = 0; i < SlotWidgets.Num(); i++)
 	{
-		const FInventorySlot& InventorySlot  = InventoryComp->Items[i];
-		SlotWidgets[i]->SetSlotData(i, InventorySlot .ItemTypeTag, InventorySlot .Quantity);
+		if (i < InventoryComp->Items.Num())
+		{
+			const FInventorySlot& InventorySlot  = InventoryComp->Items[i];
+			SlotWidgets[i]->SetSlotData(i, InventorySlot.ItemTypeTag, InventorySlot.Quantity);
+		}
+		else
+		{
+			SlotWidgets[i]->SetSlotData(i, FGameplayTag(), 0);
+		}
 	}
 }
