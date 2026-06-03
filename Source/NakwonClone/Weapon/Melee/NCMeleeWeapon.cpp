@@ -31,7 +31,7 @@ void ANCMeleeWeapon::InitFromDataTable(FName RowName)
 {
     if (!WeaponDataTable) return;
 
-    FNCMeleeWeaponData* Data = WeaponDataTable->FindRow<FNCMeleeWeaponData>(
+    FNCWeaponData* Data = WeaponDataTable->FindRow<FNCWeaponData>(
         RowName, TEXT("MeleeWeaponData"));
 
     if (Data)

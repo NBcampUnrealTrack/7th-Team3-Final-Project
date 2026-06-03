@@ -59,6 +59,29 @@ namespace NCItemTag
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest);   // 퀘스트 아이템
 };
 
+// 무기 관련 태그
+namespace NCWeapon
+{
+	// 무기 타입
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Unarmed);    // 맨손
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_OneHanded);  // 한손 (크로우바, 칼)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_TwoHanded);  // 양손 (도끼, 배트)
+
+	// 무기 무게
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weight_Light);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weight_Medium);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weight_Heavy);
+
+	// 무기 액션
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Attacking);   // 공격 중
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_SwingDelay);  // 공격 후 딜레이
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Swapping);    // 무기 교체 중
+
+	// 무기 상태
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Equipped);  // 장착됨
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Broken);    // 파손
+};
+
 namespace NCGameStateTags
 {
 	// 게임 상태
