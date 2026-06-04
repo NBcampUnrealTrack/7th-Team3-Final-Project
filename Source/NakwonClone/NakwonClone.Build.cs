@@ -29,8 +29,7 @@ public class NakwonClone : ModuleRules
 			"GameplayAbilities",
 			"GameplayTasks",
 			"GameplayTags",
-            "AnimGraphRuntime"
-        });
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
