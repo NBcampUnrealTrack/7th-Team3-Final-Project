@@ -58,5 +58,12 @@ void UBTService_CheckAttackRange::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		Distance, AttackRange, Distance <= AttackRange ? TEXT("true") : TEXT("false"));
 	
 	// 공격 범위 안이면 bIsAttack = true
-	Blackboard->SetValueAsBool("bIsAttack", Distance <= AttackRange);
+	if (Distance <= AttackRange)
+	{
+		Blackboard->SetValueAsBool("bIsAttack", true);
+	}
+	else
+	{
+		Blackboard->SetValueAsBool("bIsAttack", false);
+	}
 }

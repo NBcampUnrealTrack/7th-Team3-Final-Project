@@ -46,9 +46,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
 	virtual bool DropItem(int32 SlotIndex, int32 Quantity);
 	
+	UFUNCTION(Server, Reliable)
+	void Server_DropItem(int32 SlotIndex, int32 Quantity);
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Drop")
 	TSubclassOf<class AActor> BaseItemActorClass;
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
 	virtual bool LootItem(class ANCItemActor* ItemToLoot);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_LootItem(class ANCItemActor* ItemToLoot);
+	
 };

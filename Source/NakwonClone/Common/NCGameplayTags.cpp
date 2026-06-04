@@ -25,6 +25,25 @@ UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Alive, "Character.State.Alive");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Downed, "Character.State.Downed");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Dead, "Character.State.Dead");
 
+// 무기 타입
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_Unarmed,   "Weapon.Type.Unarmed");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_OneHanded, "Weapon.Type.OneHanded");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_TwoHanded, "Weapon.Type.TwoHanded");
+
+// 무기 무게
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Weight_Light,  "Weapon.Weight.Light");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Weight_Medium, "Weapon.Weight.Medium");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Weight_Heavy,  "Weapon.Weight.Heavy");
+
+// 무기 액션
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Action_Attacking,  "Weapon.Action.Attacking");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Action_SwingDelay, "Weapon.Action.SwingDelay");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Action_Swapping,   "Weapon.Action.Swapping");
+
+// 무기 상태
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::State_Equipped, "Weapon.State.Equipped");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::State_Broken,   "Weapon.State.Broken");
+
 // 게임 상태
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::Title, "GameState.State.Title");
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::Lobby, "GameState.State.Lobby");

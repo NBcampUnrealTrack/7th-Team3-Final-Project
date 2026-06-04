@@ -38,7 +38,7 @@ protected:
 #pragma region 워커 고유 스탯
 	// 이동 속도 ( 추후 GAS로 옮길 예정 )
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Walker")
-	float WalkSpeed = 100.f;
+	float WalkSpeed = 80.f;
 #pragma endregion
 
 #pragma region 애니메이션
@@ -64,4 +64,10 @@ protected:
 public:
 	// BTTask에서 상태 변경 시 호출
 	void SetMonsterState(EMonsterState NewState);
+	
+	UFUNCTION()
+	void HandleHit();
+	
+	UFUNCTION()
+	void HandleDead();
 };

@@ -24,6 +24,37 @@ void ANCGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// todo : 아이템, 좀비 스폰 포인트 추가 (배열, UGamePlayStatics::GetAllActorsOfClass(~~))
+	/* 월드의 SpawnPoint를 순회하면서 스폰 로직 활성화
+	TArray<AActor*> ItemFoundVolumes;
+	TArray<AActor*> ZombieFoundVolumes;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AItemSpawnPoint::StaticClass(), ItemFoundVolumes);
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AZombieSpawnPoint::StaticClass(), ZombieFoundVolumes);
+	
+	for (AActor* Actor : ItemFoundVolumes)
+	{
+		AItemSpawnPoint* ItemSpawnVolume = Cast<AItemSpawnPoint>(Actor);
+		if (ItemSpawnVolume)
+		{
+			ItemSpawnVolume->SpawnItems();
+		}
+	}
+	
+	for (AActor* Actor : ZombieFoundVolumes)
+	{
+		AZombieSpawnPoint* ZombieSpawnVolume = Cast<AZombieSpawnPoint>(Actor);
+		if (ZombieSpawnVolume)
+		{
+			ZombieSpawnVolume->SpawnZombie(5, 10, 4, 6, 1, 1);
+		}
+	}
+	
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ACH4PlayerController* PC = Cast<ACH4PlayerController>(It->Get());
+		PC->Client_EnablePlayerInput();
+	}
+	*/
 }
 
 void ANCGameMode::PostLogin(APlayerController* NewPlayer)
@@ -77,7 +108,7 @@ void ANCGameMode::StartMatch()
 	SetMatchTimerHandle();
 }
 
-void ANCGameMode::HandleMatchEnd(bool bClear)
+void ANCGameMode::EndMatch(bool bClear)
 {
 	ANCGameState* GS = GetGameState<ANCGameState>();
 	if (!GS) return;
@@ -100,14 +131,14 @@ void ANCGameMode::MoveToTitle()
 {
 	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
 	
-	GetWorld()->ServerTravel("Game/Maps/L_TitleAndLobby?listen");
+	GetWorld()->ServerTravel("/Game/Maps/L_TitleAndLobby?listen"); // todo : 타이틀 경로 추가 예시-("/Game/Maps/TitleMap?listen")
 }
 
 void ANCGameMode::MoveToLobby()
 {
 	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
 	
-	GetWorld()->ServerTravel("Game/Maps/L_TitleAndLobby?listen");
+	GetWorld()->ServerTravel("/Game/Maps/L_TitleAndLobby?listen");
 }
 
 void ANCGameMode::HandlePlayerDowned(ANCPlayerState* PlayerState)
@@ -161,7 +192,7 @@ void ANCGameMode::CheckAllPlayersDead()
 
 	if (GS->AlivePlayerCount <= 0)
 	{
-		HandleMatchEnd(false); // 전멸 → 게임오버
+		EndMatch(false); // 전멸 → 게임오버
 	}
 }
 
@@ -191,6 +222,6 @@ void ANCGameMode::TimerTick()
 	if (GS->RemainingMatchTime <= 0.f)
 	{
 		GetWorldTimerManager().ClearTimer(MatchTimerHandle);
-		HandleMatchEnd(false);
+		EndMatch(false);
 	}
 }

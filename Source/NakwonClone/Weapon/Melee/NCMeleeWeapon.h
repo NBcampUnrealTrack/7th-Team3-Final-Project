@@ -33,7 +33,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<UDataTable> WeaponDataTable;
 
-	FNCMeleeWeaponData CurrentWeaponData;
+	FNCWeaponData CurrentWeaponData;
 
 	//GAS
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|GAS")
