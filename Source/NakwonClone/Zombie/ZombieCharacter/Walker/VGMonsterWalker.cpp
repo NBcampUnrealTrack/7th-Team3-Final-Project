@@ -2,6 +2,7 @@
 
 #include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 
 AVGMonsterWalker::AVGMonsterWalker()
@@ -33,9 +34,6 @@ void AVGMonsterWalker::BeginPlay()
 		// 사망 이벤트 오면 HandleDead 실행
 		MonsterAttributeSet->OnDead.AddDynamic(this, &AVGMonsterWalker::HandleDead);
 	}
-	
-	// 시작 시 순찰 상태로 초기화
-	SetMonsterState(EMonsterState::Move);
 }
 
 void AVGMonsterWalker::SetMonsterState(EMonsterState NewState)
@@ -98,4 +96,52 @@ void AVGMonsterWalker::HandleDead()
 	}, 1.16f, false);
 
 	SetLifeSpan(200.f);
+}
+
+void AVGMonsterWalker::PerformAttackTrace()
+{
+	USkeletalMeshComponent* SkeletalMesh = GetMesh();
+	if (!SkeletalMesh) return;
+	
+	for (const FName& SocketName : AttackSocketNames)
+	{
+		FVector SocketLocation = SkeletalMesh->GetSocketLocation(SocketName);
+		FVector TraceEnd = SocketLocation + GetActorForwardVector() * AttackTraceDistance;
+		
+		FHitResult Hit;
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(this);
+	
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			Hit,
+			SocketLocation,
+			TraceEnd,
+			ECC_Pawn,
+			Params);
+		
+		DrawDebugLine(GetWorld(), SocketLocation, TraceEnd, bHit ? FColor::Red : FColor::Green, false, 1.f);
+	
+		if (bHit)
+		{
+			UAbilitySystemComponent* TargetASC = 
+				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Hit.GetActor());
+			UAbilitySystemComponent* MonsterASC = 
+				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
+		
+			if (TargetASC && MonsterASC && AttackEffectClass)
+			{
+				FGameplayEffectContextHandle EffectContext = MonsterASC->MakeEffectContext();
+				EffectContext.AddSourceObject(this);
+				FGameplayEffectSpecHandle  SpecHandle = MonsterASC->MakeOutgoingSpec(
+					AttackEffectClass, 2.f, EffectContext);
+			
+				if (SpecHandle.IsValid())
+				{
+					MonsterASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+				}
+			}
+			return;
+		}
+		
+	}
 }
