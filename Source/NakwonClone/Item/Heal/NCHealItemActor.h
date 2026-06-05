@@ -12,9 +12,17 @@ class NAKWONCLONE_API ANCHealItemActor : public ANCItemActor
 public:
 	ANCHealItemActor();
 
-	/** 사용 시 회복할 체력량 */
+	//체력 회복량
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Heal")
 	float HealAmount;
+
+	// 스태미나 회복량
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Heal")
+	float StaminaAmount;
+
+	// 감염도 감소량
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Heal")
+	float InfectionReduceAmount;
 
 	virtual void UseItem(class ACharacter* User) override;
 
