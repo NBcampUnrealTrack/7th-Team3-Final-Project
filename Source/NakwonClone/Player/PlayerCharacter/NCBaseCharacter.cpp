@@ -1,7 +1,6 @@
 #include "NCBaseCharacter.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "NakwonClone/Player/PlayerData/NCPlayerMovementData.h"
 #include "NakwonClone/Player/PlayerComponent/UNCStatComponent.h"
 #include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "AbilitySystemComponent.h"
@@ -19,8 +18,6 @@ ANCBaseCharacter::ANCBaseCharacter()
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
     GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
-    CurrentGaitTag = NCCharacter::Jog;
-    CurrentStanceTag = NCCharacter::Stand;
     CurrentActionTag = FGameplayTag::EmptyTag;
 
     //TODO: GAS 완전 전환 후 제거
@@ -44,10 +41,9 @@ void ANCBaseCharacter::BeginPlay()
     Super::BeginPlay();
 
     if (AbilitySystemComponent)
-        if (AbilitySystemComponent)
-        {
-            AbilitySystemComponent->InitAbilityActorInfo(this, this);
-        }
+    {
+        AbilitySystemComponent->InitAbilityActorInfo(this, this);
+    }
 }
 
 void ANCBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -75,22 +71,6 @@ void ANCBaseCharacter::Landed(const FHitResult& Hit)
     );
 }
 
-void ANCBaseCharacter::ApplyMovementData(FGameplayTag StateTag)
-{
-    if (!MovementDataTable) return;
-
-    FName RowName = StateTag.GetTagName();
-    FString ContextString = TEXT("Movement Data");
-
-    FNcPlayerMovementData* RowData = MovementDataTable->FindRow<FNcPlayerMovementData>(RowName, ContextString);
-
-    if (RowData)
-    {
-        GetCharacterMovement()->MaxWalkSpeed = RowData->MovementSpeed;
-        GetCharacterMovement()->MaxWalkSpeedCrouched = RowData->MovementSpeed;
-        GetCharacterMovement()->MaxAcceleration = RowData->MaxAcceleration;
-    }
-}
 
 void ANCBaseCharacter::ResetLandingState()
 {

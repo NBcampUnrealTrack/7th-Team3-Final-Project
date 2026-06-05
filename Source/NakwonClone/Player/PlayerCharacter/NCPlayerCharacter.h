@@ -7,6 +7,8 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UNCPlayerInventoryComponent;
+class UNCLocomotionComponent;
+class UNCCombatComponent;
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
@@ -18,7 +20,7 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	
-	// 하상빈 추가
+	//하상빈 추가
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventory; }
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer StateTags;
@@ -46,12 +48,22 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FollowCamera;
 
-	// 하상빈 추가
+	//하상빈 추가
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Inventory")
 	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventory;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Locomotion")
+	TObjectPtr<UNCLocomotionComponent> LocomotionComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Interaction")
 	TObjectPtr<class UNCInteractionComponent> InteractionComponent;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
+	TObjectPtr<UNCCombatComponent> CombatComponent;
+
+private:
+	void InitCamera();
+	void InitComponents();
+
 public:
 	//무기 장착
 	UFUNCTION(BlueprintCallable)

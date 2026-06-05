@@ -7,8 +7,16 @@
 #include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
+#include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
+#include "NakwonClone/Player/PlayerComponent/Combat/UNCCombatComponent.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
+{
+    InitCamera();
+    InitComponents();
+}
+
+void ANCPlayerCharacter::InitCamera()
 {
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
@@ -20,10 +28,14 @@ ANCPlayerCharacter::ANCPlayerCharacter()
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     FollowCamera->bUsePawnControlRotation = false;
-  
-    // 하상빈 추가
+}
+
+void ANCPlayerCharacter::InitComponents()
+{
     PlayerInventory = CreateDefaultSubobject<UNCPlayerInventoryComponent>(TEXT("PlayerInventory"));
     InteractionComponent = CreateDefaultSubobject<UNCInteractionComponent>(TEXT("InteractionComponent"));
+    LocomotionComponent = CreateDefaultSubobject<UNCLocomotionComponent>(TEXT("LocomotionComponent"));
+    CombatComponent = CreateDefaultSubobject<UNCCombatComponent>(TEXT("CombatComponent"));
 }
 
 void ANCPlayerCharacter::BeginPlay()
@@ -40,7 +52,8 @@ void ANCPlayerCharacter::BeginPlay()
 void ANCPlayerCharacter::Server_SetGait_Implementation(FGameplayTag NewGaitTag)
 {
     CurrentGaitTag = NewGaitTag;
-    ApplyMovementData(CurrentGaitTag);
+    if (LocomotionComponent)
+        LocomotionComponent->SetGaitTag(NewGaitTag);
 }
 
 void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceTag)
@@ -50,40 +63,42 @@ void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceT
     if (CurrentStanceTag == NCCharacter::Crouch)
     {
         Crouch();
-        ApplyMovementData(CurrentStanceTag);
+        if (LocomotionComponent)
+            LocomotionComponent->SetStanceTag(NewStanceTag);
     }
     else
     {
         UnCrouch();
-        ApplyMovementData(CurrentGaitTag);
+        if (LocomotionComponent)
+            LocomotionComponent->SetGaitTag(CurrentGaitTag);
     }
 }
 
 void ANCPlayerCharacter::StartSprint()
 {
     CurrentGaitTag = NCCharacter::Sprint;
-    ApplyMovementData(CurrentGaitTag);
+    if (LocomotionComponent)
+        LocomotionComponent->SetGaitTag(CurrentGaitTag);
     Server_SetGait(CurrentGaitTag);
 }
 
 void ANCPlayerCharacter::StopSprint()
 {
     CurrentGaitTag = NCCharacter::Jog;
-    ApplyMovementData(CurrentGaitTag);
+    if (LocomotionComponent)
+        LocomotionComponent->SetGaitTag(CurrentGaitTag);
     Server_SetGait(CurrentGaitTag);
 }
 
 void ANCPlayerCharacter::ToggleWalk()
 {
     if (CurrentGaitTag == NCCharacter::Walk)
-    {
         CurrentGaitTag = NCCharacter::Jog;
-    }
     else
-    {
         CurrentGaitTag = NCCharacter::Walk;
-    }
-    ApplyMovementData(CurrentGaitTag);
+
+    if (LocomotionComponent)
+        LocomotionComponent->SetGaitTag(CurrentGaitTag);
     Server_SetGait(CurrentGaitTag);
 }
 
@@ -93,13 +108,15 @@ void ANCPlayerCharacter::ToggleCrouch()
     {
         UnCrouch();
         CurrentStanceTag = NCCharacter::Stand;
-        ApplyMovementData(CurrentGaitTag);
+        if (LocomotionComponent)
+            LocomotionComponent->SetGaitTag(CurrentGaitTag);
     }
     else
     {
         Crouch();
         CurrentStanceTag = NCCharacter::Crouch;
-        ApplyMovementData(CurrentStanceTag);
+        if (LocomotionComponent)
+            LocomotionComponent->SetStanceTag(CurrentStanceTag);
     }
     Server_SetStance(CurrentStanceTag);
 }

@@ -110,11 +110,16 @@ void ANCMeleeWeapon::PerformTrace()
     PreviousEnd   = CurrentEnd;
 }
 
-//모든 클라이언트에서 디버그 라인 표시
+//모든 클라이언트에서 디버그 표시
 void ANCMeleeWeapon::Multicast_DrawDebug_Implementation(FVector Start, FVector End)
 {
 #if WITH_EDITOR
-    DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.1f, 0, 1.f);
+    // 트레이스 라인
+    DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.5f, 0, 2.f);
+
+    // 시작점/끝점 구체
+    DrawDebugSphere(GetWorld(), Start, 6.f, 8, FColor::Green, false, 0.5f);
+    DrawDebugSphere(GetWorld(), End,   6.f, 8, FColor::Blue,  false, 0.5f);
 #endif
 }
 
@@ -130,8 +135,9 @@ void ANCMeleeWeapon::Server_ApplyDamage_Implementation(ANCBaseCharacter* Target)
     if (TargetASC && SourceASC)
     {
         FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
+        // DataTable의 Damage 값 적용
         FGameplayEffectSpecHandle EffectSpec = SourceASC->MakeOutgoingSpec(
-            DamageEffectClass, 1.0f, EffectContext);
+            DamageEffectClass, CurrentWeaponData.Damage, EffectContext);
 
         if (EffectSpec.IsValid())
         {
