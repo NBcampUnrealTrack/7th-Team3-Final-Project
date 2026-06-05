@@ -31,8 +31,17 @@ public:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Data")
 	int32 Quantity = 1;
 	
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Data")
+	FName ItemID; 
+
+	UPROPERTY(ReplicatedUsing = OnRep_ItemMeshAsset, BlueprintReadOnly, Category = "Item|Data")
+	class UStaticMesh* ItemMeshAsset;
+
+	UFUNCTION()
+	void OnRep_ItemMeshAsset();
+	
 	UFUNCTION(BlueprintCallable, Category = "Item")
-	void InitializeItemData(FGameplayTag InTag, int32 InQuantity);
+	void InitializeItemData(FName InItemID, FGameplayTag InTag, int32 InQuantity, UStaticMesh* InMesh);
 
 	// 아이템 사용
 	UFUNCTION(BlueprintCallable, Category = "Item")

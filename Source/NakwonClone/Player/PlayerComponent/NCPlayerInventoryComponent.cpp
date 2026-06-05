@@ -163,7 +163,7 @@ void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex
 		ANCItemActor* SpawnedItemActor = Cast<ANCItemActor>(DroppedItem);
 		if (SpawnedItemActor)
 		{
-			SpawnedItemActor->InitializeItemData(ItemTag, DropQuantity);
+			SpawnedItemActor->InitializeItemData(NAME_None, ItemTag, DropQuantity, nullptr);
 		}
 	}
 

@@ -27,6 +27,8 @@ void ANCItemActor::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 	
 	DOREPLIFETIME(ANCItemActor, ItemTypeTag);
 	DOREPLIFETIME(ANCItemActor, Quantity);
+	DOREPLIFETIME(ANCItemActor, ItemID);    
+	DOREPLIFETIME(ANCItemActor, ItemMeshAsset);
 }
 
 // 자식 클래스에서 오버라이드
@@ -70,13 +72,23 @@ void ANCItemActor::ToggleHighlight_Implementation(bool bHighlight)
 	}
 }
 
-void ANCItemActor::InitializeItemData(FGameplayTag InTag, int32 InQuantity)
+void ANCItemActor::OnRep_ItemMeshAsset()
 {
-	if (HasAuthority())
+	if (ItemMesh && ItemMeshAsset)
 	{
-		ItemTypeTag = InTag;
-		Quantity = InQuantity;
+		ItemMesh->SetStaticMesh(ItemMeshAsset);
 	}
 }
 
-
+void ANCItemActor::InitializeItemData(FName InItemID, FGameplayTag InTag, int32 InQuantity, UStaticMesh* InMesh)
+{
+	if (HasAuthority())
+	{
+		ItemID = InItemID;
+		ItemTypeTag = InTag;
+		Quantity = InQuantity;
+		
+		ItemMeshAsset = InMesh;
+		OnRep_ItemMeshAsset();
+	}
+}
