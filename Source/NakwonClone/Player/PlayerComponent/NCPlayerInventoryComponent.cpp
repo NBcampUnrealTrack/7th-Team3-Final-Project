@@ -103,6 +103,7 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
         
 		if (QuickSlots[QuickSlotIndex].Quantity <= 0)
 		{
+			QuickSlots[QuickSlotIndex].ItemID = NAME_None;
 			QuickSlots[QuickSlotIndex].ItemTypeTag = FGameplayTag::EmptyTag;
 			QuickSlots[QuickSlotIndex].Quantity = 0;
 		}
@@ -143,13 +144,12 @@ void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex
 		return;
 	}
 
+	FName DropItemID = Items[SlotIndex].ItemID;
 	FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
-
 	int32 DropQuantity = FMath::Min(Quantity, Items[SlotIndex].Quantity);
 
 	AActor* OwnerActor = GetOwner();
 	FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
-
 	SpawnLocation.Z -= 20.0f; 
 	FRotator SpawnRotation = OwnerActor->GetActorRotation();
 
@@ -163,7 +163,20 @@ void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex
 		ANCItemActor* SpawnedItemActor = Cast<ANCItemActor>(DroppedItem);
 		if (SpawnedItemActor)
 		{
-			SpawnedItemActor->InitializeItemData(NAME_None, ItemTag, DropQuantity, nullptr);
+			UStaticMesh* MeshToSet = nullptr;
+			
+			UDataTable* LoadedItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/NakwonClone/Blueprints/Item/ItemData/DT_ItemTypeData.DT_ItemTypeData"));
+           
+			if (LoadedItemDataTable && !DropItemID.IsNone())
+			{
+				FItemData* FoundData = LoadedItemDataTable->FindRow<FItemData>(DropItemID, TEXT("DropItemLookup"));
+				if (FoundData)
+				{
+					MeshToSet = FoundData->ItemMesh; // 옷 찾기 성공!
+				}
+			}
+			
+			SpawnedItemActor->InitializeItemData(DropItemID, ItemTag, DropQuantity, MeshToSet);
 		}
 	}
 
@@ -186,10 +199,11 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 		return;
 	}
 	
+	FName LootID = ItemToLoot->ItemID;
 	FGameplayTag LootTag = ItemToLoot->ItemTypeTag; 
 	int32 LootQuantity = ItemToLoot->Quantity;
 	
-	bool bAdded = AddItem(LootTag, LootQuantity);
+	bool bAdded = AddItem(LootID, LootTag, LootQuantity);
 	
 	if (bAdded)
 	{
