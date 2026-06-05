@@ -52,11 +52,6 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UVGPlayerAttributeSet> PlayerAttributeSet;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
-	class UDataTable* MovementDataTable;
-
-	void ApplyMovementData(FGameplayTag StateTag);
-
 protected:
 	FTimerHandle LandingTimerHandle;
 	void ResetLandingState();
