@@ -42,24 +42,25 @@ protected:
 #pragma endregion
 
 #pragma region 애니메이션
-	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
 	TObjectPtr<UAnimMontage> AnimMove;
 	
-	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
 	TObjectPtr<UAnimMontage> AnimStop;
 	
-	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
 	TObjectPtr<UAnimMontage> AnimChase;
 	
-	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
 	TObjectPtr<UAnimMontage> AnimHit;
 	
-	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
 	TObjectPtr<UAnimMontage> AnimDead;
 	
-	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
 	TObjectPtr<UAnimMontage> AnimAttack;
 #pragma endregion
+	
 	
 public:
 	// BTTask에서 상태 변경 시 호출
@@ -70,4 +71,25 @@ public:
 	
 	UFUNCTION()
 	void HandleDead();
+	
+
+public:
+	void PerformAttackTrace();
+	
+private:
+	// 에디터에서 GE_Attack 에셋 할당
+	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
+	TSubclassOf<class UGameplayEffect> AttackEffectClass;
+	
+	// 소켓 이름 (스켈레톤 에디터에서 추가한 이름과 동일하게)
+	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
+	TArray<FName> AttackSocketNames = {
+		TEXT("AttackSocket_Fist"),
+		TEXT("AttackSocket_Wrist"),
+		TEXT("AttackSocket_Elbow")
+	};
+	
+	// 트레이스 거리
+	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
+	float AttackTraceDistance = 100.f;
 };
