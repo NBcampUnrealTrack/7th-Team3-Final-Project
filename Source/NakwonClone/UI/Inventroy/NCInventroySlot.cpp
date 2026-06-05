@@ -16,11 +16,13 @@ void UNCInventroySlot::SetSlotData(int32 InIndex, FGameplayTag InTag, int32 InQu
 	if (InTag.IsValid())
 	{
 		ItemCountText->SetText(FText::AsNumber(InQuantity));
+		ItemCountText->SetVisibility(ESlateVisibility::Visible);
 		ItemImage->SetVisibility(ESlateVisibility::Visible);
 	}
 	else
 	{
 		ItemCountText->SetText(FText::GetEmpty());
+		ItemCountText->SetVisibility(ESlateVisibility::Hidden);
 		ItemImage->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
