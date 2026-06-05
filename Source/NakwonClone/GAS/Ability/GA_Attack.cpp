@@ -1,5 +1,5 @@
-#include "GA_Attack.h"
-#include "NakwonClone/Player/PlayerComponent/Combat/UNCCombatComponent.h"
+﻿#include "GA_Attack.h"
+#include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "NakwonClone/Player/PlayerData/NCWeaponData.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "AbilitySystemComponent.h"

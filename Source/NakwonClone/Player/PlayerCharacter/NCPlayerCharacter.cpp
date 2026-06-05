@@ -1,4 +1,4 @@
-#include "NCPlayerCharacter.h"
+﻿#include "NCPlayerCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Common/NCGameplayTags.h"
@@ -8,7 +8,7 @@
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
-#include "NakwonClone/Player/PlayerComponent/Combat/UNCCombatComponent.h"
+#include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
