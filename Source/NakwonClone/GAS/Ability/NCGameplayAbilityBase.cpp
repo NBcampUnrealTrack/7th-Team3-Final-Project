@@ -1,6 +1,6 @@
-#include "NCGameplayAbilityBase.h"
+﻿#include "NCGameplayAbilityBase.h"
 #include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
-#include "NakwonClone/Player/PlayerComponent/Combat/UNCCombatComponent.h"
+#include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 
 ANCBaseCharacter* UNCGameplayAbilityBase::GetOwnerCharacter() const
 {
