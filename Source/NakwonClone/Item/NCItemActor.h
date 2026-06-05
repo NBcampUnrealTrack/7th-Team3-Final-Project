@@ -22,16 +22,20 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Data")
+	FDataTableRowHandle ItemRowHandle;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
 	class UStaticMeshComponent* ItemMesh;
 	
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Data")
-	FGameplayTag ItemTypeTag;
-	
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Data")
 	int32 Quantity = 1;
 	
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Data")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Item|Data")
+	FGameplayTag ItemTypeTag;
+	
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Item|Data")
 	FName ItemID; 
 
 	UPROPERTY(ReplicatedUsing = OnRep_ItemMeshAsset, BlueprintReadOnly, Category = "Item|Data")
@@ -55,4 +59,6 @@ public:
 	virtual FText GetInteractPrompt_Implementation() override;
 	
 	virtual void ToggleHighlight_Implementation(bool bHighlight) override;
+	
+	virtual void OnConstruction(const FTransform& Transform) override;
 };

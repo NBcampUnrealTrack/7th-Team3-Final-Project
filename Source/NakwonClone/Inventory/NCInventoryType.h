@@ -12,9 +12,10 @@ struct FItemData : public FTableRowBase
 	GENERATED_BODY()
 	
 public:
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
 	class UStaticMesh* ItemMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
+	class UTexture2D* ItemIcon;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
 	FGameplayTag ItemTypeTag;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
@@ -22,6 +23,7 @@ public:
 	
 	FItemData()
 		: ItemMesh(nullptr)
+		, ItemIcon(nullptr)
 		, ItemTypeTag(FGameplayTag::EmptyTag)
 		, MaxStackSize(1)
 	{}

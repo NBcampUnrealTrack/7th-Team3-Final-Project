@@ -72,6 +72,28 @@ void ANCItemActor::ToggleHighlight_Implementation(bool bHighlight)
 	}
 }
 
+void ANCItemActor::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	
+	ItemID = ItemRowHandle.RowName;
+
+	if (!ItemRowHandle.IsNull())
+	{
+		FItemData* FoundData = ItemRowHandle.GetRow<FItemData>(TEXT("ActorConstruction"));
+        
+		if (FoundData)
+		{
+			ItemTypeTag = FoundData->ItemTypeTag;
+            
+			if (ItemMesh && FoundData->ItemMesh)
+			{
+				ItemMesh->SetStaticMesh(FoundData->ItemMesh);
+			}
+		}
+	}
+}
+
 void ANCItemActor::OnRep_ItemMeshAsset()
 {
 	if (ItemMesh && ItemMeshAsset)
