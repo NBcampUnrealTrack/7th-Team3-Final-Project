@@ -39,14 +39,14 @@ void UNCInventoryBaseComponent::InitializeInventory()
 	Items.Init(FInventorySlot(), TotalSlots);
 }
 
-bool UNCInventoryBaseComponent::GetItemDataByTag(FGameplayTag ItemTag, FItemData& OutItemData) const
+bool UNCInventoryBaseComponent::GetItemDataByTag(FName ItemID, FGameplayTag ItemTag, FItemData& OutItemData) const
 {
 	if (!ItemDataTable || !ItemTag.IsValid())
 	{
 		return false;
 	}
 	
-	FItemData* FoundData = ItemDataTable->FindRow<FItemData>(ItemTag.GetTagName(), TEXT("GetItemData_Helper"));
+	FItemData* FoundData = ItemDataTable->FindRow<FItemData>(ItemID, TEXT("GetItemData_Helper"));
     
 	if (FoundData)
 	{
@@ -57,7 +57,7 @@ bool UNCInventoryBaseComponent::GetItemDataByTag(FGameplayTag ItemTag, FItemData
 	return false;
 }
 
-bool UNCInventoryBaseComponent::AddItem(FGameplayTag ItemTypeTag, int32 Quantity)
+bool UNCInventoryBaseComponent::AddItem(FName ItemID, FGameplayTag ItemTypeTag, int32 Quantity)
 {
 	if (!GetOwner()->HasAuthority())
 	{
@@ -70,7 +70,7 @@ bool UNCInventoryBaseComponent::AddItem(FGameplayTag ItemTypeTag, int32 Quantity
 	}
 	
 	FString ContextString = TEXT("Item Add");
-	FItemData* ItemData = ItemDataTable->FindRow<FItemData>(ItemTypeTag.GetTagName(), ContextString);
+	FItemData* ItemData = ItemDataTable->FindRow<FItemData>(ItemID, ContextString);
 	
 	if (!ItemData)
 	{
@@ -82,7 +82,8 @@ bool UNCInventoryBaseComponent::AddItem(FGameplayTag ItemTypeTag, int32 Quantity
 	if (ItemData->MaxStackSize > 1)
 	{
 		int32 StackableSlotIndex;
-		while (RemainingQuantity > 0 && FindStackableSlot(ItemTypeTag, ItemData->MaxStackSize, StackableSlotIndex))
+		
+		while (RemainingQuantity > 0 && FindStackableSlot(ItemID, ItemTypeTag, ItemData->MaxStackSize, StackableSlotIndex))
 		{
 			int32 RoomInSlot = ItemData->MaxStackSize - Items[StackableSlotIndex].Quantity;
 
@@ -104,6 +105,7 @@ bool UNCInventoryBaseComponent::AddItem(FGameplayTag ItemTypeTag, int32 Quantity
 		int32 EmptySlotIndex;
 		if (FindEmptySlot(EmptySlotIndex))
 		{
+			Items[EmptySlotIndex].ItemID = ItemID;
 			Items[EmptySlotIndex].ItemTypeTag = ItemTypeTag;
 
 			if (RemainingQuantity <= ItemData->MaxStackSize)
@@ -148,6 +150,7 @@ bool UNCInventoryBaseComponent::RemoveItem(int32 SlotIndex, int32 Quantity)
 
 		if (Items[SlotIndex].Quantity == 0)
 		{
+			Items[SlotIndex].ItemID = NAME_None;
 			Items[SlotIndex].ItemTypeTag = FGameplayTag::EmptyTag;
 		}
         
@@ -176,6 +179,7 @@ bool UNCInventoryBaseComponent::MoveItem(int32 FromIndex, int32 ToIndex)
 	{
 		Items[ToIndex] = Items[FromIndex];
         
+		Items[FromIndex].ItemID = NAME_None;
 		Items[FromIndex].ItemTypeTag = FGameplayTag::EmptyTag;
 		Items[FromIndex].Quantity = 0;
         
@@ -183,7 +187,7 @@ bool UNCInventoryBaseComponent::MoveItem(int32 FromIndex, int32 ToIndex)
 	}
 	else
 	{
-		if (Items[ToIndex].ItemTypeTag == Items[FromIndex].ItemTypeTag)
+		if (Items[ToIndex].ItemID == Items[FromIndex].ItemID && Items[ToIndex].ItemTypeTag == Items[FromIndex].ItemTypeTag)
 		{
 			bSuccess = CombineSlots(FromIndex, ToIndex);
 		}
@@ -214,12 +218,11 @@ bool UNCInventoryBaseComponent::FindEmptySlot(int32& OutSlotIndex) const
 	return false;
 }
 
-bool UNCInventoryBaseComponent::FindStackableSlot(FGameplayTag ItemTypeTag, int32 MaxStackSize,
-	int32& OutSlotIndex) const
+bool UNCInventoryBaseComponent::FindStackableSlot(FName ItemID, FGameplayTag ItemTypeTag, int32 MaxStackSize, int32& OutSlotIndex) const
 {
 	for (int32 i = 0; i < Items.Num(); i++)
 	{
-		if (Items[i].ItemTypeTag == ItemTypeTag && Items[i].Quantity < MaxStackSize)
+		if (Items[i].ItemID == ItemID && Items[i].ItemTypeTag == ItemTypeTag && Items[i].Quantity < MaxStackSize)
 		{
 			OutSlotIndex = i;
 			return true;
@@ -244,7 +247,7 @@ bool UNCInventoryBaseComponent::CombineSlots(int32 SourceIndex, int32 TargetInde
 		return false;
 	}
 	
-	FItemData* ItemData = ItemDataTable->FindRow<FItemData>(Items[SourceIndex].ItemTypeTag.GetTagName(), TEXT("CombineItem"));
+	FItemData* ItemData = ItemDataTable->FindRow<FItemData>(Items[SourceIndex].ItemID, TEXT("CombineItem"));
 	if (!ItemData)
 	{
 		return false;
@@ -260,6 +263,7 @@ bool UNCInventoryBaseComponent::CombineSlots(int32 SourceIndex, int32 TargetInde
 	{
 		Items[TargetIndex].Quantity += Items[SourceIndex].Quantity;
 		
+		Items[SourceIndex].ItemID = NAME_None;
 		Items[SourceIndex].ItemTypeTag = FGameplayTag::EmptyTag;
 		Items[SourceIndex].Quantity = 0;
 	}

@@ -5,6 +5,7 @@
 #include "Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
+#include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "AbilitySystemComponent.h"
 
 ANCPlayerController::ANCPlayerController()
@@ -144,9 +145,17 @@ void ANCPlayerController::Attack()
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
 
-    if (UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent())
+    UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent();
+    if (!ASC) return;
+
+    // 첫 번째 공격: GA_Attack 활성화 시도
+    // 실패(이미 공격 중) → 콤보 다음 섹션으로 전환
+    if (!ASC->TryActivateAbilityByClass(PC->AttackAbilityClass))
     {
-        ASC->TryActivateAbilityByClass(PC->AttackAbilityClass);
+        if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
+        {
+            Combat->MeleeAttack();
+        }
     }
 }
 

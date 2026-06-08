@@ -167,6 +167,12 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 			ASC->AddLooseGameplayTag(Data->WeightTag);
 			ASC->AddLooseGameplayTag(NCWeapon::State_Equipped);
 
+			// 콤보 데이터 설정
+			FNCWeaponComboData ComboData;
+			ComboData.ComboMontage = Data->AttackMontage.LoadSynchronous();
+			ComboData.ComboSections = { TEXT("Attack1"), TEXT("Attack2"), TEXT("Attack3"), TEXT("Attack4") };
+			EquipWeaponCombo(ComboData);
+
 			// 무기 액터 스폰 후 손에 부착
 			if (!Data->WeaponActorClass.IsNull())
 			{
@@ -260,11 +266,6 @@ bool UNCCombatComponent::CanAttack() const
 	}
 
 	if (!ASC)
-	{
-		return false;
-	}
-
-	if (ASC->HasMatchingGameplayTag(NCWeapon::Action_Attacking))
 	{
 		return false;
 	}
