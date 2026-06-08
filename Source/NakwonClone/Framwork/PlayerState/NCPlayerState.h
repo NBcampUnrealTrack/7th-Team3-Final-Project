@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
-
 #include "NakwonClone/Common/NCGameplayTags.h"
+class UNCPlayerInventoryComponent;
+class UNCStashInventoryComponent;
 
 #include "NCPlayerState.generated.h"
 
@@ -24,6 +25,7 @@ class NAKWONCLONE_API ANCPlayerState : public APlayerState
 public:
 	ANCPlayerState();
 	
+	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_LifeStateTag, BlueprintReadOnly)
@@ -77,4 +79,18 @@ public:
 	
 	UPROPERTY()
 	FOnLifeStateChanged OnLifeStateChanged;
+	
+public: //하상빈 추가
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UNCPlayerInventoryComponent* PlayerInventory;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UNCStashInventoryComponent* StashInventory;
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Save")
+	void SaveInventoryData();
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Save")
+	void LoadInventoryData();
 };
