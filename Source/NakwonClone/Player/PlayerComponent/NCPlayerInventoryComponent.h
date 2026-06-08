@@ -25,8 +25,6 @@ public:
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
     
-	virtual void InitializeInventory() override;
-	
 	UFUNCTION()
 	virtual void OnRep_QuickSlots();
 	
@@ -58,4 +56,5 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_LootItem(class ANCItemActor* ItemToLoot);
 	
+	virtual void InitializeInventory() override;
 };
