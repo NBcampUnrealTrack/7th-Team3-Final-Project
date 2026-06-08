@@ -26,7 +26,7 @@ public:
 	TSubclassOf<UGA_Attack> AttackAbilityClass;
 	
 	//하상빈 추가
-	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventory; }
+	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryComponent; }
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer StateTags;
 	
@@ -55,7 +55,7 @@ protected:
 
 	//하상빈 추가
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Inventory")
-	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventory;
+	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventoryComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Locomotion")
 	TObjectPtr<UNCLocomotionComponent> LocomotionComponent;

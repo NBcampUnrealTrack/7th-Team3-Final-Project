@@ -36,6 +36,6 @@ void UNCInventoryHud::UpdateItemSlot()
 	for (int32 i = 0; i < SlotWidgets.Num(); i++)
 	{
 		const FInventorySlot& InventorySlot  = InventoryComp->Items[i];
-		SlotWidgets[i]->SetSlotData(i, InventorySlot .ItemTypeTag, InventorySlot .Quantity);
+		SlotWidgets[i]->SetSlotData(i, InventorySlot.ItemTypeTag, InventorySlot.Quantity, InventorySlot.ItemID);
 	}
 }
