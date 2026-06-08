@@ -40,10 +40,10 @@ public:
 	TObjectPtr<class UDataTable> ItemDataTable;
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Inventory|Helper")
-    bool GetItemDataByTag(FGameplayTag ItemTag, FItemData& OutItemData) const;
+    bool GetItemDataByTag(FName ItemID, FGameplayTag ItemTag, FItemData& OutItemData) const;
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-	virtual bool AddItem(FGameplayTag ItemTypeTag, int32 Quantity);
+	virtual bool AddItem(FName ItemID, FGameplayTag ItemTypeTag, int32 Quantity);
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	virtual bool RemoveItem(int32 SlotIndex, int32 Quantity);
@@ -55,7 +55,7 @@ public:
 	bool FindEmptySlot(int32& OutSlotIndex) const;
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-	bool FindStackableSlot(FGameplayTag ItemTypeTag, int32 MaxStackSize, int32& OutSlotIndex) const;
+	bool FindStackableSlot(FName ItemID, FGameplayTag ItemTypeTag, int32 MaxStackSize, int32& OutSlotIndex) const;
 	
 protected:
 	bool SwapSlots(int32 IndexA, int32 IndexB);
