@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
+#include "Player/PlayerData/NCWeaponData.h"
 
 #include "NCInventoryType.generated.h"
 
@@ -42,6 +43,8 @@ public:
 	FGameplayTag ItemTypeTag;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Slot")
 	int32 Quantity;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory Slot")
+	FNCWeaponInstance WeaponInstance;
 	
 	FInventorySlot()
 		: ItemID(NAME_None)

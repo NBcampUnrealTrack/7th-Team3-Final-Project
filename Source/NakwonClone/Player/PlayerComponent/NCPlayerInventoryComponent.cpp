@@ -1,6 +1,7 @@
 ﻿#include "NCPlayerInventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "NakwonClone/Item/NCItemActor.h"
+#include "Player/PlayerAnimation/NCCombatComponent.h"
 
 UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 {
@@ -76,6 +77,14 @@ bool UNCPlayerInventoryComponent::EquipToQuickSlot(int32 MainSlotIndex, int32 Qu
 	FInventorySlot TempSlot = QuickSlots[QuickSlotIndex];
 	QuickSlots[QuickSlotIndex] = Items[MainSlotIndex];
 	Items[MainSlotIndex] = TempSlot;
+	
+	if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
+	{
+		if (UNCCombatComponent* CombatComp =GetOwner()->FindComponentByClass<UNCCombatComponent>())
+		{
+			CombatComp->EquipWeapon(QuickSlots[QuickSlotIndex].WeaponInstance);
+		}
+	}
 	
 	OnInventoryUpdated.Broadcast();
 	OnQuickSlotUpdated.Broadcast();
