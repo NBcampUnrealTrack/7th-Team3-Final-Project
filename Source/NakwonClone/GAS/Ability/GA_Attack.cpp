@@ -39,14 +39,16 @@ void UGA_Attack::ActivateAbility(
     if (ASC)
         ASC->AddLooseGameplayTag(NCWeapon::Action_Attacking);
 
-    // 몽타주 재생 (판정은 HitCheckNotify가 담당)
-    UAnimMontage* Montage = Combat->GetEquippedWeaponData()->AttackMontage.LoadSynchronous();
+    // 첫 번째 콤보 공격 시작 (CombatComponent가 섹션 관리)
+    Combat->MeleeAttack();
+
+    // 몽타주 종료 델리게이트 등록 (몽타주가 끝나면 어빌리티 종료)
+    UAnimMontage* Montage = Combat->GetCurrentComboMontage();
     if (Montage)
     {
         UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
         if (AnimInstance)
         {
-            AnimInstance->Montage_Play(Montage, Combat->GetEquippedWeaponData()->AttackSpeed);
             FOnMontageEnded EndDelegate;
             EndDelegate.BindUObject(this, &UGA_Attack::OnMontageEnded);
             AnimInstance->Montage_SetEndDelegate(EndDelegate, Montage);

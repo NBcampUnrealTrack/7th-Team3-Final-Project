@@ -57,6 +57,8 @@ public:
 
 	void ReduceDurability(float Amount);
 
+	UAnimMontage* GetCurrentComboMontage() const { return CurrentWeaponCombo.ComboMontage; }
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	FNCWeaponComboData CurrentWeaponCombo;
