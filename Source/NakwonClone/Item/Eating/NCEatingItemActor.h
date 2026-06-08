@@ -1,26 +1,31 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Item/NCItemActor.h"
 #include "NCEatingItemActor.generated.h"
 
 UCLASS()
-class NAKWONCLONE_API ANCEatingItemActor : public AActor
+class NAKWONCLONE_API ANCEatingItemActor : public ANCItemActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+
+public:
 	ANCEatingItemActor();
 
+	// 체력 회복량/
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Eating")
+	float HealAmount;
+
+	// 스태미나 회복량
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Eating")
+	float StaminaAmount;
+
+	// 감염도 감소량
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Eating")
+	float InfectionReduceAmount;
+
+	virtual void UseItem(class ACharacter* User) override;
+
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

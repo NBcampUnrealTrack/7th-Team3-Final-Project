@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "GameplayTagContainer.h"
-#include "AbilitySystemInterface.h"  // 추가
+#include "AbilitySystemInterface.h"
 #include "NCBaseCharacter.generated.h"
 
 class UNCStatComponent;
@@ -51,11 +51,6 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UVGPlayerAttributeSet> PlayerAttributeSet;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
-	class UDataTable* MovementDataTable;
-
-	void ApplyMovementData(FGameplayTag StateTag);
 
 protected:
 	FTimerHandle LandingTimerHandle;
