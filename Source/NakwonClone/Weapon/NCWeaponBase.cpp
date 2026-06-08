@@ -5,11 +5,8 @@ ANCWeaponBase::ANCWeaponBase()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 
-	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	SetRootComponent(Root);
-
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-	WeaponMesh->SetupAttachment(Root);
+	SetRootComponent(WeaponMesh);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
@@ -19,7 +16,7 @@ void ANCWeaponBase::AttachToCharacter(USkeletalMeshComponent* CharacterMesh, FNa
 
 	AttachToComponent(
 		CharacterMesh,
-		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		FAttachmentTransformRules::SnapToTargetIncludingScale,
 		SocketName
 	);
 }
@@ -28,4 +25,3 @@ void ANCWeaponBase::DetachFromCharacter()
 {
 	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 }
-
