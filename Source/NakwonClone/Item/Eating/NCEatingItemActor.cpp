@@ -1,27 +1,66 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿#include "NCEatingItemActor.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
+#include "Net/UnrealNetwork.h"
+#include "GameFramework/Character.h"
+#include "Common/NCGameplayTags.h"
+#include "GAS/AttributeSet/VGPlayerAttributeSet.h"
 
-
-#include "NCEatingItemActor.h"
-
-// Sets default values
 ANCEatingItemActor::ANCEatingItemActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	HealAmount = 0.f;
+	StaminaAmount = 20.f;
+	InfectionReduceAmount = 0.f;
 
+	ItemTypeTag = NCItemTag::Eating;
 }
 
-// Called when the game starts or when spawned
-void ANCEatingItemActor::BeginPlay()
+void ANCEatingItemActor::UseItem(ACharacter* User)
 {
-	Super::BeginPlay();
-	
+	Super::UseItem(User);
+
+	if (!HasAuthority() || !User) return;
+
+	IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(User);
+	if (!ASCInterface) return;
+
+	UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	// 체력 회복
+	if (HealAmount > 0.f)
+	{
+		const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetHealthAttribute());
+		const float Max = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxHealthAttribute());
+		ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetHealthAttribute(),
+			FMath::Clamp(Current + HealAmount, 0.f, Max));
+	}
+
+	// 스태미나 회복
+	if (StaminaAmount > 0.f)
+	{
+		const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetStaminaAttribute());
+		const float Max = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxStaminaAttribute());
+		ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(),
+			FMath::Clamp(Current + StaminaAmount, 0.f, Max));
+	}
+
+	// 감염도 감소
+	if (InfectionReduceAmount > 0.f)
+	{
+		const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetInfectionAttribute());
+		ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetInfectionAttribute(),
+			FMath::Max(Current - InfectionReduceAmount, 0.f));
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[NCEatingItem] %s 사용 - 체력: %.1f 스태미나: %.1f 감염도감소: %.1f"),
+		*User->GetName(), HealAmount, StaminaAmount, InfectionReduceAmount);
 }
 
-// Called every frame
-void ANCEatingItemActor::Tick(float DeltaTime)
+void ANCEatingItemActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	Super::Tick(DeltaTime);
-
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ANCEatingItemActor, HealAmount);
+	DOREPLIFETIME(ANCEatingItemActor, StaminaAmount);
+	DOREPLIFETIME(ANCEatingItemActor, InfectionReduceAmount);
 }
-

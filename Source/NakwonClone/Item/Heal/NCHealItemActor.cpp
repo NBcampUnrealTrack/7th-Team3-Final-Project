@@ -9,6 +9,9 @@
 ANCHealItemActor::ANCHealItemActor()
 {
 	HealAmount = 30.f;
+	StaminaAmount = 0.f;
+	InfectionReduceAmount = 0.f;
+
 	ItemTypeTag = NCItemTag::Heal;
 }
 
@@ -24,18 +27,40 @@ void ANCHealItemActor::UseItem(ACharacter* User)
 	UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent();
 	if (!ASC) return;
 
-	const float CurrentHealth = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetHealthAttribute());
-	const float CurrentMax = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxHealthAttribute());
-	const float NewHealth = FMath::Clamp(CurrentHealth + HealAmount, 0.f, CurrentMax);
+	// 체력 회복
+	if (HealAmount > 0.f)
+	{
+		const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetHealthAttribute());
+		const float Max = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxHealthAttribute());
+		ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetHealthAttribute(),
+			FMath::Clamp(Current + HealAmount, 0.f, Max));
+	}
 
-	ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetHealthAttribute(), NewHealth);
+	// 스태미나 회복
+	if (StaminaAmount > 0.f)
+	{
+		const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetStaminaAttribute());
+		const float Max = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxStaminaAttribute());
+		ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(),
+			FMath::Clamp(Current + StaminaAmount, 0.f, Max));
+	}
 
-	UE_LOG(LogTemp, Log, TEXT("[NCHealItem] %s 체력 회복: %.1f -> %.1f"),
-		*User->GetName(), CurrentHealth, NewHealth);
+	// 감염도 감소
+	if (InfectionReduceAmount > 0.f)
+	{
+		const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetInfectionAttribute());
+		ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetInfectionAttribute(),
+			FMath::Max(Current - InfectionReduceAmount, 0.f));
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[NCHealItem] %s 사용 - 체력: %.1f 스태미나: %.1f 감염도감소: %.1f"),
+		*User->GetName(), HealAmount, StaminaAmount, InfectionReduceAmount);
 }
 
 void ANCHealItemActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ANCHealItemActor, HealAmount);
+	DOREPLIFETIME(ANCHealItemActor, StaminaAmount);
+	DOREPLIFETIME(ANCHealItemActor, InfectionReduceAmount);
 }
