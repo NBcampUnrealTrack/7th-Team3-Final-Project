@@ -42,6 +42,10 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
 	FVector HitBoxExtent = FVector(50.f, 30.f, 10.f);
 
+	//스폰할 무기 액터 클래스 (BP_Crowbar 등)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor")
+	TSoftClassPtr<AActor> WeaponActorClass;
+
 	//애니메이션
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TSoftObjectPtr<UAnimMontage> AttackMontage;

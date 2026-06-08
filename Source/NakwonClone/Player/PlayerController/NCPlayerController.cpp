@@ -5,6 +5,7 @@
 #include "Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
+#include "AbilitySystemComponent.h"
 
 ANCPlayerController::ANCPlayerController()
 {
@@ -62,6 +63,9 @@ void ANCPlayerController::SetupInputComponent()
         {
             EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &ANCPlayerController::ToggleInventory);
         }
+
+        if (AttackAction)
+            EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ANCPlayerController::Attack);
     }
 }
 
@@ -132,6 +136,17 @@ void ANCPlayerController::Interact()
         {
             InteractionComp->Interact();
         }
+    }
+}
+
+void ANCPlayerController::Attack()
+{
+    ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
+    if (!PC) return;
+
+    if (UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent())
+    {
+        ASC->TryActivateAbilityByClass(PC->AttackAbilityClass);
     }
 }
 

@@ -82,6 +82,12 @@ namespace NCWeapon
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Broken);    // 파손
 };
 
+// 데미지 데이터 태그 (SetByCaller용)
+namespace NCData
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Damage);
+};
+
 namespace NCGameStateTags
 {
 	// 게임 상태

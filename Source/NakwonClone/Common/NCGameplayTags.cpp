@@ -44,6 +44,9 @@ UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Action_Swapping,   "Weapon.Action.Swapping");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::State_Equipped, "Weapon.State.Equipped");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::State_Broken,   "Weapon.State.Broken");
 
+// 데미지 데이터 태그
+UE_DEFINE_GAMEPLAY_TAG(NCData::Damage, "Data.Damage");
+
 // 게임 상태
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::Title, "GameState.State.Title");
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::Lobby, "GameState.State.Lobby");

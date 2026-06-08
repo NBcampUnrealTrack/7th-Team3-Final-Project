@@ -39,6 +39,8 @@ private:
 	// 하상빈 추가
 	void Interact();
 	void ToggleInventory();
+
+	void Attack();
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -67,6 +69,9 @@ protected:
 	TObjectPtr<UInputAction> InteractAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> InventoryAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> AttackAction;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsInventoryOpen = false;
