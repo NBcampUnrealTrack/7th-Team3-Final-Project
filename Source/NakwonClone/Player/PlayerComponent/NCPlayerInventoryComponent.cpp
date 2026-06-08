@@ -63,6 +63,7 @@ bool UNCPlayerInventoryComponent::EquipToQuickSlot(int32 MainSlotIndex, int32 Qu
 	}
 	
 	FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
+	FName ItemID = Items[MainSlotIndex].ItemID;
 	
 	if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
 	{
@@ -72,6 +73,39 @@ bool UNCPlayerInventoryComponent::EquipToQuickSlot(int32 MainSlotIndex, int32 Qu
 	else if (QuickSlotIndex == 2 || QuickSlotIndex == 3)
 	{
 		if (!ItemTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Consumable")))) return false;
+	}
+	
+	if (!QuickSlots[QuickSlotIndex].IsEmpty())
+	{
+		if (QuickSlots[QuickSlotIndex].ItemID == ItemID && QuickSlots[QuickSlotIndex].ItemTypeTag == ItemTag)
+		{
+			FItemData ItemData;
+			if (GetItemDataByTag(ItemID, ItemTag, ItemData))
+			{
+				int32 RoomInQuickSlot = ItemData.MaxStackSize - QuickSlots[QuickSlotIndex].Quantity;
+                
+				if (RoomInQuickSlot > 0)
+				{
+					if (Items[MainSlotIndex].Quantity <= RoomInQuickSlot)
+					{
+						QuickSlots[QuickSlotIndex].Quantity += Items[MainSlotIndex].Quantity;
+						
+						Items[MainSlotIndex].ItemID = NAME_None;
+						Items[MainSlotIndex].ItemTypeTag = FGameplayTag::EmptyTag;
+						Items[MainSlotIndex].Quantity = 0;
+					}
+					else
+					{
+						QuickSlots[QuickSlotIndex].Quantity = ItemData.MaxStackSize;
+						Items[MainSlotIndex].Quantity -= RoomInQuickSlot;
+					}
+                    
+					OnInventoryUpdated.Broadcast();
+					OnQuickSlotUpdated.Broadcast();
+					return true;
+				}
+			}
+		}
 	}
 	
 	FInventorySlot TempSlot = QuickSlots[QuickSlotIndex];
