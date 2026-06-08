@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "NCBaseCharacter.h"
+#include "NakwonClone/GAS/Ability/GA_Attack.h"
 #include "NCPlayerCharacter.generated.h"
 
 class USpringArmComponent;
@@ -19,6 +20,10 @@ public:
 	ANCPlayerCharacter();
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	//GAS 어빌리티
+	UPROPERTY(EditDefaultsOnly, Category = "GAS|Ability")
+	TSubclassOf<UGA_Attack> AttackAbilityClass;
 	
 	//하상빈 추가
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventory; }
@@ -59,22 +64,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
 	TObjectPtr<UNCCombatComponent> CombatComponent;
-
+	
 private:
 	void InitCamera();
 	void InitComponents();
 
-public:
-	//무기 장착
-	UFUNCTION(BlueprintCallable)
-	void EquipWeapon(TSubclassOf<ANCWeaponBase> WeaponClass);
-
-	//무기 해제
-	UFUNCTION(BlueprintCallable)
-	void UnEquipWeapon();
-
-protected:
-	//현재 장착된 무기
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TObjectPtr<ANCWeaponBase> CurrentWeapon;
 };

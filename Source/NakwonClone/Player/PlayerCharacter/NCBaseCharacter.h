@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "GameplayTagContainer.h"
-#include "AbilitySystemInterface.h"  // 추가
+#include "AbilitySystemInterface.h"
 #include "NCBaseCharacter.generated.h"
 
 class UNCStatComponent;

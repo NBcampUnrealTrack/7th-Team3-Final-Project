@@ -166,6 +166,29 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 			ASC->AddLooseGameplayTag(Data->WeaponTypeTag);
 			ASC->AddLooseGameplayTag(Data->WeightTag);
 			ASC->AddLooseGameplayTag(NCWeapon::State_Equipped);
+
+			// 무기 액터 스폰 후 손에 부착
+			if (!Data->WeaponActorClass.IsNull())
+			{
+				UClass* ActorClass = Data->WeaponActorClass.LoadSynchronous();
+				if (ActorClass && OwnerCharacter)
+				{
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.Owner = OwnerCharacter;
+					SpawnParams.Instigator = OwnerCharacter;
+
+					SpawnedWeaponActor = GetWorld()->SpawnActor<AActor>(
+						ActorClass, FTransform::Identity, SpawnParams);
+
+					if (SpawnedWeaponActor)
+					{
+						SpawnedWeaponActor->AttachToComponent(
+							OwnerCharacter->GetMesh(),
+							FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+							FName("weapon_r"));
+					}
+				}
+			}
 		}
 	}
 }
@@ -182,6 +205,13 @@ void UNCCombatComponent::Internal_UnEquipWeapon()
 			ASC->RemoveLooseGameplayTag(Data->WeightTag);
 			ASC->RemoveLooseGameplayTag(NCWeapon::State_Equipped);
 		}
+	}
+
+	// 무기 액터 제거
+	if (SpawnedWeaponActor)
+	{
+		SpawnedWeaponActor->Destroy();
+		SpawnedWeaponActor = nullptr;
 	}
 
 	EquippedWeapon = FNCWeaponInstance();

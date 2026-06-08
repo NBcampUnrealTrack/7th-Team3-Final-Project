@@ -89,5 +89,9 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	FNCWeaponInstance EquippedWeapon;
 
+	// 현재 손에 들고 있는 무기 액터
+	UPROPERTY()
+	TObjectPtr<AActor> SpawnedWeaponActor;
+
 	bool bIsEquipped = false;
 };

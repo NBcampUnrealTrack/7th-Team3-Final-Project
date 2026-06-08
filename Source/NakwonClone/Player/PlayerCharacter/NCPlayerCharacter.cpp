@@ -1,10 +1,9 @@
-﻿#include "NCPlayerCharacter.h"
+#include "NCPlayerCharacter.h"
+#include "AbilitySystemComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Common/NCGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "NakwonClone/Weapon/NCWeaponBase.h"
-#include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
@@ -41,11 +40,26 @@ void ANCPlayerCharacter::InitComponents()
 void ANCPlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    
-    //AttributeSet 초기화
+
     if (AbilitySystemComponent)
     {
         AbilitySystemComponent->InitAbilityActorInfo(this, this);
+        if (HasAuthority() && AttackAbilityClass)
+        {
+            AbilitySystemComponent->GiveAbility(
+                FGameplayAbilitySpec(AttackAbilityClass, 1));
+        }
+    }
+
+    // TODO: 테스트용 임시 크로우바 장착 - 아이템 픽업 시스템 완성 후 제거
+    if (HasAuthority() && CombatComponent)
+    {
+        FNCWeaponInstance TestWeapon;
+        TestWeapon.UniqueID = FGuid::NewGuid();
+        TestWeapon.WeaponID = FName("Crowbar");
+        TestWeapon.CurrentDurability = 100.f;
+        TestWeapon.bIsBroken = false;
+        CombatComponent->EquipWeapon(TestWeapon);
     }
 }
 
@@ -119,41 +133,4 @@ void ANCPlayerCharacter::ToggleCrouch()
             LocomotionComponent->SetStanceTag(CurrentStanceTag);
     }
     Server_SetStance(CurrentStanceTag);
-}
-
-void ANCPlayerCharacter::EquipWeapon(TSubclassOf<ANCWeaponBase> WeaponClass)
-{
-    if (!HasAuthority()) return;
-    if (!WeaponClass) return;
-
-    //기존 무기 해제
-    if (CurrentWeapon)
-    {
-        CurrentWeapon->DetachFromCharacter();
-        CurrentWeapon->Destroy();
-        CurrentWeapon = nullptr;
-    }
-
-    //새 무기 스폰
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.Owner = this;
-    SpawnParams.Instigator = this;
-
-    CurrentWeapon = GetWorld()->SpawnActor<ANCWeaponBase>(
-        WeaponClass, FTransform::Identity, SpawnParams);
-
-    if (CurrentWeapon)
-    {
-        CurrentWeapon->AttachToCharacter(GetMesh(), FName("weapon_r"));
-    }
-}
-
-void ANCPlayerCharacter::UnEquipWeapon()
-{
-    if (!HasAuthority()) return;
-    if (!CurrentWeapon) return;
-
-    CurrentWeapon->DetachFromCharacter();
-    CurrentWeapon->Destroy();
-    CurrentWeapon = nullptr;
 }
