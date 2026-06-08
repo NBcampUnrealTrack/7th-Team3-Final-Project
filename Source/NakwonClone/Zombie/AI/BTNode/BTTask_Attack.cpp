@@ -4,9 +4,6 @@
 #include "NakwonClone/Zombie/AI/BTNode/BTTask_Attack.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemBlueprintLibrary.h"
-#include "GameplayEffect.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 
@@ -17,50 +14,56 @@ UBTTask_Attack::UBTTask_Attack()
 
 EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	// 컨트롤러 가져오기
+	// 이 BT를 실행 중인 AI 컨트롤러 가져오기
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	if (!AIController) return EBTNodeResult::Failed;
 	
-	// 몬스터 가져오기
+	// AI 컨트롤러가 빙의한 폰(몬스터)을 Walker로 캐스팅하기
 	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(AIController->GetPawn());
 	if (!Walker) return EBTNodeResult::Failed;
-	// 몬스터 상태 변경
+	
+	// 몬스터의 애니메이션 인스턴스 가져오기
+	UAnimInstance* AnimInstance = Walker->GetMesh()->GetAnimInstance();
+	if (!AnimInstance) return EBTNodeResult::Failed;
+	
+	// OwnerComp 저장하기
+	CachedOwnerComp = &OwnerComp;
+	
+	// 몽타주가 끝나면 OnMontageEnded를 호출하도록 드록
+	AnimInstance->OnMontageEnded.AddDynamic(this, &UBTTask_Attack::OnMontageEnded);
+	
+	// 공격 몽타주 재생
 	Walker->SetMonsterState(EMonsterState::Attack);
 	
-	// 블랙보드에서 타겟 액터 가져오기
-	UBlackboardComponent* Blackboard = OwnerComp.GetBlackboardComponent();
-	if (!Blackboard) return EBTNodeResult::Failed;
-	
-	AActor* Target = Cast<AActor>(Blackboard->GetValueAsObject(
-	AVGMonsterAIControllerBase::TargetActorKey));
-	if (!Target) return EBTNodeResult::Failed;
-	
-	// 타겟의 ASC 가져오기
-	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
-	if (!TargetASC) return EBTNodeResult::Failed;
-	
-	// 몬스터의 ASC 가져오기 (GE 적용 주체)
-	UAbilitySystemComponent* MonsterASC =
-		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Walker);
-	if (!MonsterASC) return EBTNodeResult::Failed;
-	
-	// GE_Attack 적용
-	if (AttackEffectClass)
+	// "아직 진행 중" 반환 -> BT 대기
+	return EBTNodeResult::InProgress;
+}
+
+void UBTTask_Attack::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory,
+	EBTNodeResult::Type TaskResult)
+{
+	// 테스크가 어떤 이유로든 끝나면 콜백 하제 + 포인터 초기화
+	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(OwnerComp.GetAIOwner()->GetPawn());
+	if (Walker)
 	{
-		FGameplayEffectContextHandle EffectContext = MonsterASC->MakeEffectContext();
-		EffectContext.AddSourceObject(Walker);
-		
-		FGameplayEffectSpecHandle SpecHandle = MonsterASC->MakeOutgoingSpec(
-			AttackEffectClass, 2.f, EffectContext);
-		
-		if (SpecHandle.IsValid())
+		UAnimInstance* AnimInstance = Walker->GetMesh()->GetAnimInstance();
+		if (AnimInstance)
 		{
-			MonsterASC->ApplyGameplayEffectSpecToTarget(
-				*SpecHandle.Data.Get(), TargetASC);
-			
-			UE_LOG(LogTemp, Warning, TEXT("[BTTask_Attack] GE_Attack 적용 완료"));
+			AnimInstance->OnMontageEnded.RemoveDynamic(this, &UBTTask_Attack::OnMontageEnded);
 		}
 	}
 	
-	return EBTNodeResult::Succeeded;
+	CachedOwnerComp = nullptr;
+	
+	Super::OnTaskFinished(OwnerComp, NodeMemory, TaskResult);
+}
+
+
+void UBTTask_Attack::OnMontageEnded(UAnimMontage* AnimAttack, bool bInterrupted)
+{
+	if (CachedOwnerComp)
+	{
+		FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
+		CachedOwnerComp = nullptr;
+	}
 }
