@@ -22,6 +22,26 @@ void UNCPlayerInventoryComponent::InitializeInventory()
 	QuickSlots.Init(FInventorySlot(), 4);
 }
 
+FInventorySlot UNCPlayerInventoryComponent::GetQuickSlotData(int32 SlotIndex) const
+{
+	if (QuickSlots.IsValidIndex(SlotIndex))
+	{
+		return QuickSlots[SlotIndex];
+	}
+    
+	return FInventorySlot();
+}
+
+FInventorySlot UNCPlayerInventoryComponent::GetMainSlotData(int32 SlotIndex) const
+{
+	if (Items.IsValidIndex(SlotIndex))
+	{
+		return Items[SlotIndex];
+	}
+    
+	return FInventorySlot();
+}
+
 void UNCPlayerInventoryComponent::OnRep_QuickSlots()
 {
 	OnQuickSlotUpdated.Broadcast();

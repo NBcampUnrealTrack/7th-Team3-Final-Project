@@ -165,7 +165,7 @@ void ANCPlayerController::ToggleInventory()
 
     ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetPawn());
     
-    if (!bIsInventoryOpen)
+    if (bIsInventoryOpen)
     {
         bShowMouseCursor = true;
         FInputModeGameAndUI InputMode;
