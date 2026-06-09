@@ -3,7 +3,6 @@
 
 #include "VGPlayerAttributeSet.h"
 #include "GameplayEffectExtension.h"
-#include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
 
 UVGPlayerAttributeSet::UVGPlayerAttributeSet()
 {
@@ -50,10 +49,6 @@ void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		if (GetHealth() <= 0.f)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("[PlayerAS] 사망"));
-			if (ANCBaseCharacter* Character = Cast<ANCBaseCharacter>(GetOwningActor()))
-			{
-				Character->OnDead();
-			}
 		}
 	}
 	if (Data.EvaluatedData.Attribute == GetCreditsAttribute())

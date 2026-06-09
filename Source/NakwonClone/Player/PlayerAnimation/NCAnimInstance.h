@@ -25,18 +25,18 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "References")
     TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Locomotion", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     float Speed = 0.f;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Locomotion", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     float Direction = 0.f;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Locomotion", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     bool bShouldMove = false;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Locomotion", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     bool bIsInAir = false;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Locomotion", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     bool bIsCrouching = false;
 };
