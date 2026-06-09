@@ -20,7 +20,6 @@ class NAKWONCLONE_API ANCGameMode : public AGameMode
 	
 public:
 	ANCGameMode();
-	~ANCGameMode();
 	
 	virtual void BeginPlay() override;
 	
