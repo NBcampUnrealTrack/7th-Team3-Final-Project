@@ -65,6 +65,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
 	TObjectPtr<UNCCombatComponent> CombatComponent;
 	
+	//사망
+	virtual void OnDead() override;
 private:
 	void InitCamera();
 	void InitComponents();

@@ -1,4 +1,6 @@
 #include "NCPlayerCharacter.h"
+#include "Components/CapsuleComponent.h"
+#include "NakwonClone/Player/PlayerComponent/UNCStatComponent.h"
 #include "AbilitySystemComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -133,4 +135,16 @@ void ANCPlayerCharacter::ToggleCrouch()
             LocomotionComponent->SetStanceTag(CurrentStanceTag);
     }
     Server_SetStance(CurrentStanceTag);
+}
+void ANCPlayerCharacter::OnDead()
+{
+    UE_LOG(LogTemp, Warning, TEXT("[OnDead] 호출됨!"));
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        PC->SetIgnoreMoveInput(true);
+        PC->SetIgnoreLookInput(true);
+    }
+    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    GetCharacterMovement()->StopMovementImmediately();
+    GetCharacterMovement()->DisableMovement();
 }

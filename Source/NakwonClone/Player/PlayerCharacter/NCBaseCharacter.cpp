@@ -76,3 +76,7 @@ void ANCBaseCharacter::ResetLandingState()
 {
     CurrentActionTag = FGameplayTag::EmptyTag;
 }
+
+void ANCBaseCharacter::OnDead()
+{
+}

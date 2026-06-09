@@ -44,6 +44,9 @@ public:
 
 	virtual void Landed(const FHitResult& Hit) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Stat")
+	virtual void OnDead();
+
 protected:
 	//GAS
 	UPROPERTY(VisibleAnywhere, Category = "GAS")
