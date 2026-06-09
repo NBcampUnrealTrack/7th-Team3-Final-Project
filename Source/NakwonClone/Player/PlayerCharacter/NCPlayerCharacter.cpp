@@ -5,6 +5,7 @@
 #include "Common/NCGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
@@ -32,7 +33,6 @@ void ANCPlayerCharacter::InitCamera()
 
 void ANCPlayerCharacter::InitComponents()
 {
-    PlayerInventoryComponent = CreateDefaultSubobject<UNCPlayerInventoryComponent>(TEXT("PlayerInventoryComponent"));
     InteractionComponent = CreateDefaultSubobject<UNCInteractionComponent>(TEXT("InteractionComponent"));
     LocomotionComponent = CreateDefaultSubobject<UNCLocomotionComponent>(TEXT("LocomotionComponent"));
     CombatComponent = CreateDefaultSubobject<UNCCombatComponent>(TEXT("CombatComponent"));
@@ -62,6 +62,26 @@ void ANCPlayerCharacter::BeginPlay()
          TestWeapon.bIsBroken = false;
          CombatComponent->EquipWeapon(TestWeapon);
      }
+}
+
+void ANCPlayerCharacter::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+    
+    if (APlayerState* NCPS = GetPlayerState())
+    {
+        PlayerInventoryRef = NCPS->FindComponentByClass<UNCPlayerInventoryComponent>();
+    }
+}
+
+void ANCPlayerCharacter::OnRep_PlayerState()
+{
+    Super::OnRep_PlayerState();
+    
+    if (APlayerState* NCPS = GetPlayerState())
+    {
+        PlayerInventoryRef = NCPS->FindComponentByClass<UNCPlayerInventoryComponent>();
+    }
 }
 
 void ANCPlayerCharacter::Server_SetGait_Implementation(FGameplayTag NewGaitTag)

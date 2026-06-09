@@ -69,6 +69,9 @@ public:
 	void SetItemsArray(const TArray<FInventorySlot>& NewItems) { Items = NewItems; }
 	
 protected:
+	
+	UFUNCTION(BlueprintCallable, Category = Inventory)
 	bool SwapSlots(int32 IndexA, int32 IndexB);
+	
 	bool CombineSlots(int32 SourceIndex, int32 TargetIndex);
 };
