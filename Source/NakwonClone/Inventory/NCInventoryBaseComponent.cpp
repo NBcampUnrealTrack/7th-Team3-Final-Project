@@ -205,6 +205,99 @@ bool UNCInventoryBaseComponent::MoveItem(int32 FromIndex, int32 ToIndex)
 	return bSuccess;
 }
 
+bool UNCInventoryBaseComponent::TransferItemTo(UNCInventoryBaseComponent* TargetInventory, int32 FromIndex,
+	int32 ToIndex)
+{
+    if (!GetOwner()->HasAuthority() || !TargetInventory)
+    {
+	    return false;
+    }
+	
+    if (this == TargetInventory)
+    {
+        return MoveItem(FromIndex, ToIndex);
+    }
+
+    if (!Items.IsValidIndex(FromIndex) || Items[FromIndex].IsEmpty())
+    {
+	    return false;
+    }
+	
+    if (!TargetInventory->Items.IsValidIndex(ToIndex))
+    {
+	    return false;
+    }
+	
+    bool bSuccess = false;
+
+    if (TargetInventory->Items[ToIndex].IsEmpty())
+    {
+        TargetInventory->Items[ToIndex] = Items[FromIndex];
+        
+        Items[FromIndex].ItemID = NAME_None;
+        Items[FromIndex].ItemTypeTag = FGameplayTag::EmptyTag;
+        Items[FromIndex].Quantity = 0;
+        
+        bSuccess = true;
+    }
+    else
+    {
+        bool bIsSameItem = (TargetInventory->Items[ToIndex].ItemID == Items[FromIndex].ItemID) && 
+                           (TargetInventory->Items[ToIndex].ItemTypeTag == Items[FromIndex].ItemTypeTag);
+
+        if (bIsSameItem)
+        {
+            FItemData ItemData;
+            if (GetItemDataByTag(Items[FromIndex].ItemID, Items[FromIndex].ItemTypeTag, ItemData)) 
+            {
+                int32 RoomInTarget = ItemData.MaxStackSize - TargetInventory->Items[ToIndex].Quantity;
+
+                if (RoomInTarget > 0)
+                {
+                    if (Items[FromIndex].Quantity <= RoomInTarget)
+                    {
+                        TargetInventory->Items[ToIndex].Quantity += Items[FromIndex].Quantity;
+                        
+                        Items[FromIndex].ItemID = NAME_None;
+                        Items[FromIndex].ItemTypeTag = FGameplayTag::EmptyTag;
+                        Items[FromIndex].Quantity = 0;
+                    }
+                    else
+                    {
+                        TargetInventory->Items[ToIndex].Quantity = ItemData.MaxStackSize;
+                        Items[FromIndex].Quantity -= RoomInTarget;
+                    }
+                    bSuccess = true;
+                }
+                else
+                {
+                    FInventorySlot TempSlot = TargetInventory->Items[ToIndex];
+                    TargetInventory->Items[ToIndex] = Items[FromIndex];
+                    Items[FromIndex] = TempSlot;
+                    
+                    bSuccess = true;
+                }
+            }
+        }
+        else
+        {
+            FInventorySlot TempSlot = TargetInventory->Items[ToIndex];
+            TargetInventory->Items[ToIndex] = Items[FromIndex];
+            Items[FromIndex] = TempSlot;
+            
+            bSuccess = true;
+        }
+    }
+
+    if (bSuccess)
+    {
+        this->OnInventoryUpdated.Broadcast();
+        TargetInventory->OnInventoryUpdated.Broadcast();
+    }
+
+    return bSuccess;
+}
+
 bool UNCInventoryBaseComponent::FindEmptySlot(int32& OutSlotIndex) const
 {
 	for (int32 i = 0; i < Items.Num(); i++)

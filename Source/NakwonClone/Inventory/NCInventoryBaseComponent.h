@@ -18,6 +18,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
 	FOnInventoryUpdated OnInventoryUpdated;
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -31,6 +32,9 @@ public:
 	
 	UPROPERTY(ReplicatedUsing = OnRep_Items, EditAnywhere, BlueprintReadOnly, Category = Inventory)
 	TArray<FInventorySlot> Items;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_Items, EditAnywhere, BlueprintReadOnly, Category = Inventory)
+	TArray<FInventorySlot> EquipmentItem;
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	virtual void InitializeInventory();
@@ -51,11 +55,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	virtual bool MoveItem(int32 FromIndex, int32 ToIndex);
 	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	virtual bool TransferItemTo(UNCInventoryBaseComponent* TargetInventory, int32 FromIndex, int32 ToIndex);
+	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	bool FindEmptySlot(int32& OutSlotIndex) const;
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	bool FindStackableSlot(FName ItemID, FGameplayTag ItemTypeTag, int32 MaxStackSize, int32& OutSlotIndex) const;
+	
+	TArray<FInventorySlot> GetItemsArray() const { return Items; }
+	
+	void SetItemsArray(const TArray<FInventorySlot>& NewItems) { Items = NewItems; }
 	
 protected:
 	bool SwapSlots(int32 IndexA, int32 IndexB);

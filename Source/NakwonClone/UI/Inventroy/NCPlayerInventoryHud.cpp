@@ -3,7 +3,6 @@
 #include "NakwonClone/Inventory/NCInventoryType.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
-#include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 
 void UNCPlayerInventoryHud::NativeConstruct()
 {

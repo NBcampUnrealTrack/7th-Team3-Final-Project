@@ -11,8 +11,7 @@ UCLASS()
 class NAKWONCLONE_API UNCPlayerInventoryHud : public UUserWidget
 {
 	GENERATED_BODY()
-	
-		
+
 protected:
 	virtual void NativeConstruct() override;
 	
