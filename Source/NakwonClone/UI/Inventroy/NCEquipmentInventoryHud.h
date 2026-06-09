@@ -2,16 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "NCInventroySlot.h"
+#include "NCEquipmentInventorySlot.h"
 #include "NakwonClone/Inventory/NCInventoryBaseComponent.h"
 #include "Components/UniformGridPanel.h"
-#include "NCPlayerInventoryHud.generated.h"
+#include "NCEquipmentInventoryHud.generated.h"
 
 UCLASS()
-class NAKWONCLONE_API UNCPlayerInventoryHud : public UUserWidget
+class NAKWONCLONE_API UNCEquipmentInventoryHud : public UUserWidget
 {
 	GENERATED_BODY()
-
+	
 protected:
 	virtual void NativeConstruct() override;
 	
@@ -19,7 +19,7 @@ protected:
 	void InitWithInventory(UNCInventoryBaseComponent* InInventory);
 
 	UFUNCTION()
-	void UpdateItemSlot();
+	void UpdateEquipmentItemSlot();
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UUniformGridPanel> PlayerInventoryGrid;
@@ -28,8 +28,8 @@ protected:
 	TObjectPtr<UNCInventoryBaseComponent> InventoryComp;
 	
 	UPROPERTY()
-	TArray<TObjectPtr<UNCInventroySlot>> SlotWidgets; 
+	TArray<TObjectPtr<UNCEquipmentInventorySlot>> SlotWidgets;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
-	TSubclassOf<UNCInventroySlot> SlotClass;
+	TSubclassOf<UNCEquipmentInventorySlot> SlotClass;
 };
