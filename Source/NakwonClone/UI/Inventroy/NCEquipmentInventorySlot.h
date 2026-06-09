@@ -29,7 +29,7 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UImage* EquipmentItemImage;
 	
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 SlotIndex;
 	
 	UPROPERTY(BlueprintReadOnly)
