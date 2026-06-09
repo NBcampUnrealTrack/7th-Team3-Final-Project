@@ -42,6 +42,7 @@ public:
 	void StopSprint();
 	void ToggleWalk();
 	void ToggleCrouch();
+	void OnDead();
 
 protected:
 	UFUNCTION(Server, Reliable)
