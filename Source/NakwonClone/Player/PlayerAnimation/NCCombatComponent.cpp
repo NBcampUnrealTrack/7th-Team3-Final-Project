@@ -191,7 +191,7 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 						SpawnedWeaponActor->AttachToComponent(
 							OwnerCharacter->GetMesh(),
 							FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-							FName("weapon_axe_r"));
+							Data->AttachSocketName);
 					}
 				}
 			}

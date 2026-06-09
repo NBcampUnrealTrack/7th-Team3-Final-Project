@@ -51,6 +51,12 @@ public:
 
 	FNCWeaponInstance GetEquippedWeapon() const { return EquippedWeapon; }
 
+	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
+	AActor* GetSpawnedWeaponActor() const
+	{
+		return SpawnedWeaponActor;
+	}
+
 	FNCWeaponData* GetEquippedWeaponData() const;
 
 	bool CanAttack() const;
