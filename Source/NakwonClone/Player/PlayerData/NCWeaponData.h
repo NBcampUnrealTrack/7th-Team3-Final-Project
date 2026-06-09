@@ -46,6 +46,18 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor")
 	TSoftClassPtr<AActor> WeaponActorClass;
 
+	//장착할 캐릭터 소켓 이름
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Socket")
+	FName AttachSocketName = NAME_None;
+
+	//왼손 IK 사용 여부
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	bool bUseLeftHandIK = false;
+
+	//왼손 IK가 따라갈 무기 Mesh 소켓 이름
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	FName LeftHandIKSocketName = NAME_None;
+
 	//애니메이션
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TSoftObjectPtr<UAnimMontage> AttackMontage;
