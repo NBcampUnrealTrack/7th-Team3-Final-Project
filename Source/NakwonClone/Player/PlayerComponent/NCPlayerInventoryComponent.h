@@ -64,4 +64,5 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Getters")
 	FInventorySlot GetMainSlotData(int32 SlotIndex) const;
+	
 };
