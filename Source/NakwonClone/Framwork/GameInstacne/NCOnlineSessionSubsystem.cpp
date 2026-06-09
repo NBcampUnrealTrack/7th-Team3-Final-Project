@@ -1,8 +1,13 @@
 ﻿
 #include "NCOnlineSessionSubsystem.h"
-#include "OnlineSubsystem.h"
+
 #include "OnlineSessionSettings.h"
+#include "OnlineSubsystem.h"
+#include "OnlineSubsystemUtils.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Interfaces/OnlineExternalUIInterface.h"
+#include "Interfaces/OnlineFriendsInterface.h"
+#include "Interfaces/OnlinePresenceInterface.h"
 #include "Kismet/GameplayStatics.h"
 
 void UNCOnlineSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -57,7 +62,7 @@ void UNCOnlineSessionSubsystem::FindSessions(int32 MaxResult)
 	LastSearch->MaxSearchResults = MaxResult;
 	LastSearch->bIsLanQuery = false;
 	
-	// steam presence 기반으로마나 검색(열려있는 방만 뜨도록)
+	// steam presence 기반으로만 검색(열려있는 방만 뜨도록)
 	LastSearch->QuerySettings.Set(
 		FName(TEXT("PRESENCESEARCH")),
 		true,
@@ -119,9 +124,91 @@ int32 UNCOnlineSessionSubsystem::GetSessionOpenConnections(int32 Index) const
 	return LastSearchResults[Index].Session.NumOpenPublicConnections;
 }
 
+void UNCOnlineSessionSubsystem::ShowInviteOverlay()
+{
+	IOnlineSubsystem* OSS = Online::GetSubsystem(GetWorld());
+	if (!OSS) return;
+	
+	IOnlineExternalUIPtr ExternalUI = OSS->GetExternalUIInterface();
+	if (!ExternalUI) return;
+
+	// Steam 오버레이의 친구 초대 창 열기
+	ExternalUI->ShowInviteUI(0, NAME_GameSession);
+}
+
+void UNCOnlineSessionSubsystem::LoadFriendsList()
+{
+	IOnlineFriendsPtr Friends = GetFriendsInterface();
+	if (!Friends) return;
+
+	Friends->ReadFriendsList(
+		0,
+		TEXT("default"),
+		FOnReadFriendsListComplete::CreateUObject(
+			this, &UNCOnlineSessionSubsystem::OnReadFriendsListComplete));
+}
+
+void UNCOnlineSessionSubsystem::SendInviteToFriend(int32 FriendIndex)
+{
+	if (!CachedFriends.IsValidIndex(FriendIndex)) return;
+
+	IOnlineSessionPtr Sessions = GetSessionInterface();
+	if (!Sessions) return;
+
+	TSharedRef<FOnlineFriend> Friend = CachedFriends[FriendIndex];
+	Sessions->SendSessionInviteToFriend(
+		0,
+		NAME_GameSession,
+		*Friend->GetUserId());
+
+	OnInviteSentEvent.Broadcast();
+}
+
+FString UNCOnlineSessionSubsystem::GetFriendName(int32 Index) const
+{
+	if (!CachedFriends.IsValidIndex(Index)) return TEXT("");
+	return CachedFriends[Index]->GetRealName();
+}
+
+bool UNCOnlineSessionSubsystem::IsFriendOnline(int32 Index) const
+{
+	if (!CachedFriends.IsValidIndex(Index)) return false;
+
+	const FOnlineUserPresence& Presence = CachedFriends[Index]->GetPresence();
+	return Presence.bIsOnline || Presence.bIsPlaying;
+}
+
+IOnlineFriendsPtr UNCOnlineSessionSubsystem::GetFriendsInterface() const
+{
+	IOnlineSubsystem* OSS = Online::GetSubsystem(GetWorld()); // ??????????
+	if (!OSS) return nullptr;
+	
+	return OSS->GetFriendsInterface();
+}
+
+void UNCOnlineSessionSubsystem::OnReadFriendsListComplete(
+	int32 LocalUserNum,
+	bool bWasSuccessful,
+	const FString& ListName,
+	const FString& ErrorStr)
+{
+	CachedFriends.Empty();
+
+	if (bWasSuccessful)
+	{
+		IOnlineFriendsPtr Friends = GetFriendsInterface();
+		if (Friends)
+		{
+			Friends->GetFriendsList(0, TEXT("default"), CachedFriends);
+		}
+	}
+
+	OnFriendsListLoadedEvent.Broadcast(bWasSuccessful, CachedFriends.Num());
+}
+
 IOnlineSessionPtr UNCOnlineSessionSubsystem::GetSessionInterface() const
 {
-	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
 	if (!OnlineSubsystem)
 	{
 		return nullptr;
@@ -139,11 +226,10 @@ void UNCOnlineSessionSubsystem::OnCreateSessionComplete(FName SessionName, bool 
 	
 	if (bSuccessful)
 	{
-		// todo : 맵 경로 확정되면 교체
 		UWorld* World = GetWorld();
 		if (World)
 		{
-			World->ServerTravel("/Game/Maps/LobbyMap?listen");
+			World->ServerTravel("Game/Maps/L_MVP?listen");
 		}
 	}
 }

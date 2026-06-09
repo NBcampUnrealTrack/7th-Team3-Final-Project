@@ -108,7 +108,7 @@ void ANCGameMode::StartMatch()
 	SetMatchTimerHandle();
 }
 
-void ANCGameMode::EndMatch(bool bClear)
+void ANCGameMode::HandleMatchEnd(bool bClear)
 {
 	ANCGameState* GS = GetGameState<ANCGameState>();
 	if (!GS) return;
@@ -192,7 +192,7 @@ void ANCGameMode::CheckAllPlayersDead()
 
 	if (GS->AlivePlayerCount <= 0)
 	{
-		EndMatch(false); // 전멸 → 게임오버
+		HandleMatchEnd(false); // 전멸 → 게임오버
 	}
 }
 
@@ -222,6 +222,6 @@ void ANCGameMode::TimerTick()
 	if (GS->RemainingMatchTime <= 0.f)
 	{
 		GetWorldTimerManager().ClearTimer(MatchTimerHandle);
-		EndMatch(false);
+		HandleMatchEnd(false);
 	}
 }

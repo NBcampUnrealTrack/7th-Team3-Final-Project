@@ -28,7 +28,7 @@ public:
 	virtual void Logout(AController* Exiting) override;
 
 	virtual void StartMatch() override;
-	void EndMatch(bool bClear);
+	void HandleMatchEnd(bool bClear);
 	
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToTitle();
