@@ -1,6 +1,7 @@
 #include "ANCLootBoxActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "NakwonClone/Inventory/NCInventoryBaseComponent.h"
+#include "NakwonClone/Item/Data/NCLootDropData.h"
 
 AANCLootBoxActor::AANCLootBoxActor()
 {
@@ -24,15 +25,50 @@ void AANCLootBoxActor::BeginPlay()
 	}
 }
 
-void AANCLootBoxActor::Interact(AActor* Interactor)
-{
-}
 
 void AANCLootBoxActor::GenerateLoot()
 {
 	for (const TPair<FName, int32>& FixedItem : FixedLootItems)
 	{
-		// TODO: LootInventory->Initialize or AddItem 로직 처리
+		// TODO: 가방에 아이템 넣기
+		// 예: LootInventory->AddItem(FixedItem.Key, FixedItem.Value);
+	}
+
+	// 랜덤 확률 아이템 스폰
+	if (RandomDropTable)
+	{
+		TArray<FNCLootDropData*> AllDropData;
+		RandomDropTable->GetAllRows<FNCLootDropData>(TEXT("LootBox_RandomDrop"), AllDropData);
+
+		if (AllDropData.Num() > 0)
+		{
+			float TotalWeight = 0.0f;
+			for (const FNCLootDropData* DropData : AllDropData)
+			{
+				TotalWeight += DropData->DropWeight;
+			}
+
+			for (int32 i = 0; i < RandomRollCount; ++i)
+			{
+				float RandomRoll = FMath::FRandRange(0.0f, TotalWeight);
+				float CurrentWeight = 0.0f;
+
+				for (const FNCLootDropData* DropData : AllDropData)
+				{
+					CurrentWeight += DropData->DropWeight;
+                    
+					if (RandomRoll <= CurrentWeight)
+					{
+						int32 DropQuantity = FMath::RandRange(DropData->MinQuantity, DropData->MaxQuantity);
+                        
+						// TODO: 가방에 아이템 넣기
+						// 예: LootInventory->AddItem(DropData->ItemID, DropQuantity);
+                        
+						break; 
+					}
+				}
+			}
+		}
 	}
 }
 

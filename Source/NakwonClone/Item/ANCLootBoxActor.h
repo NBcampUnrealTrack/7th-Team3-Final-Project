@@ -24,9 +24,7 @@ protected:
 	void GenerateLoot();
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "LootBox|Interaction")
-	void Interact(AActor* Interactor);
-	
+
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual bool CanInteract_Implementation(AActor* Interactor) override;
 	virtual void ToggleHighlight_Implementation(bool bHighlight) override;
