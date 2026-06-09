@@ -18,6 +18,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
 	FOnInventoryUpdated OnInventoryUpdated;
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -31,6 +32,9 @@ public:
 	
 	UPROPERTY(ReplicatedUsing = OnRep_Items, EditAnywhere, BlueprintReadOnly, Category = Inventory)
 	TArray<FInventorySlot> Items;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_Items, EditAnywhere, BlueprintReadOnly, Category = Inventory)
+	TArray<FInventorySlot> EquipmentItem;
 	
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	virtual void InitializeInventory();
