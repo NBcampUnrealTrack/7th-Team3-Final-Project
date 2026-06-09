@@ -26,13 +26,17 @@ public:
 	TSubclassOf<UGA_Attack> AttackAbilityClass;
 	
 	//하상빈 추가
-	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryComponent; }
+	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryRef; }
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer StateTags;
 	
 protected:
 	virtual void BeginPlay() override;
 
+	//하상빈 추가
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+	
 public:
 	void StartSprint();
 	void StopSprint();
@@ -54,8 +58,8 @@ protected:
 	TObjectPtr<UCameraComponent> FollowCamera;
 
 	//하상빈 추가
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Inventory")
-	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventoryComponent;
+	UPROPERTY(BlueprintReadOnly, Category = "Components|Inventory")
+	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventoryRef;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Locomotion")
 	TObjectPtr<UNCLocomotionComponent> LocomotionComponent;
