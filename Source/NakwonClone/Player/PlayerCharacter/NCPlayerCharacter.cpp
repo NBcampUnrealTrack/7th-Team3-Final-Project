@@ -57,7 +57,7 @@ void ANCPlayerCharacter::BeginPlay()
      {
          FNCWeaponInstance TestWeapon;
          TestWeapon.UniqueID = FGuid::NewGuid();
-         TestWeapon.WeaponID = FName("Axe");
+         TestWeapon.WeaponID = FName("Crowbar");
          TestWeapon.CurrentDurability = 100.f;
          TestWeapon.bIsBroken = false;
          CombatComponent->EquipWeapon(TestWeapon);
