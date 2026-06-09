@@ -1,4 +1,4 @@
-#include "NCPlayerCharacter.h"
+﻿#include "NCPlayerCharacter.h"
 #include "AbilitySystemComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -52,15 +52,15 @@ void ANCPlayerCharacter::BeginPlay()
     }
 
     // TODO: 테스트용 임시 크로우바 장착 - 아이템 픽업 시스템 완성 후 제거
-    // if (HasAuthority() && CombatComponent)
-    // {
-    //     FNCWeaponInstance TestWeapon;
-    //     TestWeapon.UniqueID = FGuid::NewGuid();
-    //     TestWeapon.WeaponID = FName("Crowbar");
-    //     TestWeapon.CurrentDurability = 100.f;
-    //     TestWeapon.bIsBroken = false;
-    //     CombatComponent->EquipWeapon(TestWeapon);
-    // }
+     //if (HasAuthority() && CombatComponent)
+     //{
+     //    FNCWeaponInstance TestWeapon;
+     //    TestWeapon.UniqueID = FGuid::NewGuid();
+     //    TestWeapon.WeaponID = FName("Axe");
+     //    TestWeapon.CurrentDurability = 100.f;
+     //    TestWeapon.bIsBroken = false;
+     //    CombatComponent->EquipWeapon(TestWeapon);
+     //}
 }
 
 void ANCPlayerCharacter::Server_SetGait_Implementation(FGameplayTag NewGaitTag)
