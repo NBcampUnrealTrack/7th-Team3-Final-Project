@@ -57,4 +57,11 @@ public:
 	void Server_LootItem(class ANCItemActor* ItemToLoot);
 	
 	virtual void InitializeInventory() override;
+	
+public:
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Getters")
+	FInventorySlot GetQuickSlotData(int32 SlotIndex) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Getters")
+	FInventorySlot GetMainSlotData(int32 SlotIndex) const;
 };
