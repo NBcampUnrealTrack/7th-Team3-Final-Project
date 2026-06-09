@@ -16,10 +16,6 @@ ANCGameMode::ANCGameMode()
 	// todo : 플레이어 기본 캐릭터 지정
 }
 
-ANCGameMode::~ANCGameMode()
-{
-}
-
 void ANCGameMode::BeginPlay()
 {
 	Super::BeginPlay();
