@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
@@ -12,7 +10,6 @@ class UBlendSpace;
 class UNCCombatComponent;
 class UCharacterMovementComponent;
 class ANCPlayerCharacter;
-class UNCCombatComponent;
 
 UCLASS()
 class NAKWONCLONE_API UNCAnimInstance : public UAnimInstance
@@ -29,11 +26,10 @@ protected:
 
     UPROPERTY(BlueprintReadOnly, Category = "References")
     TObjectPtr<UCharacterMovementComponent> MovementComponent;
-    //H
+
     UPROPERTY(BlueprintReadOnly, Category = "References")
     TObjectPtr<UNCCombatComponent> CombatComponent;
 
-    // 캐싱 (매 프레임 Find 방지)
     UPROPERTY()
     TObjectPtr<UNCCombatComponent> CachedCombatComponent;
 
@@ -52,19 +48,15 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     bool bIsCrouching = false;
 
-    //H 현재 활성 이동 BlendSpace (런타임 계산 결과)
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     TObjectPtr<UBlendSpace> CurrentLocomotionBlendSpace;
 
-    //H 무기 없을 때 기본 BlendSpace (ABP 디테일에서 할당)
     UPROPERTY(EditDefaultsOnly, Category = "Locomotion|Defaults")
     TSoftObjectPtr<UBlendSpace> DefaultUnarmedBS_Standing;
-    //H
+
     UPROPERTY(EditDefaultsOnly, Category = "Locomotion|Defaults")
     TSoftObjectPtr<UBlendSpace> DefaultUnarmedBS_Crouching;
 
-protected:
-    void UpdateWeaponAndBlendSpace();
     UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
     FGameplayTag CurrentWeaponTypeTag;
 
@@ -76,4 +68,7 @@ protected:
 
     UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
     bool bIsTwoHandedWeapon = false;
+
+protected:
+    void UpdateWeaponAndBlendSpace();
 };

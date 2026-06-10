@@ -1,10 +1,9 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿#include "NCAnimInstance.h"
 
-#include "NCAnimInstance.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "NCCombatComponent.h"
 #include "KismetAnimationLibrary.h"
+
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
@@ -14,13 +13,13 @@ void UNCAnimInstance::NativeInitializeAnimation()
     Super::NativeInitializeAnimation();
 
     OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner());
+
     if (OwnerCharacter)
     {
         MovementComponent = OwnerCharacter->GetCharacterMovement();
-        //H
-        CombatComponent = OwnerCharacter->FindComponentByClass<UNCCombatComponent>(); 
 
-        // CombatComponent 캐싱
+        CombatComponent = OwnerCharacter->FindComponentByClass<UNCCombatComponent>();
+
         if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
         {
             CachedCombatComponent = PlayerCharacter->GetCombatComponent();
@@ -35,47 +34,79 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     if (!OwnerCharacter || !MovementComponent)
     {
         OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner());
+
         if (OwnerCharacter)
         {
             MovementComponent = OwnerCharacter->GetCharacterMovement();
+
+            CombatComponent = OwnerCharacter->FindComponentByClass<UNCCombatComponent>();
+
+            if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+            {
+                CachedCombatComponent = PlayerCharacter->GetCombatComponent();
+            }
         }
-        if (!OwnerCharacter || !MovementComponent) return;
+
+        if (!OwnerCharacter || !MovementComponent)
+        {
+            return;
+        }
     }
 
     const FVector Velocity = OwnerCharacter->GetVelocity();
 
     Speed = Velocity.Size2D();
-    Direction = UKismetAnimationLibrary::CalculateDirection(Velocity, OwnerCharacter->GetActorRotation());
+    Direction = UKismetAnimationLibrary::CalculateDirection(
+        Velocity,
+        OwnerCharacter->GetActorRotation()
+    );
+
     bIsInAir = MovementComponent->IsFalling();
     bIsCrouching = MovementComponent->IsCrouching();
     bShouldMove = Speed > 3.f && !MovementComponent->GetCurrentAcceleration().IsNearlyZero();
-    //H
+
     UpdateWeaponAndBlendSpace();
 }
 
 void UNCAnimInstance::UpdateWeaponAndBlendSpace()
 {
-    bHasWeapon = false;
-    CurrentWeaponTypeTag = FGameplayTag();
+    if (!CachedCombatComponent && OwnerCharacter)
+    {
+        if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+        {
+            CachedCombatComponent = PlayerCharacter->GetCombatComponent();
+        }
+    }
 
-    // CombatComponent가 뒤늦게 붙는 케이스 방어
     if (!CombatComponent && OwnerCharacter)
     {
         CombatComponent = OwnerCharacter->FindComponentByClass<UNCCombatComponent>();
     }
 
+    UNCCombatComponent* ActiveCombatComponent = CachedCombatComponent
+        ? CachedCombatComponent.Get()
+        : CombatComponent.Get();
+
     const FNCWeaponData* WeaponData = nullptr;
-    if (CombatComponent && CombatComponent->GetEquippedWeapon().IsValid())
+
+    if (ActiveCombatComponent)
     {
-        WeaponData = CombatComponent->GetEquippedWeaponData();
-        if (WeaponData)
-        {
-            bHasWeapon = true;
-            CurrentWeaponTypeTag = WeaponData->WeaponTypeTag;
-        }
+        CurrentWeaponTypeTag = ActiveCombatComponent->GetEquippedWeaponTypeTag();
+
+        bHasWeapon = !CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Unarmed);
+        bIsOneHandedWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_OneHanded);
+        bIsTwoHandedWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_TwoHanded);
+
+        WeaponData = ActiveCombatComponent->GetEquippedWeaponData();
+    }
+    else
+    {
+        CurrentWeaponTypeTag = NCWeapon::Type_Unarmed;
+        bHasWeapon = false;
+        bIsOneHandedWeapon = false;
+        bIsTwoHandedWeapon = false;
     }
 
-    // 4분기: 무기 있음/없음 × 서기/앉기
     if (WeaponData)
     {
         CurrentLocomotionBlendSpace = bIsCrouching
@@ -87,13 +118,5 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
         CurrentLocomotionBlendSpace = bIsCrouching
             ? DefaultUnarmedBS_Crouching.LoadSynchronous()
             : DefaultUnarmedBS_Standing.LoadSynchronous();
-    }
-    // 무기 타입 업데이트
-    if (CachedCombatComponent)
-    {
-        CurrentWeaponTypeTag = CachedCombatComponent->GetEquippedWeaponTypeTag();
-        bHasWeapon = !CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Unarmed);
-        bIsOneHandedWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_OneHanded);
-        bIsTwoHandedWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_TwoHanded);
     }
 }
