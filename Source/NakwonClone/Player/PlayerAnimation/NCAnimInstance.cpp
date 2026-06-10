@@ -87,7 +87,7 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
         CurrentLocomotionBlendSpace = bIsCrouching
             ? DefaultUnarmedBS_Crouching.LoadSynchronous()
             : DefaultUnarmedBS_Standing.LoadSynchronous();
-
+    }
     // 무기 타입 업데이트
     if (CachedCombatComponent)
     {
