@@ -1,4 +1,6 @@
 ﻿#include "NCPlayerInventoryComponent.h"
+
+#include "Framwork/PlayerState/NCPlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "NakwonClone/Item/NCItemActor.h"
 #include "Player/PlayerAnimation/NCCombatComponent.h"
@@ -211,7 +213,9 @@ void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex
 	FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
 	int32 DropQuantity = FMath::Min(Quantity, Items[SlotIndex].Quantity);
 
-	AActor* OwnerActor = GetOwner();
+	
+	ANCPlayerState* OwningPlayerState = Cast<ANCPlayerState>(GetOwner());
+	AActor* OwnerActor = OwningPlayerState->GetPawn();
 	FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
 	SpawnLocation.Z -= 20.0f; 
 	FRotator SpawnRotation = OwnerActor->GetActorRotation();

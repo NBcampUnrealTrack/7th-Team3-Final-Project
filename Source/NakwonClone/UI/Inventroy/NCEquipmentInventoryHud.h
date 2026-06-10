@@ -18,11 +18,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void InitWithInventory(UNCInventoryBaseComponent* InInventory);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void UpdateEquipmentItemSlot();
-	
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UUniformGridPanel> PlayerInventoryGrid;
 	
 	UPROPERTY()
 	TObjectPtr<UNCInventoryBaseComponent> InventoryComp;
