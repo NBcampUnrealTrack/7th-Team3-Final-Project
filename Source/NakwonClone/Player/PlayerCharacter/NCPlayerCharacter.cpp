@@ -45,6 +45,10 @@ void ANCPlayerCharacter::BeginPlay()
     if (AbilitySystemComponent)
     {
         AbilitySystemComponent->InitAbilityActorInfo(this, this);
+        
+        // 플레이어 태그 부여
+        AbilitySystemComponent->AddLooseGameplayTag(NCCharacter::Player);
+        
         if (HasAuthority() && AttackAbilityClass)
         {
             AbilitySystemComponent->GiveAbility(

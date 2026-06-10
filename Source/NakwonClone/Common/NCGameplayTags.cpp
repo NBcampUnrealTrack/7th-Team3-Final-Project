@@ -2,6 +2,11 @@
 
 // 양식: UE_DEFINE_GAMEPLAY_TAG(네임스페이스::변수명, "에디터에_보여질_태그_이름");
 
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Player, "Character.Player");
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Monster, "Character.Monster");
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Monster_Walker, "Character.Monster.Walker");
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Monster_Runner, "Character.Monster.Runner");
+
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Walk, "Character.State.Walk");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Jog, "Character.State.Jog");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Sprint, "Character.State.Sprint");
