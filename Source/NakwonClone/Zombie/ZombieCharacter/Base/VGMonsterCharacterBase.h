@@ -8,6 +8,17 @@
 #include "AbilitySystemInterface.h"
 #include "VGMonsterCharacterBase.generated.h"
 
+UENUM(BlueprintType)
+enum class EMonsterState : uint8
+{
+	Move,
+	Stop,
+	Chase,
+	Attack,
+	Hit,
+	Dead
+};
+
 UCLASS()
 class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbilitySystemInterface
 {
@@ -15,6 +26,8 @@ class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbili
 
 public:
 	AVGMonsterCharacterBase();
+	
+	virtual void SetMonsterState(EMonsterState NewState);
 	
 #pragma region ASC
 public:
