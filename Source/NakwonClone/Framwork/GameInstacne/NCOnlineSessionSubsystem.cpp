@@ -229,7 +229,7 @@ void UNCOnlineSessionSubsystem::OnCreateSessionComplete(FName SessionName, bool 
 		UWorld* World = GetWorld();
 		if (World)
 		{
-			World->ServerTravel("Game/Maps/L_MVP?listen");
+			World->ServerTravel("/Game/Maps/L_MVP?listen");
 		}
 	}
 }
