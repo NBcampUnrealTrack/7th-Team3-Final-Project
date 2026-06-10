@@ -215,7 +215,11 @@ void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex
 
 	
 	ANCPlayerState* OwningPlayerState = Cast<ANCPlayerState>(GetOwner());
+	if (!OwningPlayerState) return;
+	
 	AActor* OwnerActor = OwningPlayerState->GetPawn();
+	if (!OwnerActor) return; 
+	
 	FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
 	SpawnLocation.Z -= 20.0f; 
 	FRotator SpawnRotation = OwnerActor->GetActorRotation();
