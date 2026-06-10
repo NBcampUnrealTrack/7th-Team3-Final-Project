@@ -1,73 +1,45 @@
 ﻿#include "NCItemSlot.h"
 
+#include "Inventory/NCInventoryType.h"
+#include "Kismet/GameplayStatics.h"
 #include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
-#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
+#include "Player/PlayerComponent/NCPlayerInventoryComponent.h"
 
 void UNCItemSlot::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetOwningPlayerPawn());
-	
-	if (PlayerCharacter)
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (!PC || !PC->PlayerState) return;
+
+	UNCPlayerInventoryComponent* InventoryComp = PC->PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>();
+	if (InventoryComp)
 	{
-		ANCPlayerState* PlayerState = Cast<ANCPlayerState>(PlayerCharacter->GetPlayerState());
-		
-		if (PlayerState)
-		{
-			PlayerState->OnLeftSlotImageChanged.AddDynamic(this, &UNCItemSlot::UpdateLeftSlotImage);
-			PlayerState->OnRightSlotImageChanged.AddDynamic(this, &UNCItemSlot::UpdateRightSlotImage);
-		}
+		InventoryComp->OnQuickSlotUpdated.RemoveDynamic(this, &UNCItemSlot::UpdateSlotVisual);
+		InventoryComp->OnQuickSlotUpdated.AddDynamic(this, &UNCItemSlot::UpdateSlotVisual);
+
+		UpdateSlotVisual();
 	}
 }
 
-void UNCItemSlot::UpdateLeftSlotImage(UTexture2D* ItemIcon)
+void UNCItemSlot::UpdateSlotVisual()
 {
-	if (LeftSlotImage)
-	{
-		LeftSlotImage->SetBrushFromTexture(ItemIcon);
-	}
+	if (!RightSlotImage) return;
 	
-	// 무기 데이터 연동 후 주석 제거
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (!PC || !PC->PlayerState) return;
+
+	UNCPlayerInventoryComponent* InventoryComp = PC->PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>();
+	if (!InventoryComp) return;
 	
-	// if (TwoHandWeapon)
-	// {
-	// 	RightSizeBox->SetVisibility(ESlateVisibility::Collapsed);
-	// 	LeftSizeBox->SetWidthOverride(300.f);
-	// }
-	// else
-	// {
-	// 	RightSizeBox->SetVisibility(ESlateVisibility::Visible);
-	// 	LeftSizeBox->SetWidthOverride(150.f);
-	// }
-}
+	FInventorySlot SlotData = InventoryComp->GetQuickSlotData(TargetSlotIndex);
+	
+	static const FString ContextString(TEXT("QuickSlot Update Context"));
+	FItemData* RowData = ItemDataTable->FindRow<FItemData>(SlotData.ItemID, ContextString);
 
-void UNCItemSlot::UpdateRightSlotImage(UTexture2D* ItemIcon)
-{
-	if (RightSlotImage)
+	if (RowData && RowData->ItemIcon)
 	{
-		RightSlotImage->SetBrushFromTexture(ItemIcon);
+		// 4. 데이터 테이블에 등록된 아이템 실제 아이콘으로 교체
+		RightSlotImage->SetBrushFromTexture(RowData->ItemIcon);
 	}
-}
-
-void UNCItemSlot::UpdateSlotHighlight()
-{
-	// 키 입력 바인딩 후 주석 제거
-
-	// if (1번 키입력)
-	// {
-	// 	FirstItemSlotNumber->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
-	// 	FirstItemSlotImage->SetBrushTintColor(FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 0.3f)));
-	// 	
-	// 	SecondItemSlotNumber->SetColorAndOpacity(FSlateColor(FLinearColor(0.2f, 0.2f, 0.2f, 1.0f)));
-	// 	SecondItemSlotImage->SetBrushTintColor(FSlateColor(FLinearColor(0.2f, 0.2f, 0.2f, 0.3f)));
-	// }
-	// else
-	// {
-	// 	FirstItemSlotNumber->SetColorAndOpacity(FSlateColor(FLinearColor(0.2f, 0.2f, 0.2f, 1.0f)));
-	// 	FirstItemSlotImage->SetBrushTintColor(FSlateColor(FLinearColor(0.2f, 0.2f, 0.2f, 0.3f)));
-	// 	
-	// 	SecondItemSlotNumber->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
-	// 	SecondItemSlotImage->SetBrushTintColor(FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 0.3f)));
-	// }
 }
