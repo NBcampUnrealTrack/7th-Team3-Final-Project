@@ -26,9 +26,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Walker")
 	float WalkSpeed = 80.f;
 #pragma endregion
-	
-public:
 
+#pragma region 공격 트레이스
 public:
 	void PerformAttackTrace();
 	
@@ -48,4 +47,5 @@ private:
 	// 트레이스 거리
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
 	float AttackTraceDistance = 100.f;
+#pragma endregion
 };

@@ -4,9 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 #include "AbilitySystemInterface.h"
 #include "VGMonsterCharacterBase.generated.h"
+
+// 전방 선언
+class AVGMonsterAIControllerBase;
+class UAbilitySystemComponent;
+class UVGMonsterAttributeSet;
+class UAnimMontage;
 
 UCLASS()
 class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -55,7 +60,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimDead;
 	
+public:
 	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
+	UAnimMontage* GetRandomMoveMontage()   { return GetRandomMontage(AnimMove); }
+	UAnimMontage* GetRandomStopMontage()   { return GetRandomMontage(AnimStop); }
+	UAnimMontage* GetRandomChaseMontage()  { return GetRandomMontage(AnimChase); }
+	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
+	UAnimMontage* GetRandomHitMontage()    { return GetRandomMontage(AnimHit); }
+	UAnimMontage* GetRandomDeadMontage()   { return GetRandomMontage(AnimDead); }
 #pragma endregion
 	
 #pragma region 피격

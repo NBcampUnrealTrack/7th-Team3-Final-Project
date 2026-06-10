@@ -5,17 +5,27 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
 UBTTask_Stop::UBTTask_Stop()
 {
 	NodeName = "Stop";
+	bNotifyTick = true;
 }
 
 EBTNodeResult::Type UBTTask_Stop::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
+	float* ElapsedTime = reinterpret_cast<float*>(NodeMemory);
+	*ElapsedTime = 0.f;
+	
 	// 이동 정지
 	OwnerComp.GetAIOwner()->StopMovement();
+	
+	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
+	if (Monster)
+	{
+		Monster->PlayAnimMontage(Monster->GetRandomStopMontage());
+	}
 	
 	// StopDuration 이후 InProgress (InProgress : 다음 틱에서 완료 처리)
 	return EBTNodeResult::InProgress;
@@ -27,14 +37,10 @@ void UBTTask_Stop::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory
 	float& Elapsed = *reinterpret_cast<float*>(NodeMemory);
 	Elapsed += DeltaSeconds;
 	
-	if (Elapsed > StopDuration)
+	if (Elapsed >= StopDuration)
 	{
-		OwnerComp.GetBlackboardComponent()->SetValueAsVector(
-			AVGMonsterAIControllerBase::HeardLocationKey,
-			FVector::ZeroVector);
-		
-		AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(OwnerComp.GetAIOwner()->GetPawn());
-		if (Walker) Walker->SetMonsterState(EMonsterState::Stop);
+		OwnerComp.GetBlackboardComponent()->ClearValue(
+			AVGMonsterAIControllerBase::HeardLocationKey);
 		
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 	}

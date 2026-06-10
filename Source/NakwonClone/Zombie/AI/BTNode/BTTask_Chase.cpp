@@ -3,7 +3,7 @@
 
 #include "BTTask_Chase.h"
 #include "AIController.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
 UBTTask_Chase::UBTTask_Chase()
 {
@@ -12,10 +12,10 @@ UBTTask_Chase::UBTTask_Chase()
 
 EBTNodeResult::Type UBTTask_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(OwnerComp.GetAIOwner()->GetPawn());
-	if (!Walker) return EBTNodeResult::Failed;
-	
-	Walker->SetMonsterState(EMonsterState::Chase);
-	
+	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
+	if (!Monster) return EBTNodeResult::Failed;
+
+	Monster->PlayAnimMontage(Monster->GetRandomChaseMontage());
+
 	return EBTNodeResult::Succeeded;
 }

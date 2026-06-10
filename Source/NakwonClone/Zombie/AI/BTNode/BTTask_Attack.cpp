@@ -3,9 +3,7 @@
 
 #include "NakwonClone/Zombie/AI/BTNode/BTTask_Attack.h"
 #include "AIController.h"
-#include "BehaviorTree/BlackboardComponent.h"
-#include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
 UBTTask_Attack::UBTTask_Attack()
 {
@@ -19,11 +17,11 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 	if (!AIController) return EBTNodeResult::Failed;
 	
 	// AI 컨트롤러가 빙의한 폰(몬스터)을 Walker로 캐스팅하기
-	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(AIController->GetPawn());
-	if (!Walker) return EBTNodeResult::Failed;
+	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(AIController->GetPawn());
+	if (!Monster) return EBTNodeResult::Failed;
 	
 	// 몬스터의 애니메이션 인스턴스 가져오기
-	UAnimInstance* AnimInstance = Walker->GetMesh()->GetAnimInstance();
+	UAnimInstance* AnimInstance = Monster->GetMesh()->GetAnimInstance();
 	if (!AnimInstance) return EBTNodeResult::Failed;
 	
 	// OwnerComp 저장하기
@@ -33,7 +31,7 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 	AnimInstance->OnMontageEnded.AddDynamic(this, &UBTTask_Attack::OnMontageEnded);
 	
 	// 공격 몽타주 재생
-	Walker->SetMonsterState(EMonsterState::Attack);
+	Monster->PlayAnimMontage(Monster->GetRandomAttackMontage());
 	
 	// "아직 진행 중" 반환 -> BT 대기
 	return EBTNodeResult::InProgress;
@@ -43,10 +41,10 @@ void UBTTask_Attack::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* No
 	EBTNodeResult::Type TaskResult)
 {
 	// 테스크가 어떤 이유로든 끝나면 콜백 하제 + 포인터 초기화
-	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(OwnerComp.GetAIOwner()->GetPawn());
-	if (Walker)
+	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
+	if (Monster)
 	{
-		UAnimInstance* AnimInstance = Walker->GetMesh()->GetAnimInstance();
+		UAnimInstance* AnimInstance = Monster->GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{
 			AnimInstance->OnMontageEnded.RemoveDynamic(this, &UBTTask_Attack::OnMontageEnded);
@@ -54,10 +52,8 @@ void UBTTask_Attack::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* No
 	}
 	
 	CachedOwnerComp = nullptr;
-	
 	Super::OnTaskFinished(OwnerComp, NodeMemory, TaskResult);
 }
-
 
 void UBTTask_Attack::OnMontageEnded(UAnimMontage* AnimAttack, bool bInterrupted)
 {

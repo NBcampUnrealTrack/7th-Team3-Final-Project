@@ -3,7 +3,8 @@
 #include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
+#include "AbilitySystemComponent.h"
+#include "Common/NCGameplayTags.h"
 
 AVGMonsterWalker::AVGMonsterWalker()
 {
@@ -13,8 +14,6 @@ AVGMonsterWalker::AVGMonsterWalker()
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
 	}
-	
-	MonsterAttributeSet = CreateDefaultSubobject<UVGMonsterAttributeSet>(TEXT("MonsterAttributeSet"));
 }
 
 void AVGMonsterWalker::BeginPlay()
@@ -58,6 +57,8 @@ void AVGMonsterWalker::PerformAttackTrace()
 			UAbilitySystemComponent* MonsterASC = 
 				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
 		
+			if (TargetASC && !TargetASC->HasMatchingGameplayTag(NCCharacter::Player)) return;
+			
 			if (TargetASC && MonsterASC && AttackEffectClass)
 			{
 				FGameplayEffectContextHandle EffectContext = MonsterASC->MakeEffectContext();
@@ -72,6 +73,5 @@ void AVGMonsterWalker::PerformAttackTrace()
 			}
 			return;
 		}
-		
 	}
 }

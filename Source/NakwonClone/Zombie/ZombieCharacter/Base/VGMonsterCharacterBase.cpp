@@ -4,6 +4,8 @@
 #include "VGMonsterCharacterBase.h"
 #include "AbilitySystemComponent.h"
 #include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
+#include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 {
@@ -18,7 +20,6 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	bUseControllerRotationRoll = false;
 	
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	MonsterAttributeSet = CreateDefaultSubobject<UVGMonsterAttributeSet>(TEXT("MonsterAttributeSet"));
 }
 
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
@@ -55,18 +56,25 @@ void AVGMonsterCharacterBase::HandleHit()
 {
 	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
 	
+	bIsHit = true;
+	PlayAnimMontage(GetRandomMontage(AnimHit));
+	
+	GetWorldTimerManager().SetTimer(HitTimerHandle, [this]()
+	{
+		bIsHit = false;
+		
+		if (AIController)
+		{
+			if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
+			{
+				Blackboard->SetValueAsBool(FName("BIsHit"), false);
+			}
+		}
+	}, 0.5f, false);
+	
 	// 뒤로 밀려남
 	FVector PushBack = -GetActorForwardVector();
 	LaunchCharacter(PushBack * 300.f, true, false);
-	
-	// Blackboard에 bIsHit Set
-	if (AAIController* AIController = Cast<AAIController>(GetController()))
-	{
-		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
-		{
-			Blackboard->SetValueAsBool(FName("BIsHit"), true);
-		}
-	}
 }
 
 void AVGMonsterCharacterBase::HandleDead()
@@ -77,18 +85,17 @@ void AVGMonsterCharacterBase::HandleDead()
 		AIC->UnPossess();
 	}
 
+	// 사망 시, 액터의 콜리전을 비활성화 (시체와 충돌 방지)
 	SetActorEnableCollision(false);
 
-	float Duration = PlayAnimMontage(GetRandomMontage(AnimDead));
-
-	FTimerHandle FreezeHandle;
-	GetWorldTimerManager().SetTimer(FreezeHandle, [this]()
-	{
-		if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
-		{
-			AnimInst->Montage_Pause(GetRandomMontage(AnimDead));
-		}
-	}, 1.16f, false);
-
 	SetLifeSpan(200.f);
+}
+
+UAnimMontage* AVGMonsterCharacterBase::GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages)
+{
+	if (Montages.IsEmpty())
+	{
+		return nullptr;
+	}
+	return Montages[FMath::RandRange(0, Montages.Num() - 1)];
 }

@@ -12,6 +12,5 @@ AVGMonsterWalkerController::AVGMonsterWalkerController()
 void AVGMonsterWalkerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 

@@ -15,5 +15,6 @@ class NAKWONCLONE_API UBTTask_Dead : public UBTTaskNode
 public:
 	UBTTask_Dead();
 	
+protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

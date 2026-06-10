@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BTService_CheckAttackRange.h"
-#include "AICOntroller.h"
+#include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 
@@ -45,7 +45,7 @@ void UBTService_CheckAttackRange::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	if (!Target)
 	{
 		UE_LOG(LogAttackRange, Error, TEXT("[Service] Target 없음"));
-		Blackboard->SetValueAsBool("bIsAttack", false);
+		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAttackKey, false);
 		return;
 	}
 	
@@ -60,10 +60,10 @@ void UBTService_CheckAttackRange::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	// 공격 범위 안이면 bIsAttack = true
 	if (Distance <= AttackRange)
 	{
-		Blackboard->SetValueAsBool("bIsAttack", true);
+		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAttackKey, true);
 	}
 	else
 	{
-		Blackboard->SetValueAsBool("bIsAttack", false);
+		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAttackKey, false);
 	}
 }

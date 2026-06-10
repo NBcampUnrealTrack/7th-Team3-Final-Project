@@ -11,6 +11,6 @@ UCLASS()
 class NAKWONCLONE_API UAnimNotify_AttackTrace : public UAnimNotify
 {
 	GENERATED_BODY()
-public:
+protected:
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
 };

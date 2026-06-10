@@ -5,10 +5,13 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Common/NCGameplayTags.h"
-#include "Kismet/GameplayStatics.h"
-#include "Engine/TargetPoint.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
-#include "Perception/AIPerceptionSystem.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISense_Sight.h"
+#include "Perception/AISenseConfig_Sight.h"
+#include "Perception/AISense_Hearing.h"
+#include "Perception/AISenseConfig_Hearing.h"
 
 DEFINE_LOG_CATEGORY(LogMonster);
 DEFINE_LOG_CATEGORY(LogAIPc);
@@ -19,6 +22,7 @@ const FName AVGMonsterAIControllerBase::PatrolIndexKey    = "PatrolIndex";
 const FName AVGMonsterAIControllerBase::TargetActorKey    = "TargetActor";
 const FName AVGMonsterAIControllerBase::HeardLocationKey  = "HeardLocation";
 const FName AVGMonsterAIControllerBase::IsDeadKey         = "IsDead";
+const FName AVGMonsterAIControllerBase::IsAttackKey		  = "bIsAttack";
 #pragma endregion
 
 AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
@@ -121,9 +125,6 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 			UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지: %s"), *Actor->GetName());
 			Blackboard->SetValueAsObject(TargetActorKey, Actor);
 			Blackboard->ClearValue(HeardLocationKey);
-			
-			AVGMonsterCharacterBase* Monster  = Cast<AVGMonsterCharacterBase>(GetPawn());
-			if (Monster) Monster->SetMonsterState(EMonsterState::Chase);
 		}
 		else
 		{
