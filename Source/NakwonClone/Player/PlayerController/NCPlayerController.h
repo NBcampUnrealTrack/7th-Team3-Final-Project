@@ -36,10 +36,17 @@ private:
 	void Jump();
 	void StopJump();
 	void ToggleCrouch();
+	
 	// 하상빈 추가
 	void Interact();
 	void ToggleInventory();
-
+	void QuickSlot1();
+	void QuickSlot2();
+	void QuickSlot3();
+	void QuickSlot4();
+	void UnArm();
+	// ----------
+	
 	void Attack();
 	
 protected:
@@ -64,12 +71,23 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> CrouchAction;
 	
-	// 하상빈 추가
+	// ---하상빈 추가---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> InteractAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> InventoryAction;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> QuickSlot1Action;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> QuickSlot2Action;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> QuickSlot3Action;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> QuickSlot4Action;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> UnArmAction;
+	// ----------
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> AttackAction;
 	
