@@ -13,6 +13,9 @@ class UAnimInstance;
 class ANCBaseCharacter;
 class UAbilitySystemComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+	FOnWeaponChanged, const FNCWeaponInstance&, NewWeapon);
+
 USTRUCT(BlueprintType)
 struct FNCWeaponComboData
 {
@@ -50,6 +53,9 @@ public:
 	void UnEquipWeapon();
 
 	FNCWeaponInstance GetEquippedWeapon() const { return EquippedWeapon; }
+
+	UPROPERTY(BlueprintAssignable, Category = "Combat")
+	FOnWeaponChanged OnWeaponChanged;
 
 	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
 	AActor* GetSpawnedWeaponActor() const

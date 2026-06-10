@@ -197,6 +197,8 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 			}
 		}
 	}
+
+	OnWeaponChanged.Broadcast(EquippedWeapon);
 }
 
 void UNCCombatComponent::Internal_UnEquipWeapon()
@@ -222,6 +224,8 @@ void UNCCombatComponent::Internal_UnEquipWeapon()
 
 	EquippedWeapon = FNCWeaponInstance();
 	bIsEquipped = false;
+
+	OnWeaponChanged.Broadcast(FNCWeaponInstance{});
 }
 
 void UNCCombatComponent::OnRep_EquippedWeapon()
@@ -232,6 +236,8 @@ void UNCCombatComponent::OnRep_EquippedWeapon()
 	{
 		ASC->AddLooseGameplayTag(NCWeapon::State_Broken);
 	}
+
+	OnWeaponChanged.Broadcast(EquippedWeapon);
 }
 
 FNCWeaponData* UNCCombatComponent::GetEquippedWeaponData() const
