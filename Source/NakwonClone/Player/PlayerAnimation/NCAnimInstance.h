@@ -11,6 +11,8 @@ class ACharacter;
 class UBlendSpace;
 class UNCCombatComponent;
 class UCharacterMovementComponent;
+class ANCPlayerCharacter;
+class UNCCombatComponent;
 
 UCLASS()
 class NAKWONCLONE_API UNCAnimInstance : public UAnimInstance
@@ -31,6 +33,10 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "References")
     TObjectPtr<UNCCombatComponent> CombatComponent;
 
+    // 캐싱 (매 프레임 Find 방지)
+    UPROPERTY()
+    TObjectPtr<UNCCombatComponent> CachedCombatComponent;
+
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     float Speed = 0.f;
 
@@ -46,13 +52,6 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     bool bIsCrouching = false;
 
-    //H 무기 상태
-    UPROPERTY(BlueprintReadOnly, Category = "Weapon")
-    bool bHasWeapon = false;
-    //H
-    UPROPERTY(BlueprintReadOnly, Category = "Weapon")
-    FGameplayTag CurrentWeaponTypeTag;
-
     //H 현재 활성 이동 BlendSpace (런타임 계산 결과)
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     TObjectPtr<UBlendSpace> CurrentLocomotionBlendSpace;
@@ -66,4 +65,15 @@ protected:
 
 private:
     void UpdateWeaponAndBlendSpace();
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    FGameplayTag CurrentWeaponTypeTag;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    bool bHasWeapon = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    bool bIsOneHandedWeapon = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    bool bIsTwoHandedWeapon = false;
 };

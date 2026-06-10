@@ -9,9 +9,6 @@ void UNCEquipmentInventorySlot::NativeConstruct()
 
 void UNCEquipmentInventorySlot::SetSlotData(int32 InIndex, FGameplayTag InTag, FName InItemID)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ItemImage %s"),
-	EquipmentItemImage ? TEXT("VALID") : TEXT("NULL"));
-	
 	SlotIndex = InIndex;
 	ItemTag = InTag;
 	ItemID = InItemID;

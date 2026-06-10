@@ -24,6 +24,9 @@ public:
 	//GAS 어빌리티
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Ability")
 	TSubclassOf<UGA_Attack> AttackAbilityClass;
+
+	UFUNCTION(BlueprintPure, Category = "Components|Combat")
+	UNCCombatComponent* GetCombatComponent() const { return CombatComponent; }
 	
 	//하상빈 추가
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryRef; }

@@ -14,9 +14,10 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* HPProgressBar;
 
-	UFUNCTION()
-	void NativeConstruct();
+	// UFUNCTION()
+	// void NativeConstruct();
 	
+public:
 	UFUNCTION()
 	void UpdateHP(float CurrentHP, float MaxHP);
 };

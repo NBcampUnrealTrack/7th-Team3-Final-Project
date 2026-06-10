@@ -75,20 +75,23 @@ void ANCItemActor::ToggleHighlight_Implementation(bool bHighlight)
 void ANCItemActor::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-	
-	ItemID = ItemRowHandle.RowName;
 
-	if (!ItemRowHandle.IsNull())
+	if (!ItemID.IsNone())
 	{
-		FItemData* FoundData = ItemRowHandle.GetRow<FItemData>(TEXT("ActorConstruction"));
-        
-		if (FoundData)
+		UDataTable* LoadedItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/NakwonClone/Blueprints/Item/ItemData/DT_ItemTypeData.DT_ItemTypeData"));
+		
+		if (LoadedItemDataTable)
 		{
-			ItemTypeTag = FoundData->ItemTypeTag;
-            
-			if (ItemMesh && FoundData->ItemMesh)
+			FItemData* FoundData = LoadedItemDataTable->FindRow<FItemData>(ItemID, TEXT("ActorConstruction"));
+			
+			if (FoundData)
 			{
-				ItemMesh->SetStaticMesh(FoundData->ItemMesh);
+				ItemTypeTag = FoundData->ItemTypeTag;
+				
+				if (ItemMesh && FoundData->ItemMesh)
+				{
+					ItemMesh->SetStaticMesh(FoundData->ItemMesh);
+				}
 			}
 		}
 	}
