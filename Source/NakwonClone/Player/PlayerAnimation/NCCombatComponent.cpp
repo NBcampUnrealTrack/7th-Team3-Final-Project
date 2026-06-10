@@ -240,6 +240,16 @@ void UNCCombatComponent::OnRep_EquippedWeapon()
 	OnWeaponChanged.Broadcast(EquippedWeapon);
 }
 
+FGameplayTag UNCCombatComponent::GetEquippedWeaponTypeTag() const
+{
+	const FNCWeaponData* WeaponData = GetEquippedWeaponData();
+	if (!WeaponData)
+	{
+		return NCWeapon::Type_Unarmed;
+	}
+	return WeaponData->WeaponTypeTag;
+}
+
 FNCWeaponData* UNCCombatComponent::GetEquippedWeaponData() const
 {
 	if (!bIsEquipped || !OwnerCharacter)

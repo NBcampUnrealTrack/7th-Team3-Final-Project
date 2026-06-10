@@ -67,6 +67,12 @@ public:
 
 	bool CanAttack() const;
 
+	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
+	FGameplayTag GetEquippedWeaponTypeTag() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
+	bool IsWeaponEquipped() const { return bIsEquipped; }
+
 	void ReduceDurability(float Amount);
 
 	UAnimMontage* GetCurrentComboMontage() const { return CurrentWeaponCombo.ComboMontage; }
