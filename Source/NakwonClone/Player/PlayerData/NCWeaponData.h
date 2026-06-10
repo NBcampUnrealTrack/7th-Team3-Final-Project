@@ -5,6 +5,8 @@
 #include "GameplayTagContainer.h"
 #include "NCWeaponData.generated.h"
 
+//H
+class UBlendSpace;
 //DataTable 행 구조 - 무기 타입 정보 (공유, 1개만 존재)
 USTRUCT(BlueprintType)
 struct FNCWeaponData : public FTableRowBase
@@ -65,11 +67,27 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TSoftObjectPtr<UAnimMontage> HeavyAttackMontage;
 
+	//H AttackMontage가 풀바디인지 (true=하체까지 덮음, false=상체만)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	bool bAttackFullBody = false;
+
+	//H HeavyAttackMontage가 풀바디인지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	bool bHeavyAttackFullBody = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TSoftObjectPtr<UAnimMontage> EquipMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TSoftObjectPtr<UAnimMontage> BrokenMontage;
+
+	//H 이동 BlendSpace - 서 있을 때
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	TSoftObjectPtr<UBlendSpace> LocomotionBS_Standing;
+
+	//H 이동 BlendSpace - 앉아 있을 때
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	TSoftObjectPtr<UBlendSpace> LocomotionBS_Crouching;
 };
 
 //개별 무기 인스턴스 - 줍는 순간 생성, 내구도 개별 관리
