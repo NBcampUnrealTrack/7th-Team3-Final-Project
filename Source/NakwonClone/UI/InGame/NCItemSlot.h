@@ -13,6 +13,12 @@ class NAKWONCLONE_API UNCItemSlot : public UUserWidget
 	GENERATED_BODY()
 	
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UDataTable* ItemDataTable;
+	
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "UI|Config")
+	int32 TargetSlotIndex;
+	
 	UPROPERTY(meta = (BindWidget))
 	UImage* LeftSlotImage;
 	
@@ -41,10 +47,5 @@ protected:
 	virtual void NativeConstruct() override;
 	
 	UFUNCTION()
-	void UpdateLeftSlotImage(UTexture2D* ItemIcon);
-	
-	UFUNCTION()
-	void UpdateRightSlotImage(UTexture2D* ItemIcon);
-	
-	void UpdateSlotHighlight();
+	void UpdateSlotVisual();
 };
