@@ -10,17 +10,6 @@
 class UVGMonsterAttributeSet;
 class UAnimMontage;
 
-UENUM(BlueprintType)
-enum class EMonsterState : uint8
-{
-	Move,
-	Stop,
-	Chase,
-	Attack,
-	Hit,
-	Dead
-};
-
 UCLASS()
 class NAKWONCLONE_API AVGMonsterWalker : public AVGMonsterCharacterBase
 {
@@ -64,7 +53,7 @@ protected:
 	
 public:
 	// BTTask에서 상태 변경 시 호출
-	void SetMonsterState(EMonsterState NewState);
+	virtual void SetMonsterState(EMonsterState NewState) override;
 	
 	UFUNCTION()
 	void HandleHit();

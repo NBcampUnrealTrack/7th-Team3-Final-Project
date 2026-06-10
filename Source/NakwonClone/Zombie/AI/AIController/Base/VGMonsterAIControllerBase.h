@@ -3,6 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogMonster, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogAIPc, Log, All);
+
 #include "AIController.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"

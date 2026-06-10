@@ -7,6 +7,8 @@
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "AbilitySystemComponent.h"
+#include "Perception/AISense_Hearing.h"
+#include "Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 
 ANCPlayerController::ANCPlayerController()
 {
@@ -96,7 +98,21 @@ void ANCPlayerController::Look(const FInputActionValue& Value)
 void ANCPlayerController::StartSprint()
 {
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+    {
         PC->StartSprint();
+    }
+    
+    if (APawn* MyPawn = GetPawn())
+    {
+        UE_LOG(LogAIPc, Warning, TEXT("[Sprint] ReportNoiseEvent 호출 위치: %s"), *MyPawn->GetActorLocation().ToString());
+        
+        UAISense_Hearing::ReportNoiseEvent(
+            GetWorld(),
+            GetPawn()->GetActorLocation(),
+            1.0f,
+            MyPawn,
+            0.0f);
+    }
 }
 
 void ANCPlayerController::StopSprint()
