@@ -9,8 +9,7 @@
 
 UBTTask_Stop::UBTTask_Stop()
 {
-	NodeName = "Stop & Boundary";
-	bNotifyTick = true;
+	NodeName = "Stop";
 }
 
 EBTNodeResult::Type UBTTask_Stop::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
