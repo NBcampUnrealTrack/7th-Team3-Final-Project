@@ -63,7 +63,7 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Locomotion|Defaults")
     TSoftObjectPtr<UBlendSpace> DefaultUnarmedBS_Crouching;
 
-private:
+protected:
     void UpdateWeaponAndBlendSpace();
     UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
     FGameplayTag CurrentWeaponTypeTag;
