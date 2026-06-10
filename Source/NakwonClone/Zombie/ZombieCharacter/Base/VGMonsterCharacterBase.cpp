@@ -3,7 +3,7 @@
 
 #include "VGMonsterCharacterBase.h"
 #include "AbilitySystemComponent.h"
-
+#include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 {
@@ -18,11 +18,7 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	bUseControllerRotationRoll = false;
 	
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-}
-
-void AVGMonsterCharacterBase::SetMonsterState(EMonsterState NewState)
-{
-	// 순수 가상 함수 못써서 이렇게 사용 중
+	MonsterAttributeSet = CreateDefaultSubobject<UVGMonsterAttributeSet>(TEXT("MonsterAttributeSet"));
 }
 
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
@@ -34,47 +30,65 @@ void AVGMonsterCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UE_LOG(LogTemp, Warning, TEXT("[MonsterBase] BeginPlay 호출됨: %s"), *GetName());
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] BeginPlay 호출됨: %s"), *GetName());
 
 	AIController = Cast<AVGMonsterAIControllerBase>(GetController());
 
 	if (!AIController)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MonsterBase] AIController 캐스팅 실패: %s"), *GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[MonsterBase] AIController 캐스팅 성공: %s"), *AIController->GetName());
+		UE_LOG(LogMonster, Error, TEXT("[MonsterBase] AIController 캐스팅 실패: %s"), *GetName());
 	}
 	
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	}
-}
-
-void AVGMonsterCharacterBase::TakeDamage_Monster(float DamageAmount)
-{
-	if (CurrentHealth <= 0.f) return;
-
-	CurrentHealth = FMath::Max(0.f, CurrentHealth - DamageAmount);
-	UE_LOG(LogTemp, Log, TEXT("[Monster] %s 피격: %.1f / %.1f"), *GetName(), CurrentHealth, MaxHealth);
-
-	if (CurrentHealth <= 0.f)
+	
+	if (MonsterAttributeSet)
 	{
-		Dead();
+		MonsterAttributeSet->OnHitReceived.AddDynamic(this, &AVGMonsterCharacterBase::HandleHit);
+		MonsterAttributeSet->OnDead.AddDynamic(this, &AVGMonsterCharacterBase::HandleDead);
 	}
 }
 
-void AVGMonsterCharacterBase::Dead()
+void AVGMonsterCharacterBase::HandleHit()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[Monster] %s 사망"), *GetName());
-
-	// AI 중단
-	if (AIController)
+	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
+	
+	// 뒤로 밀려남
+	FVector PushBack = -GetActorForwardVector();
+	LaunchCharacter(PushBack * 300.f, true, false);
+	
+	// Blackboard에 bIsHit Set
+	if (AAIController* AIController = Cast<AAIController>(GetController()))
 	{
-		AIController->StopMovement();
+		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
+		{
+			Blackboard->SetValueAsBool(FName("BIsHit"), true);
+		}
+	}
+}
+
+void AVGMonsterCharacterBase::HandleDead()
+{
+	if (AAIController* AIC = Cast<AAIController>(GetController()))
+	{
+		AIC->StopMovement();
+		AIC->UnPossess();
 	}
 
-	// 추후: 사망 애니메이션, 래그돌, 제거 타이머 등 추가
+	SetActorEnableCollision(false);
+
+	float Duration = PlayAnimMontage(GetRandomMontage(AnimDead));
+
+	FTimerHandle FreezeHandle;
+	GetWorldTimerManager().SetTimer(FreezeHandle, [this]()
+	{
+		if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
+		{
+			AnimInst->Montage_Pause(GetRandomMontage(AnimDead));
+		}
+	}, 1.16f, false);
+
+	SetLifeSpan(200.f);
 }
