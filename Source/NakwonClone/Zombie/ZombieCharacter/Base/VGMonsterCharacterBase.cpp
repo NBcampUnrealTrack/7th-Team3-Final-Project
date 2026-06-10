@@ -20,6 +20,11 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 }
 
+void AVGMonsterCharacterBase::SetMonsterState(EMonsterState NewState)
+{
+	// 순수 가상 함수 못써서 이렇게 사용 중
+}
+
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;

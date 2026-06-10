@@ -1,10 +1,17 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
+
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "Common/NCGameplayTags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/TargetPoint.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 #include "Perception/AIPerceptionSystem.h"
+
+DEFINE_LOG_CATEGORY(LogMonster);
+DEFINE_LOG_CATEGORY(LogAIPc);
 
 #pragma region 블랙보드 키 이름 정의
 const FName AVGMonsterAIControllerBase::PatrolLocationKey = "PatrolLocation";
@@ -37,8 +44,8 @@ AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
 
 	// 청각 설정
 	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
-	HearingConfig->HearingRange = 800.f;				// 청각 반경
-	HearingConfig->SetMaxAge(3.f);						// 감지 정보 유지 시간 (청각)
+	HearingConfig->HearingRange = 5000.f;				// 청각 반경
+	HearingConfig->SetMaxAge(60.f);						// 감지 정보 유지 시간 (청각)
 	HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
 	HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
 	HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
@@ -66,7 +73,7 @@ void AVGMonsterAIControllerBase::BeginPlay()
 			this,
 			&AVGMonsterAIControllerBase::OnPerceptionUpdated);
 
-		UE_LOG(LogTemp, Warning, TEXT("[AIController] Perception 콜백 바인딩 완료"));
+		UE_LOG(LogMonster, Warning, TEXT("[AIController] Perception 콜백 바인딩 완료"));
 	}
 }
 
@@ -74,25 +81,24 @@ void AVGMonsterAIControllerBase::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	
-	UE_LOG(LogTemp, Warning, TEXT("[AIController] OnPossess 호출됨"));
 
 	if (BehaviorTree)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[AIController] BT 실행 시도"));
+		UE_LOG(LogMonster, Warning, TEXT("[AIController] BT 실행 시도"));
 		UBlackboardComponent* BlackboardComp = Blackboard;
 		if (UseBlackboard(BehaviorTree->BlackboardAsset, BlackboardComp))
 		{
 			RunBehaviorTree(BehaviorTree);
-			UE_LOG(LogTemp, Warning, TEXT("[AIController] BT 실행 완료"));
+			UE_LOG(LogMonster, Warning, TEXT("[AIController] BT 실행 완료"));
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("[AIController] UseBlackboard 실패"));
+			UE_LOG(LogMonster, Error, TEXT("[AIController] UseBlackboard 실패"));
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[AIController] BehaviorTree가 null"));
+		UE_LOG(LogMonster, Error, TEXT("[AIController] BehaviorTree가 null"));
 	}
 }
 
@@ -100,8 +106,11 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 {
 	if (!Blackboard || !Actor) return;
 
-	// 플레이어 태그 확인
-	// if (!Actor->ActorHasTag("Player")) return;
+	// ASC에서 플레이어 태그 확인
+	UAbilitySystemComponent* TargetASC = 
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
+	if (!TargetASC) return;
+	if (!TargetASC->HasMatchingGameplayTag(NCCharacter::Player)) return;
 
 #pragma region 시각 감지 처리
 	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
@@ -109,16 +118,17 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 		if (Stimulus.WasSuccessfullySensed())
 		{
 			// 시각 감지 성공 → TargetActor 등록
-			UE_LOG(LogTemp, Warning, TEXT("[AIPerception] 시각 감지: %s"), *Actor->GetName());
+			UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지: %s"), *Actor->GetName());
 			Blackboard->SetValueAsObject(TargetActorKey, Actor);
+			Blackboard->ClearValue(HeardLocationKey);
 			
-			AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(GetPawn());
-			if (Walker) Walker->SetMonsterState(EMonsterState::Chase);
+			AVGMonsterCharacterBase* Monster  = Cast<AVGMonsterCharacterBase>(GetPawn());
+			if (Monster) Monster->SetMonsterState(EMonsterState::Chase);
 		}
 		else
 		{
 			// 시각 감지 해제 → TargetActor 초기화
-			UE_LOG(LogTemp, Warning, TEXT("[AIPerception] 시각 감지 해제: %s"), *Actor->GetName());
+			UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지 해제: %s"), *Actor->GetName());
 			Blackboard->ClearValue(TargetActorKey);
 		}
 	}
@@ -130,7 +140,7 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 		if (Stimulus.WasSuccessfullySensed())
 		{
 			// 청각 감지 성공 → 소리 발생 위치 등록
-			UE_LOG(LogTemp, Warning, TEXT("[AIPerception] 청각 감지 위치: %s"), *Stimulus.StimulusLocation.ToString());
+			UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 청각 감지 위치: %s"), *Stimulus.StimulusLocation.ToString());
 			Blackboard->SetValueAsVector(HeardLocationKey, Stimulus.StimulusLocation);
 		}
 	}
