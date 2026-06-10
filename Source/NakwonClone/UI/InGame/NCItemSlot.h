@@ -5,6 +5,7 @@
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
+#include "Inventory/NCInventoryType.h"
 #include "NCItemSlot.generated.h"
 
 UCLASS()
@@ -48,4 +49,5 @@ protected:
 	
 	UFUNCTION()
 	void UpdateSlotVisual();
+	void UpdateImage(UImage* TargetImage, const FInventorySlot& SlotData);
 };
