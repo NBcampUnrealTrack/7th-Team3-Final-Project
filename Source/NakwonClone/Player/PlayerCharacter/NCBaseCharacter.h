@@ -20,6 +20,7 @@ public:
 
 	// GAS 인터페이스
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual UVGPlayerAttributeSet* GetPlayerAttributeSet() const;
 
 protected:
 	virtual void BeginPlay() override;

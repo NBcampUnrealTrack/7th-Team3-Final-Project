@@ -36,6 +36,11 @@ UAbilitySystemComponent* ANCBaseCharacter::GetAbilitySystemComponent() const
     return AbilitySystemComponent;
 }
 
+UVGPlayerAttributeSet* ANCBaseCharacter::GetPlayerAttributeSet() const
+{
+    return PlayerAttributeSet;
+}
+
 void ANCBaseCharacter::BeginPlay()
 {
     Super::BeginPlay();

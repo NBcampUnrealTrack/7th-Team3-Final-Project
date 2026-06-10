@@ -24,22 +24,60 @@ void UNCItemSlot::NativeConstruct()
 
 void UNCItemSlot::UpdateSlotVisual()
 {
-	if (!RightSlotImage) return;
+	// APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	// if (!PC || !PC->PlayerState) return;
+	//
+	// UNCPlayerInventoryComponent* InventoryComp = PC->PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>();
+	// if (!InventoryComp) return;
+	//
+	// UImage* TargetImage = nullptr;
+	// if (TargetSlotIndex == 0)
+	// {
+	// 	TargetImage = LeftSlotImage;
+	// }
+	// else if (TargetSlotIndex == 1)
+	// {
+	// 	TargetImage = RightSlotImage;
+	// }
+	//
+	// if (!TargetImage) return;
+	//
+	// FInventorySlot SlotData = InventoryComp->GetQuickSlotData(TargetSlotIndex);
+	//
+	// static const FString ContextString(TEXT("QuickSlot Update Context"));
+	// FItemData* RowData = ItemDataTable->FindRow<FItemData>(SlotData.ItemID, ContextString);
+	//
+	// if (RowData && RowData->ItemIcon)
+	// {
+	// 	TargetImage->SetBrushFromTexture(RowData->ItemIcon);
+	// }
 	
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PC || !PC->PlayerState) return;
 
-	UNCPlayerInventoryComponent* InventoryComp = PC->PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>();
+	UNCPlayerInventoryComponent* InventoryComp =
+		PC->PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>();
+
 	if (!InventoryComp) return;
 	
-	FInventorySlot SlotData = InventoryComp->GetQuickSlotData(TargetSlotIndex);
-	
-	static const FString ContextString(TEXT("QuickSlot Update Context"));
+	FInventorySlot LeftSlotData = InventoryComp->GetQuickSlotData(0);
+
+	FInventorySlot RightSlotData = InventoryComp->GetQuickSlotData(1);
+
+	UpdateImage(LeftSlotImage, LeftSlotData);
+	UpdateImage(RightSlotImage, RightSlotData);
+}
+
+void UNCItemSlot::UpdateImage(UImage* TargetImage, const FInventorySlot& SlotData)
+{
+	if (!TargetImage) return;
+
+	static const FString ContextString(TEXT("QuickSlot"));
+
 	FItemData* RowData = ItemDataTable->FindRow<FItemData>(SlotData.ItemID, ContextString);
 
 	if (RowData && RowData->ItemIcon)
 	{
-		// 4. 데이터 테이블에 등록된 아이템 실제 아이콘으로 교체
-		RightSlotImage->SetBrushFromTexture(RowData->ItemIcon);
+		TargetImage->SetBrushFromTexture(RowData->ItemIcon);
 	}
 }
