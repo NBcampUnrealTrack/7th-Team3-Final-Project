@@ -65,4 +65,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Getters")
 	FInventorySlot GetMainSlotData(int32 SlotIndex) const;
 	
+	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
+	int32 CurrentEquippedSlotIndex = -1;
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void ForceUnArm();
 };

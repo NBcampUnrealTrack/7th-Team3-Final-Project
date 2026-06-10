@@ -4,6 +4,7 @@
 #include "Net/UnrealNetwork.h"
 #include "NakwonClone/Item/NCItemActor.h"
 #include "Player/PlayerAnimation/NCCombatComponent.h"
+#include "Player/PlayerCharacter/NCBaseCharacter.h"
 
 UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 {
@@ -42,6 +43,29 @@ FInventorySlot UNCPlayerInventoryComponent::GetMainSlotData(int32 SlotIndex) con
 	}
     
 	return FInventorySlot();
+}
+
+void UNCPlayerInventoryComponent::ForceUnArm()
+{
+	if (CurrentEquippedSlotIndex == -1)
+	{
+		return;
+	}
+	
+	if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+	{
+		if (APawn* NCPawn = NCPS->GetPawn())
+		{
+			if (UNCCombatComponent* NCCombatComp = NCPawn->FindComponentByClass<UNCCombatComponent>())
+			{
+				NCCombatComp->UnEquipWeapon();
+				CurrentEquippedSlotIndex = -1;
+				
+				FString DebugMsg = TEXT("[H키 : 맨손 전환]");
+				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::White, DebugMsg);	
+			}
+		}
+	}
 }
 
 void UNCPlayerInventoryComponent::OnRep_QuickSlots()
@@ -136,9 +160,15 @@ bool UNCPlayerInventoryComponent::EquipToQuickSlot(int32 MainSlotIndex, int32 Qu
 	
 	if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
 	{
-		if (UNCCombatComponent* CombatComp =GetOwner()->FindComponentByClass<UNCCombatComponent>())
+		if (ANCPlayerState* NCPS =  Cast<ANCPlayerState>(GetOwner()))
 		{
-			CombatComp->EquipWeapon(QuickSlots[QuickSlotIndex].WeaponInstance);
+			if (APawn* NCPawn =	NCPS->GetPawn())
+			{
+				if (UNCCombatComponent* NCCombatComponent = NCPawn->FindComponentByClass<UNCCombatComponent>())
+				{
+					NCCombatComponent->EquipWeapon(QuickSlots[QuickSlotIndex].WeaponInstance);
+				}
+			}
 		}
 	}
 	
@@ -185,14 +215,45 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 	
 	else if (ItemTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Equipment"))))
 	{
+		if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+		{
+			if (APawn* NCPawn =	NCPS->GetPawn())
+			{
+				if (UNCCombatComponent* NCCombatComp = NCPawn->FindComponentByClass<UNCCombatComponent>())
+				{
+					if (CurrentEquippedSlotIndex == QuickSlotIndex)
+					{
+						return true;
+					}
+					
+					if (CurrentEquippedSlotIndex != -1)
+					{
+						NCCombatComp->UnEquipWeapon();
+					}
+					
+					FNCWeaponInstance WeapontoEquip = QuickSlots[QuickSlotIndex].WeaponInstance;
+					
+					if (WeapontoEquip.WeaponID.IsNone())
+					{
+						WeapontoEquip.WeaponID = QuickSlots[QuickSlotIndex].ItemID;
+						WeapontoEquip.UniqueID = FGuid::NewGuid();
+						WeapontoEquip.CurrentDurability = 100.0f;
+						WeapontoEquip.bIsBroken = false;
+					}
+					
+					NCCombatComp->EquipWeapon(WeapontoEquip);
+					CurrentEquippedSlotIndex = QuickSlotIndex;
+					
+					FString DebugMsg = FString::Printf(TEXT("[무기 장착] 슬롯: %d, 아이디: %s"), QuickSlotIndex, *WeapontoEquip.WeaponID.ToString());
+					GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMsg);
+				}
+			}
+		}
+		
 		OnItemUsed.Broadcast(ItemTag);
-
-		FString DebugMsg = FString::Printf(TEXT("[무기 장착] %s"), *ItemTag.ToString());
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMsg);
-
 		return true;
 	}
-	
+		
 	return false;
 }
 
@@ -215,7 +276,11 @@ void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex
 
 	
 	ANCPlayerState* OwningPlayerState = Cast<ANCPlayerState>(GetOwner());
+	if (!OwningPlayerState) return;
+	
 	AActor* OwnerActor = OwningPlayerState->GetPawn();
+	if (!OwnerActor) return; 
+	
 	FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
 	SpawnLocation.Z -= 20.0f; 
 	FRotator SpawnRotation = OwnerActor->GetActorRotation();
