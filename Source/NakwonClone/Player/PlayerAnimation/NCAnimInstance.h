@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "GameplayTagContainer.h"
 #include "NCAnimInstance.generated.h"
 
 class ACharacter;
+class UBlendSpace;
+class UNCCombatComponent;
 class UCharacterMovementComponent;
 
 UCLASS()
@@ -24,6 +27,9 @@ protected:
 
     UPROPERTY(BlueprintReadOnly, Category = "References")
     TObjectPtr<UCharacterMovementComponent> MovementComponent;
+    //H
+    UPROPERTY(BlueprintReadOnly, Category = "References")
+    TObjectPtr<UNCCombatComponent> CombatComponent;
 
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     float Speed = 0.f;
@@ -39,4 +45,25 @@ protected:
 
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     bool bIsCrouching = false;
+
+    //H 무기 상태
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon")
+    bool bHasWeapon = false;
+    //H
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon")
+    FGameplayTag CurrentWeaponTypeTag;
+
+    //H 현재 활성 이동 BlendSpace (런타임 계산 결과)
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+    TObjectPtr<UBlendSpace> CurrentLocomotionBlendSpace;
+
+    //H 무기 없을 때 기본 BlendSpace (ABP 디테일에서 할당)
+    UPROPERTY(EditDefaultsOnly, Category = "Locomotion|Defaults")
+    TSoftObjectPtr<UBlendSpace> DefaultUnarmedBS_Standing;
+    //H
+    UPROPERTY(EditDefaultsOnly, Category = "Locomotion|Defaults")
+    TSoftObjectPtr<UBlendSpace> DefaultUnarmedBS_Crouching;
+
+private:
+    void UpdateWeaponAndBlendSpace();
 };
