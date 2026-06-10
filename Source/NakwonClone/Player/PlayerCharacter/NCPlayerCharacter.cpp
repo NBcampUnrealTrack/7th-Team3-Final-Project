@@ -15,6 +15,9 @@ ANCPlayerCharacter::ANCPlayerCharacter()
 {
     InitCamera();
     InitComponents();
+
+    //H
+    GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
 void ANCPlayerCharacter::InitCamera()
