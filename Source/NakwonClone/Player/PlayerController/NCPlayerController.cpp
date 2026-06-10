@@ -1,4 +1,4 @@
-#include "NCPlayerController.h"
+﻿#include "NCPlayerController.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -75,19 +75,19 @@ void ANCPlayerController::SetupInputComponent()
         }
         if (QuickSlot2Action)
         {
-            EIC->BindAction(QuickSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot2);
+            EIC->BindAction(QuickSlot2Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot2);
         }
         if (QuickSlot3Action)
         {
-            EIC->BindAction(QuickSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot3);
+            EIC->BindAction(QuickSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot3);
         }
         if (QuickSlot4Action)
         {
-            EIC->BindAction(QuickSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot4);
+            EIC->BindAction(QuickSlot4Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot4);
         }
         if (UnArmAction)
         {
-            EIC->BindAction(QuickSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::UnArm);
+            EIC->BindAction(UnArmAction, ETriggerEvent::Started, this, &ANCPlayerController::UnArm);
         }
         // -----------
         
