@@ -38,6 +38,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|QuickSlot")
 	virtual bool EquipToQuickSlot(int32 MainSlotIndex, int32 QuickSlotIndex);
 	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	virtual bool UnequipFromQuickSlot(int32 QuickSlotIndex, int32 MainSlotIndex);
+	
 	UFUNCTION(BlueprintCallable, Category = "Inventory|QuickSlot")
 	virtual bool UseQuickSlot(int32 QuickSlotIndex);
 	
