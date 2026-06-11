@@ -1,13 +1,15 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "GameplayTagContainer.h"
 #include "NCAnimInstance.generated.h"
 
 class ACharacter;
+class UBlendSpace;
+class UNCCombatComponent;
 class UCharacterMovementComponent;
+class ANCPlayerCharacter;
 
 UCLASS()
 class NAKWONCLONE_API UNCAnimInstance : public UAnimInstance
@@ -25,6 +27,12 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "References")
     TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
+    UPROPERTY(BlueprintReadOnly, Category = "References")
+    TObjectPtr<UNCCombatComponent> CombatComponent;
+
+    UPROPERTY()
+    TObjectPtr<UNCCombatComponent> CachedCombatComponent;
+
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     float Speed = 0.f;
 
@@ -39,4 +47,28 @@ protected:
 
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     bool bIsCrouching = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+    TObjectPtr<UBlendSpace> CurrentLocomotionBlendSpace;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Locomotion|Defaults")
+    TSoftObjectPtr<UBlendSpace> DefaultUnarmedBS_Standing;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Locomotion|Defaults")
+    TSoftObjectPtr<UBlendSpace> DefaultUnarmedBS_Crouching;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    FGameplayTag CurrentWeaponTypeTag;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    bool bHasWeapon = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    bool bIsOneHandedWeapon = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    bool bIsTwoHandedWeapon = false;
+
+protected:
+    void UpdateWeaponAndBlendSpace();
 };

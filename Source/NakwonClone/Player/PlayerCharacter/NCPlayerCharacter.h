@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "NCBaseCharacter.h"
@@ -24,6 +24,9 @@ public:
 	//GAS 어빌리티
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Ability")
 	TSubclassOf<UGA_Attack> AttackAbilityClass;
+
+	UFUNCTION(BlueprintPure, Category = "Components|Combat")
+	UNCCombatComponent* GetCombatComponent() const { return CombatComponent; }
 	
 	//하상빈 추가
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryRef; }
@@ -70,8 +73,23 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
 	TObjectPtr<UNCCombatComponent> CombatComponent;
 	
+	//H Movement 카테고리
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	float WalkSpeed = 200.f;
+	//H
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	float SprintSpeed = 600.f;
+
+	//H Input 카테고리 (Enhanced Input 쓴다면)
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<class UInputAction> SprintAction;
+
 private:
 	void InitCamera();
 	void InitComponents();
+
+	//H 입력 콜백 함수
+	void OnSprintStarted(const struct FInputActionValue& Value);
+	void OnSprintStopped(const struct FInputActionValue& Value);
 
 };

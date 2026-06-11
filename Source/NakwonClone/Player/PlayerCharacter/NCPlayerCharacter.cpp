@@ -15,6 +15,9 @@ ANCPlayerCharacter::ANCPlayerCharacter()
 {
     InitCamera();
     InitComponents();
+
+    //H
+    GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
 void ANCPlayerCharacter::InitCamera()
@@ -56,16 +59,16 @@ void ANCPlayerCharacter::BeginPlay()
         }
     }
 
-    // TODO: 테스트용 임시 크로우바 장착 - 아이템 픽업 시스템 완성 후 제거
-     if (HasAuthority() && CombatComponent)
-     {
-         FNCWeaponInstance TestWeapon;
-         TestWeapon.UniqueID = FGuid::NewGuid();
-         TestWeapon.WeaponID = FName("Crowbar");
-         TestWeapon.CurrentDurability = 100.f;
-         TestWeapon.bIsBroken = false;
-         CombatComponent->EquipWeapon(TestWeapon);
-     }
+    //// TODO: 테스트용 임시 크로우바 장착 - 아이템 픽업 시스템 완성 후 제거
+    // if (HasAuthority() && CombatComponent)
+    // {
+    //     FNCWeaponInstance TestWeapon;
+    //     TestWeapon.UniqueID = FGuid::NewGuid();
+    //     TestWeapon.WeaponID = FName("Crowbar");
+    //     TestWeapon.CurrentDurability = 100.f;
+    //     TestWeapon.bIsBroken = false;
+    //     CombatComponent->EquipWeapon(TestWeapon);
+    // }
 }
 
 void ANCPlayerCharacter::PossessedBy(AController* NewController)

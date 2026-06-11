@@ -13,6 +13,9 @@ class UAnimInstance;
 class ANCBaseCharacter;
 class UAbilitySystemComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+	FOnWeaponChanged, const FNCWeaponInstance&, NewWeapon);
+
 USTRUCT(BlueprintType)
 struct FNCWeaponComboData
 {
@@ -51,6 +54,9 @@ public:
 
 	FNCWeaponInstance GetEquippedWeapon() const { return EquippedWeapon; }
 
+	UPROPERTY(BlueprintAssignable, Category = "Combat")
+	FOnWeaponChanged OnWeaponChanged;
+
 	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
 	AActor* GetSpawnedWeaponActor() const
 	{
@@ -60,6 +66,12 @@ public:
 	FNCWeaponData* GetEquippedWeaponData() const;
 
 	bool CanAttack() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
+	FGameplayTag GetEquippedWeaponTypeTag() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
+	bool IsWeaponEquipped() const { return bIsEquipped; }
 
 	void ReduceDurability(float Amount);
 

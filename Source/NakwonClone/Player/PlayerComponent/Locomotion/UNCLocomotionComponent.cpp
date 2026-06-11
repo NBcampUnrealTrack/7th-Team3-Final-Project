@@ -1,4 +1,4 @@
-#include "UNCLocomotionComponent.h"
+﻿#include "UNCLocomotionComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
@@ -23,6 +23,9 @@ void UNCLocomotionComponent::BeginPlay()
 	//기본 상태 설정
 	CurrentGaitTag = NCCharacter::Jog;
 	CurrentStanceTag = NCCharacter::Stand;
+
+	//H
+	ApplyMovementSpeed();
 }
 
 void UNCLocomotionComponent::SetGaitTag(FGameplayTag NewGaitTag)

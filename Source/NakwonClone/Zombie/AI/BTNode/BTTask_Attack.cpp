@@ -28,6 +28,8 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 	CachedOwnerComp = &OwnerComp;
 	
 	// 몽타주가 끝나면 OnMontageEnded를 호출하도록 드록
+	
+	AnimInstance->OnMontageEnded.RemoveDynamic(this, &UBTTask_Attack::OnMontageEnded);
 	AnimInstance->OnMontageEnded.AddDynamic(this, &UBTTask_Attack::OnMontageEnded);
 	
 	// 공격 몽타주 재생

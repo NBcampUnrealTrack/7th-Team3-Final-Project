@@ -1,4 +1,4 @@
-#include "NCPlayerController.h"
+﻿#include "NCPlayerController.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -7,7 +7,9 @@
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "AbilitySystemComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "Perception/AISense_Hearing.h"
+#include "Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 
 ANCPlayerController::ANCPlayerController()
@@ -58,6 +60,7 @@ void ANCPlayerController::SetupInputComponent()
         if (CrouchAction)
             EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &ANCPlayerController::ToggleCrouch);
         
+        // ---하상빈 추가---
         if (InteractAction)
         {
             EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &ANCPlayerController::Interact);
@@ -66,7 +69,28 @@ void ANCPlayerController::SetupInputComponent()
         {
             EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &ANCPlayerController::ToggleInventory);
         }
-
+        if (QuickSlot1Action)
+        {
+            EIC->BindAction(QuickSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot1);
+        }
+        if (QuickSlot2Action)
+        {
+            EIC->BindAction(QuickSlot2Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot2);
+        }
+        if (QuickSlot3Action)
+        {
+            EIC->BindAction(QuickSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot3);
+        }
+        if (QuickSlot4Action)
+        {
+            EIC->BindAction(QuickSlot4Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot4);
+        }
+        if (UnArmAction)
+        {
+            EIC->BindAction(UnArmAction, ETriggerEvent::Started, this, &ANCPlayerController::UnArm);
+        }
+        // -----------
+        
         if (AttackAction)
             EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ANCPlayerController::Attack);
     }
@@ -206,4 +230,44 @@ void ANCPlayerController::ToggleInventory()
     }
 
     OnInventoryToggled.Broadcast(bIsInventoryOpen);
+}
+
+void ANCPlayerController::QuickSlot1()
+{
+    if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
+    {
+        NCInventoryComp->UseQuickSlot(0);
+    }
+}
+
+void ANCPlayerController::QuickSlot2()
+{
+    if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
+    {
+        NCInventoryComp->UseQuickSlot(1);
+    }
+}
+
+void ANCPlayerController::QuickSlot3()
+{
+    if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
+    {
+        NCInventoryComp->UseQuickSlot(2);
+    }
+}
+
+void ANCPlayerController::QuickSlot4()
+{
+    if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
+    {
+        NCInventoryComp->UseQuickSlot(3);
+    }
+}
+
+void ANCPlayerController::UnArm()
+{
+    if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
+    {
+        NCInventoryComp->ForceUnArm();
+    }
 }

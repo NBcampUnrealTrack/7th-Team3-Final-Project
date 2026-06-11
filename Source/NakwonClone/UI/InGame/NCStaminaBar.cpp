@@ -3,30 +3,24 @@
 #include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 
-void UNCStaminaBar::NativeConstruct()
+void UNCStaminaBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
-	Super::NativeConstruct();
-	
-	ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetOwningPlayerPawn());
-	
-	if (PlayerCharacter)
-	{
-		ANCPlayerState* PlayerState = Cast<ANCPlayerState>(PlayerCharacter->GetPlayerState());
-		
-		if (PlayerState)
-		{
-			PlayerState->OnStaminaBarChanged.AddDynamic(this, &UNCStaminaBar::UpdateStaminaBar);
-		}
-	}
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	UpdateAssistanceStaminaBar(InDeltaTime);
 }
 
-void UNCStaminaBar::UpdateStaminaBar(float CurrentStamina, float MaxStamina)
+void UNCStaminaBar::UpdateStaminaBar(float InToCurrentStamina, float InToMaxStamina)
 {
+	MaxStamina = InToMaxStamina;
+	
 	if (StaminaProgressBar && AssistanceStaminaProgressBar)
 	{
-		StaminaProgressBar->SetPercent(CurrentStamina / MaxStamina);
+		StaminaProgressBar->SetPercent(InToCurrentStamina / InToMaxStamina);
 		
-		if (CurrentStamina >= MaxStamina)
+		TargetStamina = InToCurrentStamina;
+		
+		if (InToCurrentStamina >= InToMaxStamina)
 		{
 			StaminaCanvasPanel->SetVisibility(ESlateVisibility::Hidden);
 		}
@@ -34,20 +28,14 @@ void UNCStaminaBar::UpdateStaminaBar(float CurrentStamina, float MaxStamina)
 		{
 			StaminaCanvasPanel->SetVisibility(ESlateVisibility::Visible);
 		}
-		
-		GetWorld()->GetTimerManager().SetTimer(
-			OnStaminaBarTimerHandle,
-			this,
-			&UNCStaminaBar::UpdateAssistanceStaminaBar,
-			0.1f,
-			false
-		);
 	}
 }
 
-void UNCStaminaBar::UpdateAssistanceStaminaBar()
+void UNCStaminaBar::UpdateAssistanceStaminaBar(float DeltaTime)
 {
-	// ANCPlayerCharacter* Player = Cast<ANCPlayerCharacter>(GetOwningPlayer());
+	if (MaxStamina <= 0.f) return;
 	
-	// AssistanceStaminaProgressBar->SetPercent(Player->CurrentStamina / Player->MaxStamina);
+	CurrentAssistStamina = FMath::FInterpTo(CurrentAssistStamina, TargetStamina, DeltaTime, 6.f);
+	
+	AssistanceStaminaProgressBar->SetPercent(CurrentAssistStamina / MaxStamina);
 }

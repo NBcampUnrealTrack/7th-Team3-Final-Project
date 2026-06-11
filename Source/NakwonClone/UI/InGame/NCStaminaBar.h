@@ -20,13 +20,14 @@ protected:
 	
 	UPROPERTY(meta = (BindWidget))
 	UCanvasPanel* StaminaCanvasPanel;
+
+	float TargetStamina;
+	float CurrentAssistStamina;
+	float MaxStamina;
 	
+public:
+	void NativeTick(const FGeometry& MyGeometry, float InDeltaTime);
 	UFUNCTION()
-	virtual void NativeConstruct() override;
-	
-	UFUNCTION()
-	void UpdateStaminaBar(float CurrentStamina, float MaxStamina);
-	void UpdateAssistanceStaminaBar();
-	
-	FTimerHandle OnStaminaBarTimerHandle;
+	void UpdateStaminaBar(float InToCurrentStamina, float InToMaxStamina);
+	void UpdateAssistanceStaminaBar(float DeltaTime);
 };

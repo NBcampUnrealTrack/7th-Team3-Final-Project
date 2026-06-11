@@ -35,7 +35,7 @@ public:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Item|Data")
 	FGameplayTag ItemTypeTag;
 	
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Item|Data")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Item|Data")
 	FName ItemID; 
 
 	UPROPERTY(ReplicatedUsing = OnRep_ItemMeshAsset, BlueprintReadOnly, Category = "Item|Data")
