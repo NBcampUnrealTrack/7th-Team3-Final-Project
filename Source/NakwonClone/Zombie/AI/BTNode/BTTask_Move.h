@@ -6,11 +6,14 @@
 #include "BehaviorTree/BTTaskNode.h"
 #include "BTTask_Move.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class NAKWONCLONE_API UBTTask_Move : public UBTTaskNode
 {
 	GENERATED_BODY()
+	
+public:
+	UBTTask_Move();
+	
+protected:
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };
