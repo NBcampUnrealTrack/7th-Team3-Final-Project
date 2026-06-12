@@ -178,6 +178,66 @@ bool UNCPlayerInventoryComponent::EquipToQuickSlot(int32 MainSlotIndex, int32 Qu
 	return true;
 }
 
+bool UNCPlayerInventoryComponent::UnequipFromQuickSlot(int32 QuickSlotIndex, int32 MainSlotIndex)
+{
+	if (!GetOwner()->HasAuthority())
+    {
+       return false;
+    }
+
+    if (!QuickSlots.IsValidIndex(QuickSlotIndex) || !Items.IsValidIndex(MainSlotIndex))
+    {
+       return false;
+    }
+    if (QuickSlots[QuickSlotIndex].IsEmpty())
+    {
+       return false;
+    }
+
+    if (!Items[MainSlotIndex].IsEmpty())
+    {
+       FGameplayTag IncomingTag = Items[MainSlotIndex].ItemTypeTag;
+       if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
+       {
+          if (!IncomingTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Equipment")))) return false;
+       }
+       else if (QuickSlotIndex == 2 || QuickSlotIndex == 3)
+       {
+          if (!IncomingTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Consumable")))) return false;
+       }
+    }
+
+    if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
+    {
+       if (CurrentEquippedSlotIndex == QuickSlotIndex)
+       {
+          if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+          {
+             if (APawn* NCPawn = NCPS->GetPawn())
+             {
+                if (UNCCombatComponent* NCCombatComp = NCPawn->FindComponentByClass<UNCCombatComponent>())
+                {
+                   NCCombatComp->UnEquipWeapon();
+                   CurrentEquippedSlotIndex = -1;
+                   
+                   FString DebugMsg = FString::Printf(TEXT("[장비 해제] %d번 슬롯 무기를 가방으로 이동 및 맨손 전환"), QuickSlotIndex);
+                   GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, DebugMsg);
+                }
+             }
+          }
+       }
+    }
+
+    FInventorySlot TempSlot = QuickSlots[QuickSlotIndex];
+    QuickSlots[QuickSlotIndex] = Items[MainSlotIndex];
+    Items[MainSlotIndex] = TempSlot;
+
+    OnInventoryUpdated.Broadcast();
+    OnQuickSlotUpdated.Broadcast();
+
+    return true;
+}
+
 bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 {
 	if (!GetOwner()->HasAuthority())
