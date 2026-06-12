@@ -87,8 +87,10 @@ bool UNCPlayerInventoryComponent::UseItem(int32 SlotIndex)
 	
 	FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
 	
-	// TODO : 소비품(Consumable) 태그인지 확인하는 로직 추가
-	// if (!ItemTag.MatchesTag(NCItemType::Consumable)) return false;
+	if (!ItemTag.MatchesTag(NCItemType::Consumable)) 
+	{
+		return false;
+	}
 	
 	FString DebugMsg = FString::Printf(TEXT("아이템 사용 태그: %s"), *ItemTag.ToString());
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
@@ -113,12 +115,17 @@ bool UNCPlayerInventoryComponent::EquipToQuickSlot(int32 MainSlotIndex, int32 Qu
 	
 	if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
 	{
-		if (!ItemTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Equipment")))) return false;
+		if (!ItemTag.MatchesTag(NCItemTag::Weapon)) return false;
 	}
 	
-	else if (QuickSlotIndex == 2 || QuickSlotIndex == 3)
+	else if (QuickSlotIndex == 2)
 	{
-		if (!ItemTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Consumable")))) return false;
+		if (!ItemTag.MatchesTag(NCItemTag::Heal)) return false;
+	}
+	
+	else if (QuickSlotIndex == 3)
+	{
+		if (!ItemTag.MatchesTag(NCItemTag::Food)) return false;
 	}
 	
 	if (!QuickSlots[QuickSlotIndex].IsEmpty())
@@ -199,11 +206,15 @@ bool UNCPlayerInventoryComponent::UnequipFromQuickSlot(int32 QuickSlotIndex, int
        FGameplayTag IncomingTag = Items[MainSlotIndex].ItemTypeTag;
        if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
        {
-          if (!IncomingTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Equipment")))) return false;
+       	if (!IncomingTag.MatchesTag(NCItemTag::Weapon)) return false;
        }
-       else if (QuickSlotIndex == 2 || QuickSlotIndex == 3)
+       else if (QuickSlotIndex == 2)
        {
-          if (!IncomingTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Consumable")))) return false;
+       	if (!IncomingTag.MatchesTag(NCItemTag::Heal)) return false;
+       }
+       else if (QuickSlotIndex == 3)
+       {
+       	if (!IncomingTag.MatchesTag(NCItemTag::Food)) return false;
        }
     }
 
@@ -252,7 +263,7 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 	
 	FGameplayTag ItemTag = QuickSlots[QuickSlotIndex].ItemTypeTag;
 	
-	if (ItemTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Consumable"))))
+	if (ItemTag.MatchesTag(NCItemType::Consumable))
 	{
 		QuickSlots[QuickSlotIndex].Quantity -= 1;
         
@@ -273,7 +284,7 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 		return true;
 	}
 	
-	else if (ItemTag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("ItemType.Equipment"))))
+	else if (ItemTag.MatchesTag(NCItemTag::Weapon))
 	{
 		if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
 		{

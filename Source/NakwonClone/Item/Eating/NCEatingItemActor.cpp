@@ -12,7 +12,7 @@ ANCEatingItemActor::ANCEatingItemActor()
 	StaminaAmount = 20.f;
 	InfectionReduceAmount = 0.f;
 
-	ItemTypeTag = NCItemTag::Eating;
+	ItemTypeTag = NCItemTag::Food;
 }
 
 void ANCEatingItemActor::UseItem(ACharacter* User)

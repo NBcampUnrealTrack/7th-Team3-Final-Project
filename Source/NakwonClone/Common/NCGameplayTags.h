@@ -52,15 +52,20 @@ namespace NCCharacter
 
 namespace NCItemType
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Consumable);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Material);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment); // 장비 아이템
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Consumable); // 소모품
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Material); // 재료
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Currency); // 화폐
 };
 
 namespace NCItemTag
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Eating);  // 음식 아이템
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weapon);  // 무기
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Armor);   // 방어구
+	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Food);  // 음식 아이템
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Heal);    // 회복 아이템
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Credit);  // 크레딧
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest);   // 퀘스트 아이템
 };

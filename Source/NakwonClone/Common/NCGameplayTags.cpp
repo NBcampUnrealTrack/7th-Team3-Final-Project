@@ -17,14 +17,21 @@ UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Landed, "Character.State.Landed");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Crouch, "Character.State.Crouch");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::InventoryOpen, "Character.State.InventoryOpen");
 
-UE_DEFINE_GAMEPLAY_TAG(NCItemType::Equipment, "ItemType.Equipment")
-UE_DEFINE_GAMEPLAY_TAG(NCItemType::Consumable, "ItemType.Consumable")
-UE_DEFINE_GAMEPLAY_TAG(NCItemType::Material, "ItemType.Material")
+// --------------아이템------------------
+UE_DEFINE_GAMEPLAY_TAG(NCItemType::Equipment, "Item.Equipment")
+UE_DEFINE_GAMEPLAY_TAG(NCItemType::Consumable, "Item.Consumable")
+UE_DEFINE_GAMEPLAY_TAG(NCItemType::Material, "Item.Material")
+UE_DEFINE_GAMEPLAY_TAG(NCItemType::Currency, "Item.Currency");
 
-UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Eating, "Item.Consumable.Eating")
-UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Heal, "Item.Consumable.Heal")
-UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Credit, "Item.Currency.Credit")
-UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Quest, "Item.Currency.Quest")
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Weapon, "Item.Equipment.Weapon");
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Armor, "Item.Equipment.Armor");
+
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Food, "Item.Consumable.Food");
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Heal, "Item.Consumable.Heal");
+
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Credit, "Item.Currency.Credit");
+UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Quest, "Item.Currency.Quest");
+// --------------------------------------
 
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Alive, "Character.State.Alive");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Downed, "Character.State.Downed");
@@ -61,4 +68,4 @@ UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::GameClear, "GameState.State.Clear");
 	
 // 싱글, 멀티 여부
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::SinglePlay, "GameState.State.SinglePlay");
-UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::MultiPlay, "GameState.State.MultiPlay");
+UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::MultiPlay, "GameState.State.MultiPlay")
