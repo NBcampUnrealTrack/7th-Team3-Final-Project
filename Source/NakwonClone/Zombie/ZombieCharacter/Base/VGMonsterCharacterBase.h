@@ -4,20 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 #include "AbilitySystemInterface.h"
 #include "VGMonsterCharacterBase.generated.h"
 
-UENUM(BlueprintType)
-enum class EMonsterState : uint8
-{
-	Move,
-	Stop,
-	Chase,
-	Attack,
-	Hit,
-	Dead
-};
+// 전방 선언
+class AVGMonsterAIControllerBase;
+class UAbilitySystemComponent;
+class UVGMonsterAttributeSet;
+class UAnimMontage;
 
 UCLASS()
 class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -27,37 +21,68 @@ class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbili
 public:
 	AVGMonsterCharacterBase();
 	
-	virtual void SetMonsterState(EMonsterState NewState);
+protected:
+	virtual void BeginPlay() override;
+	
+	// AI 컨트롤러 참조 (읽기 전용, 블랙보드 직접 접근 금지)
+	UPROPERTY()
+	AVGMonsterAIControllerBase* AIController;
 	
 #pragma region ASC
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	
+	UPROPERTY(VisibleAnywhere, Category = "GAS")
+	TObjectPtr<UVGMonsterAttributeSet> MonsterAttributeSet;
 #pragma endregion
-
+	
+#pragma region 애니메이션
 protected:
-	virtual void BeginPlay() override;
-
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TArray<TObjectPtr<UAnimMontage>> AnimMove;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TArray<TObjectPtr<UAnimMontage>> AnimStop;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TArray<TObjectPtr<UAnimMontage>> AnimChase;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TArray<TObjectPtr<UAnimMontage>> AnimAttack;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TArray<TObjectPtr<UAnimMontage>> AnimHit;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TArray<TObjectPtr<UAnimMontage>> AnimDead;
+	
 public:
-	// 스탯 (추후 확장)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Stats")
-	float MaxHealth = 100.f;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Monster|Stats")
-	float CurrentHealth;
-
-	// 피격 처리 (AIController 또는 외부에서 호출)
-	UFUNCTION(BlueprintCallable, Category = "Monster|Combat")
-	virtual void TakeDamage_Monster(float DamageAmount);
-
-	// 사망 처리
-	UFUNCTION(BlueprintCallable, Category = "Monster|Combat")
-	virtual void Dead();
-
-protected:
-	// AI 컨트롤러 참조 (읽기 전용, 블랙보드 직접 접근 금지)
-	UPROPERTY()
-	AVGMonsterAIControllerBase* AIController;
+	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
+	UAnimMontage* GetRandomMoveMontage()   { return GetRandomMontage(AnimMove); }
+	UAnimMontage* GetRandomStopMontage()   { return GetRandomMontage(AnimStop); }
+	UAnimMontage* GetRandomChaseMontage()  { return GetRandomMontage(AnimChase); }
+	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
+	UAnimMontage* GetRandomHitMontage()    { return GetRandomMontage(AnimHit); }
+	UAnimMontage* GetRandomDeadMontage()   { return GetRandomMontage(AnimDead); }
+#pragma endregion
+	
+#pragma region 피격
+public:
+	UFUNCTION()
+	void HandleHit();
+	
+private:
+	bool bIsHit = false;
+	FTimerHandle HitTimerHandle;
+#pragma endregion
+	
+#pragma region 사망 처리
+public:
+	UFUNCTION()
+	void HandleDead();
+#pragma endregion
 };

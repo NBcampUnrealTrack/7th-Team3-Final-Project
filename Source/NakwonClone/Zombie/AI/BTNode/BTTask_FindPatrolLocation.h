@@ -14,14 +14,12 @@ class NAKWONCLONE_API UBTTask_FindPatrolLocation : public UBTTaskNode
 	
 public:
 	UBTTask_FindPatrolLocation();
+	
+protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	
 private:
 	// 랜덤 좌표 탐색 반경
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 	float SearchRadius = 500.0f;
-	
-	// 거리 감소 단위
-	UPROPERTY(EditAnywhere, Category = "Patrol")
-	float ReductionUnit = 10.0f;
 };

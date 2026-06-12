@@ -21,47 +21,13 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	
-	UPROPERTY()
-	TObjectPtr<UVGMonsterAttributeSet> MonsterAttributeSet;
-	
 #pragma region 워커 고유 스탯
 	// 이동 속도 ( 추후 GAS로 옮길 예정 )
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Walker")
 	float WalkSpeed = 80.f;
 #pragma endregion
 
-#pragma region 애니메이션
-	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
-	TObjectPtr<UAnimMontage> AnimMove;
-	
-	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
-	TObjectPtr<UAnimMontage> AnimStop;
-	
-	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
-	TObjectPtr<UAnimMontage> AnimChase;
-	
-	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
-	TObjectPtr<UAnimMontage> AnimHit;
-	
-	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
-	TObjectPtr<UAnimMontage> AnimDead;
-	
-	UPROPERTY(EditAnywhere, Category = "Walker|Animation")
-	TObjectPtr<UAnimMontage> AnimAttack;
-#pragma endregion
-	
-	
-public:
-	// BTTask에서 상태 변경 시 호출
-	virtual void SetMonsterState(EMonsterState NewState) override;
-	
-	UFUNCTION()
-	void HandleHit();
-	
-	UFUNCTION()
-	void HandleDead();
-	
-
+#pragma region 공격 트레이스
 public:
 	void PerformAttackTrace();
 	
@@ -81,4 +47,5 @@ private:
 	// 트레이스 거리
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
 	float AttackTraceDistance = 100.f;
+#pragma endregion
 };

@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AIController.h"
+#include "Perception/AIPerceptionTypes.h"
+#include "VGMonsterAIControllerBase.generated.h"
+
+// 전방 선언
+class UBehaviorTree;
+class UBlackboardComponent;
+class UAIPerceptionComponent;
+class UAISenseConfig_Sight;
+class UAISenseConfig_Hearing;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogMonster, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogAIPc, Log, All);
-
-#include "AIController.h"
-#include "BehaviorTree/BehaviorTree.h"
-#include "BehaviorTree/BlackboardComponent.h"
-#include "Perception/AIPerceptionComponent.h"
-#include "Perception/AISense_Sight.h"
-#include "Perception/AISense_Hearing.h"
-#include "Perception/AISenseConfig_Sight.h"
-#include "Perception/AISenseConfig_Hearing.h"
-#include "VGMonsterAIControllerBase.generated.h"
 
 UCLASS()
 class NAKWONCLONE_API AVGMonsterAIControllerBase : public AAIController
@@ -31,6 +31,7 @@ public:
 	static const FName TargetActorKey;
 	static const FName HeardLocationKey;
 	static const FName IsDeadKey;
+	static const FName IsAttackKey;
 #pragma endregion
 
 #pragma region Behavior Tree & Blackboard

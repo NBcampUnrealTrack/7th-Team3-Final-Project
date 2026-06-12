@@ -8,9 +8,9 @@
 void UAnimNotify_AttackTrace::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
 	if (!MeshComp) return;
-	
+    
 	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(MeshComp->GetOwner());
 	if (!Walker) return;
-	
+    
 	Walker->PerformAttackTrace();
 }

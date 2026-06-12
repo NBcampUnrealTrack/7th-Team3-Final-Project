@@ -14,6 +14,7 @@ class NAKWONCLONE_API UBTTask_Attack : public UBTTaskNode
 public:
 	UBTTask_Attack();
 	
+protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	
 	virtual void OnTaskFinished(
@@ -22,10 +23,6 @@ public:
 		EBTNodeResult::Type TaskResult) override;
 	
 private:
-	// 에디터에서 GE_Attack 에셋 할당
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<class UGameplayEffect> AttackEffectClass;
-	
 	// 몽타주 종료 시 FinishLatentTask 호출
 	UPROPERTY()
 	TObjectPtr<UBehaviorTreeComponent> CachedOwnerComp;

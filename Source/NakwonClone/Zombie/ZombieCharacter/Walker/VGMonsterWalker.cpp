@@ -3,7 +3,8 @@
 #include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
+#include "AbilitySystemComponent.h"
+#include "Common/NCGameplayTags.h"
 
 AVGMonsterWalker::AVGMonsterWalker()
 {
@@ -13,8 +14,6 @@ AVGMonsterWalker::AVGMonsterWalker()
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
 	}
-	
-	MonsterAttributeSet = CreateDefaultSubobject<UVGMonsterAttributeSet>(TEXT("MonsterAttributeSet"));
 }
 
 void AVGMonsterWalker::BeginPlay()
@@ -26,76 +25,6 @@ void AVGMonsterWalker::BeginPlay()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	}
-	
-	if (MonsterAttributeSet)
-	{
-		// 피격 이벤트 오면 HandleHit 실행
-		MonsterAttributeSet->OnHitReceived.AddDynamic(this, &AVGMonsterWalker::HandleHit);
-		// 사망 이벤트 오면 HandleDead 실행
-		MonsterAttributeSet->OnDead.AddDynamic(this, &AVGMonsterWalker::HandleDead);
-	}
-}
-
-void AVGMonsterWalker::SetMonsterState(EMonsterState NewState)
-{
-	UAnimMontage* TargetMontage = nullptr;
-
-	switch (NewState)
-	{
-	case EMonsterState::Move:
-		TargetMontage = AnimMove;
-		break;
-	case EMonsterState::Stop:
-		TargetMontage = AnimStop;
-		break;
-	case EMonsterState::Chase:
-		TargetMontage = AnimChase;
-		break;
-	case EMonsterState::Hit:
-		TargetMontage = AnimHit;
-		break;
-	case EMonsterState::Attack:
-		TargetMontage = AnimAttack;
-		break;
-	case EMonsterState::Dead:
-		TargetMontage = AnimDead;
-		break;
-	}
-	
-	if (TargetMontage)
-	{
-		PlayAnimMontage(TargetMontage);
-	}
-}
-
-void AVGMonsterWalker::HandleHit()
-{
-	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
-	SetMonsterState(EMonsterState::Hit);
-}
-
-void AVGMonsterWalker::HandleDead()
-{
-	if (AAIController* AIC = Cast<AAIController>(GetController()))
-	{
-		AIC->StopMovement();
-		AIC->UnPossess();
-	}
-
-	SetActorEnableCollision(false);
-
-	float Duration = PlayAnimMontage(AnimDead);
-
-	FTimerHandle FreezeHandle;
-	GetWorldTimerManager().SetTimer(FreezeHandle, [this]()
-	{
-		if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
-		{
-			AnimInst->Montage_Pause(AnimDead);
-		}
-	}, 1.16f, false);
-
-	SetLifeSpan(200.f);
 }
 
 void AVGMonsterWalker::PerformAttackTrace()
@@ -128,6 +57,8 @@ void AVGMonsterWalker::PerformAttackTrace()
 			UAbilitySystemComponent* MonsterASC = 
 				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
 		
+			if (TargetASC && !TargetASC->HasMatchingGameplayTag(NCCharacter::Player)) return;
+			
 			if (TargetASC && MonsterASC && AttackEffectClass)
 			{
 				FGameplayEffectContextHandle EffectContext = MonsterASC->MakeEffectContext();
@@ -142,6 +73,5 @@ void AVGMonsterWalker::PerformAttackTrace()
 			}
 			return;
 		}
-		
 	}
 }
