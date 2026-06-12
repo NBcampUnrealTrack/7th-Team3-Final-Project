@@ -101,7 +101,14 @@ void AANCLootBoxActor::Interact_Implementation(AActor* Interactor)
 
 		UE_LOG(LogTemp, Log, TEXT("[LootBox] 서버: %s 가 상자를 열었습니다."), *Interactor->GetName());
 
-		// TODO: Interactor의 Controller에 Client RPC 호출
+		if (APawn* InteractorPawn = Cast<APawn>(Interactor))
+		{
+			if (APlayerController* PC = Cast<APlayerController>(InteractorPawn->GetController()))
+			{
+				// TODO: PlayerController 클래스로 캐스팅해서 Client RPC 함수 호출
+				// 예: Cast<ANCPlayerController>(PC)->Client_OpenLootBoxUI(this);
+			}
+		}
 	}
 }
 

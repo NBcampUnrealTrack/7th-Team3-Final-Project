@@ -19,6 +19,9 @@ class NAKWONCLONE_API AANCLootBoxActor : public AActor, public INCInteractableIn
 public:
 	AANCLootBoxActor();
 	
+	UFUNCTION(BlueprintCallable, Category = "LootBox|Inventory")
+	UNCInventoryBaseComponent* GetLootInventory() const { return LootInventory; }
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
