@@ -12,8 +12,11 @@ ANCItemActor::ANCItemActor()
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
 	RootComponent = ItemMesh;
 	
-	ItemMesh->SetCollisionProfileName(TEXT("PhysicsActor"));
-	ItemMesh->SetSimulatePhysics(true);
+	ItemMesh->SetSimulatePhysics(false);
+	ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	ItemMesh->SetCollisionObjectType(ECC_WorldStatic);
+	ItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	ItemMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 }
 
 void ANCItemActor::BeginPlay()
