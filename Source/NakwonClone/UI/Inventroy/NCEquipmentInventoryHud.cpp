@@ -27,11 +27,11 @@ void UNCEquipmentInventoryHud::UpdateEquipmentItemSlot()
 		{
 			const FInventorySlot& EquipmentSlot  = InventoryComp->EquipmentItem[i];
 
-			SlotWidgets[i]->SetSlotData(i, EquipmentSlot.ItemTypeTag, EquipmentSlot.ItemID);
+			SlotWidgets[i]->SetSlotData(i, EquipmentSlot.Quantity, EquipmentSlot.ItemTypeTag, EquipmentSlot.ItemID);
 		}
 		else
 		{
-			SlotWidgets[i]->SetSlotData(i, FGameplayTag(),NAME_None);
+			SlotWidgets[i]->SetSlotData(i, 0,FGameplayTag(),NAME_None);
 		}
 	}
 }
