@@ -1,10 +1,12 @@
 ﻿#include "NCPlayerInventoryComponent.h"
 
 #include "Framwork/PlayerState/NCPlayerState.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
-#include "NakwonClone/Item/NCItemActor.h"
+#include "Item/NCItemActor.h"
 #include "Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
+#include "Common/NCSaveGame.h"
 
 UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 {
@@ -64,6 +66,50 @@ void UNCPlayerInventoryComponent::ForceUnArm()
 				FString DebugMsg = TEXT("[H키 : 맨손 전환]");
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::White, DebugMsg);	
 			}
+		}
+	}
+}
+
+void UNCPlayerInventoryComponent::SaveInventoryData()
+{
+	UNCSaveGame* SaveInst = Cast<UNCSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("LobbyInventorySlot"), 0));
+	if (!SaveInst)
+	{
+		SaveInst = Cast<UNCSaveGame>(UGameplayStatics::CreateSaveGameObject(UNCSaveGame::StaticClass()));
+	}
+
+	if (SaveInst)
+	{
+		SaveInst->PlayerInventoryItems = Items;
+		SaveInst->PlayerQuickSlots = QuickSlots;
+
+		UGameplayStatics::SaveGameToSlot(SaveInst, TEXT("LobbyInventorySlot"), 0);
+
+		FString DebugMsg = TEXT("[Save] 인벤토리 및 퀵슬롯 저장 완료");
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, DebugMsg);
+	}
+}
+
+void UNCPlayerInventoryComponent::LoadInventoryData()
+{
+	if (UGameplayStatics::DoesSaveGameExist(TEXT("LobbyInventorySlot"), 0))
+	{
+		UNCSaveGame* LoadInst = Cast<UNCSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("LobbyInventorySlot"), 0));
+		if (LoadInst)
+		{
+			Items = LoadInst->PlayerInventoryItems;
+			QuickSlots = LoadInst->PlayerQuickSlots;
+
+			if (QuickSlots.Num() != 4)
+			{
+				QuickSlots.Init(FInventorySlot(), 4);
+			}
+
+			OnInventoryUpdated.Broadcast();
+			OnQuickSlotUpdated.Broadcast();
+
+			FString DebugMsg = TEXT("[Load] 인벤토리 및 퀵슬롯 불러오기 완료");
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
 		}
 	}
 }

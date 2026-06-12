@@ -76,4 +76,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void ForceUnArm();
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|SaveLoad")
+	void SaveInventoryData();
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|SaveLoad")
+	void LoadInventoryData();
 };

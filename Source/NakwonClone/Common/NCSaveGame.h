@@ -16,6 +16,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "SaveData")
 	TArray<FInventorySlot> PlayerInventoryItems;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveData")
+	TArray<FInventorySlot> PlayerQuickSlots;
 
 	UPROPERTY(VisibleAnywhere, Category = "SaveData")
 	TArray<FInventorySlot> StashInventoryItems;
