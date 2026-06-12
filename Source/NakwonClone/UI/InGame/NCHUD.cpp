@@ -54,6 +54,10 @@ void UNCHud::OnHPChanged(const FOnAttributeChangeData& Data)
 
 void UNCHud::OnStaminaChanged(const FOnAttributeChangeData& Data)
 {
+	UE_LOG(LogTemp, Warning,
+		TEXT("Stamina Changed : %f"),
+		Data.NewValue);
+	
 	if (!StaminaBarWidget || !AttributeSet)
 	{
 		return;

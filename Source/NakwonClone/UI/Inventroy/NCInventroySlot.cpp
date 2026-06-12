@@ -1,6 +1,7 @@
 ﻿#include "NCInventroySlot.h"
 
 #include "GameplayTagContainer.h"
+#include "Common/NCGameplayTags.h"
 #include "Inventory/NCInventoryType.h"
 
 void UNCInventroySlot::NativeConstruct()
@@ -17,10 +18,17 @@ void UNCInventroySlot::SetSlotData(int32 InIndex, FGameplayTag InTag, int32 InQu
 	
 	if (!ItemID.IsNone() && Quantity > 0)
 	{
-		ItemCountText->SetText(FText::AsNumber(InQuantity));
-		ItemCountText->SetVisibility(ESlateVisibility::Visible);
-		
 		FItemData* ItemData = ItemDataTable->FindRow<FItemData>(ItemID, TEXT(""));
+		if (ItemData->ItemTypeTag.MatchesTag(NCItemTag::Heal) || ItemData->ItemTypeTag.MatchesTag(NCItemTag::Food))
+		{
+			ItemCountText->SetText(FText::AsNumber(Quantity));
+			ItemCountText->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			ItemCountText->SetVisibility(ESlateVisibility::Hidden);
+		}
+		
 		if (ItemData && ItemData->ItemIcon)
 		{
 			ItemImage->SetBrushFromTexture(ItemData->ItemIcon);

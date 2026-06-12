@@ -58,7 +58,7 @@ void ANCPlayerState::OnRep_CurrentHP()
 
 void ANCPlayerState::OnRep_CurrentStemina()
 {
-	OnHPChanged.Broadcast(CurrentStamina, MaxStamina);
+	OnStaminaBarChanged.Broadcast(CurrentStamina, MaxStamina);
 }
 
 void ANCPlayerState::SaveInventoryData()
