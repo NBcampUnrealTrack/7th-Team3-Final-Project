@@ -7,6 +7,7 @@
 
 //H
 class UBlendSpace;
+class USoundBase;
 //DataTable 행 구조 - 무기 타입 정보 (공유, 1개만 존재)
 USTRUCT(BlueprintType)
 struct FNCWeaponData : public FTableRowBase
@@ -59,6 +60,20 @@ struct FNCWeaponData : public FTableRowBase
 	//왼손 IK가 따라갈 무기 Mesh 소켓 이름
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
 	FName LeftHandIKSocketName = NAME_None;
+
+	// 소켓 기반 라인 트레이스 히트 판정 (양손무기용, 비어있으면 구 트레이스 사용)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitTrace")
+	FName TrailStartSocket = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitTrace")
+	FName TrailEndSocket = NAME_None;
+
+	// 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TSoftObjectPtr<USoundBase> HitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TSoftObjectPtr<USoundBase> SwingSound;
 
 	//애니메이션
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
