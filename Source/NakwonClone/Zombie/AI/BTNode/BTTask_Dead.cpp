@@ -15,8 +15,9 @@ EBTNodeResult::Type UBTTask_Dead::ExecuteTask(UBehaviorTreeComponent& OwnerComp,
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!Monster) return EBTNodeResult::Failed;
 
-	Monster->HandleDead();
+	Monster->PlayAnimMontage(Monster->GetRandomDeadMontage());
 	OwnerComp.StopTree(EBTStopMode::Safe);
+	Monster->HandleDead();
 
 	return EBTNodeResult::Succeeded;
 }

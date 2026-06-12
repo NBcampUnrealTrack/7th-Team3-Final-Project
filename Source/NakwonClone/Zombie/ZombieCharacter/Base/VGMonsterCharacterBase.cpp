@@ -48,8 +48,20 @@ void AVGMonsterCharacterBase::BeginPlay()
 	if (MonsterAttributeSet)
 	{
 		MonsterAttributeSet->OnHitReceived.AddDynamic(this, &AVGMonsterCharacterBase::HandleHit);
-		MonsterAttributeSet->OnDead.AddDynamic(this, &AVGMonsterCharacterBase::HandleDead);
 	}
+}
+
+// HandleDead()
+void AVGMonsterCharacterBase::HandleDead()
+{
+	if (AAIController* AIC = Cast<AAIController>(GetController()))
+	{
+		AIC->StopMovement();
+		AIC->UnPossess();
+	}
+
+	SetActorEnableCollision(false);
+	SetLifeSpan(200.f);
 }
 
 void AVGMonsterCharacterBase::HandleHit()
@@ -75,20 +87,6 @@ void AVGMonsterCharacterBase::HandleHit()
 	// 뒤로 밀려남
 	FVector PushBack = -GetActorForwardVector();
 	LaunchCharacter(PushBack * 300.f, true, false);
-}
-
-void AVGMonsterCharacterBase::HandleDead()
-{
-	if (AAIController* AIC = Cast<AAIController>(GetController()))
-	{
-		AIC->StopMovement();
-		AIC->UnPossess();
-	}
-
-	// 사망 시, 액터의 콜리전을 비활성화 (시체와 충돌 방지)
-	SetActorEnableCollision(false);
-
-	SetLifeSpan(200.f);
 }
 
 UAnimMontage* AVGMonsterCharacterBase::GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages)
