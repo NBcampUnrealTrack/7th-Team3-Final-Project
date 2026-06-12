@@ -18,7 +18,7 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void SetSlotData(int32 InIndex, FGameplayTag InTag, FName InItemID);
+	void SetSlotData(int32 InIndex, int32 InQuantity, FGameplayTag InTag, FName InItemID);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UDataTable* ItemDataTable;
@@ -28,6 +28,9 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	UImage* EquipmentItemImage;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* EquipmentItemQuantityTextBlock;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 SlotIndex;
