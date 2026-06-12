@@ -98,6 +98,44 @@ bool UNCPlayerInventoryComponent::UseItem(int32 SlotIndex)
 	return RemoveItem(SlotIndex, 1);
 }
 
+bool UNCPlayerInventoryComponent::AutoEquipItem(int32 MainSlotIndex)
+{
+	if (!GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+
+	if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty())
+	{
+		return false;
+	}
+
+	FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
+	int32 TargetQuickSlotIndex = -1;
+
+	if (ItemTag.MatchesTag(NCItemTag::Weapon))
+	{
+		if (QuickSlots[0].IsEmpty()) TargetQuickSlotIndex = 0;
+		else if (QuickSlots[1].IsEmpty()) TargetQuickSlotIndex = 1;
+		else TargetQuickSlotIndex = 0;
+	}
+	else if (ItemTag.MatchesTag(NCItemTag::Heal))
+	{
+		TargetQuickSlotIndex = 2;
+	}
+	else if (ItemTag.MatchesTag(NCItemTag::Food))
+	{
+		TargetQuickSlotIndex = 3;
+	}
+
+	if (TargetQuickSlotIndex != -1)
+	{
+		return EquipToQuickSlot(MainSlotIndex, TargetQuickSlotIndex);
+	}
+
+	return false;
+}
+
 bool UNCPlayerInventoryComponent::EquipToQuickSlot(int32 MainSlotIndex, int32 QuickSlotIndex)
 {
 	if (!GetOwner()->HasAuthority())

@@ -35,6 +35,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
 	virtual bool UseItem(int32 SlotIndex);
 	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
+	virtual bool AutoEquipItem(int32 MainSlotIndex);
+	
 	UFUNCTION(BlueprintCallable, Category = "Inventory|QuickSlot")
 	virtual bool EquipToQuickSlot(int32 MainSlotIndex, int32 QuickSlotIndex);
 	
