@@ -118,6 +118,10 @@ void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceT
 
 void ANCPlayerCharacter::StartSprint()
 {
+    //헌호수정
+    if (LocomotionComponent)
+        LocomotionComponent->StartStaminaDrain();
+
     CurrentGaitTag = NCCharacter::Sprint;
     if (LocomotionComponent)
         LocomotionComponent->SetGaitTag(CurrentGaitTag);
@@ -126,6 +130,10 @@ void ANCPlayerCharacter::StartSprint()
 
 void ANCPlayerCharacter::StopSprint()
 {
+    //헌호수정
+    if (LocomotionComponent)
+        LocomotionComponent->StopStaminaDrain();
+
     CurrentGaitTag = NCCharacter::Jog;
     if (LocomotionComponent)
         LocomotionComponent->SetGaitTag(CurrentGaitTag);

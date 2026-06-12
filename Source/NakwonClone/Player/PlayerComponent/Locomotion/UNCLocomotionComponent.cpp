@@ -3,6 +3,9 @@
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
 #include "NakwonClone/Player/PlayerData/NCPlayerMovementData.h"
+//헌호수정
+#include "AbilitySystemComponent.h"
+#include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"
 
 UNCLocomotionComponent::UNCLocomotionComponent()
 {
@@ -58,4 +61,68 @@ void UNCLocomotionComponent::ApplyMovementSpeed()
 		MovementComponent->MaxWalkSpeed = Data->MovementSpeed;
 		MovementComponent->MaxAcceleration = Data->MaxAcceleration;
 	}
+}
+
+//헌호수정 - 스태미나 드레인 시작 (Sprint 시작 시 호출)
+void UNCLocomotionComponent::StartStaminaDrain()
+{
+	if (bSprintLocked) return;
+
+	GetWorld()->GetTimerManager().ClearTimer(StaminaRegenHandle);
+	GetWorld()->GetTimerManager().SetTimer(
+		StaminaDrainHandle, this, &UNCLocomotionComponent::DrainStamina, 0.1f, true);
+}
+
+//헌호수정 - 스태미나 드레인 중지 (Sprint 종료 시 호출)
+void UNCLocomotionComponent::StopStaminaDrain()
+{
+	GetWorld()->GetTimerManager().ClearTimer(StaminaDrainHandle);
+	GetWorld()->GetTimerManager().SetTimer(
+		StaminaRegenHandle, this, &UNCLocomotionComponent::RegenStamina, 0.1f, true);
+}
+
+void UNCLocomotionComponent::DrainStamina()
+{
+	if (!OwnerCharacter) return;
+
+	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetStaminaAttribute());
+	const float NewValue = FMath::Max(Current - StaminaDrainRate * 0.1f, 0.f);
+	ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(), NewValue);
+
+	if (NewValue <= 0.f)
+		OnStaminaEmpty();
+}
+
+void UNCLocomotionComponent::RegenStamina()
+{
+	if (!OwnerCharacter) return;
+
+	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetStaminaAttribute());
+	const float Max = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxStaminaAttribute());
+	const float NewValue = FMath::Min(Current + StaminaRegenRate * 0.1f, Max);
+	ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(), NewValue);
+
+	if (bSprintLocked && NewValue >= StaminaRegenThreshold)
+	{
+		bSprintLocked = false;
+		GetWorld()->GetTimerManager().ClearTimer(StaminaRegenHandle);
+	}
+}
+
+void UNCLocomotionComponent::OnStaminaEmpty()
+{
+	bSprintLocked = true;
+	GetWorld()->GetTimerManager().ClearTimer(StaminaDrainHandle);
+	GetWorld()->GetTimerManager().SetTimer(
+		StaminaRegenHandle, this, &UNCLocomotionComponent::RegenStamina, 0.1f, true);
+
+	SetGaitTag(NCCharacter::Jog);
+	if (OwnerCharacter)
+		OwnerCharacter->CurrentGaitTag = NCCharacter::Jog;
 }

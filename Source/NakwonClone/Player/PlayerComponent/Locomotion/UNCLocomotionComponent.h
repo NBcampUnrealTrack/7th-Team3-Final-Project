@@ -49,4 +49,28 @@ private:
 
 	//DataTable에서 속도 가져와서 적용
 	void ApplyMovementSpeed();
+
+	//헌호수정 - 스태미나 시스템
+public:
+	void StartStaminaDrain();
+	void StopStaminaDrain();
+
+private:
+	FTimerHandle StaminaDrainHandle;
+	FTimerHandle StaminaRegenHandle;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
+	float StaminaDrainRate = 15.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
+	float StaminaRegenRate = 8.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
+	float StaminaRegenThreshold = 30.f;
+
+	bool bSprintLocked = false;
+
+	void DrainStamina();
+	void RegenStamina();
+	void OnStaminaEmpty();
 };
