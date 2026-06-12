@@ -17,8 +17,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UDataTable* ItemDataTable;
 	
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "UI|Config")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Config")
 	int32 TargetSlotIndex;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* DefaultImage;
 	
 	UPROPERTY(meta = (BindWidget))
 	UImage* LeftSlotImage;

@@ -24,34 +24,6 @@ void UNCItemSlot::NativeConstruct()
 
 void UNCItemSlot::UpdateSlotVisual()
 {
-	// APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	// if (!PC || !PC->PlayerState) return;
-	//
-	// UNCPlayerInventoryComponent* InventoryComp = PC->PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>();
-	// if (!InventoryComp) return;
-	//
-	// UImage* TargetImage = nullptr;
-	// if (TargetSlotIndex == 0)
-	// {
-	// 	TargetImage = LeftSlotImage;
-	// }
-	// else if (TargetSlotIndex == 1)
-	// {
-	// 	TargetImage = RightSlotImage;
-	// }
-	//
-	// if (!TargetImage) return;
-	//
-	// FInventorySlot SlotData = InventoryComp->GetQuickSlotData(TargetSlotIndex);
-	//
-	// static const FString ContextString(TEXT("QuickSlot Update Context"));
-	// FItemData* RowData = ItemDataTable->FindRow<FItemData>(SlotData.ItemID, ContextString);
-	//
-	// if (RowData && RowData->ItemIcon)
-	// {
-	// 	TargetImage->SetBrushFromTexture(RowData->ItemIcon);
-	// }
-	
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PC || !PC->PlayerState) return;
 
@@ -71,6 +43,12 @@ void UNCItemSlot::UpdateSlotVisual()
 void UNCItemSlot::UpdateImage(UImage* TargetImage, const FInventorySlot& SlotData)
 {
 	if (!TargetImage) return;
+	
+	if (SlotData.ItemID.IsNone())
+	{
+		TargetImage->SetBrushFromTexture(DefaultImage);
+		return;
+	}
 
 	static const FString ContextString(TEXT("QuickSlot"));
 
