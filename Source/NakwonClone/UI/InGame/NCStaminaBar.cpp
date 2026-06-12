@@ -16,17 +16,19 @@ void UNCStaminaBar::UpdateStaminaBar(float InToCurrentStamina, float InToMaxStam
 	
 	if (StaminaProgressBar && AssistanceStaminaProgressBar)
 	{
-		StaminaProgressBar->SetPercent(InToCurrentStamina / InToMaxStamina);
+		StaminaProgressBar->SetPercent(InToCurrentStamina / MaxStamina);
 		
 		TargetStamina = InToCurrentStamina;
 		
-		if (InToCurrentStamina >= InToMaxStamina)
+		if (TargetStamina >= InToMaxStamina)
 		{
-			StaminaCanvasPanel->SetVisibility(ESlateVisibility::Hidden);
+			StaminaProgressBar->SetVisibility(ESlateVisibility::Hidden);
+			AssistanceStaminaProgressBar->SetVisibility(ESlateVisibility::Hidden);
 		}
 		else
 		{
-			StaminaCanvasPanel->SetVisibility(ESlateVisibility::Visible);
+			StaminaProgressBar->SetVisibility(ESlateVisibility::Visible);
+			AssistanceStaminaProgressBar->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
 }
