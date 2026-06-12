@@ -31,6 +31,8 @@ UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Heal, "Item.Consumable.Heal");
 
 UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Credit, "Item.Currency.Credit");
 UE_DEFINE_GAMEPLAY_TAG(NCItemTag::Quest, "Item.Currency.Quest");
+
+UE_DEFINE_GAMEPLAY_TAG(NCLootBox::State_BeingLooted, "LootBox.State.BeingLooted");
 // --------------------------------------
 
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Alive, "Character.State.Alive");

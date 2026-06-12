@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
 #include "NakwonClone/Common/NCInteractableInterface.h"
 
@@ -18,17 +19,23 @@ class NAKWONCLONE_API AANCLootBoxActor : public AActor, public INCInteractableIn
 public:
 	AANCLootBoxActor();
 	
+	UFUNCTION(BlueprintCallable, Category = "LootBox|Inventory")
+	UNCInventoryBaseComponent* GetLootInventory() const { return LootInventory; }
+	
 protected:
 	virtual void BeginPlay() override;
-	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	void GenerateLoot();
 	
 public:
-
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual bool CanInteract_Implementation(AActor* Interactor) override;
 	virtual void ToggleHighlight_Implementation(bool bHighlight) override;
 
+public:
+	UFUNCTION(BlueprintCallable, Category = "LootBox|Action")
+	void EndLooting();
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LootBox|Components")
 	TObjectPtr<UStaticMeshComponent> BoxMesh;
@@ -44,5 +51,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootBox|Settings", meta = (ClampMin = "0"))
 	int32 RandomRollCount = 1;
+	
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "LootBox|State")
+	FGameplayTagContainer StateTags;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LootBox|State")
+	TObjectPtr<AActor> CurrentLooter;
 	
 };

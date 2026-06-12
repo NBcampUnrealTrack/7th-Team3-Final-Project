@@ -70,6 +70,11 @@ namespace NCItemTag
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest);   // 퀘스트 아이템
 };
 
+namespace NCLootBox
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_BeingLooted); // 누군가 파밍 중인 상태
+};
+
 // 무기 관련 태그
 namespace NCWeapon
 {
