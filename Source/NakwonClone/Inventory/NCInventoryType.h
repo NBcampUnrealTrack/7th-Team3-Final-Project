@@ -61,3 +61,27 @@ public:
 		return ItemID.IsNone() || !ItemTypeTag.IsValid() || Quantity <= 0;
 	}
 };
+
+USTRUCT(BlueprintType)
+struct FConsumableItemData : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consumable")
+	float HealAmount = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consumable")
+	float StaminaAmount = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consumable")
+	float InfectionReduceAmount = 0.f;
+};
+
+USTRUCT(BlueprintType)
+struct FCreditItemData : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Credit")
+	int32 CreditValue = 0;
+};
