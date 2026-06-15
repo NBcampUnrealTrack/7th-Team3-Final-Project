@@ -56,7 +56,11 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     const FVector Velocity = OwnerCharacter->GetVelocity();
 
+    // 찬우수정 - Stop 판정을 위해 현재 Speed를 갱신하기 전에 이전 프레임 Speed 저장
+    PreviousSpeed = Speed;
+
     Speed = Velocity.Size2D();
+
     Direction = UKismetAnimationLibrary::CalculateDirection(
         Velocity,
         OwnerCharacter->GetActorRotation()
@@ -64,7 +68,11 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     bIsInAir = MovementComponent->IsFalling();
     bIsCrouching = MovementComponent->IsCrouching();
+
     bShouldMove = Speed > 3.f && !MovementComponent->GetCurrentAcceleration().IsNearlyZero();
+
+    // 찬우추가 - 걷기/뛰기/앉기 Stop 애니메이션 전환용 상태 계산
+    UpdateStopState();
 
     UpdateWeaponAndBlendSpace();
 
@@ -76,6 +84,50 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
             UpdateLeftHandIK();
         }
     }
+}
+
+// 찬우추가 - Stop 애니메이션 판정 함수
+void UNCAnimInstance::UpdateStopState()
+{
+    if (!MovementComponent)
+    {
+        bWantsToStop = false;
+        bWasMoving = false;
+        StopSpeed = 0.f;
+        StopDirection = 0.f;
+        return;
+    }
+
+    const bool bHasAcceleration = !MovementComponent->GetCurrentAcceleration().IsNearlyZero();
+
+    /*
+     * Stop 판정 기준
+     *
+     * bWasMoving      : 직전까지 이동 중이었는가
+     * !bHasAcceleration : 현재 입력이 끊겼는가
+     * Speed > 10.f    : 아직 완전히 멈추기 전인가
+     * !bIsInAir       : 공중 상태가 아닌가
+     *
+     * 즉, 이동 입력을 놓았고 캐릭터가 감속 중이면 Stop 애니메이션으로 보낼 수 있음.
+     */
+    bWantsToStop =
+        bWasMoving &&
+        !bHasAcceleration &&
+        Speed > 10.f &&
+        !bIsInAir;
+
+    if (bWantsToStop)
+    {
+        StopSpeed = PreviousSpeed;
+        StopDirection = Direction;
+    }
+
+    /*
+     * 다음 프레임 Stop 판정에 사용할 이동 여부 저장.
+     * 50 이상으로 둔 이유:
+     * 아주 작은 미끄러짐/보정 속도 때문에 Stop이 계속 발생하는 걸 방지.
+     */
+    bWasMoving = Speed > 50.f;
 }
 
 void UNCAnimInstance::UpdateWeaponAndBlendSpace()
