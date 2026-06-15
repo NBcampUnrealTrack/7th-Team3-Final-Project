@@ -24,6 +24,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
 	FOnItemUsedSignature OnItemUsed;
 	
+	UPROPERTY()
+	TObjectPtr<ANCItemActor> PendingUseItemCDO;
+	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
     

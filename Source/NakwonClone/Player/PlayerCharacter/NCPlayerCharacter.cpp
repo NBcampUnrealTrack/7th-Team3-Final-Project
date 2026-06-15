@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerState.h"
+#include "Item/NCItemActor.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
@@ -78,6 +79,10 @@ void ANCPlayerCharacter::PossessedBy(AController* NewController)
     if (APlayerState* NCPS = GetPlayerState())
     {
         PlayerInventoryRef = NCPS->FindComponentByClass<UNCPlayerInventoryComponent>();
+        if (PlayerInventoryRef)
+        {
+            PlayerInventoryRef->OnItemUsed.AddDynamic(this, &ANCPlayerCharacter::OnItemUsed);
+        }
     }
 }
 
@@ -88,6 +93,10 @@ void ANCPlayerCharacter::OnRep_PlayerState()
     if (APlayerState* NCPS = GetPlayerState())
     {
         PlayerInventoryRef = NCPS->FindComponentByClass<UNCPlayerInventoryComponent>();
+        if (PlayerInventoryRef)
+        {
+            PlayerInventoryRef->OnItemUsed.AddDynamic(this, &ANCPlayerCharacter::OnItemUsed);
+        }
     }
 }
 
@@ -182,4 +191,21 @@ void ANCPlayerCharacter::OnDead()
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->DisableMovement();
+}
+
+void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
+{
+    if (UseItemMontage)
+    {
+        PlayAnimMontage(UseItemMontage);
+    }
+}
+
+void ANCPlayerCharacter::OnUseItemMontageEnded()
+{
+    if (PlayerInventoryRef && PlayerInventoryRef->PendingUseItemCDO)
+    {
+        PlayerInventoryRef->PendingUseItemCDO->UseItem(this);
+        PlayerInventoryRef->PendingUseItemCDO = nullptr;
+    }
 }

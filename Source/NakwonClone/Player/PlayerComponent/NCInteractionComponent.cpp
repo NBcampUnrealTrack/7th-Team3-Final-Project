@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/OverlapResult.h"
+#include "Item/NCItemActor.h"
 #include "NakwonClone/Common/NCInteractableInterface.h"
 
 UNCInteractionComponent::UNCInteractionComponent()
@@ -29,10 +30,29 @@ void UNCInteractionComponent::BeginPlay()
 
 void UNCInteractionComponent::Interact()
 {
-	if (CurrentInteractableTarget)
+	if (!CurrentInteractableTarget || bIsLooting)
+	{
+		return;
+	}
+	
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+
+	if (CurrentInteractableTarget->IsA<ANCItemActor>() && LootMontage && OwnerCharacter)
+	{
+		bIsLooting = true;
+		OwnerCharacter->PlayAnimMontage(LootMontage);
+		INCInteractableInterface::Execute_Interact(CurrentInteractableTarget, GetOwner());
+	}
+	
+	else
 	{
 		INCInteractableInterface::Execute_Interact(CurrentInteractableTarget, GetOwner());
 	}
+}
+
+void UNCInteractionComponent::OnLootMontageEnded()
+{
+	bIsLooting = false;
 }
 
 void UNCInteractionComponent::UpdateInteractableTarget()
