@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -22,7 +22,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Action")
 	void Interact();
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Animation")
 	void OnLootMontageEnded();
 	
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
