@@ -69,6 +69,23 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
     bool bIsTwoHandedWeapon = false;
 
+    // 헌호수정 - 양손 IK
+    UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
+    FVector LeftHandIKLocation = FVector::ZeroVector;
+
+    UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
+    FVector RightHandIKLocation = FVector::ZeroVector;
+
+    UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
+    bool bUseLeftHandIK = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
+    bool bUseRightHandIK = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
+    bool bIsAttacking = false;
+
 protected:
     void UpdateWeaponAndBlendSpace();
+    void UpdateLeftHandIK();
 };
