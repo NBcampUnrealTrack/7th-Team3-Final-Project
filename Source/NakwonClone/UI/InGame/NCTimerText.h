@@ -17,5 +17,6 @@ protected:
 	UFUNCTION()
 	virtual void NativeConstruct() override;
 	
-	void OnTimerTextChanged();
+	UFUNCTION()
+	void OnTimerTextChanged(int32 InToRemainingMatchTime);
 };
