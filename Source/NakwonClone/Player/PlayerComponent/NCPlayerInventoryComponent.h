@@ -1,7 +1,8 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "NakwonClone/Inventory/NCInventoryBaseComponent.h"
+#include "Inventory/NCInventoryBaseComponent.h"
+#include "Inventory/NCInventoryType.h"
 
 #include "NCPlayerInventoryComponent.generated.h"
 
@@ -23,9 +24,6 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
 	FOnItemUsedSignature OnItemUsed;
-	
-	UPROPERTY()
-	TObjectPtr<ANCItemActor> PendingUseItemCDO;
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -94,4 +92,14 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void Server_TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+	
+public:
+	FConsumableItemData PendingConsumableData;
+	bool bHasPendingConsumable = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
+	TObjectPtr<UDataTable> ConsumableDataTable;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
+	TObjectPtr<UDataTable> CreditDataTable;
 };

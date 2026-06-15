@@ -8,7 +8,7 @@
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
 #include "Common/NCSaveGame.h"
 #include "Item/ANCLootBoxActor.h"	
-#include "Item/NCItemActor.h"	
+#include "Item/NCItemActor.h"
 
 UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 {
@@ -386,22 +386,18 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 
 		OnQuickSlotUpdated.Broadcast();
 		
-		FItemData ItemData;
-		if (GetItemDataByTag(QuickSlots[QuickSlotIndex].ItemID, ItemTag, ItemData))
+		if (ItemTag.MatchesTag(NCItemTag::Heal) || ItemTag.MatchesTag(NCItemTag::Food))
 		{
-			if (ItemData.ItemActorClass)
+			if (ConsumableDataTable)
 			{
-				ANCItemActor* NCCDO = ItemData.ItemActorClass->GetDefaultObject<ANCItemActor>();
-				if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+				if (FConsumableItemData* Data = ConsumableDataTable->FindRow<FConsumableItemData>(ItemID, TEXT("UseQuickSlot")))
 				{
-					if (ACharacter* Character = Cast<ACharacter>(NCPS->GetPawn()))
-					{
-						PendingUseItemCDO = NCCDO;
-					}
+					PendingConsumableData = *Data;
+					bHasPendingConsumable = true;
 				}
 			}
 		}
-
+		
 		OnItemUsed.Broadcast(ItemTag);
 
 		FString DebugMsg = FString::Printf(TEXT("[소모품 사용] %s (남은 수량: %d)"), *ItemTag.ToString(), QuickSlots[QuickSlotIndex].Quantity);
@@ -531,6 +527,23 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 	FName LootID = ItemToLoot->ItemID;
 	FGameplayTag LootTag = ItemToLoot->ItemTypeTag; 
 	int32 LootQuantity = ItemToLoot->Quantity;
+	
+	if (LootTag.MatchesTag(NCItemTag::Credit))
+	{
+		if (CreditDataTable)
+		{
+			if (FCreditItemData* Data = CreditDataTable->FindRow<FCreditItemData>(LootID, TEXT("LootCredit")))
+			{
+				int32 RandomCredits = FMath::RandRange(Data->MinValue, Data->MaxValue);
+				if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+				{
+					NCPS->AddCredits(RandomCredits);
+				}
+			}
+		}
+		ItemToLoot->Destroy();
+		return;
+	}
 	
 	bool bAdded = AddItem(LootID, LootTag, LootQuantity);
 	
