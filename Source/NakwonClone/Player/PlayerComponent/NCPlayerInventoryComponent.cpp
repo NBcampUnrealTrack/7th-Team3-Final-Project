@@ -8,7 +8,7 @@
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
 #include "Common/NCSaveGame.h"
 #include "Item/ANCLootBoxActor.h"	
-#include "Item/NCItemActor.h"	
+#include "Item/NCItemActor.h"
 
 UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 {
@@ -386,22 +386,25 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 
 		OnQuickSlotUpdated.Broadcast();
 		
-		FItemData ItemData;
-		if (GetItemDataByTag(QuickSlots[QuickSlotIndex].ItemID, ItemTag, ItemData))
+		if (ItemTag.MatchesTag(NCItemTag::Heal) || ItemTag.MatchesTag(NCItemTag::Food))
 		{
-			if (ItemData.ItemActorClass)
+			if (ConsumableDataTable)
 			{
-				ANCItemActor* NCCDO = ItemData.ItemActorClass->GetDefaultObject<ANCItemActor>();
-				if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+				if (FConsumableItemData* Data = ConsumableDataTable->FindRow<FConsumableItemData>(ItemID, TEXT("UseQuickSlot")))
 				{
-					if (ACharacter* Character = Cast<ACharacter>(NCPS->GetPawn()))
-					{
-						PendingUseItemCDO = NCCDO;
-					}
+					PendingConsumableData = *Data;
+					bHasPendingConsumable = true;
 				}
 			}
 		}
-
+		else if (ItemTag.MatchesTag(NCItemTag::Credit))
+		{
+			if (CreditDataTable)
+			{
+				// TODO: 크레딧 시스템 완성 후 적용
+			}
+		}
+		
 		OnItemUsed.Broadcast(ItemTag);
 
 		FString DebugMsg = FString::Printf(TEXT("[소모품 사용] %s (남은 수량: %d)"), *ItemTag.ToString(), QuickSlots[QuickSlotIndex].Quantity);

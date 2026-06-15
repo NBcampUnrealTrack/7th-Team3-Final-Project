@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerState.h"
+#include "GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "Item/NCItemActor.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
@@ -203,9 +204,40 @@ void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
 
 void ANCPlayerCharacter::OnUseItemMontageEnded()
 {
-    if (PlayerInventoryRef && PlayerInventoryRef->PendingUseItemCDO)
+    if (!PlayerInventoryRef || !PlayerInventoryRef->bHasPendingConsumable)
     {
-        PlayerInventoryRef->PendingUseItemCDO->UseItem(this);
-        PlayerInventoryRef->PendingUseItemCDO = nullptr;
+        return;
+    }
+
+    FConsumableItemData& Data = PlayerInventoryRef->PendingConsumableData;
+    PlayerInventoryRef->bHasPendingConsumable = false;
+
+    UAbilitySystemComponent* NCASC = GetAbilitySystemComponent();
+    if (!NCASC)
+    {
+        return;
+    }
+    
+    if (Data.HealAmount > 0.f)
+    {
+        const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetHealthAttribute());
+        const float Max = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxHealthAttribute());
+        NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetHealthAttribute(),
+            FMath::Clamp(Current + Data.HealAmount, 0.f, Max));
+    }
+
+    if (Data.StaminaAmount > 0.f)
+    {
+        const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetStaminaAttribute());
+        const float Max = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxStaminaAttribute());
+        NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(),
+            FMath::Clamp(Current + Data.StaminaAmount, 0.f, Max));
+    }
+
+    if (Data.InfectionReduceAmount > 0.f)
+    {
+        const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetInfectionAttribute());
+        NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetInfectionAttribute(),
+            FMath::Max(Current - Data.InfectionReduceAmount, 0.f));
     }
 }
