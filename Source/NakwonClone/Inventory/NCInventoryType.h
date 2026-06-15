@@ -7,12 +7,16 @@
 
 #include "NCInventoryType.generated.h"
 
+class ANCItemActor;
+
 USTRUCT(BlueprintType)
 struct FItemData : public FTableRowBase
 {
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
+	TSubclassOf<ANCItemActor> ItemActorClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
 	class UStaticMesh* ItemMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")

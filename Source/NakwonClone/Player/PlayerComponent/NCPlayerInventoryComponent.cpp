@@ -7,6 +7,8 @@
 #include "Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
 #include "Common/NCSaveGame.h"
+#include "Item/ANCLootBoxActor.h"	
+#include "Item/NCItemActor.h"	
 
 UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 {
@@ -112,6 +114,29 @@ void UNCPlayerInventoryComponent::LoadInventoryData()
 			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
 		}
 	}
+}
+
+void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex,int32 PlayerSlotIndex)
+{
+	if (!LootBox)
+	{
+		return;
+	}
+	Server_TakeItemFromLootBox(LootBox, BoxSlotIndex, PlayerSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANCLootBoxActor* LootBox,int32 BoxSlotIndex, int32 PlayerSlotIndex)
+{
+	if (!LootBox)
+	{
+		return;
+	}
+	UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
+	if (!LootInventory)
+	{
+		return;
+	}
+	LootInventory->TransferItemTo(this, BoxSlotIndex, PlayerSlotIndex);
 }
 
 void UNCPlayerInventoryComponent::OnRep_QuickSlots()
@@ -346,6 +371,7 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 	}
 	
 	FGameplayTag ItemTag = QuickSlots[QuickSlotIndex].ItemTypeTag;
+	FName ItemID = QuickSlots[QuickSlotIndex].ItemID;
 	
 	if (ItemTag.MatchesTag(NCItemType::Consumable))
 	{
@@ -359,6 +385,22 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 		}
 
 		OnQuickSlotUpdated.Broadcast();
+		
+		FItemData ItemData;
+		if (GetItemDataByTag(QuickSlots[QuickSlotIndex].ItemID, ItemTag, ItemData))
+		{
+			if (ItemData.ItemActorClass)
+			{
+				ANCItemActor* NCCDO = ItemData.ItemActorClass->GetDefaultObject<ANCItemActor>();
+				if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+				{
+					if (ACharacter* Character = Cast<ACharacter>(NCPS->GetPawn()))
+					{
+						PendingUseItemCDO = NCCDO;
+					}
+				}
+			}
+		}
 
 		OnItemUsed.Broadcast(ItemTag);
 

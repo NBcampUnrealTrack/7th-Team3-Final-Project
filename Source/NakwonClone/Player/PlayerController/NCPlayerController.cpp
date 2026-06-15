@@ -6,6 +6,7 @@
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
+#include "NakwonClone/Item/ANCLootBoxActor.h"
 #include "AbilitySystemComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Perception/AISense_Hearing.h"
@@ -270,4 +271,19 @@ void ANCPlayerController::UnArm()
     {
         NCInventoryComp->ForceUnArm();
     }
+}
+
+void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)
+{
+    if (!TargetBox)
+    {
+        return;
+    }
+    
+    bShowMouseCursor = true;
+    FInputModeGameAndUI InputMode;
+    InputMode.SetHideCursorDuringCapture(false);
+    SetInputMode(InputMode);
+
+    // TODO: LootBox UI 위젯 클래스 완성 후 CreateWidget + AddToViewport 연동
 }

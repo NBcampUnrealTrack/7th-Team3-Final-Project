@@ -33,6 +33,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer StateTags;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> UseItemMontage;
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void OnUseItemMontageEnded();
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -92,4 +98,7 @@ private:
 	void OnSprintStarted(const struct FInputActionValue& Value);
 	void OnSprintStopped(const struct FInputActionValue& Value);
 
+	//하상빈 추가
+	UFUNCTION()
+	void OnItemUsed(FGameplayTag UsedItemTag);
 };
