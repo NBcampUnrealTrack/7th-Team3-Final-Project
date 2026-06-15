@@ -23,4 +23,5 @@ void ANCGameState::OnRep_CurrentGameStateTag()
 void ANCGameState::OnRep_MatchTime()
 {
 	// todo : 타이머 UI 갱신
+	OnRemainingMatchTimeUpdate.Broadcast(RemainingMatchTime);
 }
