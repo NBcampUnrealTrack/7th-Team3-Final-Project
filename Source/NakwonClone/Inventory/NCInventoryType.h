@@ -83,5 +83,8 @@ struct FCreditItemData : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Credit")
-	int32 CreditValue = 0;
+	int32 MinValue = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Credit")
+	int32 MaxValue = 0;
 };

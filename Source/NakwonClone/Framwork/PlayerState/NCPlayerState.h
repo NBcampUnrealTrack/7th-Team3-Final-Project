@@ -94,4 +94,22 @@ public: //하상빈 추가
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Save")
 	void LoadInventoryData();
+
+	UFUNCTION()
+	void OnRep_Credits();
+
+	UFUNCTION(BlueprintCallable, Category = "Credits")
+	void AddCredits(int32 Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Credits")
+	bool SpendCredits(int32 Amount);
+	
+	UPROPERTY(BlueprintAssignable, Category = "Credits")
+	FOnCitizenRankTextChanged OnCreditsChanged;
+		
+	UPROPERTY(ReplicatedUsing = OnRep_Credits, BlueprintReadOnly, Category = "Credits")
+	int32 Credits = 0;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Credits")
+	int32 MaxCredits = 999999;
 };

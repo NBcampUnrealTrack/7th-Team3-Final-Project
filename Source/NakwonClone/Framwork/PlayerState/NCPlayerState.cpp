@@ -44,6 +44,7 @@ void ANCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(ANCPlayerState, MaxStamina);
 	DOREPLIFETIME(ANCPlayerState, bHost);
 	DOREPLIFETIME(ANCPlayerState, TeamIndex);
+	DOREPLIFETIME(ANCPlayerState, Credits);
 }
 
 void ANCPlayerState::OnRep_LifeStateTag()
@@ -114,4 +115,37 @@ void ANCPlayerState::LoadInventoryData()
 	if (StashInventory) StashInventory->InitializeInventory();
     
 	UE_LOG(LogTemp, Warning, TEXT("[NCPlayerState] 세이브 파일이 없어 신규 인벤토리로 초기화"));
+}
+
+void ANCPlayerState::OnRep_Credits()
+{
+	OnCreditsChanged.Broadcast(Credits);
+}
+
+void ANCPlayerState::AddCredits(int32 Amount)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+	Credits = FMath::Clamp(Credits + Amount, 0, MaxCredits);
+	OnCreditsChanged.Broadcast(Credits);
+}
+
+bool ANCPlayerState::SpendCredits(int32 Amount)
+{
+	if (!HasAuthority())
+	{
+		return false;
+		
+	}
+	
+	if (Credits < Amount)
+	{
+		return false;
+	}
+	
+	Credits -= Amount;
+	OnCreditsChanged.Broadcast(Credits);
+	return true;
 }

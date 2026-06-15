@@ -397,13 +397,6 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 				}
 			}
 		}
-		else if (ItemTag.MatchesTag(NCItemTag::Credit))
-		{
-			if (CreditDataTable)
-			{
-				// TODO: 크레딧 시스템 완성 후 적용
-			}
-		}
 		
 		OnItemUsed.Broadcast(ItemTag);
 
@@ -534,6 +527,23 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 	FName LootID = ItemToLoot->ItemID;
 	FGameplayTag LootTag = ItemToLoot->ItemTypeTag; 
 	int32 LootQuantity = ItemToLoot->Quantity;
+	
+	if (LootTag.MatchesTag(NCItemTag::Credit))
+	{
+		if (CreditDataTable)
+		{
+			if (FCreditItemData* Data = CreditDataTable->FindRow<FCreditItemData>(LootID, TEXT("LootCredit")))
+			{
+				int32 RandomCredits = FMath::RandRange(Data->MinValue, Data->MaxValue);
+				if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+				{
+					NCPS->AddCredits(RandomCredits);
+				}
+			}
+		}
+		ItemToLoot->Destroy();
+		return;
+	}
 	
 	bool bAdded = AddItem(LootID, LootTag, LootQuantity);
 	
