@@ -43,7 +43,4 @@ public:
 	
 	UFUNCTION()
 	void OnRep_MatchTime();
-	
-
-	
 };
