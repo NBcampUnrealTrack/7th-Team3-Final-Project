@@ -2,6 +2,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "NakwonClone/Inventory/NCInventoryBaseComponent.h"
 #include "NakwonClone/Item/Data/NCLootDropData.h"
+#include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 #include "Common/NCGameplayTags.h"
 #include "Net/UnrealNetwork.h"
 
@@ -88,7 +89,7 @@ void AANCLootBoxActor::Interact_Implementation(AActor* Interactor)
 		return;
 	}
 	
-	if (!HasAuthority())
+	if (HasAuthority())
 	{
 		if (StateTags.HasTagExact(NCLootBox::State_BeingLooted))
 		{
@@ -103,10 +104,9 @@ void AANCLootBoxActor::Interact_Implementation(AActor* Interactor)
 
 		if (APawn* InteractorPawn = Cast<APawn>(Interactor))
 		{
-			if (APlayerController* PC = Cast<APlayerController>(InteractorPawn->GetController()))
+			if (ANCPlayerController* NCPC = Cast<ANCPlayerController>(InteractorPawn->GetController()))
 			{
-				// TODO: PlayerController 클래스로 캐스팅해서 Client RPC 함수 호출
-				// 예: Cast<ANCPlayerController>(PC)->Client_OpenLootBoxUI(this);
+				NCPC->Client_OpenLootBoxUI(this);
 			}
 		}
 	}

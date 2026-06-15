@@ -5,6 +5,8 @@
 
 #include "NCPlayerInventoryComponent.generated.h"
 
+class AANCLootBoxActor;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuickSlotUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemUsedSignature, FGameplayTag, UsedItemTag);
 
@@ -82,4 +84,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory|SaveLoad")
 	void LoadInventoryData();
+	
+public:
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
 };
