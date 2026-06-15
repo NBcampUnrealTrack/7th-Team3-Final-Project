@@ -45,7 +45,11 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
         AActor* WeaponActor = Combat->GetSpawnedWeaponActor();
         if (WeaponActor)
         {
-            USkeletalMeshComponent* WeaponMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>();
+            // 헌호수정 - 스켈레탈 메시 먼저 시도, 없으면 스태틱 메시 시도
+            UMeshComponent* WeaponMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>();
+            if (!WeaponMesh)
+                WeaponMesh = WeaponActor->FindComponentByClass<UStaticMeshComponent>();
+
             if (WeaponMesh)
             {
                 const FVector TrailStart = WeaponMesh->GetSocketLocation(WeaponData->TrailStartSocket);

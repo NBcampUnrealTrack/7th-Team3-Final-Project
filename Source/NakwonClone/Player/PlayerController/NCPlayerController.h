@@ -6,6 +6,7 @@
 
 class UInputMappingContext;
 class UInputAction;
+class AANCLootBoxActor;
 struct FInputActionValue;
 
 //하상빈 추가
@@ -22,6 +23,8 @@ public:
 	//하상빈 추가
 	UPROPERTY(BlueprintAssignable, Category = "UI|Inventory")
 	FOnInventoryToggledSignature OnInventoryToggled;
+	UFUNCTION(Client, Reliable)
+	void Client_OpenLootBoxUI(AANCLootBoxActor* TargetBox);
 	
 protected:
 	virtual void BeginPlay() override;

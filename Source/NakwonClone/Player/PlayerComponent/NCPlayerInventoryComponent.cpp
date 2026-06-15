@@ -7,6 +7,8 @@
 #include "Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
 #include "Common/NCSaveGame.h"
+#include "Item/ANCLootBoxActor.h"	
+#include "Item/NCItemActor.h"
 
 UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 {
@@ -112,6 +114,29 @@ void UNCPlayerInventoryComponent::LoadInventoryData()
 			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
 		}
 	}
+}
+
+void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex,int32 PlayerSlotIndex)
+{
+	if (!LootBox)
+	{
+		return;
+	}
+	Server_TakeItemFromLootBox(LootBox, BoxSlotIndex, PlayerSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANCLootBoxActor* LootBox,int32 BoxSlotIndex, int32 PlayerSlotIndex)
+{
+	if (!LootBox)
+	{
+		return;
+	}
+	UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
+	if (!LootInventory)
+	{
+		return;
+	}
+	LootInventory->TransferItemTo(this, BoxSlotIndex, PlayerSlotIndex);
 }
 
 void UNCPlayerInventoryComponent::OnRep_QuickSlots()
@@ -346,6 +371,7 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 	}
 	
 	FGameplayTag ItemTag = QuickSlots[QuickSlotIndex].ItemTypeTag;
+	FName ItemID = QuickSlots[QuickSlotIndex].ItemID;
 	
 	if (ItemTag.MatchesTag(NCItemType::Consumable))
 	{
@@ -359,7 +385,19 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 		}
 
 		OnQuickSlotUpdated.Broadcast();
-
+		
+		if (ItemTag.MatchesTag(NCItemTag::Heal) || ItemTag.MatchesTag(NCItemTag::Food))
+		{
+			if (ConsumableDataTable)
+			{
+				if (FConsumableItemData* Data = ConsumableDataTable->FindRow<FConsumableItemData>(ItemID, TEXT("UseQuickSlot")))
+				{
+					PendingConsumableData = *Data;
+					bHasPendingConsumable = true;
+				}
+			}
+		}
+		
 		OnItemUsed.Broadcast(ItemTag);
 
 		FString DebugMsg = FString::Printf(TEXT("[소모품 사용] %s (남은 수량: %d)"), *ItemTag.ToString(), QuickSlots[QuickSlotIndex].Quantity);
@@ -489,6 +527,23 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 	FName LootID = ItemToLoot->ItemID;
 	FGameplayTag LootTag = ItemToLoot->ItemTypeTag; 
 	int32 LootQuantity = ItemToLoot->Quantity;
+	
+	if (LootTag.MatchesTag(NCItemTag::Credit))
+	{
+		if (CreditDataTable)
+		{
+			if (FCreditItemData* Data = CreditDataTable->FindRow<FCreditItemData>(LootID, TEXT("LootCredit")))
+			{
+				int32 RandomCredits = FMath::RandRange(Data->MinValue, Data->MaxValue);
+				if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+				{
+					NCPS->AddCredits(RandomCredits);
+				}
+			}
+		}
+		ItemToLoot->Destroy();
+		return;
+	}
 	
 	bool bAdded = AddItem(LootID, LootTag, LootQuantity);
 	

@@ -53,13 +53,21 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Socket")
 	FName AttachSocketName = NAME_None;
 
-	//왼손 IK 사용 여부
+	//양손 IK 사용 여부 (양손무기)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
-	bool bUseLeftHandIK = false;
+	bool bUseTwoHandIK = false;
 
-	//왼손 IK가 따라갈 무기 Mesh 소켓 이름
+	//왼손 IK 소켓 이름
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
 	FName LeftHandIKSocketName = NAME_None;
+
+	//오른손 IK 소켓 이름
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	FName RightHandIKSocketName = NAME_None;
+
+	//왼손 IK 사용 여부 (단일 왼손 IK, 기존 호환용)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	bool bUseLeftHandIK = false;
 
 	// 소켓 기반 라인 트레이스 히트 판정 (양손무기용, 비어있으면 구 트레이스 사용)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitTrace")
