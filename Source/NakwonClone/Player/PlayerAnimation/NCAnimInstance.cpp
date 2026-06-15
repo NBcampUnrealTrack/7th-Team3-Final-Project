@@ -56,6 +56,8 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     const FVector Velocity = OwnerCharacter->GetVelocity();
 
+    VerticalVelocity = Velocity.Z;
+
     // 찬우수정 - Stop 판정을 위해 현재 Speed를 갱신하기 전에 이전 프레임 Speed 저장
     PreviousSpeed = Speed;
 

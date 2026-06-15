@@ -27,6 +27,8 @@ public:
     UFUNCTION(BlueprintPure, Category = "Locomotion")
     float GetDirection() const { return Direction; }
 
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+    float VerticalVelocity = 0.f;
 
     UFUNCTION(BlueprintPure, Category = "Locomotion")
     bool GetShouldMove() const { return bShouldMove; }
