@@ -13,10 +13,21 @@ class NAKWONCLONE_API UNCGameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
+	virtual void Init() override;
+	
 	//무기 DataTable - 에디터에서 BP_NCGameInstance에 연결
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
 	TObjectPtr<UDataTable> WeaponDataTable;
 
 	//WeaponID로 무기 데이터 조회 (어디서든 호출 가능)
 	FNCWeaponData* GetWeaponData(FName WeaponID) const;
+	
+#pragma region Loading창 띄우기	
+private:
+	void RegisterLoadingScreenHandlers(); // 로딩 화면 등록
+	void BeginLoadingScreen(const FString& MapName); // 로딩 화면 시작 콜백(레벨 전환 시 자동 호출)
+	void EndLoadingScreen(UWorld* InLoadedWorld); // 로딩 화면 종료 콜백(자동 호출)
+	
+#pragma endregion
+	
 };
