@@ -55,7 +55,7 @@ void AVGMonsterCharacterBase::BeginPlay()
 void AVGMonsterCharacterBase::HandleDead()
 {
 	if (AAIController* AIC = Cast<AAIController>(GetController()))
-	{
+ 	{
 		AIC->StopMovement();
 		AIC->UnPossess();
 	}
