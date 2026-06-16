@@ -32,6 +32,14 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
 
+    // 헌호수정 - 파괴 중인 액터 접근 방지
+    if (OwnerCharacter && OwnerCharacter->IsActorBeingDestroyed())
+    {
+        OwnerCharacter = nullptr;
+        MovementComponent = nullptr;
+        return;
+    }
+
     if (!OwnerCharacter || !MovementComponent)
     {
         OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner());
