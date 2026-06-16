@@ -26,8 +26,11 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FName ItemID;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	UImage* EquipmentItemImage;
+	
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
+	UImage* EquipmentSlotImage;
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* EquipmentItemQuantityTextBlock;

@@ -37,9 +37,11 @@ void UNCEquipmentInventorySlot::SetSlotData(int32 InIndex, int32 InQuantity, FGa
 		}
 		
 		EquipmentItemImage->SetVisibility(ESlateVisibility::Visible);
+		EquipmentSlotImage->SetVisibility(ESlateVisibility::Collapsed);
 	}
 	else
 	{
+		EquipmentSlotImage->SetVisibility(ESlateVisibility::Visible);
 		EquipmentItemImage->SetVisibility(ESlateVisibility::Hidden);
 		EquipmentItemQuantityTextBlock->SetVisibility(ESlateVisibility::Hidden);
 	}
