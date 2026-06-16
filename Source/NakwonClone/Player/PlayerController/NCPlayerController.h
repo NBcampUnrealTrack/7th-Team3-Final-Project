@@ -7,6 +7,7 @@
 class UInputMappingContext;
 class UInputAction;
 class AANCLootBoxActor;
+class UNCLootBoxHud;
 struct FInputActionValue;
 
 //하상빈 추가
@@ -25,6 +26,14 @@ public:
 	FOnInventoryToggledSignature OnInventoryToggled;
 	UFUNCTION(Client, Reliable)
 	void Client_OpenLootBoxUI(AANCLootBoxActor* TargetBox);
+	void ToggleInventory();
+	void CloseLootBoxUI();
+		
+	UFUNCTION(BlueprintCallable)
+	bool TryCloseTopUI();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsInventoryOpen = false;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -42,7 +51,6 @@ private:
 	
 	// 하상빈 추가
 	void Interact();
-	void ToggleInventory();
 	void QuickSlot1();
 	void QuickSlot2();
 	void QuickSlot3();
@@ -89,11 +97,16 @@ protected:
 	TObjectPtr<UInputAction> QuickSlot4Action;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> UnArmAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> CloseUIAction;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|LootBox")
+	TSubclassOf<UNCLootBoxHud> LootBoxWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UNCLootBoxHud> LootBoxWidget;
 	// ----------
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> AttackAction;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsInventoryOpen = false;
+
 };
