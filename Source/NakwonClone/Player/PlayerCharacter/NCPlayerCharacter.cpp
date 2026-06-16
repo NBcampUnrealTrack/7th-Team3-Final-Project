@@ -18,8 +18,7 @@ ANCPlayerCharacter::ANCPlayerCharacter()
     InitCamera();
     InitComponents();
 
-    //H
-    GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+    // 헌호수정 - DataTable에서 속도 적용하므로 하드코딩 제거
 }
 
 void ANCPlayerCharacter::InitCamera()
@@ -76,12 +75,14 @@ void ANCPlayerCharacter::BeginPlay()
 void ANCPlayerCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
-    
+
     if (APlayerState* NCPS = GetPlayerState())
     {
         PlayerInventoryRef = NCPS->FindComponentByClass<UNCPlayerInventoryComponent>();
         if (PlayerInventoryRef)
         {
+            // 헌호수정 - 이중 바인딩 방지 (RemoveDynamic 먼저)
+            PlayerInventoryRef->OnItemUsed.RemoveDynamic(this, &ANCPlayerCharacter::OnItemUsed);
             PlayerInventoryRef->OnItemUsed.AddDynamic(this, &ANCPlayerCharacter::OnItemUsed);
         }
     }
@@ -90,12 +91,14 @@ void ANCPlayerCharacter::PossessedBy(AController* NewController)
 void ANCPlayerCharacter::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
-    
+
     if (APlayerState* NCPS = GetPlayerState())
     {
         PlayerInventoryRef = NCPS->FindComponentByClass<UNCPlayerInventoryComponent>();
         if (PlayerInventoryRef)
         {
+            // 헌호수정 - 이중 바인딩 방지 (RemoveDynamic 먼저)
+            PlayerInventoryRef->OnItemUsed.RemoveDynamic(this, &ANCPlayerCharacter::OnItemUsed);
             PlayerInventoryRef->OnItemUsed.AddDynamic(this, &ANCPlayerCharacter::OnItemUsed);
         }
     }
@@ -122,13 +125,19 @@ void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceT
     {
         UnCrouch();
         if (LocomotionComponent)
+        {
+            // 헌호수정 - 서버도 StanceTag 먼저 Stand로 변경 후 속도 재적용
+            LocomotionComponent->SetStanceTag(NCCharacter::Stand);
             LocomotionComponent->SetGaitTag(CurrentGaitTag);
+        }
     }
 }
 
 void ANCPlayerCharacter::StartSprint()
 {
-    //헌호수정
+    // 헌호수정 - 스프린트 잠금 중이면 속도 변경도 막음
+    if (LocomotionComponent && LocomotionComponent->IsSprintLocked()) return;
+
     if (LocomotionComponent)
         LocomotionComponent->StartStaminaDrain();
 
@@ -164,15 +173,27 @@ void ANCPlayerCharacter::ToggleWalk()
 
 void ANCPlayerCharacter::ToggleCrouch()
 {
+    // 헌호수정 - 공중에서 앉기 방지
+    if (GetCharacterMovement()->IsFalling()) return;
+
     if (CurrentStanceTag == NCCharacter::Crouch)
     {
         UnCrouch();
         CurrentStanceTag = NCCharacter::Stand;
         if (LocomotionComponent)
+        {
+            // 헌호수정 - StanceTag 먼저 Stand로 변경 후 속도 재적용
+            LocomotionComponent->SetStanceTag(NCCharacter::Stand);
             LocomotionComponent->SetGaitTag(CurrentGaitTag);
+        }
     }
     else
     {
+        // 헌호수정 - 앉을 때 스프린트 중이면 스태미나 드레인 중지
+        if (CurrentGaitTag == NCCharacter::Sprint && LocomotionComponent)
+            LocomotionComponent->StopStaminaDrain();
+
+        CurrentGaitTag = NCCharacter::Jog;
         Crouch();
         CurrentStanceTag = NCCharacter::Crouch;
         if (LocomotionComponent)
@@ -192,6 +213,10 @@ void ANCPlayerCharacter::OnDead()
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->DisableMovement();
+
+    // 헌호수정 - 사망 시 스태미나 타이머 정리
+    if (LocomotionComponent)
+        LocomotionComponent->ClearAllStaminaTimers();
 }
 
 void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
