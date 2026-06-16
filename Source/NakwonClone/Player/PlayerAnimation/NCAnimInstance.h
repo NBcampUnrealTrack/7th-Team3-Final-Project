@@ -39,6 +39,9 @@ public:
     UFUNCTION(BlueprintPure, Category = "Locomotion")
     bool GetIsCrouching() const { return bIsCrouching; }
 
+    UFUNCTION(BlueprintPure, Category = "Locomotion|Crouch")
+    float GetCrouchMovePlayRate() const { return CrouchMovePlayRate; }
+
     UFUNCTION(BlueprintPure, Category = "Locomotion|Stop")
     bool GetWantsToStop() const { return bWantsToStop; }
 
@@ -106,6 +109,9 @@ protected:
 
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     bool bIsCrouching = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Crouch", meta = (AllowPrivateAccess = "true"))
+    float CrouchMovePlayRate = 1.0f;
 
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
     TObjectPtr<UBlendSpace> CurrentLocomotionBlendSpace;
