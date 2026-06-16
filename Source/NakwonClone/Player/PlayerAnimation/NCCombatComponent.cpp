@@ -212,9 +212,6 @@ void UNCCombatComponent::Internal_UnEquipWeapon()
 			ASC->RemoveLooseGameplayTag(Data->WeaponTypeTag);
 			ASC->RemoveLooseGameplayTag(Data->WeightTag);
 			ASC->RemoveLooseGameplayTag(NCWeapon::State_Equipped);
-			// 헌호수정 - 파손 상태 태그도 제거 (다음 무기에 영향 방지)
-			if (EquippedWeapon.bIsBroken)
-				ASC->RemoveLooseGameplayTag(NCWeapon::State_Broken);
 		}
 	}
 

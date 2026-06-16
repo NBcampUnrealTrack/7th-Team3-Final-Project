@@ -84,6 +84,4 @@ void ANCBaseCharacter::ResetLandingState()
 
 void ANCBaseCharacter::OnDead()
 {
-    // 헌호수정 - 사망 시 착지 타이머 정리 (파괴된 액터 접근 방지)
-    GetWorldTimerManager().ClearTimer(LandingTimerHandle);
 }

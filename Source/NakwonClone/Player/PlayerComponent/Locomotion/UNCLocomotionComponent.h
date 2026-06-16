@@ -54,8 +54,6 @@ private:
 public:
 	void StartStaminaDrain();
 	void StopStaminaDrain();
-	void ClearAllStaminaTimers();
-	bool IsSprintLocked() const { return bSprintLocked; }
 
 private:
 	FTimerHandle StaminaDrainHandle;
