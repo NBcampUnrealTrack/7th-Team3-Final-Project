@@ -46,7 +46,15 @@ void UNCItemSlot::UpdateImage(UImage* TargetImage, const FInventorySlot& SlotDat
 	
 	if (SlotData.ItemID.IsNone())
 	{
-		TargetImage->SetBrushFromTexture(DefaultImage);
+		if (TargetImage == LeftSlotImage)
+		{
+			TargetImage->SetBrushFromTexture(LeftSlotDefaultImage);
+		}
+		else if (TargetImage == RightSlotImage)
+		{
+			TargetImage->SetBrushFromTexture(RightSlotDefaultImage);
+		}
+
 		return;
 	}
 
