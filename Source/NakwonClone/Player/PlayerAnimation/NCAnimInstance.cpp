@@ -32,6 +32,14 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
 
+    // 헌호수정 - 파괴 중인 액터 접근 방지
+    if (OwnerCharacter && OwnerCharacter->IsActorBeingDestroyed())
+    {
+        OwnerCharacter = nullptr;
+        MovementComponent = nullptr;
+        return;
+    }
+
     if (!OwnerCharacter || !MovementComponent)
     {
         OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner());
@@ -70,25 +78,6 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     bIsInAir = MovementComponent->IsFalling();
     bIsCrouching = MovementComponent->IsCrouching();
-
-    // 찬우추가 - 앉기 이동 Play Rate 계산
-    // Speed 130 전후 = 앉아서 걷기
-    // Speed 200 이상 = 앉아서 뛰기 느낌으로 재생속도 증가
-    if (bIsCrouching)
-    {
-        if (Speed >= 200.f)
-        {
-            CrouchMovePlayRate = 1.35f;
-        }
-        else
-        {
-            CrouchMovePlayRate = 1.0f;
-        }
-    }
-    else
-    {
-        CrouchMovePlayRate = 1.0f;
-    }
 
     bShouldMove = Speed > 3.f && !MovementComponent->GetCurrentAcceleration().IsNearlyZero();
 
@@ -244,9 +233,7 @@ void UNCAnimInstance::UpdateLeftHandIK()
     // 스켈레탈 메시 먼저 시도, 없으면 스태틱 메시 시도
     UMeshComponent* WeaponMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>();
     if (!WeaponMesh)
-    {
         WeaponMesh = WeaponActor->FindComponentByClass<UStaticMeshComponent>();
-    }
 
     if (!WeaponMesh)
     {
