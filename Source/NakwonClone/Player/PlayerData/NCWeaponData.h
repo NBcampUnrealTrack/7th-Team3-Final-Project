@@ -69,12 +69,20 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
 	bool bUseLeftHandIK = false;
 
-	// 소켓 기반 라인 트레이스 히트 판정 (양손무기용, 비어있으면 구 트레이스 사용)
+	// 소켓 기반 스피어 트레이스 히트 판정 (양손무기용, 비어있으면 전방 스피어 트레이스 사용)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitTrace")
 	FName TrailStartSocket = NAME_None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitTrace")
 	FName TrailEndSocket = NAME_None;
+
+	// 헌호수정 - 스피어트레이스 반경 (소켓 방식/전방 방식 공통)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitTrace")
+	float HitSphereRadius = 15.f;
+
+	// 헌호수정 - 전방 스피어트레이스 사거리 (소켓 없을 때 사용)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitTrace")
+	float HitTraceRange = 150.f;
 
 	// 사운드
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
@@ -82,6 +90,10 @@ struct FNCWeaponData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TSoftObjectPtr<USoundBase> SwingSound;
+
+	//헌호수정 - 사용할 콤보 섹션 목록 (비어있으면 Attack1만 사용)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	TArray<FName> AttackSections;
 
 	//애니메이션
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")

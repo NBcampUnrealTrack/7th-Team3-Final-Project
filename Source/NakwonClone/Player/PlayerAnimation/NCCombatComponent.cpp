@@ -167,10 +167,12 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 			ASC->AddLooseGameplayTag(Data->WeightTag);
 			ASC->AddLooseGameplayTag(NCWeapon::State_Equipped);
 
-			// 콤보 데이터 설정
+			// 헌호수정 - 콤보 섹션을 DataTable에서 가져옴 (없으면 Attack1 기본값)
 			FNCWeaponComboData ComboData;
 			ComboData.ComboMontage = Data->AttackMontage.LoadSynchronous();
-			ComboData.ComboSections = { TEXT("Attack1"), TEXT("Attack2"), TEXT("Attack3"), TEXT("Attack4") };
+			ComboData.ComboSections = Data->AttackSections.Num() > 0
+				? Data->AttackSections
+				: TArray<FName>{ TEXT("Attack1") };
 			EquipWeaponCombo(ComboData);
 
 			// 무기 액터 스폰 후 손에 부착
