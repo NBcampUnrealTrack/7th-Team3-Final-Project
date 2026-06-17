@@ -32,11 +32,9 @@ void UNCItemSlot::UpdateSlotVisual()
 
 	if (!InventoryComp) return;
 	
-	FEquipmentPreset Preset0 = InventoryComp->GetPresetData(0);
-	FInventorySlot LeftSlotData = Preset0.IsTwoHandActive() ? Preset0.TwoHand : Preset0.RightHand;
+	FInventorySlot LeftSlotData = InventoryComp->GetQuickSlotData(0);
 
-	FEquipmentPreset Preset1 = InventoryComp->GetPresetData(1);
-	FInventorySlot RightSlotData = Preset1.IsTwoHandActive() ? Preset1.TwoHand : Preset1.RightHand;
+	FInventorySlot RightSlotData = InventoryComp->GetQuickSlotData(1);
 
 	UpdateImage(LeftSlotImage, LeftSlotData);
 	UpdateImage(RightSlotImage, RightSlotData);
