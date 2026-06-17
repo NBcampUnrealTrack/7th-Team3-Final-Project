@@ -84,5 +84,9 @@ private:
 public:
 	UFUNCTION()
 	void HandleDead();
+	
+private:
+	void OnStartRagdoll();
+	FTimerHandle DeadTimerHandle;
 #pragma endregion
 };

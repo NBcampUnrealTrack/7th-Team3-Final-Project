@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/AssetManager.h"
 #include "Player/PlayerData/NCWeaponData.h"
 #include "Styling/SlateBrush.h"
 #include "NCGameInstance.generated.h"
@@ -29,6 +31,8 @@ private:
 	void BeginLoadingScreen(const FString& MapName); // 로딩 화면 시작 콜백(레벨 전환 시 자동 호출)
 	void EndLoadingScreen(UWorld* InLoadedWorld); // 로딩 화면 종료 콜백(자동 호출)
 	
+	bool bHasLoadedOnce = false;
+	
 #pragma endregion
 	
 #pragma region Loading Screen 이미지 추가
@@ -39,5 +43,15 @@ public:
 	
 private:
 	FSlateBrush BackgroundBrush; // slate 브러시를 멤버변수로 보관(BegineLoadingScreen 호출 시 생성)	
+#pragma endregion
+	
+#pragma region Preloading
+public:
+	void StartPreloading();
+	
+private:
+	TSharedPtr<FStreamableHandle> PreloadHandle;
+	
+	void OnPreloadComplete();
 #pragma endregion
 };

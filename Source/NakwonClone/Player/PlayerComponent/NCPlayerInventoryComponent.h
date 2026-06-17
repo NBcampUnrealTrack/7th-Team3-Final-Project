@@ -56,6 +56,10 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_DropItem(int32 SlotIndex, int32 Quantity);
 
+	// 헌호수정 - 서버→모든 클라이언트에 아이템 사용 이벤트 전파
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OnItemUsed(FGameplayTag ItemTag);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Drop")
 	TSubclassOf<class AActor> BaseItemActorClass;
 	

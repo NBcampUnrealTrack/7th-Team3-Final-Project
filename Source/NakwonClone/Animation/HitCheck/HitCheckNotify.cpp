@@ -41,7 +41,7 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
     // 헌호수정 - 소켓 있으면 소켓 간 스피어트레이스, 없으면 전방 스피어트레이스 (둘 다 스피어)
     if (WeaponData->TrailStartSocket != NAME_None && WeaponData->TrailEndSocket != NAME_None)
     {
-        // 헌호수정 - 도끼 등 양손무기 - 소켓 간 라인트레이스
+        // 헌호수정 - 도끼 등 양손무기 - 소켓 간 스피어트레이스
         AActor* WeaponActor = Combat->GetSpawnedWeaponActor();
         if (WeaponActor)
         {
@@ -53,15 +53,19 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
             {
                 const FVector TrailStart = WeaponMesh->GetSocketLocation(WeaponData->TrailStartSocket);
                 const FVector TrailEnd = WeaponMesh->GetSocketLocation(WeaponData->TrailEndSocket);
+                const float Radius = WeaponData->HitSphereRadius;
 
-                bHit = World->LineTraceMultiByChannel(
-                    HitResults, TrailStart, TrailEnd,
+                bHit = World->SweepMultiByChannel(
+                    HitResults, TrailStart, TrailEnd, FQuat::Identity,
                     ECollisionChannel::ECC_Pawn,
+                    FCollisionShape::MakeSphere(Radius),
                     Params
                 );
 
-                DrawDebugLine(World, TrailStart, TrailEnd,
-                    bHit ? FColor::Red : FColor::Green, false, 3.f, 0, 2.f);
+                DrawDebugSphere(World, TrailStart, Radius, 12,
+                    bHit ? FColor::Red : FColor::Green, false, 3.f, 0, 1.f);
+                DrawDebugSphere(World, TrailEnd, Radius, 12,
+                    bHit ? FColor::Red : FColor::Green, false, 3.f, 0, 1.f);
             }
         }
     }
