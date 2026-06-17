@@ -58,7 +58,11 @@ void ANCPlayerCharacter::BeginPlay()
             AbilitySystemComponent->GiveAbility(
                 FGameplayAbilitySpec(AttackAbilityClass, 1));
         }
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+            UVGPlayerAttributeSet::GetHealthAttribute())
+            .AddUObject(this, &ANCPlayerCharacter::HandleHealthChanged);
     }
+
 
     //// TODO: 테스트용 임시 크로우바 장착 - 아이템 픽업 시스템 완성 후 제거
     // if (HasAuthority() && CombatComponent)
@@ -70,6 +74,17 @@ void ANCPlayerCharacter::BeginPlay()
     //     TestWeapon.bIsBroken = false;
     //     CombatComponent->EquipWeapon(TestWeapon);
     // }
+}
+
+void ANCPlayerCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)
+{
+    if (Data.NewValue >= Data.OldValue) return; // 체력 감소(피격)만
+    if (Data.NewValue <= 0.f) return;           // 사망은 OnDead가 처리
+
+    UE_LOG(LogTemp, Warning, TEXT("[HitReact] 피격! HP %.1f -> %.1f"),
+        Data.OldValue, Data.NewValue);
+
+    PlayHitReactMontage();
 }
 
 void ANCPlayerCharacter::PossessedBy(AController* NewController)
@@ -278,5 +293,14 @@ void ANCPlayerCharacter::OnUseItemMontageEnded()
         const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetInfectionAttribute());
         NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetInfectionAttribute(),
             FMath::Max(Current - Data.InfectionReduceAmount, 0.f));
+    }
+}
+
+//H
+void ANCPlayerCharacter::PlayHitReactMontage()
+{
+    if (HitReactMontage)
+    {
+        PlayAnimMontage(HitReactMontage);
     }
 }

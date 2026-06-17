@@ -90,6 +90,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<class UInputAction> SprintAction;
 
+	//H 피격 리액션 몽타주
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> HitReactMontage;
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void PlayHitReactMontage();
+
+	// 체력 변경 콜백 (피격 감지 → 몽타주 트리거)
+	void HandleHealthChanged(const struct FOnAttributeChangeData& Data);
+
 private:
 	void InitCamera();
 	void InitComponents();
