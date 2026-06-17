@@ -17,6 +17,12 @@ ANCItemActor::ANCItemActor()
 	ItemMesh->SetCollisionObjectType(ECC_WorldStatic);
 	ItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	ItemMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	
+	InteractionWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
+	InteractionWidget->SetupAttachment(ItemMesh);
+	InteractionWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	InteractionWidget->SetRelativeLocation(FVector(0.f, 0.f, 120.f));
+	InteractionWidget->SetVisibility(false);
 }
 
 void ANCItemActor::BeginPlay()
@@ -68,6 +74,13 @@ FText ANCItemActor::GetInteractPrompt_Implementation()
 
 void ANCItemActor::ToggleHighlight_Implementation(bool bHighlight)
 {
+	ItemMesh->SetRenderCustomDepth(bHighlight);
+
+	if (InteractionWidget)
+	{
+		InteractionWidget->SetVisibility(bHighlight);
+	}
+	
 	if (ItemMesh) 
 	{
 		ItemMesh->SetRenderCustomDepth(bHighlight);

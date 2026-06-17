@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -22,8 +22,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Action")
 	void Interact();
 	
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Animation")
+	void OnLootMontageEnded();
+	
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
 	FOnInteractTargetChangedSignature OnInteractTargetChanged;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Animation")
+	TObjectPtr<UAnimMontage> LootMontage;
 	
 private:
 	FTimerHandle TimerHandle_UpdateInteractable;
@@ -37,7 +43,10 @@ private:
 	UPROPERTY()
 	AActor* CurrentInteractableTarget = nullptr;
 	
+	bool bIsLooting = false;
+	
 	void UpdateInteractableTarget();
 	
 	void SetHighlight(AActor* TargetActor, bool bHighlight);
+	
 };

@@ -6,6 +6,8 @@
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
+#include "NakwonClone/Item/ANCLootBoxActor.h"
+#include "NakwonClone/UI/Inventroy/LootBox/NCLootBoxHud.h"
 #include "AbilitySystemComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Perception/AISense_Hearing.h"
@@ -89,6 +91,10 @@ void ANCPlayerController::SetupInputComponent()
         {
             EIC->BindAction(UnArmAction, ETriggerEvent::Started, this, &ANCPlayerController::UnArm);
         }
+        if (CloseUIAction)
+        {
+            EIC->BindAction(CloseUIAction, ETriggerEvent::Started, this, &ANCPlayerController::CloseLootBoxUI);
+        }
         // -----------
         
         if (AttackAction)
@@ -98,6 +104,11 @@ void ANCPlayerController::SetupInputComponent()
 
 void ANCPlayerController::Move(const FInputActionValue& Value)
 {
+    if (LootBoxWidget)
+    {
+        CloseLootBoxUI();
+    }
+    
     ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PlayerCharacter) return;
 
@@ -232,6 +243,30 @@ void ANCPlayerController::ToggleInventory()
     OnInventoryToggled.Broadcast(bIsInventoryOpen);
 }
 
+void ANCPlayerController::CloseLootBoxUI()
+{
+    if (LootBoxWidget)
+    {
+        LootBoxWidget->CloseLootBoxUI();
+        LootBoxWidget = nullptr;
+    }
+}
+
+bool ANCPlayerController::TryCloseTopUI()
+{
+    if (LootBoxWidget)
+    {
+        CloseLootBoxUI();
+        return true;
+    }
+    if (bIsInventoryOpen)
+    {
+        ToggleInventory();
+        return true;
+    }
+    return false;
+}
+
 void ANCPlayerController::QuickSlot1()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
@@ -269,5 +304,25 @@ void ANCPlayerController::UnArm()
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
         NCInventoryComp->ForceUnArm();
+    }
+}
+
+void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)
+{
+    if (!TargetBox || !LootBoxWidgetClass)
+    {
+        return;
+    }
+    
+    if (!bIsInventoryOpen)
+    {
+        ToggleInventory();
+    }
+
+    LootBoxWidget = CreateWidget<UNCLootBoxHud>(this, LootBoxWidgetClass);
+    if (LootBoxWidget)
+    {
+        LootBoxWidget->InitWithLootBox(TargetBox, nullptr);
+        LootBoxWidget->AddToViewport();
     }
 }

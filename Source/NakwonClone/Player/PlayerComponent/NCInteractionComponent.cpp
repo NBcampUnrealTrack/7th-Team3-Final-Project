@@ -3,7 +3,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/OverlapResult.h"
+#include "Item/NCItemActor.h"
 #include "NakwonClone/Common/NCInteractableInterface.h"
+#include "Animation/AnimInstance.h" //헌호수정
 
 UNCInteractionComponent::UNCInteractionComponent()
 {
@@ -29,10 +31,47 @@ void UNCInteractionComponent::BeginPlay()
 
 void UNCInteractionComponent::Interact()
 {
-	if (CurrentInteractableTarget)
+	if (!CurrentInteractableTarget || bIsLooting)
+	{
+		return;
+	}
+	
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+
+	if (CurrentInteractableTarget->IsA<ANCItemActor>() && LootMontage && OwnerCharacter)
+	{
+		bIsLooting = true;
+		float MontageLength = OwnerCharacter->PlayAnimMontage(LootMontage);
+		INCInteractableInterface::Execute_Interact(CurrentInteractableTarget, GetOwner());
+
+		// 헌호수정 - 몽타주 종료 시 bIsLooting 자동 해제 (타이머 방식)
+		if (MontageLength > 0.f)
+		{
+			FTimerHandle LootTimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(
+				LootTimerHandle,
+				this,
+				&UNCInteractionComponent::OnLootMontageEnded,
+				MontageLength,
+				false
+			);
+		}
+		else
+		{
+			// 헌호수정 - 몽타주 길이가 0이면 즉시 해제
+			bIsLooting = false;
+		}
+	}
+	
+	else
 	{
 		INCInteractableInterface::Execute_Interact(CurrentInteractableTarget, GetOwner());
 	}
+}
+
+void UNCInteractionComponent::OnLootMontageEnded()
+{
+	bIsLooting = false;
 }
 
 void UNCInteractionComponent::UpdateInteractableTarget()

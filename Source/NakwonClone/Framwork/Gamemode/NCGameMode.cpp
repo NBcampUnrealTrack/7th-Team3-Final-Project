@@ -20,6 +20,9 @@ void ANCGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	GS->RemainingMatchTime = 900; // 15분
+	
 	// todo : 아이템, 좀비 스폰 포인트 추가 (배열, UGamePlayStatics::GetAllActorsOfClass(~~))
 	/* 월드의 SpawnPoint를 순회하면서 스폰 로직 활성화
 	TArray<AActor*> ItemFoundVolumes;
@@ -196,8 +199,6 @@ void ANCGameMode::SetMatchTimerHandle()
 {
 	ANCGameState* GS = GetGameState<ANCGameState>();
 	if (!GS) return;
-
-	GS->RemainingMatchTime = 900.f; // 15분
 	
 	GetWorldTimerManager().SetTimer(
 		MatchTimerHandle,
@@ -214,6 +215,8 @@ void ANCGameMode::TimerTick()
 	if (!GS) return;
 	
 	GS->RemainingMatchTime--;
+	
+	GS->OnRemainingMatchTimeUpdate.Broadcast(GS->RemainingMatchTime);
 	
 	if (GS->RemainingMatchTime <= 0.f)
 	{
