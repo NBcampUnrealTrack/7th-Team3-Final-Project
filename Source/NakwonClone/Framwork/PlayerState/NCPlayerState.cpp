@@ -72,6 +72,7 @@ void ANCPlayerState::SaveInventoryData()
 	if (PlayerInventory)
 	{
 		SaveGameInstance->PlayerInventoryItems = PlayerInventory->GetItemsArray();
+		SaveGameInstance->PlayerQuickSlots     = PlayerInventory->GetQuickSlotsArray();
 	}
     
 	if (StashInventory)
@@ -79,7 +80,7 @@ void ANCPlayerState::SaveInventoryData()
 		SaveGameInstance->StashInventoryItems = StashInventory->GetItemsArray();
 	}
 
-	UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->SaveSlotName, SaveGameInstance->UserIndex);
+	UGameplayStatics::SaveGameToSlot(SaveGameInstance, GetInventorySaveSlotName(), 0);
     
 	UE_LOG(LogTemp, Log, TEXT("[NCPlayerState] 인벤토리 및 창고 데이터 저장 완료"));
 }
@@ -88,7 +89,7 @@ void ANCPlayerState::LoadInventoryData()
 {
 	if (!HasAuthority()) return;
 
-	FString SlotName = TEXT("LobbyInventorySlot");
+	FString SlotName = GetInventorySaveSlotName();
 	int32 UserIndex = 0;
 
 	if (UGameplayStatics::DoesSaveGameExist(SlotName, UserIndex))
@@ -99,6 +100,7 @@ void ANCPlayerState::LoadInventoryData()
 			if (PlayerInventory && LoadGameInstance->PlayerInventoryItems.Num() > 0)
 			{
 				PlayerInventory->SetItemsArray(LoadGameInstance->PlayerInventoryItems);
+				PlayerInventory->SetQuickSlotsArray(LoadGameInstance->PlayerQuickSlots);
 			}
             
 			if (StashInventory && LoadGameInstance->StashInventoryItems.Num() > 0)
@@ -115,6 +117,20 @@ void ANCPlayerState::LoadInventoryData()
 	if (StashInventory) StashInventory->InitializeInventory();
     
 	UE_LOG(LogTemp, Warning, TEXT("[NCPlayerState] 세이브 파일이 없어 신규 인벤토리로 초기화"));
+}
+
+FString ANCPlayerState::GetInventorySaveSlotName() const
+{
+	FString PlayerKey;
+	if (GetUniqueId().IsValid())
+	{
+		PlayerKey = GetUniqueId()->ToString();
+	}
+	else
+	{
+		PlayerKey = FString::FromInt(GetPlayerId());
+	}
+	return FString::Printf(TEXT("InvSave_%s"), *PlayerKey);
 }
 
 void ANCPlayerState::OnRep_Credits()

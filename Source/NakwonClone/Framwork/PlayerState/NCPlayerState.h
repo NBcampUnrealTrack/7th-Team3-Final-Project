@@ -94,7 +94,13 @@ public: //하상빈 추가
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Save")
 	void LoadInventoryData();
+	
+private:
+	// 플레이어별 고유 세이브 슬롯명 (멀티 충돌 방지)
+	FString GetInventorySaveSlotName() const;
 
+public:
+	
 	UFUNCTION()
 	void OnRep_Credits();
 

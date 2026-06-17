@@ -7,8 +7,8 @@
 
 void UNCLootBoxHud::InitWithLootBox(AANCLootBoxActor* TargetBox, UNCInventoryBaseComponent* PlayerInventory)
 {
-	if (!TargetBox || !PlayerInventory) return;
-
+	if (!TargetBox || !LootGrid || !SlotClass) return;
+	
 	CurrentLootBox = TargetBox;
 	LootInventoryComp = TargetBox->GetLootInventory();
 
@@ -24,6 +24,8 @@ void UNCLootBoxHud::InitWithLootBox(AANCLootBoxActor* TargetBox, UNCInventoryBas
 	for (int32 i = 0; i < TotalSlots; i++)
 	{
 		UNCInventroySlot* NewSlot = CreateWidget<UNCInventroySlot>(GetOwningPlayer(), SlotClass);
+		NewSlot->bIsLootBoxSlot = true;
+		NewSlot->LootBoxRef = CurrentLootBox;
 		LootGrid->AddChildToUniformGrid(NewSlot, i / Columns, i % Columns);
 		LootSlotWidgets.Add(NewSlot);
 	}

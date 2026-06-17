@@ -6,7 +6,6 @@
 #include "Item/NCItemActor.h"
 #include "Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
-#include "Common/NCSaveGame.h"
 #include "Item/ANCLootBoxActor.h"	
 #include "Item/NCItemActor.h"
 
@@ -72,50 +71,6 @@ void UNCPlayerInventoryComponent::ForceUnArm()
 	}
 }
 
-void UNCPlayerInventoryComponent::SaveInventoryData()
-{
-	UNCSaveGame* SaveInst = Cast<UNCSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("LobbyInventorySlot"), 0));
-	if (!SaveInst)
-	{
-		SaveInst = Cast<UNCSaveGame>(UGameplayStatics::CreateSaveGameObject(UNCSaveGame::StaticClass()));
-	}
-
-	if (SaveInst)
-	{
-		SaveInst->PlayerInventoryItems = Items;
-		SaveInst->PlayerQuickSlots = QuickSlots;
-
-		UGameplayStatics::SaveGameToSlot(SaveInst, TEXT("LobbyInventorySlot"), 0);
-
-		FString DebugMsg = TEXT("[Save] 인벤토리 및 퀵슬롯 저장 완료");
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, DebugMsg);
-	}
-}
-
-void UNCPlayerInventoryComponent::LoadInventoryData()
-{
-	if (UGameplayStatics::DoesSaveGameExist(TEXT("LobbyInventorySlot"), 0))
-	{
-		UNCSaveGame* LoadInst = Cast<UNCSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("LobbyInventorySlot"), 0));
-		if (LoadInst)
-		{
-			Items = LoadInst->PlayerInventoryItems;
-			QuickSlots = LoadInst->PlayerQuickSlots;
-
-			if (QuickSlots.Num() != 4)
-			{
-				QuickSlots.Init(FInventorySlot(), 4);
-			}
-
-			OnInventoryUpdated.Broadcast();
-			OnQuickSlotUpdated.Broadcast();
-
-			FString DebugMsg = TEXT("[Load] 인벤토리 및 퀵슬롯 불러오기 완료");
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
-		}
-	}
-}
-
 void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex,int32 PlayerSlotIndex)
 {
 	if (!LootBox)
@@ -136,7 +91,25 @@ void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANC
 	{
 		return;
 	}
-	LootInventory->TransferItemTo(this, BoxSlotIndex, PlayerSlotIndex);
+	int32 TargetSlot = PlayerSlotIndex;
+	if (TargetSlot == -1)
+	{
+		for (int32 i = 0; i < Items.Num(); ++i)
+		{
+			if (Items[i].IsEmpty())
+			{
+				TargetSlot = i;
+				break;
+			}
+		}
+	}
+	if (TargetSlot == -1)
+	{
+		return;
+	}
+
+	
+	LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
 }
 
 void UNCPlayerInventoryComponent::OnRep_QuickSlots()
