@@ -35,9 +35,15 @@ void UNCGameInstance::RegisterLoadingScreenHandlers()
 
 void UNCGameInstance::BeginLoadingScreen(const FString& MapName)
 {
-	if (!MapName.Contains(TEXT("L_MVP")))
+	if (!MapName.Contains(TEXT("L_MVP")) && !MapName.Contains(TEXT("L_TitleAndLobby")))
 		return;
-		
+
+	if (MapName.Contains(TEXT("L_TitleAndLobby")) && !bHasLoadedOnce)
+	{
+		bHasLoadedOnce = true;
+		return;
+	}
+	
 	// 배경 텍스처가 에디터에서 연결되어 있으면 브러시로 변환하는 로직
 	if (LoadingBackgroundTexture)
 	{
