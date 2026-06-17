@@ -14,7 +14,7 @@ struct FNCPlayerStatData : public FTableRowBase
 
     //스태미나 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
-    float MaxStamina = 100.f;
+    float MaxStamina = 200.f; //헌호수정
 
     //생존 여부
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")

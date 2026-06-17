@@ -21,12 +21,15 @@ protected:
 	int32 TargetSlotIndex;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UTexture2D* DefaultImage;
+	UTexture2D* LeftSlotDefaultImage;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* RightSlotDefaultImage;
+	
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	UImage* LeftSlotImage;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	UImage* RightSlotImage;
 	
 	UPROPERTY(meta = (BindWidget))

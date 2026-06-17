@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/WidgetComponent.h"
 #include "GameplayTagContainer.h"
 #include "NakwonClone/Common/NCInteractableInterface.h"
 
@@ -22,6 +23,8 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
+	UPROPERTY(VisibleAnywhere)
+	UWidgetComponent* InteractionWidget;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Data")
 	FDataTableRowHandle ItemRowHandle;

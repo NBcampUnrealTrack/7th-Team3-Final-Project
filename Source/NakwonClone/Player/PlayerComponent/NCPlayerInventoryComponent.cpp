@@ -6,7 +6,8 @@
 #include "Item/NCItemActor.h"
 #include "Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
-#include "Common/NCSaveGame.h"
+#include "Item/ANCLootBoxActor.h"	
+#include "Item/NCItemActor.h"
 
 UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 {
@@ -70,48 +71,45 @@ void UNCPlayerInventoryComponent::ForceUnArm()
 	}
 }
 
-void UNCPlayerInventoryComponent::SaveInventoryData()
+void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex,int32 PlayerSlotIndex)
 {
-	UNCSaveGame* SaveInst = Cast<UNCSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("LobbyInventorySlot"), 0));
-	if (!SaveInst)
+	if (!LootBox)
 	{
-		SaveInst = Cast<UNCSaveGame>(UGameplayStatics::CreateSaveGameObject(UNCSaveGame::StaticClass()));
+		return;
 	}
-
-	if (SaveInst)
-	{
-		SaveInst->PlayerInventoryItems = Items;
-		SaveInst->PlayerQuickSlots = QuickSlots;
-
-		UGameplayStatics::SaveGameToSlot(SaveInst, TEXT("LobbyInventorySlot"), 0);
-
-		FString DebugMsg = TEXT("[Save] 인벤토리 및 퀵슬롯 저장 완료");
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, DebugMsg);
-	}
+	Server_TakeItemFromLootBox(LootBox, BoxSlotIndex, PlayerSlotIndex);
 }
 
-void UNCPlayerInventoryComponent::LoadInventoryData()
+void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANCLootBoxActor* LootBox,int32 BoxSlotIndex, int32 PlayerSlotIndex)
 {
-	if (UGameplayStatics::DoesSaveGameExist(TEXT("LobbyInventorySlot"), 0))
+	if (!LootBox)
 	{
-		UNCSaveGame* LoadInst = Cast<UNCSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("LobbyInventorySlot"), 0));
-		if (LoadInst)
+		return;
+	}
+	UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
+	if (!LootInventory)
+	{
+		return;
+	}
+	int32 TargetSlot = PlayerSlotIndex;
+	if (TargetSlot == -1)
+	{
+		for (int32 i = 0; i < Items.Num(); ++i)
 		{
-			Items = LoadInst->PlayerInventoryItems;
-			QuickSlots = LoadInst->PlayerQuickSlots;
-
-			if (QuickSlots.Num() != 4)
+			if (Items[i].IsEmpty())
 			{
-				QuickSlots.Init(FInventorySlot(), 4);
+				TargetSlot = i;
+				break;
 			}
-
-			OnInventoryUpdated.Broadcast();
-			OnQuickSlotUpdated.Broadcast();
-
-			FString DebugMsg = TEXT("[Load] 인벤토리 및 퀵슬롯 불러오기 완료");
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
 		}
 	}
+	if (TargetSlot == -1)
+	{
+		return;
+	}
+
+	
+	LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
 }
 
 void UNCPlayerInventoryComponent::OnRep_QuickSlots()
@@ -346,6 +344,7 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 	}
 	
 	FGameplayTag ItemTag = QuickSlots[QuickSlotIndex].ItemTypeTag;
+	FName ItemID = QuickSlots[QuickSlotIndex].ItemID;
 	
 	if (ItemTag.MatchesTag(NCItemType::Consumable))
 	{
@@ -359,8 +358,20 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 		}
 
 		OnQuickSlotUpdated.Broadcast();
-
-		OnItemUsed.Broadcast(ItemTag);
+		
+		if (ItemTag.MatchesTag(NCItemTag::Heal) || ItemTag.MatchesTag(NCItemTag::Food))
+		{
+			if (ConsumableDataTable)
+			{
+				if (FConsumableItemData* Data = ConsumableDataTable->FindRow<FConsumableItemData>(ItemID, TEXT("UseQuickSlot")))
+				{
+					PendingConsumableData = *Data;
+					bHasPendingConsumable = true;
+				}
+			}
+		}
+		
+		Multicast_OnItemUsed(ItemTag); //헌호수정 - 멀티캐스트로 모든 클라이언트에 전파
 
 		FString DebugMsg = FString::Printf(TEXT("[소모품 사용] %s (남은 수량: %d)"), *ItemTag.ToString(), QuickSlots[QuickSlotIndex].Quantity);
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
@@ -490,11 +501,34 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 	FGameplayTag LootTag = ItemToLoot->ItemTypeTag; 
 	int32 LootQuantity = ItemToLoot->Quantity;
 	
-	bool bAdded = AddItem(LootID, LootTag, LootQuantity);
+	if (LootTag.MatchesTag(NCItemTag::Credit))
+	{
+		if (CreditDataTable)
+		{
+			if (FCreditItemData* Data = CreditDataTable->FindRow<FCreditItemData>(LootID, TEXT("LootCredit")))
+			{
+				int32 RandomCredits = FMath::RandRange(Data->MinValue, Data->MaxValue);
+				if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+				{
+					NCPS->AddCredits(RandomCredits);
+				}
+			}
+		}
+		ItemToLoot->Destroy();
+		return;
+	}
 	
+	bool bAdded = AddItem(LootID, LootTag, LootQuantity);
+
 	if (bAdded)
 	{
 		ItemToLoot->Destroy();
 		return;
 	}
+}
+
+// 헌호수정 - 서버에서 호출 → 모든 클라이언트에서 OnItemUsed 델리게이트 실행
+void UNCPlayerInventoryComponent::Multicast_OnItemUsed_Implementation(FGameplayTag ItemTag)
+{
+	OnItemUsed.Broadcast(ItemTag);
 }

@@ -33,8 +33,6 @@ void UNCLocomotionComponent::BeginPlay()
 
 void UNCLocomotionComponent::SetGaitTag(FGameplayTag NewGaitTag)
 {
-	if (CurrentGaitTag == NewGaitTag) return; //같은 상태면 무시
-
 	CurrentGaitTag = NewGaitTag;
 	ApplyMovementSpeed();
 }
@@ -44,6 +42,8 @@ void UNCLocomotionComponent::SetStanceTag(FGameplayTag NewStanceTag)
 	if (CurrentStanceTag == NewStanceTag) return;
 
 	CurrentStanceTag = NewStanceTag;
+	// 헌호수정 - 크라우치 전환 시 속도 재적용
+	ApplyMovementSpeed();
 }
 
 void UNCLocomotionComponent::ApplyMovementSpeed()
@@ -52,7 +52,19 @@ void UNCLocomotionComponent::ApplyMovementSpeed()
 
 	if (!MovementDataTable) return;
 
-	FName RowName = CurrentGaitTag.GetTagName();
+	// 헌호수정 - 크라우치 스프린트면 CrouchSprint 행, 크라우치면 Crouch 행, 아니면 Gait 행
+	FName RowName;
+	if (CurrentStanceTag == NCCharacter::Crouch)
+	{
+		RowName = (CurrentGaitTag == NCCharacter::CrouchSprint)
+			? NCCharacter::CrouchSprint.GetTag().GetTagName()
+			: NCCharacter::Crouch.GetTag().GetTagName();
+	}
+	else
+	{
+		RowName = CurrentGaitTag.GetTagName();
+	}
+
 	FNcPlayerMovementData* Data = MovementDataTable->FindRow
 		<FNcPlayerMovementData>(RowName, TEXT("Locomotion"));
 
@@ -60,7 +72,39 @@ void UNCLocomotionComponent::ApplyMovementSpeed()
 	{
 		MovementComponent->MaxWalkSpeed = Data->MovementSpeed;
 		MovementComponent->MaxAcceleration = Data->MaxAcceleration;
+		// 헌호수정 - 자연스러운 이동감을 위한 감속/마찰/회전 적용
+		MovementComponent->BrakingDecelerationWalking = Data->BrakingDeceleration;
+		MovementComponent->BrakingFrictionFactor = Data->BrakingFrictionFactor;
+		MovementComponent->RotationRate = FRotator(0.f, Data->RotationRate, 0.f);
+		// 헌호수정 - 크라우치 전용 속도도 같이 적용
+		if (CurrentStanceTag == NCCharacter::Crouch)
+			MovementComponent->MaxWalkSpeedCrouched = Data->MovementSpeed;
+
+		// 헌호수정 - 디버그 화면 출력
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Cyan,
+				FString::Printf(TEXT("[Locomotion] Row: %s | Speed: %.0f | Accel: %.0f"),
+					*RowName.ToString(), Data->MovementSpeed, Data->MaxAcceleration));
+		}
 	}
+	else
+	{
+		// 헌호수정 - DataTable 조회 실패 시 화면 출력
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red,
+				FString::Printf(TEXT("[Locomotion] DataTable 조회 실패! Row: %s"), *RowName.ToString()));
+		}
+	}
+}
+
+// 헌호수정 - 사망 시 모든 스태미나 타이머 정리
+void UNCLocomotionComponent::ClearAllStaminaTimers()
+{
+	GetWorld()->GetTimerManager().ClearTimer(StaminaDrainHandle);
+	GetWorld()->GetTimerManager().ClearTimer(StaminaRegenHandle);
+	bSprintLocked = false;
 }
 
 //헌호수정 - 스태미나 드레인 시작 (Sprint 시작 시 호출)
@@ -108,9 +152,15 @@ void UNCLocomotionComponent::RegenStamina()
 	const float NewValue = FMath::Min(Current + StaminaRegenRate * 0.1f, Max);
 	ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(), NewValue);
 
+	// 헌호수정 - 임계값 도달 시 스프린트 잠금만 해제, 리젠은 계속
 	if (bSprintLocked && NewValue >= StaminaRegenThreshold)
 	{
 		bSprintLocked = false;
+	}
+
+	// 스태미나 꽉 차면 리젠 타이머 종료
+	if (NewValue >= Max)
+	{
 		GetWorld()->GetTimerManager().ClearTimer(StaminaRegenHandle);
 	}
 }

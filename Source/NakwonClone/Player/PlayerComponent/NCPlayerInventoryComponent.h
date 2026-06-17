@@ -1,9 +1,12 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "NakwonClone/Inventory/NCInventoryBaseComponent.h"
+#include "Inventory/NCInventoryBaseComponent.h"
+#include "Inventory/NCInventoryType.h"
 
 #include "NCPlayerInventoryComponent.generated.h"
+
+class AANCLootBoxActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuickSlotUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemUsedSignature, FGameplayTag, UsedItemTag);
@@ -52,7 +55,11 @@ public:
 	
 	UFUNCTION(Server, Reliable)
 	void Server_DropItem(int32 SlotIndex, int32 Quantity);
-	
+
+	// 헌호수정 - 서버→모든 클라이언트에 아이템 사용 이벤트 전파
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OnItemUsed(FGameplayTag ItemTag);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Drop")
 	TSubclassOf<class AActor> BaseItemActorClass;
 	
@@ -71,15 +78,30 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Getters")
 	FInventorySlot GetMainSlotData(int32 SlotIndex) const;
 	
+	TArray<FInventorySlot> GetQuickSlotsArray() const { return QuickSlots; }
+
+	void SetQuickSlotsArray(const TArray<FInventorySlot>& NewQuickSlots) { QuickSlots = NewQuickSlots; }
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
 	int32 CurrentEquippedSlotIndex = -1;
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void ForceUnArm();
-	
-	UFUNCTION(BlueprintCallable, Category = "Inventory|SaveLoad")
-	void SaveInventoryData();
 
-	UFUNCTION(BlueprintCallable, Category = "Inventory|SaveLoad")
-	void LoadInventoryData();
+public:
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+	
+public:
+	FConsumableItemData PendingConsumableData;
+	bool bHasPendingConsumable = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
+	TObjectPtr<UDataTable> ConsumableDataTable;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
+	TObjectPtr<UDataTable> CreditDataTable;
 };

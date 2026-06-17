@@ -6,6 +6,7 @@
 #include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/CapsuleComponent.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 {
@@ -47,6 +48,7 @@ void AVGMonsterCharacterBase::BeginPlay()
 	
 	if (MonsterAttributeSet)
 	{
+		MonsterAttributeSet->OnDead.AddDynamic(this, &AVGMonsterCharacterBase::HandleDead);
 		MonsterAttributeSet->OnHitReceived.AddDynamic(this, &AVGMonsterCharacterBase::HandleHit);
 	}
 }
@@ -54,14 +56,39 @@ void AVGMonsterCharacterBase::BeginPlay()
 // HandleDead()
 void AVGMonsterCharacterBase::HandleDead()
 {
+	SetActorEnableCollision(false);
+	
+	float Duration = PlayAnimMontage(GetRandomMontage(AnimDead));
+	
 	if (AAIController* AIC = Cast<AAIController>(GetController()))
-	{
+ 	{
 		AIC->StopMovement();
 		AIC->UnPossess();
 	}
-
-	SetActorEnableCollision(false);
+	
+	// 사망 애니메이션이 끝나면 래그돌 전환
+	GetWorldTimerManager().SetTimer(DeadTimerHandle, [this]()
+	{
+		OnStartRagdoll();
+	}, Duration, false);
+	
 	SetLifeSpan(200.f);
+}
+
+void AVGMonsterCharacterBase::OnStartRagdoll()
+{
+	USkeletalMeshComponent* SkelMesh  = GetMesh();
+	if (!SkelMesh )
+	{
+		return;
+	}
+	
+	SkelMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	
+	SkelMesh->SetAllBodiesSimulatePhysics(true);
+	SkelMesh->SetPhysicsBlendWeight(1.f);
+	
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AVGMonsterCharacterBase::HandleHit()

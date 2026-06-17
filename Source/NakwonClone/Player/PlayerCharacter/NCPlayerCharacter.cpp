@@ -6,6 +6,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerState.h"
+#include "GAS/AttributeSet/VGPlayerAttributeSet.h"
+#include "Item/NCItemActor.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
@@ -16,8 +18,7 @@ ANCPlayerCharacter::ANCPlayerCharacter()
     InitCamera();
     InitComponents();
 
-    //H
-    GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+    // 헌호수정 - DataTable에서 속도 적용하므로 하드코딩 제거
 }
 
 void ANCPlayerCharacter::InitCamera()
@@ -57,7 +58,11 @@ void ANCPlayerCharacter::BeginPlay()
             AbilitySystemComponent->GiveAbility(
                 FGameplayAbilitySpec(AttackAbilityClass, 1));
         }
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+            UVGPlayerAttributeSet::GetHealthAttribute())
+            .AddUObject(this, &ANCPlayerCharacter::HandleHealthChanged);
     }
+
 
     //// TODO: 테스트용 임시 크로우바 장착 - 아이템 픽업 시스템 완성 후 제거
     // if (HasAuthority() && CombatComponent)
@@ -71,23 +76,46 @@ void ANCPlayerCharacter::BeginPlay()
     // }
 }
 
+void ANCPlayerCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)
+{
+    if (Data.NewValue >= Data.OldValue) return; // 체력 감소(피격)만
+    if (Data.NewValue <= 0.f) return;           // 사망은 OnDead가 처리
+
+    UE_LOG(LogTemp, Warning, TEXT("[HitReact] 피격! HP %.1f -> %.1f"),
+        Data.OldValue, Data.NewValue);
+
+    PlayHitReactMontage();
+}
+
 void ANCPlayerCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
-    
+
     if (APlayerState* NCPS = GetPlayerState())
     {
         PlayerInventoryRef = NCPS->FindComponentByClass<UNCPlayerInventoryComponent>();
+        if (PlayerInventoryRef)
+        {
+            // 헌호수정 - 이중 바인딩 방지 (RemoveDynamic 먼저)
+            PlayerInventoryRef->OnItemUsed.RemoveDynamic(this, &ANCPlayerCharacter::OnItemUsed);
+            PlayerInventoryRef->OnItemUsed.AddDynamic(this, &ANCPlayerCharacter::OnItemUsed);
+        }
     }
 }
 
 void ANCPlayerCharacter::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
-    
+
     if (APlayerState* NCPS = GetPlayerState())
     {
         PlayerInventoryRef = NCPS->FindComponentByClass<UNCPlayerInventoryComponent>();
+        if (PlayerInventoryRef)
+        {
+            // 헌호수정 - 이중 바인딩 방지 (RemoveDynamic 먼저)
+            PlayerInventoryRef->OnItemUsed.RemoveDynamic(this, &ANCPlayerCharacter::OnItemUsed);
+            PlayerInventoryRef->OnItemUsed.AddDynamic(this, &ANCPlayerCharacter::OnItemUsed);
+        }
     }
 }
 
@@ -111,18 +139,35 @@ void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceT
     else
     {
         UnCrouch();
+        // 헌호수정 - 서버에서도 크라우치 스프린트 중 일어서면 조그로 전환
+        if (CurrentGaitTag == NCCharacter::CrouchSprint)
+        {
+            CurrentGaitTag = NCCharacter::Jog;
+            if (LocomotionComponent)
+                LocomotionComponent->StopStaminaDrain();
+        }
         if (LocomotionComponent)
+        {
+            // 헌호수정 - 서버도 StanceTag 먼저 Stand로 변경 후 속도 재적용
+            LocomotionComponent->SetStanceTag(NCCharacter::Stand);
             LocomotionComponent->SetGaitTag(CurrentGaitTag);
+        }
     }
 }
 
 void ANCPlayerCharacter::StartSprint()
 {
-    //헌호수정
+    // 헌호수정 - 스프린트 잠금 중이면 속도 변경도 막음
+    if (LocomotionComponent && LocomotionComponent->IsSprintLocked()) return;
+
     if (LocomotionComponent)
         LocomotionComponent->StartStaminaDrain();
 
-    CurrentGaitTag = NCCharacter::Sprint;
+    // 헌호수정 - 앉은 상태면 크라우치 스프린트
+    CurrentGaitTag = (CurrentStanceTag == NCCharacter::Crouch)
+        ? NCCharacter::CrouchSprint
+        : NCCharacter::Sprint;
+
     if (LocomotionComponent)
         LocomotionComponent->SetGaitTag(CurrentGaitTag);
     Server_SetGait(CurrentGaitTag);
@@ -130,11 +175,13 @@ void ANCPlayerCharacter::StartSprint()
 
 void ANCPlayerCharacter::StopSprint()
 {
-    //헌호수정
+    // 헌호수정
     if (LocomotionComponent)
         LocomotionComponent->StopStaminaDrain();
 
+    // 헌호수정 - Gait는 항상 Jog로 복귀 (앉은 상태라도 Jog 유지, 속도는 ApplyMovementSpeed에서 Crouch 행 사용)
     CurrentGaitTag = NCCharacter::Jog;
+
     if (LocomotionComponent)
         LocomotionComponent->SetGaitTag(CurrentGaitTag);
     Server_SetGait(CurrentGaitTag);
@@ -154,15 +201,39 @@ void ANCPlayerCharacter::ToggleWalk()
 
 void ANCPlayerCharacter::ToggleCrouch()
 {
+    // 헌호수정 - 공중에서 앉기 방지
+    if (GetCharacterMovement()->IsFalling()) return;
+
     if (CurrentStanceTag == NCCharacter::Crouch)
     {
         UnCrouch();
         CurrentStanceTag = NCCharacter::Stand;
+
+        // 헌호수정 - 크라우치 스프린트 중 일어서면 조그로 전환 + 스태미나 드레인 중지
+        if (CurrentGaitTag == NCCharacter::CrouchSprint)
+        {
+            CurrentGaitTag = NCCharacter::Jog;
+            if (LocomotionComponent)
+                LocomotionComponent->StopStaminaDrain();
+            // 헌호수정 - 서버에도 Gait 변경 알림 (서버가 클라 속도 덮어쓰는 것 방지)
+            Server_SetGait(CurrentGaitTag);
+        }
+
         if (LocomotionComponent)
+        {
+            // 헌호수정 - StanceTag 먼저 Stand로 변경 후 속도 재적용
+            LocomotionComponent->SetStanceTag(NCCharacter::Stand);
             LocomotionComponent->SetGaitTag(CurrentGaitTag);
+        }
     }
     else
     {
+        // 헌호수정 - 앉을 때 스프린트/크라우치스프린트 중이면 스태미나 드레인 중지
+        if ((CurrentGaitTag == NCCharacter::Sprint || CurrentGaitTag == NCCharacter::CrouchSprint)
+            && LocomotionComponent)
+            LocomotionComponent->StopStaminaDrain();
+
+        CurrentGaitTag = NCCharacter::Jog;
         Crouch();
         CurrentStanceTag = NCCharacter::Crouch;
         if (LocomotionComponent)
@@ -182,4 +253,79 @@ void ANCPlayerCharacter::OnDead()
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->DisableMovement();
+
+    // 헌호수정 - 사망 시 스태미나 타이머 정리
+    if (LocomotionComponent)
+        LocomotionComponent->ClearAllStaminaTimers();
+}
+
+void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
+{
+    // 헌호수정 - 아이템 태그에 따라 다른 몽타지 재생
+    UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] 태그: %s"), *UsedItemTag.ToString());
+    UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] HealMontage: %s, FoodMontage: %s"),
+        HealItemMontage ? TEXT("있음") : TEXT("없음"),
+        FoodItemMontage ? TEXT("있음") : TEXT("없음"));
+
+    if (UsedItemTag.MatchesTag(NCItemTag::Heal) && HealItemMontage)
+    {
+        float Duration = PlayAnimMontage(HealItemMontage);
+        UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] Heal 몽타지 duration: %.2f"), Duration);
+    }
+    else if (UsedItemTag.MatchesTag(NCItemTag::Food) && FoodItemMontage)
+    {
+        float Duration = PlayAnimMontage(FoodItemMontage); //헌호수정
+        UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] Food 몽타지 duration: %.2f"), Duration);
+    }
+    else if (UseItemMontage)
+        PlayAnimMontage(UseItemMontage);
+}
+
+void ANCPlayerCharacter::OnUseItemMontageEnded()
+{
+    if (!PlayerInventoryRef || !PlayerInventoryRef->bHasPendingConsumable)
+    {
+        return;
+    }
+
+    FConsumableItemData& Data = PlayerInventoryRef->PendingConsumableData;
+    PlayerInventoryRef->bHasPendingConsumable = false;
+
+    UAbilitySystemComponent* NCASC = GetAbilitySystemComponent();
+    if (!NCASC)
+    {
+        return;
+    }
+    
+    if (Data.HealAmount > 0.f)
+    {
+        const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetHealthAttribute());
+        const float Max = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxHealthAttribute());
+        NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetHealthAttribute(),
+            FMath::Clamp(Current + Data.HealAmount, 0.f, Max));
+    }
+
+    if (Data.StaminaAmount > 0.f)
+    {
+        const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetStaminaAttribute());
+        const float Max = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxStaminaAttribute());
+        NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(),
+            FMath::Clamp(Current + Data.StaminaAmount, 0.f, Max));
+    }
+
+    if (Data.InfectionReduceAmount > 0.f)
+    {
+        const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetInfectionAttribute());
+        NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetInfectionAttribute(),
+            FMath::Max(Current - Data.InfectionReduceAmount, 0.f));
+    }
+}
+
+//H
+void ANCPlayerCharacter::PlayHitReactMontage()
+{
+    if (HitReactMontage)
+    {
+        PlayAnimMontage(HitReactMontage);
+    }
 }

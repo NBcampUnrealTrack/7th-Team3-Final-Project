@@ -9,6 +9,8 @@
 
 #include "NCGameState.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRemainingMatchTimeUpdate, int32, RemainingMatchTime);
+
 UCLASS()
 class NAKWONCLONE_API ANCGameState : public AGameState
 {
@@ -25,17 +27,20 @@ public:
 	FGameplayTag CurrentGameStateTag;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_MatchTime, BlueprintReadOnly)
-	float RemainingMatchTime;
+	int32 RemainingMatchTime;
+	
+	UPROPERTY()
+	FOnRemainingMatchTimeUpdate OnRemainingMatchTimeUpdate;
 	
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	// UFUNCTION()
+	// float GetRemainingMatchTime();
 	
 	UFUNCTION()
 	void OnRep_CurrentGameStateTag(); // UI 갱신용
 	
 	UFUNCTION()
 	void OnRep_MatchTime();
-	
-
-	
 };

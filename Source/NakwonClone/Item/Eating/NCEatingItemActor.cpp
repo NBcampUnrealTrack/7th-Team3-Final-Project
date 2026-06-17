@@ -19,7 +19,7 @@ void ANCEatingItemActor::UseItem(ACharacter* User)
 {
 	Super::UseItem(User);
 
-	if (!HasAuthority() || !User) return;
+	if (!User) return;
 
 	IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(User);
 	if (!ASCInterface) return;

@@ -2,6 +2,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "NakwonClone/Inventory/NCInventoryBaseComponent.h"
 #include "NakwonClone/Item/Data/NCLootDropData.h"
+#include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 #include "Common/NCGameplayTags.h"
 #include "Net/UnrealNetwork.h"
 
@@ -37,10 +38,23 @@ void AANCLootBoxActor::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 
 void AANCLootBoxActor::GenerateLoot()
 {
+	if (!LootInventory || !LootInventory->ItemDataTable)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[LootBox] GenerateLoot: LootInventory에 ItemDataTable이 설정되지 않음"));
+		return;
+	}
+	
 	for (const TPair<FName, int32>& FixedItem : FixedLootItems)
 	{
-		// TODO: 가방에 아이템 넣기
-		// 예: LootInventory->AddItem(FixedItem.Key, FixedItem.Value);
+		FItemData* ItemData = LootInventory->ItemDataTable->FindRow<FItemData>(FixedItem.Key, TEXT("LootBox_FixedItem"));
+		if (ItemData)
+		{
+			LootInventory->AddItem(FixedItem.Key, ItemData->ItemTypeTag, FixedItem.Value);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[LootBox] FixedItem '%s'을 ItemDataTable에서 찾을 수 없음"), *FixedItem.Key.ToString());
+		}
 	}
 
 	// 랜덤 확률 아이템 스폰
@@ -68,12 +82,14 @@ void AANCLootBoxActor::GenerateLoot()
                     
 					if (RandomRoll <= CurrentWeight)
 					{
-						int32 DropQuantity = FMath::RandRange(DropData->MinQuantity, DropData->MaxQuantity);
-                        
-						// TODO: 가방에 아이템 넣기
-						// 예: LootInventory->AddItem(DropData->ItemID, DropQuantity);
-                        
+						FItemData* ItemData = LootInventory->ItemDataTable->FindRow<FItemData>(DropData->ItemID, TEXT("LootBox_RandomItem"));
+						if (ItemData)
+						{
+							int32 DropQuantity = FMath::RandRange(DropData->MinQuantity, DropData->MaxQuantity);
+							LootInventory->AddItem(DropData->ItemID, ItemData->ItemTypeTag, DropQuantity);
+						}
 						break; 
+						
 					}
 				}
 			}
@@ -88,7 +104,7 @@ void AANCLootBoxActor::Interact_Implementation(AActor* Interactor)
 		return;
 	}
 	
-	if (!HasAuthority())
+	if (HasAuthority())
 	{
 		if (StateTags.HasTagExact(NCLootBox::State_BeingLooted))
 		{
@@ -103,10 +119,9 @@ void AANCLootBoxActor::Interact_Implementation(AActor* Interactor)
 
 		if (APawn* InteractorPawn = Cast<APawn>(Interactor))
 		{
-			if (APlayerController* PC = Cast<APlayerController>(InteractorPawn->GetController()))
+			if (ANCPlayerController* NCPC = Cast<ANCPlayerController>(InteractorPawn->GetController()))
 			{
-				// TODO: PlayerController 클래스로 캐스팅해서 Client RPC 함수 호출
-				// 예: Cast<ANCPlayerController>(PC)->Client_OpenLootBoxUI(this);
+				NCPC->Client_OpenLootBoxUI(this);
 			}
 		}
 	}

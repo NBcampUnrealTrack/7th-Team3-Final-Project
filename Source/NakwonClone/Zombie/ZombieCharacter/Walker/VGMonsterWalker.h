@@ -24,7 +24,7 @@ protected:
 #pragma region 워커 고유 스탯
 	// 이동 속도 ( 추후 GAS로 옮길 예정 )
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Walker")
-	float WalkSpeed = 80.f;
+	float WalkSpeed = 100.f;
 #pragma endregion
 
 #pragma region 공격 트레이스
@@ -39,9 +39,12 @@ private:
 	// 소켓 이름 (스켈레톤 에디터에서 추가한 이름과 동일하게)
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
 	TArray<FName> AttackSocketNames = {
-		TEXT("AttackSocket_Fist"),
-		TEXT("AttackSocket_Wrist"),
-		TEXT("AttackSocket_Elbow")
+		TEXT("AttackSocket_L_Fist"),
+		TEXT("AttackSocket_L_Wrist"),
+		TEXT("AttackSocket_L_Elbow"),
+		TEXT("AttackSocket_R_Fist"),
+		TEXT("AttackSocket_R_Wrist"),
+		TEXT("AttackSocket_R_Elbow"),
 	};
 	
 	// 트레이스 거리
