@@ -16,6 +16,10 @@ class NAKWONCLONE_API ANCTitleAndLobbyGameMode : public AGameModeBase
 public:
 	ANCTitleAndLobbyGameMode();
 	
+protected:
+	virtual void BeginPlay() override;
+	
+public:
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToGameLevel();
 };
