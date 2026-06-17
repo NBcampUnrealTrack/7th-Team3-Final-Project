@@ -441,7 +441,7 @@ bool UNCPlayerInventoryComponent::UseConsumableSlot(int32 SlotIndex)
 
 bool UNCPlayerInventoryComponent::AutoEquipItem(int32 MainSlotIndex)
 {
-    if (!GetOwner()->HasAuthority())
+     if (!GetOwner()->HasAuthority())
     {
         return false;
     }
@@ -556,7 +556,7 @@ bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
 
 void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemActor* ItemToLoot)
 {
-    if (!GetOwner()->HasAuthority() || !ItemToLoot)
+  if (!GetOwner()->HasAuthority() || !ItemToLoot)
     {
         return;
     }
@@ -627,4 +627,10 @@ void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANC
     }
 
     LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
+}
+
+// 헌호 - 서버에서 호출 → 모든 클라에서 OnItemUsed 델리게이트 실행
+void UNCPlayerInventoryComponent::Multicast_OnItemUsed_Implementation(FGameplayTag ItemTag)
+{
+    OnItemUsed.Broadcast(ItemTag);
 }

@@ -50,7 +50,7 @@ public:
     UPROPERTY(ReplicatedUsing = OnRep_Presets, EditAnywhere, BlueprintReadOnly, Category = "Inventory|Preset")
     TArray<FEquipmentPreset> EquipmentPresets;
 
-    UPROPERTY(ReplicatedUsing = OnRep_QuickSlots, EditAnywhere, BlueprintReadOnly, Category = "Inventory|QuickSlot")
+  UPROPERTY(ReplicatedUsing = OnRep_QuickSlots, EditAnywhere, BlueprintReadOnly, Category = "Inventory|QuickSlot")
     TArray<FInventorySlot> ConsumableQuickSlots;
 
     UPROPERTY(BlueprintReadOnly, Category = "Inventory")
@@ -99,6 +99,10 @@ public:
 
     UFUNCTION(Server, Reliable)
     void Server_LootItem(class ANCItemActor* ItemToLoot);
+
+    // 헌호 - 서버→모든 클라 아이템 사용 이벤트 전파
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_OnItemUsed(FGameplayTag ItemTag);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void ForceUnArm();

@@ -27,6 +27,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<UBehaviorTreeComponent> CachedOwnerComp;
 	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentMontage;
+	
 	// 몽타주 종료 시 자동으로 실행되는 델리게이트
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* AnimAttack, bool bInterrupted);
