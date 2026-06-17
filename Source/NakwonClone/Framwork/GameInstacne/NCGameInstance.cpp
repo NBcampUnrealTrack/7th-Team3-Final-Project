@@ -85,3 +85,40 @@ void UNCGameInstance::EndLoadingScreen(UWorld* InLoadedWorld)
 }
 #pragma endregion
 
+#pragma region Preloading
+
+void UNCGameInstance::StartPreloading()
+{
+	// FSoftObjectPath — 에셋을 직접 로딩하지 않고 경로만 참조하는 타입
+	// (직접 참조하면 게임 시작 시 전부 로딩되어 버림 — 그걸 방지하기 위해 경로만 들고 있는 것)
+	TArray<FSoftObjectPath> AssetsToPreload;
+	
+	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_Clothes01.SM_Merged_Clothes01")));
+	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_RackBoot02.SM_Merged_RackBoot02")));
+	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_RackBoot01.SM_Merged_RackBoot01")));
+	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_Clothes20.SM_Merged_Clothes20")));
+	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Electronics/SM_Merged_Phone08.SM_Merged_Phone08")));
+	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_Clothes07.SM_Merged_Clothes07")));
+	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_Clothes19.SM_Merged_Clothes19")));
+	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_RackBoot04.SM_Merged_RackBoot04")));
+	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_Clothes12.SM_Merged_Clothes12")));
+	
+	// UAssetManager — UE의 전역 에셋 관리자. FStreamableManager를 여기서 가져오는 게 권장 방식
+	FStreamableManager& StreamableManager = UAssetManager::GetStreamableManager();
+	
+	// RequestAsyncLoad — 비동기로 에셋 로딩 시작
+	// 백그라운드에서 로딩하므로 게임 흐름을 막지 않음
+	// 완료되면 OnPreloadComplete 콜백 호출
+	PreloadHandle = StreamableManager.RequestAsyncLoad(
+		AssetsToPreload,
+		FStreamableDelegate::CreateUObject(this, &UNCGameInstance::OnPreloadComplete));
+	
+	UE_LOG(LogTemp, Log, TEXT("프리로딩 시작 — %d개 에셋"), AssetsToPreload.Num());
+}
+
+void UNCGameInstance::OnPreloadComplete()
+{
+	UE_LOG(LogTemp, Log, TEXT("프리로딩 완료"));
+}
+
+#pragma endregion
