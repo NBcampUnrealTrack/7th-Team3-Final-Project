@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -27,10 +27,13 @@ public:
 	virtual void Logout(AController* Exiting) override;
 
 	virtual void StartMatch() override;
+
+	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void HandleMatchEnd(bool bClear);
 	
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToTitle();
+
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
 	void MoveToLobby();
 
