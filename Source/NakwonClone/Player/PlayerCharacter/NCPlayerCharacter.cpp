@@ -124,6 +124,13 @@ void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceT
     else
     {
         UnCrouch();
+        // 헌호수정 - 서버에서도 크라우치 스프린트 중 일어서면 조그로 전환
+        if (CurrentGaitTag == NCCharacter::CrouchSprint)
+        {
+            CurrentGaitTag = NCCharacter::Jog;
+            if (LocomotionComponent)
+                LocomotionComponent->StopStaminaDrain();
+        }
         if (LocomotionComponent)
         {
             // 헌호수정 - 서버도 StanceTag 먼저 Stand로 변경 후 속도 재적용
@@ -157,10 +164,8 @@ void ANCPlayerCharacter::StopSprint()
     if (LocomotionComponent)
         LocomotionComponent->StopStaminaDrain();
 
-    // 헌호수정 - 앉은 상태면 크라우치로 복귀, 아니면 조그
-    CurrentGaitTag = (CurrentStanceTag == NCCharacter::Crouch)
-        ? NCCharacter::Crouch
-        : NCCharacter::Jog;
+    // 헌호수정 - Gait는 항상 Jog로 복귀 (앉은 상태라도 Jog 유지, 속도는 ApplyMovementSpeed에서 Crouch 행 사용)
+    CurrentGaitTag = NCCharacter::Jog;
 
     if (LocomotionComponent)
         LocomotionComponent->SetGaitTag(CurrentGaitTag);
@@ -189,9 +194,15 @@ void ANCPlayerCharacter::ToggleCrouch()
         UnCrouch();
         CurrentStanceTag = NCCharacter::Stand;
 
-        // 헌호수정 - 크라우치 스프린트 중 일어서면 일반 스프린트로 전환
+        // 헌호수정 - 크라우치 스프린트 중 일어서면 조그로 전환 + 스태미나 드레인 중지
         if (CurrentGaitTag == NCCharacter::CrouchSprint)
-            CurrentGaitTag = NCCharacter::Sprint;
+        {
+            CurrentGaitTag = NCCharacter::Jog;
+            if (LocomotionComponent)
+                LocomotionComponent->StopStaminaDrain();
+            // 헌호수정 - 서버에도 Gait 변경 알림 (서버가 클라 속도 덮어쓰는 것 방지)
+            Server_SetGait(CurrentGaitTag);
+        }
 
         if (LocomotionComponent)
         {
@@ -235,10 +246,24 @@ void ANCPlayerCharacter::OnDead()
 
 void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
 {
-    if (UseItemMontage)
+    // 헌호수정 - 아이템 태그에 따라 다른 몽타지 재생
+    UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] 태그: %s"), *UsedItemTag.ToString());
+    UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] HealMontage: %s, FoodMontage: %s"),
+        HealItemMontage ? TEXT("있음") : TEXT("없음"),
+        FoodItemMontage ? TEXT("있음") : TEXT("없음"));
+
+    if (UsedItemTag.MatchesTag(NCItemTag::Heal) && HealItemMontage)
     {
-        PlayAnimMontage(UseItemMontage);
+        float Duration = PlayAnimMontage(HealItemMontage);
+        UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] Heal 몽타지 duration: %.2f"), Duration);
     }
+    else if (UsedItemTag.MatchesTag(NCItemTag::Food) && FoodItemMontage)
+    {
+        float Duration = PlayAnimMontage(FoodItemMontage); //헌호수정
+        UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] Food 몽타지 duration: %.2f"), Duration);
+    }
+    else if (UseItemMontage)
+        PlayAnimMontage(UseItemMontage);
 }
 
 void ANCPlayerCharacter::OnUseItemMontageEnded()

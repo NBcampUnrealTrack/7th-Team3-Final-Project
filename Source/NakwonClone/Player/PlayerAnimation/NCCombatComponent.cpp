@@ -192,7 +192,7 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 					{
 						SpawnedWeaponActor->AttachToComponent(
 							OwnerCharacter->GetMesh(),
-							FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+							FAttachmentTransformRules::SnapToTargetIncludingScale, //헌호수정 - BP에서 설정한 Scale 유지
 							Data->AttachSocketName);
 					}
 				}
