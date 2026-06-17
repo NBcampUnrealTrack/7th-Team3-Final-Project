@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/AssetManager.h"
 #include "Player/PlayerData/NCWeaponData.h"
 #include "Styling/SlateBrush.h"
 #include "NCGameInstance.generated.h"
@@ -39,5 +41,15 @@ public:
 	
 private:
 	FSlateBrush BackgroundBrush; // slate 브러시를 멤버변수로 보관(BegineLoadingScreen 호출 시 생성)	
+#pragma endregion
+	
+#pragma region Preloading
+public:
+	void StartPreloading();
+	
+private:
+	TSharedPtr<FStreamableHandle> PreloadHandle;
+	
+	void OnPreloadComplete();
 #pragma endregion
 };
