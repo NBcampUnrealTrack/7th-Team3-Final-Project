@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
+#include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Framwork/Gamemode/NCGameMode.h"
 
 ANCEscapeTrigger::ANCEscapeTrigger()
@@ -46,9 +47,9 @@ void ANCEscapeTrigger::OnTriggerBeginOverlap(
 	}
 
 	// 인벤토리 저장
-	if (UNCPlayerInventoryComponent* Inventory = Player->GetInventoryComponent())
+	if (ANCPlayerState* NCPS = Player->GetPlayerState<ANCPlayerState>())
 	{
-		Inventory->SaveInventoryData();
+		NCPS->SaveInventoryData();
 	}
 
 	// 게임 클리어 처리
