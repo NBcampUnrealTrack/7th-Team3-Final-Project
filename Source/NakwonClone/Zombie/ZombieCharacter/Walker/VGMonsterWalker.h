@@ -39,9 +39,12 @@ private:
 	// 소켓 이름 (스켈레톤 에디터에서 추가한 이름과 동일하게)
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
 	TArray<FName> AttackSocketNames = {
-		TEXT("AttackSocket_Fist"),
-		TEXT("AttackSocket_Wrist"),
-		TEXT("AttackSocket_Elbow")
+		TEXT("AttackSocket_L_Fist"),
+		TEXT("AttackSocket_L_Wrist"),
+		TEXT("AttackSocket_L_Elbow"),
+		TEXT("AttackSocket_R_Fist"),
+		TEXT("AttackSocket_R_Wrist"),
+		TEXT("AttackSocket_R_Elbow"),
 	};
 	
 	// 트레이스 거리
