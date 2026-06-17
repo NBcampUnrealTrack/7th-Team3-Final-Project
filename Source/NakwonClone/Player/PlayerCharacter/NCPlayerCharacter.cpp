@@ -280,3 +280,12 @@ void ANCPlayerCharacter::OnUseItemMontageEnded()
             FMath::Max(Current - Data.InfectionReduceAmount, 0.f));
     }
 }
+
+//H
+void ANCPlayerCharacter::PlayHitReactMontage()
+{
+    if (HitReactMontage)
+    {
+        PlayAnimMontage(HitReactMontage);
+    }
+}
