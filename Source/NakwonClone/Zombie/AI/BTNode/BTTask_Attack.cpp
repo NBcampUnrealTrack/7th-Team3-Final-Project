@@ -33,7 +33,8 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 	AnimInstance->OnMontageEnded.AddDynamic(this, &UBTTask_Attack::OnMontageEnded);
 	
 	// 공격 몽타주 재생
-	Monster->PlayAnimMontage(Monster->GetRandomAttackMontage());
+	CurrentMontage = Monster->GetRandomAttackMontage();
+	Monster->PlayAnimMontage(CurrentMontage);
 	
 	// "아직 진행 중" 반환 -> BT 대기
 	return EBTNodeResult::InProgress;
@@ -59,6 +60,11 @@ void UBTTask_Attack::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* No
 
 void UBTTask_Attack::OnMontageEnded(UAnimMontage* AnimAttack, bool bInterrupted)
 {
+	if (AnimAttack != CurrentMontage)
+	{
+		return;
+	}
+	
 	if (CachedOwnerComp)
 	{
 		FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
