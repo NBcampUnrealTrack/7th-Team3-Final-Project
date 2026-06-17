@@ -141,7 +141,11 @@ void ANCPlayerCharacter::StartSprint()
     if (LocomotionComponent)
         LocomotionComponent->StartStaminaDrain();
 
-    CurrentGaitTag = NCCharacter::Sprint;
+    // 헌호수정 - 앉은 상태면 크라우치 스프린트
+    CurrentGaitTag = (CurrentStanceTag == NCCharacter::Crouch)
+        ? NCCharacter::CrouchSprint
+        : NCCharacter::Sprint;
+
     if (LocomotionComponent)
         LocomotionComponent->SetGaitTag(CurrentGaitTag);
     Server_SetGait(CurrentGaitTag);
@@ -149,11 +153,15 @@ void ANCPlayerCharacter::StartSprint()
 
 void ANCPlayerCharacter::StopSprint()
 {
-    //헌호수정
+    // 헌호수정
     if (LocomotionComponent)
         LocomotionComponent->StopStaminaDrain();
 
-    CurrentGaitTag = NCCharacter::Jog;
+    // 헌호수정 - 앉은 상태면 크라우치로 복귀, 아니면 조그
+    CurrentGaitTag = (CurrentStanceTag == NCCharacter::Crouch)
+        ? NCCharacter::Crouch
+        : NCCharacter::Jog;
+
     if (LocomotionComponent)
         LocomotionComponent->SetGaitTag(CurrentGaitTag);
     Server_SetGait(CurrentGaitTag);
@@ -180,6 +188,11 @@ void ANCPlayerCharacter::ToggleCrouch()
     {
         UnCrouch();
         CurrentStanceTag = NCCharacter::Stand;
+
+        // 헌호수정 - 크라우치 스프린트 중 일어서면 일반 스프린트로 전환
+        if (CurrentGaitTag == NCCharacter::CrouchSprint)
+            CurrentGaitTag = NCCharacter::Sprint;
+
         if (LocomotionComponent)
         {
             // 헌호수정 - StanceTag 먼저 Stand로 변경 후 속도 재적용
@@ -189,8 +202,9 @@ void ANCPlayerCharacter::ToggleCrouch()
     }
     else
     {
-        // 헌호수정 - 앉을 때 스프린트 중이면 스태미나 드레인 중지
-        if (CurrentGaitTag == NCCharacter::Sprint && LocomotionComponent)
+        // 헌호수정 - 앉을 때 스프린트/크라우치스프린트 중이면 스태미나 드레인 중지
+        if ((CurrentGaitTag == NCCharacter::Sprint || CurrentGaitTag == NCCharacter::CrouchSprint)
+            && LocomotionComponent)
             LocomotionComponent->StopStaminaDrain();
 
         CurrentGaitTag = NCCharacter::Jog;
