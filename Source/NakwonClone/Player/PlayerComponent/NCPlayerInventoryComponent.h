@@ -55,7 +55,7 @@ public:
 	
 	UFUNCTION(Server, Reliable)
 	void Server_DropItem(int32 SlotIndex, int32 Quantity);
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Drop")
 	TSubclassOf<class AActor> BaseItemActorClass;
 	
@@ -74,18 +74,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Getters")
 	FInventorySlot GetMainSlotData(int32 SlotIndex) const;
 	
+	TArray<FInventorySlot> GetQuickSlotsArray() const { return QuickSlots; }
+
+	void SetQuickSlotsArray(const TArray<FInventorySlot>& NewQuickSlots) { QuickSlots = NewQuickSlots; }
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
 	int32 CurrentEquippedSlotIndex = -1;
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void ForceUnArm();
-	
-	UFUNCTION(BlueprintCallable, Category = "Inventory|SaveLoad")
-	void SaveInventoryData();
 
-	UFUNCTION(BlueprintCallable, Category = "Inventory|SaveLoad")
-	void LoadInventoryData();
-	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
 	void TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);

@@ -7,6 +7,8 @@
 #include "Components/TextBlock.h"
 #include "NCInventroySlot.generated.h"
 
+class AANCLootBoxActor;
+
 UCLASS()
 class NAKWONCLONE_API UNCInventroySlot : public UUserWidget
 {
@@ -40,4 +42,11 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly)
 	int32 Quantity;
+	
+	// 하상빈 추가
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsLootBoxSlot = false;
+
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<AANCLootBoxActor> LootBoxRef;
 };
