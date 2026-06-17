@@ -3,6 +3,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "KismetAnimationLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "AbilitySystemComponent.h"
 
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
@@ -32,7 +33,6 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
 
-    // 헌호수정 - 파괴 중인 액터 접근 방지
     if (OwnerCharacter && OwnerCharacter->IsActorBeingDestroyed())
     {
         OwnerCharacter = nullptr;
@@ -66,7 +66,6 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     VerticalVelocity = Velocity.Z;
 
-    // 찬우수정 - Stop 판정을 위해 현재 Speed를 갱신하기 전에 이전 프레임 Speed 저장
     PreviousSpeed = Speed;
 
     Speed = Velocity.Size2D();
@@ -76,17 +75,33 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
         OwnerCharacter->GetActorRotation()
     );
 
+    const FRotator ControlRotation = OwnerCharacter->GetControlRotation();
+    const FRotator ActorRotation = OwnerCharacter->GetActorRotation();
+
+    const FRotator AimDeltaRotation =
+        UKismetMathLibrary::NormalizedDeltaRotator(ControlRotation, ActorRotation);
+
+    AimYaw = FMath::Clamp(AimDeltaRotation.Yaw, -70.f, 70.f);
+    AimPitch = FMath::Clamp(AimDeltaRotation.Pitch, -45.f, 45.f);
+
     bIsInAir = MovementComponent->IsFalling();
     bIsCrouching = MovementComponent->IsCrouching();
 
+    if (bIsCrouching && Speed >= 240.f)
+    {
+        CrouchMovePlayRate = 1.25f;
+    }
+    else
+    {
+        CrouchMovePlayRate = 1.0f;
+    }
+
     bShouldMove = Speed > 3.f && !MovementComponent->GetCurrentAcceleration().IsNearlyZero();
 
-    // 찬우추가 - 걷기/뛰기/앉기 Stop 애니메이션 전환용 상태 계산
-    UpdateStopState();
+    UpdateStopState(DeltaSeconds);
 
     UpdateWeaponAndBlendSpace();
 
-    // 헌호수정 - 전용 서버에서는 IK 계산 불필요
     if (UWorld* World = GetWorld())
     {
         if (!World->IsNetMode(NM_DedicatedServer))
@@ -96,13 +111,15 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     }
 }
 
-// 찬우추가 - Stop 애니메이션 판정 함수
-void UNCAnimInstance::UpdateStopState()
+void UNCAnimInstance::UpdateStopState(float DeltaSeconds)
 {
     if (!MovementComponent)
     {
         bWantsToStop = false;
         bWasMoving = false;
+        bPreviousWantsToStop = false;
+        bDisableIKDuringStop = false;
+        StopIKDisableTimer = 0.f;
         StopSpeed = 0.f;
         StopDirection = 0.f;
         return;
@@ -110,34 +127,36 @@ void UNCAnimInstance::UpdateStopState()
 
     const bool bHasAcceleration = !MovementComponent->GetCurrentAcceleration().IsNearlyZero();
 
-    /*
-     * Stop 판정 기준
-     *
-     * bWasMoving      : 직전까지 이동 중이었는가
-     * !bHasAcceleration : 현재 입력이 끊겼는가
-     * Speed > 10.f    : 아직 완전히 멈추기 전인가
-     * !bIsInAir       : 공중 상태가 아닌가
-     *
-     * 즉, 이동 입력을 놓았고 캐릭터가 감속 중이면 Stop 애니메이션으로 보낼 수 있음.
-     */
     bWantsToStop =
         bWasMoving &&
         !bHasAcceleration &&
         Speed > 10.f &&
         !bIsInAir;
 
-    if (bWantsToStop)
+    const bool bJustStartedStop = bWantsToStop && !bPreviousWantsToStop;
+
+    if (bJustStartedStop)
     {
         StopSpeed = PreviousSpeed;
         StopDirection = Direction;
+
+        StopIKDisableTimer = StopIKDisableDuration;
     }
 
-    /*
-     * 다음 프레임 Stop 판정에 사용할 이동 여부 저장.
-     * 50 이상으로 둔 이유:
-     * 아주 작은 미끄러짐/보정 속도 때문에 Stop이 계속 발생하는 걸 방지.
-     */
+    if (StopIKDisableTimer > 0.f)
+    {
+        StopIKDisableTimer -= DeltaSeconds;
+        bDisableIKDuringStop = true;
+    }
+    else
+    {
+        StopIKDisableTimer = 0.f;
+        bDisableIKDuringStop = false;
+    }
+
     bWasMoving = Speed > 50.f;
+
+    bPreviousWantsToStop = bWantsToStop;
 }
 
 void UNCAnimInstance::UpdateWeaponAndBlendSpace()
@@ -193,21 +212,43 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
     }
 }
 
-// 헌호수정 - 양손 IK 위치 업데이트 (클라이언트 전용)
 void UNCAnimInstance::UpdateLeftHandIK()
 {
     UNCCombatComponent* ActiveCombatComponent = CachedCombatComponent
         ? CachedCombatComponent.Get()
         : CombatComponent.Get();
 
-    // 공격 중에는 IK 끔 (애니메이션 자체에 맡김)
     if (OwnerCharacter)
     {
         UAbilitySystemComponent* ASC = OwnerCharacter->FindComponentByClass<UAbilitySystemComponent>();
         bIsAttacking = ASC ? ASC->HasMatchingGameplayTag(NCWeapon::Action_Attacking) : false;
     }
 
-    if (!ActiveCombatComponent || !ActiveCombatComponent->IsWeaponEquipped() || bIsAttacking)
+    const bool bDisableIKDuringStandingRun =
+        bIsTwoHandedWeapon &&
+        !bIsCrouching &&
+        Speed >= TwoHandIKDisableRunSpeed; 
+
+    const bool bDisableIKDuringCrouchRun =
+        bIsTwoHandedWeapon &&
+        bIsCrouching &&
+        Speed >= 240.f;
+
+    const bool bDisableIKDuringCrouchIdle =
+        bIsTwoHandedWeapon &&
+        bIsCrouching &&
+        Speed < 10.f;
+
+    const bool bShouldDisableIK =
+        bIsAttacking ||
+        bDisableIKDuringStop ||
+        bDisableIKDuringStandingRun ||
+        bDisableIKDuringCrouchRun ||
+        bDisableIKDuringCrouchIdle;
+
+    if (!ActiveCombatComponent ||
+        !ActiveCombatComponent->IsWeaponEquipped() ||
+        bShouldDisableIK)
     {
         bUseLeftHandIK = false;
         bUseRightHandIK = false;
@@ -230,22 +271,29 @@ void UNCAnimInstance::UpdateLeftHandIK()
         return;
     }
 
-    // 스켈레탈 메시 먼저 시도, 없으면 스태틱 메시 시도
     UMeshComponent* WeaponMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>();
     if (!WeaponMesh)
+    {
         WeaponMesh = WeaponActor->FindComponentByClass<UStaticMeshComponent>();
+    }
 
-    if (!WeaponMesh)
+    if (!WeaponMesh || !OwnerCharacter->GetMesh())
     {
         bUseLeftHandIK = false;
         bUseRightHandIK = false;
         return;
     }
 
-    // 왼손 IK
     if (!WeaponData->LeftHandIKSocketName.IsNone())
     {
-        LeftHandIKLocation = WeaponMesh->GetSocketLocation(WeaponData->LeftHandIKSocketName);
+        const FVector SocketWorldLocation =
+            WeaponMesh->GetSocketLocation(WeaponData->LeftHandIKSocketName);
+
+        LeftHandIKLocation =
+            OwnerCharacter->GetMesh()
+            ->GetComponentTransform()
+            .InverseTransformPosition(SocketWorldLocation);
+
         bUseLeftHandIK = true;
     }
     else
@@ -253,10 +301,16 @@ void UNCAnimInstance::UpdateLeftHandIK()
         bUseLeftHandIK = false;
     }
 
-    // 오른손 IK
     if (!WeaponData->RightHandIKSocketName.IsNone())
     {
-        RightHandIKLocation = WeaponMesh->GetSocketLocation(WeaponData->RightHandIKSocketName);
+        const FVector SocketWorldLocation =
+            WeaponMesh->GetSocketLocation(WeaponData->RightHandIKSocketName);
+
+        RightHandIKLocation =
+            OwnerCharacter->GetMesh()
+            ->GetComponentTransform()
+            .InverseTransformPosition(SocketWorldLocation);
+
         bUseRightHandIK = true;
     }
     else

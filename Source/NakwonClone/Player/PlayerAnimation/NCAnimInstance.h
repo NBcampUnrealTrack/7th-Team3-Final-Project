@@ -20,7 +20,6 @@ public:
     virtual void NativeInitializeAnimation() override;
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-    // 찬우추가 - ABP에서 애니메이션 상태값을 읽기 위한 Getter
     UFUNCTION(BlueprintPure, Category = "Locomotion")
     float GetSpeed() const { return Speed; }
 
@@ -54,6 +53,9 @@ public:
     UFUNCTION(BlueprintPure, Category = "Locomotion|Stop")
     float GetStopDirection() const { return StopDirection; }
 
+    UFUNCTION(BlueprintPure, Category = "Locomotion|Stop")
+    bool GetDisableIKDuringStop() const { return bDisableIKDuringStop; }
+
     UFUNCTION(BlueprintPure, Category = "Weapon")
     FGameplayTag GetCurrentWeaponTypeTag() const { return CurrentWeaponTypeTag; }
 
@@ -69,10 +71,15 @@ public:
     UFUNCTION(BlueprintPure, Category = "Weapon")
     bool GetIsAttacking() const { return bIsAttacking; }
 
+    UFUNCTION(BlueprintPure, Category = "Aim")
+    float GetAimYaw() const { return AimYaw; }
+
+    UFUNCTION(BlueprintPure, Category = "Aim")
+    float GetAimPitch() const { return AimPitch; }
+
     UFUNCTION(BlueprintPure, Category = "Locomotion")
     UBlendSpace* GetCurrentLocomotionBlendSpace() const { return CurrentLocomotionBlendSpace; }
 
-    // 찬우추가 - 필요 시 BP/외부에서 값 보정 가능하도록 Setter 제공
     UFUNCTION(BlueprintCallable, Category = "Locomotion|Stop")
     void SetWantsToStop(bool bNewWantsToStop) { bWantsToStop = bNewWantsToStop; }
 
@@ -134,7 +141,6 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
     bool bIsTwoHandedWeapon = false;
 
-    // 찬우추가 - Stop 애니메이션 판정용 변수
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Stop", meta = (AllowPrivateAccess = "true"))
     bool bWantsToStop = false;
 
@@ -147,10 +153,21 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Stop", meta = (AllowPrivateAccess = "true"))
     float StopDirection = 0.f;
 
-    // 찬우추가 - 이전 프레임 속도 저장용. ABP에서 직접 쓸 필요는 없어서 UPROPERTY 제외
+    UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Stop", meta = (AllowPrivateAccess = "true"))
+    bool bDisableIKDuringStop = false;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Locomotion|Stop", meta = (AllowPrivateAccess = "true"))
+    float StopIKDisableDuration = 1.2f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
+    float TwoHandIKDisableRunSpeed = 350.f;
+
+    float StopIKDisableTimer = 0.f;
+
     float PreviousSpeed = 0.f;
 
-    // 헌호수정 - 양손 IK
+    bool bPreviousWantsToStop = false;
+
     UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
     FVector LeftHandIKLocation = FVector::ZeroVector;
 
@@ -166,10 +183,14 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
     bool bIsAttacking = false;
 
+    UPROPERTY(BlueprintReadOnly, Category = "Aim", meta = (AllowPrivateAccess = "true"))
+    float AimYaw = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Aim", meta = (AllowPrivateAccess = "true"))
+    float AimPitch = 0.f;
+
 protected:
     void UpdateWeaponAndBlendSpace();
     void UpdateLeftHandIK();
-
-    // 찬우추가 - 걷기/뛰기 Stop 판정 계산 함수
-    void UpdateStopState();
+    void UpdateStopState(float DeltaSeconds);
 };
