@@ -136,7 +136,24 @@ void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANC
 	{
 		return;
 	}
-	LootInventory->TransferItemTo(this, BoxSlotIndex, PlayerSlotIndex);
+	int32 TargetSlot = PlayerSlotIndex;
+	if (TargetSlot == -1)
+	{
+		for (int32 i = 0; i < Items.Num(); ++i)
+		{
+			if (Items[i].IsEmpty())
+			{
+				TargetSlot = i;
+				break;
+			}
+		}
+	}
+	if (TargetSlot == -1)
+	{
+		return;
+	}
+	
+	LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
 }
 
 void UNCPlayerInventoryComponent::OnRep_QuickSlots()
