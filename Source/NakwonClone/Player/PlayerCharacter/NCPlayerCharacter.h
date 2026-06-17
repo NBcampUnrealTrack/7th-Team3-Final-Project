@@ -36,6 +36,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	TObjectPtr<UAnimMontage> UseItemMontage;
 
+	// 헌호수정 - 아이템 종류별 몽타지
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> HealItemMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> FoodItemMontage;
+
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void OnUseItemMontageEnded();
 	

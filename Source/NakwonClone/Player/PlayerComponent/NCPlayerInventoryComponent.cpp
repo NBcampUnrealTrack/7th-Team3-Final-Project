@@ -371,7 +371,7 @@ bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
 			}
 		}
 		
-		OnItemUsed.Broadcast(ItemTag);
+		Multicast_OnItemUsed(ItemTag); //헌호수정 - 멀티캐스트로 모든 클라이언트에 전파
 
 		FString DebugMsg = FString::Printf(TEXT("[소모품 사용] %s (남은 수량: %d)"), *ItemTag.ToString(), QuickSlots[QuickSlotIndex].Quantity);
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
@@ -519,10 +519,16 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 	}
 	
 	bool bAdded = AddItem(LootID, LootTag, LootQuantity);
-	
+
 	if (bAdded)
 	{
 		ItemToLoot->Destroy();
 		return;
 	}
+}
+
+// 헌호수정 - 서버에서 호출 → 모든 클라이언트에서 OnItemUsed 델리게이트 실행
+void UNCPlayerInventoryComponent::Multicast_OnItemUsed_Implementation(FGameplayTag ItemTag)
+{
+	OnItemUsed.Broadcast(ItemTag);
 }
