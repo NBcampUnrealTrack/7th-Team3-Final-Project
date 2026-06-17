@@ -25,6 +25,8 @@ public:
 	FGameplayTag ItemTypeTag;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
 	int32 MaxStackSize;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
+	FGameplayTagContainer EquipTags; 
 	
 	FItemData()
 		: ItemMesh(nullptr)
@@ -87,4 +89,17 @@ struct FCreditItemData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Credit")
 	int32 MaxValue = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FEquipmentPreset
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FInventorySlot RightHand; 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FInventorySlot LeftHand;  
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FInventorySlot TwoHand; 
+
+	bool IsTwoHandActive() const { return !TwoHand.IsEmpty(); }
+	bool IsEmpty() const { return RightHand.IsEmpty() && LeftHand.IsEmpty() && TwoHand.IsEmpty(); }
 };
