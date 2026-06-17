@@ -71,8 +71,9 @@ void ANCPlayerState::SaveInventoryData()
 
 	if (PlayerInventory)
 	{
-		SaveGameInstance->PlayerInventoryItems = PlayerInventory->GetItemsArray();
-		SaveGameInstance->PlayerQuickSlots     = PlayerInventory->GetQuickSlotsArray();
+		SaveGameInstance->PlayerInventoryItems    = PlayerInventory->GetItemsArray();
+		SaveGameInstance->PlayerEquipmentPresets  = PlayerInventory->GetPresetsArray();
+		SaveGameInstance->PlayerConsumableSlots   = PlayerInventory->GetConsumableArray();
 	}
     
 	if (StashInventory)
@@ -100,7 +101,8 @@ void ANCPlayerState::LoadInventoryData()
 			if (PlayerInventory && LoadGameInstance->PlayerInventoryItems.Num() > 0)
 			{
 				PlayerInventory->SetItemsArray(LoadGameInstance->PlayerInventoryItems);
-				PlayerInventory->SetQuickSlotsArray(LoadGameInstance->PlayerQuickSlots);
+				PlayerInventory->SetPresetsArray(LoadGameInstance->PlayerEquipmentPresets);
+				PlayerInventory->SetConsumableArray(LoadGameInstance->PlayerConsumableSlots);
 			}
             
 			if (StashInventory && LoadGameInstance->StashInventoryItems.Num() > 0)

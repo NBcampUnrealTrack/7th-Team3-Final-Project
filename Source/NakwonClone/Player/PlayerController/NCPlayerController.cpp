@@ -271,7 +271,7 @@ void ANCPlayerController::QuickSlot1()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseQuickSlot(0);
+        NCInventoryComp->ApplyPreset(0);
     }
 }
 
@@ -279,7 +279,7 @@ void ANCPlayerController::QuickSlot2()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseQuickSlot(1);
+        NCInventoryComp->ApplyPreset(1);
     }
 }
 
@@ -287,7 +287,7 @@ void ANCPlayerController::QuickSlot3()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseQuickSlot(2);
+        NCInventoryComp->UseConsumableSlot(0);
     }
 }
 
@@ -295,7 +295,7 @@ void ANCPlayerController::QuickSlot4()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseQuickSlot(3);
+        NCInventoryComp->UseConsumableSlot(1);
     }
 }
 
