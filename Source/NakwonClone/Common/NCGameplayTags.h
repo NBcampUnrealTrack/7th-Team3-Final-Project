@@ -71,6 +71,11 @@ namespace NCItemTag
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest);   // 퀘스트 아이템
 };
 
+namespace NCEquip
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Hand_Left);   // 왼손 장착 가능
+};
+
 namespace NCLootBox
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_BeingLooted); // 누군가 파밍 중인 상태
