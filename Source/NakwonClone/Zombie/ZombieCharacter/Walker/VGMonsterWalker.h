@@ -24,7 +24,7 @@ protected:
 #pragma region 워커 고유 스탯
 	// 이동 속도 ( 추후 GAS로 옮길 예정 )
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Walker")
-	float WalkSpeed = 80.f;
+	float WalkSpeed = 100.f;
 #pragma endregion
 
 #pragma region 공격 트레이스
