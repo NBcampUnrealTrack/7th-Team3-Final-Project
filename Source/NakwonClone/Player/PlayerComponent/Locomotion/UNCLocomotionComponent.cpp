@@ -52,10 +52,18 @@ void UNCLocomotionComponent::ApplyMovementSpeed()
 
 	if (!MovementDataTable) return;
 
-	// 헌호수정 - 크라우치 중이면 크라우치 행 사용, 아니면 현재 Gait 행 사용
-	FName RowName = (CurrentStanceTag == NCCharacter::Crouch)
-		? NCCharacter::Crouch.GetTag().GetTagName()
-		: CurrentGaitTag.GetTagName();
+	// 헌호수정 - 크라우치 스프린트면 CrouchSprint 행, 크라우치면 Crouch 행, 아니면 Gait 행
+	FName RowName;
+	if (CurrentStanceTag == NCCharacter::Crouch)
+	{
+		RowName = (CurrentGaitTag == NCCharacter::CrouchSprint)
+			? NCCharacter::CrouchSprint.GetTag().GetTagName()
+			: NCCharacter::Crouch.GetTag().GetTagName();
+	}
+	else
+	{
+		RowName = CurrentGaitTag.GetTagName();
+	}
 
 	FNcPlayerMovementData* Data = MovementDataTable->FindRow
 		<FNcPlayerMovementData>(RowName, TEXT("Locomotion"));

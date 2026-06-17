@@ -10,6 +10,7 @@ UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Monster_Runner, "Character.Monster.Runner");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Walk, "Character.State.Walk");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Jog, "Character.State.Jog");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Sprint, "Character.State.Sprint");
+UE_DEFINE_GAMEPLAY_TAG(NCCharacter::CrouchSprint, "Character.State.CrouchSprint"); //헌호수정
 
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Attacking, "Character.Action.Attacking");
 UE_DEFINE_GAMEPLAY_TAG(NCCharacter::Stand, "Character.State.Standing");
