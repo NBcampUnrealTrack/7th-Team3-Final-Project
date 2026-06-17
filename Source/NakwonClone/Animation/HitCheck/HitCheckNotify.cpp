@@ -38,14 +38,13 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
     TArray<FHitResult> HitResults;
     bool bHit = false;
 
-    // 소켓 이름이 있으면 라인 트레이스 (도끼 등 양손무기)
-    // 없으면 기존 구 트레이스 (크로우바 등 한손무기)
+    // 헌호수정 - 소켓 있으면 소켓 간 스피어트레이스, 없으면 전방 스피어트레이스 (둘 다 스피어)
     if (WeaponData->TrailStartSocket != NAME_None && WeaponData->TrailEndSocket != NAME_None)
     {
+        // 헌호수정 - 도끼 등 양손무기 - 소켓 간 라인트레이스
         AActor* WeaponActor = Combat->GetSpawnedWeaponActor();
         if (WeaponActor)
         {
-            // 헌호수정 - 스켈레탈 메시 먼저 시도, 없으면 스태틱 메시 시도
             UMeshComponent* WeaponMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>();
             if (!WeaponMesh)
                 WeaponMesh = WeaponActor->FindComponentByClass<UStaticMeshComponent>();
@@ -68,10 +67,10 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
     }
     else
     {
-        // 기존 구 트레이스 (크로우바)
+        // 크로우바 등 한손무기 - 전방 스피어트레이스
         const FVector Start = OwnerChar->GetActorLocation();
-        const FVector End = Start + OwnerChar->GetActorForwardVector() * 120.f;
-        const float Radius = WeaponData->HitBoxExtent.X;
+        const FVector End = Start + OwnerChar->GetActorForwardVector() * WeaponData->HitTraceRange;
+        const float Radius = WeaponData->HitSphereRadius;
 
         bHit = World->SweepMultiByChannel(
             HitResults, Start, End, FQuat::Identity,

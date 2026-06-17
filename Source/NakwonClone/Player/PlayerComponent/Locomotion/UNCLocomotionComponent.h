@@ -62,13 +62,13 @@ private:
 	FTimerHandle StaminaRegenHandle;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
-	float StaminaDrainRate = 15.f;
+	float StaminaDrainRate = 8.f; //헌호수정
 
 	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
-	float StaminaRegenRate = 8.f;
+	float StaminaRegenRate = 5.f; //헌호수정
 
 	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
-	float StaminaRegenThreshold = 30.f;
+	float StaminaRegenThreshold = 15.f; //헌호수정
 
 	bool bSprintLocked = false;
 
