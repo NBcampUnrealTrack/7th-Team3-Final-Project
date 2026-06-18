@@ -24,7 +24,7 @@ EBTNodeResult::Type UBTTask_Stop::ExecuteTask(UBehaviorTreeComponent& OwnerComp,
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
 	if (Monster)
 	{
-		Monster->PlayAnimMontage(Monster->GetRandomStopMontage());
+		Monster->PlayAnimMontage(Monster->GetSelectedStopMontage());
 	}
 	
 	// StopDuration 이후 InProgress (InProgress : 다음 틱에서 완료 처리)

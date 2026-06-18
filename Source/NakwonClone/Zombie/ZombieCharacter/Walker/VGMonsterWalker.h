@@ -21,16 +21,20 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	
+	// 워커 전용 Idle 애니메이션
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TObjectPtr<UAnimMontage> AnimIdle;
+	
 #pragma region 워커 고유 스탯
 	// 이동 속도 ( 추후 GAS로 옮길 예정 )
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Walker")
-	float WalkSpeed = 100.f;
+	float WalkSpeed = 80.f;
 #pragma endregion
 
 #pragma region 공격 트레이스
 public:
 	void PerformAttackTrace();
-	
+
 private:
 	// 에디터에서 GE_Attack 에셋 할당
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")

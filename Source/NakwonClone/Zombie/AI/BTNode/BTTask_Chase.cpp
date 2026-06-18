@@ -15,7 +15,7 @@ EBTNodeResult::Type UBTTask_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!Monster) return EBTNodeResult::Failed;
 
-	Monster->PlayAnimMontage(Monster->GetRandomChaseMontage());
+	Monster->PlayAnimMontage(Monster->GetSelectedChaseMontage());
 
 	return EBTNodeResult::Succeeded;
 }
