@@ -51,6 +51,11 @@ void AVGMonsterCharacterBase::BeginPlay()
 		MonsterAttributeSet->OnDead.AddDynamic(this, &AVGMonsterCharacterBase::HandleDead);
 		MonsterAttributeSet->OnHitReceived.AddDynamic(this, &AVGMonsterCharacterBase::HandleHit);
 	}
+	
+	SelectedMoveMontage = GetRandomMoveMontage();
+	SelectedChaseMontage = GetRandomChaseMontage();
+	SelectedStopMontage = GetRandomStopMontage();
+	SelectedDeadMontage = GetRandomDeadMontage();
 }
 
 // HandleDead()
@@ -58,19 +63,14 @@ void AVGMonsterCharacterBase::HandleDead()
 {
 	SetActorEnableCollision(false);
 	
-	float Duration = PlayAnimMontage(GetRandomMontage(AnimDead));
-	
 	if (AAIController* AIC = Cast<AAIController>(GetController()))
  	{
 		AIC->StopMovement();
 		AIC->UnPossess();
 	}
 	
-	// 사망 애니메이션이 끝나면 래그돌 전환
-	GetWorldTimerManager().SetTimer(DeadTimerHandle, [this]()
-	{
-		OnStartRagdoll();
-	}, Duration, false);
+	// 래그돌 전환
+	OnStartRagdoll();
 	
 	SetLifeSpan(200.f);
 }

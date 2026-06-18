@@ -8,6 +8,8 @@
 UBTTask_Attack::UBTTask_Attack()
 {
 	NodeName = "Attack";
+	
+	CachedOwnerComp = nullptr;
 }
 
 EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
