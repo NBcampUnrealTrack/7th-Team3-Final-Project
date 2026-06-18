@@ -392,9 +392,7 @@ bool UNCPlayerInventoryComponent::UnequipFromConsumable(int32 ConsumableSlotInde
 
     if (!Items[MainSlotIndex].IsEmpty())
     {
-        const FGameplayTag InTag = Items[MainSlotIndex].ItemTypeTag;
-        if (ConsumableSlotIndex == 0 && !InTag.MatchesTag(NCItemTag::Heal)) return false;
-        if (ConsumableSlotIndex == 1 && !InTag.MatchesTag(NCItemTag::Food)) return false;
+        if (!Items[MainSlotIndex].ItemTypeTag.MatchesTag(NCItemType::Consumable)) return false;
     }
 
     FInventorySlot Temp = ConsumableQuickSlots[ConsumableSlotIndex];
