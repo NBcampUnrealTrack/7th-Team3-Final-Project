@@ -204,6 +204,10 @@ bool UNCPlayerInventoryComponent::EquipToPreset(int32 MainSlotIndex, int32 Prese
         {
             Cell = ENCPresetCell::Two;
         }
+        else if (ItemTag.MatchesTag(NCItemTag::Weapon) && WeaponType.MatchesTagExact(NCWeapon::Type_OneHanded))
+        {
+            Cell = ENCPresetCell::Right;
+        }
         else
         {
             FItemData ItemData;
@@ -264,8 +268,9 @@ bool UNCPlayerInventoryComponent::UnequipFromPreset(int32 PresetIndex, ENCPreset
 
     FEquipmentPreset& P = EquipmentPresets[PresetIndex];
     FInventorySlot& Source =
-        (Cell == ENCPresetCell::Right) ? P.RightHand :
-        (Cell == ENCPresetCell::Two)   ? P.TwoHand   : P.LeftHand;
+        (Cell == ENCPresetCell::Two)  ? P.TwoHand :
+        (Cell == ENCPresetCell::Left) ? ((P.LeftHand.IsEmpty()  && !P.TwoHand.IsEmpty()) ? P.TwoHand : P.LeftHand) :
+                                        ((P.RightHand.IsEmpty() && !P.TwoHand.IsEmpty()) ? P.TwoHand : P.RightHand);
 
     if (Source.IsEmpty())
     {
@@ -293,9 +298,11 @@ bool UNCPlayerInventoryComponent::UnequipFromPreset(int32 PresetIndex, ENCPreset
         }
     }
 
+    const bool bSourceIsTwoHand = (&Source == &P.TwoHand);
+    const bool bSourceIsRight   = (&Source == &P.RightHand);
     const bool bWasActiveWeapon =
         (CurrentEquippedPresetIndex == PresetIndex) &&
-        ((Cell == ENCPresetCell::Two) || (Cell == ENCPresetCell::Right && P.TwoHand.IsEmpty()));
+        (bSourceIsTwoHand || (bSourceIsRight && P.TwoHand.IsEmpty()));
 
     if (bWasActiveWeapon)
     {
@@ -400,6 +407,126 @@ bool UNCPlayerInventoryComponent::UnequipFromConsumable(int32 ConsumableSlotInde
     Items[MainSlotIndex] = Temp;
 
     OnInventoryUpdated.Broadcast();
+    OnQuickSlotUpdated.Broadcast();
+    return true;
+}
+
+bool UNCPlayerInventoryComponent::MovePresetToPreset(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell)
+{
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!EquipmentPresets.IsValidIndex(FromPresetIndex) || !EquipmentPresets.IsValidIndex(ToPresetIndex))
+    {
+        return false;
+    }
+    if (FromPresetIndex == ToPresetIndex && FromCell == ToCell)
+    {
+        return false;
+    }
+
+    FEquipmentPreset& PFrom = EquipmentPresets[FromPresetIndex];
+    FEquipmentPreset& PTo   = EquipmentPresets[ToPresetIndex];
+
+    auto ResolveCell = [](FEquipmentPreset& P, ENCPresetCell Cell) -> FInventorySlot&
+    {
+        if (Cell == ENCPresetCell::Two)  return P.TwoHand;
+        if (Cell == ENCPresetCell::Left) return P.LeftHand;
+        return !P.TwoHand.IsEmpty() ? P.TwoHand : P.RightHand;
+    };
+
+    FInventorySlot& Src = ResolveCell(PFrom, FromCell);
+    if (Src.IsEmpty())
+    {
+        return false;
+    }
+
+    const FGameplayTag SrcTag    = Src.ItemTypeTag;
+    const FGameplayTag SrcWeapon = GetWeaponTypeTag(Src.ItemID);
+    ENCPresetCell DestCell = ToCell;
+    if (SrcTag.MatchesTag(NCItemTag::Weapon))
+    {
+        if (SrcWeapon.MatchesTagExact(NCWeapon::Type_TwoHanded))      DestCell = ENCPresetCell::Two;
+        else if (SrcWeapon.MatchesTagExact(NCWeapon::Type_OneHanded)) DestCell = ENCPresetCell::Right;
+    }
+
+    if (DestCell == ENCPresetCell::Two)
+    {
+        if (!PTo.RightHand.IsEmpty() || !PTo.LeftHand.IsEmpty()) return false;
+    }
+    else
+    {
+        if (!PTo.TwoHand.IsEmpty()) return false;
+    }
+
+    FInventorySlot& Dst =
+        (DestCell == ENCPresetCell::Two)  ? PTo.TwoHand  :
+        (DestCell == ENCPresetCell::Left) ? PTo.LeftHand : PTo.RightHand;
+
+    if (CurrentEquippedPresetIndex == FromPresetIndex || CurrentEquippedPresetIndex == ToPresetIndex)
+    {
+        if (ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner()))
+        {
+            if (APawn* Pawn = PS->GetPawn())
+            {
+                if (UNCCombatComponent* Combat = Pawn->FindComponentByClass<UNCCombatComponent>())
+                {
+                    Combat->UnEquipWeapon();
+                    CurrentEquippedPresetIndex = -1;
+                }
+            }
+        }
+    }
+
+    FInventorySlot Temp = Dst;
+    Dst = Src;
+    Src = Temp;
+
+    OnPresetUpdated.Broadcast();
+    return true;
+}
+
+bool UNCPlayerInventoryComponent::MoveConsumableToConsumable(int32 FromIndex, int32 ToIndex)
+{
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!ConsumableQuickSlots.IsValidIndex(FromIndex) || !ConsumableQuickSlots.IsValidIndex(ToIndex))
+    {
+        return false;
+    }
+    if (FromIndex == ToIndex || ConsumableQuickSlots[FromIndex].IsEmpty())
+    {
+        return false;
+    }
+
+    FInventorySlot& A = ConsumableQuickSlots[FromIndex];
+    FInventorySlot& B = ConsumableQuickSlots[ToIndex];
+
+    if (!B.IsEmpty() && B.ItemID == A.ItemID && B.ItemTypeTag == A.ItemTypeTag)
+    {
+        FItemData Data;
+        if (GetItemDataByTag(A.ItemID, A.ItemTypeTag, Data))
+        {
+            const int32 Room = Data.MaxStackSize - B.Quantity;
+            if (Room > 0)
+            {
+                const int32 MoveAmount = FMath::Min(Room, A.Quantity);
+                B.Quantity += MoveAmount;
+                A.Quantity -= MoveAmount;
+                if (A.Quantity <= 0) A = FInventorySlot();
+                OnQuickSlotUpdated.Broadcast();
+                return true;
+            }
+        }
+    }
+
+    FInventorySlot Temp = B;
+    B = A;
+    A = Temp;
+
     OnQuickSlotUpdated.Broadcast();
     return true;
 }

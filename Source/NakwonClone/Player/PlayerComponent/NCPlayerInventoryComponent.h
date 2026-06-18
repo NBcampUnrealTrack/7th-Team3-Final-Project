@@ -86,6 +86,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
     bool UnequipFromConsumable(int32 ConsumableSlotIndex, int32 MainSlotIndex);
 
+    UFUNCTION(BlueprintCallable, Category = "Inventory|Preset")
+    bool MovePresetToPreset(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell);
+
+    UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
+    bool MoveConsumableToConsumable(int32 FromIndex, int32 ToIndex);
+
     UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
     bool UseConsumableSlot(int32 SlotIndex);
 
