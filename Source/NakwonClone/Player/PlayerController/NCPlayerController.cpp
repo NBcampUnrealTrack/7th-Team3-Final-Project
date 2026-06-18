@@ -83,9 +83,9 @@ void ANCPlayerController::SetupInputComponent()
         {
             EIC->BindAction(QuickSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot3);
         }
-        if (QuickSlot4Action)
+        if (QuickSlot3HoldAction)
         {
-            EIC->BindAction(QuickSlot4Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot4);
+            EIC->BindAction(QuickSlot3HoldAction, ETriggerEvent::Triggered, this, &ANCPlayerController::QuickSlot3Hold);
         }
         if (UnArmAction)
         {
@@ -287,15 +287,15 @@ void ANCPlayerController::QuickSlot3()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseConsumableSlot(0);
+        NCInventoryComp->UseConsumableSlot(NCInventoryComp->SelectedConsumableIndex);
     }
 }
 
-void ANCPlayerController::QuickSlot4()
+void ANCPlayerController::QuickSlot3Hold()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseConsumableSlot(1);
+        NCInventoryComp->OnConsumableSelectionRequested.Broadcast();
     }
 }
 
