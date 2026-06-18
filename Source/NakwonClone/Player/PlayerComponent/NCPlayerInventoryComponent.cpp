@@ -23,12 +23,21 @@ void UNCPlayerInventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifet
 	DOREPLIFETIME(UNCPlayerInventoryComponent, ConsumableQuickSlots);
 }
 
+void UNCPlayerInventoryComponent::SetSelectedConsumableIndex(int32 Index)
+{
+    if (ConsumableQuickSlots.IsValidIndex(Index))
+    {
+        SelectedConsumableIndex = Index;
+        OnQuickSlotUpdated.Broadcast();
+    }
+}
+
 void UNCPlayerInventoryComponent::InitializeInventory()
 {
 	Super::InitializeInventory();
 
 	EquipmentPresets.Init(FEquipmentPreset(), 2);
-	ConsumableQuickSlots.Init(FInventorySlot(), 2);
+	ConsumableQuickSlots.Init(FInventorySlot(), 6);
 }
 
 void UNCPlayerInventoryComponent::OnRep_Presets()
@@ -325,10 +334,10 @@ bool UNCPlayerInventoryComponent::EquipToConsumable(int32 MainSlotIndex, int32 C
 
     const FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
     const FName ItemID = Items[MainSlotIndex].ItemID;
-
-    if (ConsumableSlotIndex == 0 && !ItemTag.MatchesTag(NCItemTag::Heal)) return false;
-    if (ConsumableSlotIndex == 1 && !ItemTag.MatchesTag(NCItemTag::Food)) return false;
-
+    
+    if (!ItemTag.MatchesTag(NCItemType::Consumable)) return false;
+    if (!Items[MainSlotIndex].ItemTypeTag.MatchesTag(NCItemType::Consumable)) return false;
+    
     FInventorySlot& Slot = ConsumableQuickSlots[ConsumableSlotIndex];
 
     if (!Slot.IsEmpty() && Slot.ItemID == ItemID && Slot.ItemTypeTag == ItemTag)

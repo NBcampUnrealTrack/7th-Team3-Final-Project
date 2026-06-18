@@ -9,7 +9,7 @@ void UNCInventroySlot::NativeConstruct()
 	Super::NativeConstruct();
 }
 
-void UNCInventroySlot::SetSlotData(int32 InIndex, FGameplayTag InTag, int32 InQuantity, FName InItemID)
+void UNCInventroySlot::SetSlotData(int32 InIndex, int32 InQuantity, FGameplayTag InTag, FName InItemID)
 {
 	SlotIndex = InIndex;
 	ItemTag = InTag;
@@ -19,6 +19,11 @@ void UNCInventroySlot::SetSlotData(int32 InIndex, FGameplayTag InTag, int32 InQu
 	if (!ItemID.IsNone() && Quantity > 0)
 	{
 		FItemData* ItemData = ItemDataTable->FindRow<FItemData>(ItemID, TEXT(""));
+		if (!ItemData)
+		{
+			ItemCountText->SetVisibility(ESlateVisibility::Hidden);
+			ItemImage->SetVisibility(ESlateVisibility::Hidden);
+		}
 		if (ItemData->ItemTypeTag.MatchesTag(NCItemTag::Heal) || ItemData->ItemTypeTag.MatchesTag(NCItemTag::Food))
 		{
 			ItemCountText->SetText(FText::AsNumber(Quantity));
@@ -35,11 +40,5 @@ void UNCInventroySlot::SetSlotData(int32 InIndex, FGameplayTag InTag, int32 InQu
 		}
 		
 		ItemImage->SetVisibility(ESlateVisibility::Visible);
-	}
-	else
-	{
-		ItemCountText->SetText(FText::GetEmpty());
-		ItemCountText->SetVisibility(ESlateVisibility::Hidden);
-		ItemImage->SetVisibility(ESlateVisibility::Hidden);
 	}
 }

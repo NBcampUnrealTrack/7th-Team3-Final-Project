@@ -18,6 +18,7 @@ enum class ENCPresetCell : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuickSlotUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPresetUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnConsumableSelectionRequested);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemUsedSignature, FGameplayTag, UsedItemTag);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -55,6 +56,15 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category = "Inventory")
     int32 CurrentEquippedPresetIndex = -1;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+	FOnConsumableSelectionRequested OnConsumableSelectionRequested;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Inventory|Consumable")
+	int32 SelectedConsumableIndex = 0;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
+	void SetSelectedConsumableIndex(int32 Index);
 
     virtual void InitializeInventory() override;
 
