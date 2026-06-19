@@ -69,6 +69,15 @@ void UNCInteractionComponent::Interact()
 	}
 }
 
+void UNCInteractionComponent::StopInteraction() //헌호수정 - 사망 시 호출
+{
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_UpdateInteractable);
+	if (CurrentInteractableTarget)
+		SetHighlight(CurrentInteractableTarget, false);
+	CurrentInteractableTarget = nullptr;
+	bIsLooting = false;
+}
+
 void UNCInteractionComponent::OnLootMontageEnded()
 {
 	bIsLooting = false;
