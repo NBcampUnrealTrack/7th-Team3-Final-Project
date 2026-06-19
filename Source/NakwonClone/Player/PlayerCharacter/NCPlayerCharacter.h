@@ -49,6 +49,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void OnUseItemMontageEnded();
+
+	UFUNCTION(BlueprintPure, Category = "Sound|Footstep")
+	float GetFootstepVolumeMultiplier() const;
 	
 protected:
 	virtual void BeginPlay() override;
