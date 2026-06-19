@@ -5,6 +5,8 @@
 #include "AIController.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "Animation/AnimInstance.h"
+#include "Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
+#include "Components/CapsuleComponent.h"
 
 UBTTask_Dead::UBTTask_Dead()
 {
@@ -20,6 +22,11 @@ EBTNodeResult::Type UBTTask_Dead::ExecuteTask(UBehaviorTreeComponent& OwnerComp,
 
 	CurrentMontage = Monster->GetSelectedDeadMontage();
 	Monster->PlayAnimMontage(CurrentMontage);
+	float Duration = Monster->PlayAnimMontage(CurrentMontage);
+	
+	UE_LOG(LogMonster, Warning, TEXT("DeadMontage: %s, Duration: %f"), 
+		CurrentMontage ? *CurrentMontage->GetName() : TEXT("nullptr"), Duration);
+	
 	CachedOwnerComp = &OwnerComp;
 	
 	UAnimInstance* AnimInstance = Monster->GetMesh()->GetAnimInstance();
@@ -53,6 +60,7 @@ void UBTTask_Dead::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	{
 		return;
 	}
+	
 	if (!CachedOwnerComp)
 	{
 		return;
@@ -68,3 +76,4 @@ void UBTTask_Dead::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	CachedOwnerComp->StopTree(EBTStopMode::Safe);
 	CachedOwnerComp = nullptr;
 }
+
