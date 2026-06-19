@@ -69,9 +69,16 @@ void UBTTask_Dead::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(CachedOwnerComp->GetAIOwner()->GetPawn());
 	if (Monster)
 	{
-		Monster->HandleDead();
+		Monster->OnStartRagdoll();
+		Monster->SetLifeSpan(200.f);
 	}
-	
+
+	if (AAIController* AIC = Cast<AAIController>(Monster->GetController()))
+	{
+		AIC->StopMovement();
+		AIC->UnPossess();
+	}
+
 	FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
 	CachedOwnerComp->StopTree(EBTStopMode::Safe);
 	CachedOwnerComp = nullptr;
