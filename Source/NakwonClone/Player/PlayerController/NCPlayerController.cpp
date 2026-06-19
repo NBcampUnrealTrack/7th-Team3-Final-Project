@@ -83,9 +83,9 @@ void ANCPlayerController::SetupInputComponent()
         {
             EIC->BindAction(QuickSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot3);
         }
-        if (QuickSlot4Action)
+        if (QuickSlot3HoldAction)
         {
-            EIC->BindAction(QuickSlot4Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot4);
+            EIC->BindAction(QuickSlot3HoldAction, ETriggerEvent::Triggered, this, &ANCPlayerController::QuickSlot3Hold);
         }
         if (UnArmAction)
         {
@@ -271,7 +271,7 @@ void ANCPlayerController::QuickSlot1()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseQuickSlot(0);
+        NCInventoryComp->ApplyPreset(0);
     }
 }
 
@@ -279,7 +279,7 @@ void ANCPlayerController::QuickSlot2()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseQuickSlot(1);
+        NCInventoryComp->ApplyPreset(1);
     }
 }
 
@@ -287,15 +287,15 @@ void ANCPlayerController::QuickSlot3()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseQuickSlot(2);
+        NCInventoryComp->UseConsumableSlot(NCInventoryComp->SelectedConsumableIndex);
     }
 }
 
-void ANCPlayerController::QuickSlot4()
+void ANCPlayerController::QuickSlot3Hold()
 {
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseQuickSlot(3);
+        NCInventoryComp->OnConsumableSelectionRequested.Broadcast();
     }
 }
 

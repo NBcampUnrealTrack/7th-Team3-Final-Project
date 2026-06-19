@@ -5,6 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "NCEquipmentInventorySlot.generated.h"
 
 UCLASS()
@@ -43,4 +44,16 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly)
 	int32 Quantity;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Preset")
+	int32 PresetIndex = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Preset")
+	ENCPresetCell PresetCell = ENCPresetCell::Right;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Preset")
+	bool bIsConsumableSlot = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Preset")
+	int32 ConsumableIndex = 0;
 };

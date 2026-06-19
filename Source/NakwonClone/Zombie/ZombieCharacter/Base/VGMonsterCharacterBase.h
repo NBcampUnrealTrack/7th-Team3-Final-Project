@@ -41,6 +41,20 @@ protected:
 #pragma endregion
 	
 #pragma region 애니메이션
+public:
+	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
+	UAnimMontage* GetRandomMoveMontage()   { return GetRandomMontage(AnimMove); }
+	UAnimMontage* GetRandomStopMontage()   { return GetRandomMontage(AnimStop); }
+	UAnimMontage* GetRandomChaseMontage()  { return GetRandomMontage(AnimChase); }
+	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
+	UAnimMontage* GetRandomHitMontage()    { return GetRandomMontage(AnimHit); }
+	UAnimMontage* GetRandomDeadMontage()   { return GetRandomMontage(AnimDead); }
+	
+	UAnimMontage* GetSelectedMoveMontage() { return SelectedMoveMontage; }
+	UAnimMontage* GetSelectedChaseMontage() { return SelectedChaseMontage; }
+	UAnimMontage* GetSelectedStopMontage() { return SelectedStopMontage; }
+	UAnimMontage* GetSelectedDeadMontage() { return SelectedDeadMontage; }
+	
 protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimMove;
@@ -60,14 +74,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimDead;
 	
-public:
-	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
-	UAnimMontage* GetRandomMoveMontage()   { return GetRandomMontage(AnimMove); }
-	UAnimMontage* GetRandomStopMontage()   { return GetRandomMontage(AnimStop); }
-	UAnimMontage* GetRandomChaseMontage()  { return GetRandomMontage(AnimChase); }
-	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
-	UAnimMontage* GetRandomHitMontage()    { return GetRandomMontage(AnimHit); }
-	UAnimMontage* GetRandomDeadMontage()   { return GetRandomMontage(AnimDead); }
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> SelectedMoveMontage;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> SelectedChaseMontage;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> SelectedStopMontage;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> SelectedDeadMontage;
 #pragma endregion
 	
 #pragma region 피격
@@ -80,13 +97,12 @@ private:
 	FTimerHandle HitTimerHandle;
 #pragma endregion
 	
+	
 #pragma region 사망 처리
 public:
 	UFUNCTION()
 	void HandleDead();
 	
-private:
 	void OnStartRagdoll();
-	FTimerHandle DeadTimerHandle;
 #pragma endregion
 };

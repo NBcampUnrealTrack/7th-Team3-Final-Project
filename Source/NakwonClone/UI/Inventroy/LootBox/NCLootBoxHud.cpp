@@ -69,6 +69,6 @@ void UNCLootBoxHud::UpdateLootSlots()
 	for (int32 i = 0; i < LootSlotWidgets.Num(); i++)
 	{
 		const FInventorySlot& ItemSlot  = LootInventoryComp->Items[i];
-		LootSlotWidgets[i]->SetSlotData(i, ItemSlot .ItemTypeTag, ItemSlot .Quantity, ItemSlot .ItemID);
+		LootSlotWidgets[i]->SetSlotData(i, ItemSlot.Quantity, ItemSlot.ItemTypeTag, ItemSlot.ItemID);
 	}
 }

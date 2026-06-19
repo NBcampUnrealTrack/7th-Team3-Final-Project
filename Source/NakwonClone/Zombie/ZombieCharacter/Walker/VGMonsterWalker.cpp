@@ -49,7 +49,8 @@ void AVGMonsterWalker::PerformAttackTrace()
 			Params);
 		
 		DrawDebugLine(GetWorld(), SocketLocation, TraceEnd, bHit ? FColor::Red : FColor::Green, false, 1.f);
-	
+		DrawDebugSphere(GetWorld(), SocketLocation, 5.f, 8, FColor::Yellow, false, 1.f);
+		
 		if (bHit)
 		{
 			UAbilitySystemComponent* TargetASC = 

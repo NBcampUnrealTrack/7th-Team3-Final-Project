@@ -1,6 +1,7 @@
 ﻿#include "NCPlayerInventoryComponent.h"
 
 #include "Framwork/PlayerState/NCPlayerState.h"
+#include "Framwork/GameInstacne/NCGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Item/NCItemActor.h"
@@ -17,518 +18,753 @@ UNCPlayerInventoryComponent::UNCPlayerInventoryComponent()
 void UNCPlayerInventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(UNCPlayerInventoryComponent, QuickSlots);
+
+	DOREPLIFETIME(UNCPlayerInventoryComponent, EquipmentPresets);
+	DOREPLIFETIME(UNCPlayerInventoryComponent, ConsumableQuickSlots);
+}
+
+void UNCPlayerInventoryComponent::SetSelectedConsumableIndex(int32 Index)
+{
+    if (ConsumableQuickSlots.IsValidIndex(Index))
+    {
+        SelectedConsumableIndex = Index;
+        OnQuickSlotUpdated.Broadcast();
+    }
 }
 
 void UNCPlayerInventoryComponent::InitializeInventory()
 {
 	Super::InitializeInventory();
-	
-	QuickSlots.Init(FInventorySlot(), 4);
+
+	EquipmentPresets.Init(FEquipmentPreset(), 2);
+	ConsumableQuickSlots.Init(FInventorySlot(), 6);
 }
 
-FInventorySlot UNCPlayerInventoryComponent::GetQuickSlotData(int32 SlotIndex) const
+void UNCPlayerInventoryComponent::OnRep_Presets()
 {
-	if (QuickSlots.IsValidIndex(SlotIndex))
-	{
-		return QuickSlots[SlotIndex];
-	}
-    
-	return FInventorySlot();
+	OnPresetUpdated.Broadcast();
+}
+void UNCPlayerInventoryComponent::OnRep_QuickSlots()
+{
+    OnQuickSlotUpdated.Broadcast();
+}
+
+FGameplayTag UNCPlayerInventoryComponent::GetWeaponTypeTag(FName WeaponID) const
+{
+    if (UWorld* World = GetWorld())
+    {
+        if (UNCGameInstance* GI = Cast<UNCGameInstance>(World->GetGameInstance()))
+        {
+            if (FNCWeaponData* Data = GI->GetWeaponData(WeaponID))
+            {
+                return Data->WeaponTypeTag;
+            }
+        }
+    }
+    return FGameplayTag::EmptyTag;
+}
+
+FEquipmentPreset UNCPlayerInventoryComponent::GetPresetData(int32 PresetIndex) const
+{
+    return EquipmentPresets.IsValidIndex(PresetIndex) ? EquipmentPresets[PresetIndex] : FEquipmentPreset();
+}
+
+FInventorySlot UNCPlayerInventoryComponent::GetPresetActiveWeapon(int32 PresetIndex) const
+{
+    if (!EquipmentPresets.IsValidIndex(PresetIndex))
+        return FInventorySlot();
+
+    const FEquipmentPreset& P = EquipmentPresets[PresetIndex];
+    return P.IsTwoHandActive() ? P.TwoHand : P.RightHand;
+}
+
+FInventorySlot UNCPlayerInventoryComponent::GetConsumableData(int32 SlotIndex) const
+{
+    return ConsumableQuickSlots.IsValidIndex(SlotIndex) ? ConsumableQuickSlots[SlotIndex] : FInventorySlot();
 }
 
 FInventorySlot UNCPlayerInventoryComponent::GetMainSlotData(int32 SlotIndex) const
 {
-	if (Items.IsValidIndex(SlotIndex))
-	{
-		return Items[SlotIndex];
-	}
-    
-	return FInventorySlot();
+    return Items.IsValidIndex(SlotIndex) ? Items[SlotIndex] : FInventorySlot();
 }
 
 void UNCPlayerInventoryComponent::ForceUnArm()
 {
-	if (CurrentEquippedSlotIndex == -1)
-	{
-		return;
-	}
-	
-	if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
-	{
-		if (APawn* NCPawn = NCPS->GetPawn())
-		{
-			if (UNCCombatComponent* NCCombatComp = NCPawn->FindComponentByClass<UNCCombatComponent>())
-			{
-				NCCombatComp->UnEquipWeapon();
-				CurrentEquippedSlotIndex = -1;
-				
-				FString DebugMsg = TEXT("[H키 : 맨손 전환]");
-				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::White, DebugMsg);	
-			}
-		}
-	}
-}
-
-void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex,int32 PlayerSlotIndex)
-{
-	if (!LootBox)
-	{
-		return;
-	}
-	Server_TakeItemFromLootBox(LootBox, BoxSlotIndex, PlayerSlotIndex);
-}
-
-void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANCLootBoxActor* LootBox,int32 BoxSlotIndex, int32 PlayerSlotIndex)
-{
-	if (!LootBox)
-	{
-		return;
-	}
-	UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
-	if (!LootInventory)
-	{
-		return;
-	}
-	int32 TargetSlot = PlayerSlotIndex;
-	if (TargetSlot == -1)
-	{
-		for (int32 i = 0; i < Items.Num(); ++i)
-		{
-			if (Items[i].IsEmpty())
-			{
-				TargetSlot = i;
-				break;
-			}
-		}
-	}
-	if (TargetSlot == -1)
-	{
-		return;
-	}
-
-	
-	LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
-}
-
-void UNCPlayerInventoryComponent::OnRep_QuickSlots()
-{
-	OnQuickSlotUpdated.Broadcast();
-}
-
-bool UNCPlayerInventoryComponent::UseItem(int32 SlotIndex)
-{
-	if (!GetOwner()->HasAuthority())
-	{
-		return false;
-	}
-	
-	if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty())
-	{
-		return false;
-	}
-	
-	FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
-	
-	if (!ItemTag.MatchesTag(NCItemType::Consumable)) 
-	{
-		return false;
-	}
-	
-	FString DebugMsg = FString::Printf(TEXT("아이템 사용 태그: %s"), *ItemTag.ToString());
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
-	
-	return RemoveItem(SlotIndex, 1);
-}
-
-bool UNCPlayerInventoryComponent::AutoEquipItem(int32 MainSlotIndex)
-{
-	if (!GetOwner()->HasAuthority())
-	{
-		return false;
-	}
-
-	if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty())
-	{
-		return false;
-	}
-
-	FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
-	int32 TargetQuickSlotIndex = -1;
-
-	if (ItemTag.MatchesTag(NCItemTag::Weapon))
-	{
-		if (QuickSlots[0].IsEmpty()) TargetQuickSlotIndex = 0;
-		else if (QuickSlots[1].IsEmpty()) TargetQuickSlotIndex = 1;
-		else TargetQuickSlotIndex = 0;
-	}
-	else if (ItemTag.MatchesTag(NCItemTag::Heal))
-	{
-		TargetQuickSlotIndex = 2;
-	}
-	else if (ItemTag.MatchesTag(NCItemTag::Food))
-	{
-		TargetQuickSlotIndex = 3;
-	}
-
-	if (TargetQuickSlotIndex != -1)
-	{
-		return EquipToQuickSlot(MainSlotIndex, TargetQuickSlotIndex);
-	}
-
-	return false;
-}
-
-bool UNCPlayerInventoryComponent::EquipToQuickSlot(int32 MainSlotIndex, int32 QuickSlotIndex)
-{
-	if (!GetOwner()->HasAuthority())
-	{
-		return false;
-	}
-	
-	if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty() || !QuickSlots.IsValidIndex(QuickSlotIndex))
-	{
-		return false;
-	}
-	
-	FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
-	FName ItemID = Items[MainSlotIndex].ItemID;
-	
-	if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
-	{
-		if (!ItemTag.MatchesTag(NCItemTag::Weapon)) return false;
-	}
-	
-	else if (QuickSlotIndex == 2)
-	{
-		if (!ItemTag.MatchesTag(NCItemTag::Heal)) return false;
-	}
-	
-	else if (QuickSlotIndex == 3)
-	{
-		if (!ItemTag.MatchesTag(NCItemTag::Food)) return false;
-	}
-	
-	if (!QuickSlots[QuickSlotIndex].IsEmpty())
-	{
-		if (QuickSlots[QuickSlotIndex].ItemID == ItemID && QuickSlots[QuickSlotIndex].ItemTypeTag == ItemTag)
-		{
-			FItemData ItemData;
-			if (GetItemDataByTag(ItemID, ItemTag, ItemData))
-			{
-				int32 RoomInQuickSlot = ItemData.MaxStackSize - QuickSlots[QuickSlotIndex].Quantity;
-                
-				if (RoomInQuickSlot > 0)
-				{
-					if (Items[MainSlotIndex].Quantity <= RoomInQuickSlot)
-					{
-						QuickSlots[QuickSlotIndex].Quantity += Items[MainSlotIndex].Quantity;
-						
-						Items[MainSlotIndex].ItemID = NAME_None;
-						Items[MainSlotIndex].ItemTypeTag = FGameplayTag::EmptyTag;
-						Items[MainSlotIndex].Quantity = 0;
-					}
-					else
-					{
-						QuickSlots[QuickSlotIndex].Quantity = ItemData.MaxStackSize;
-						Items[MainSlotIndex].Quantity -= RoomInQuickSlot;
-					}
-                    
-					OnInventoryUpdated.Broadcast();
-					OnQuickSlotUpdated.Broadcast();
-					return true;
-				}
-			}
-		}
-	}
-	
-	FInventorySlot TempSlot = QuickSlots[QuickSlotIndex];
-	QuickSlots[QuickSlotIndex] = Items[MainSlotIndex];
-	Items[MainSlotIndex] = TempSlot;
-	
-	if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
-	{
-		if (ANCPlayerState* NCPS =  Cast<ANCPlayerState>(GetOwner()))
-		{
-			if (APawn* NCPawn =	NCPS->GetPawn())
-			{
-				if (UNCCombatComponent* NCCombatComponent = NCPawn->FindComponentByClass<UNCCombatComponent>())
-				{
-					NCCombatComponent->EquipWeapon(QuickSlots[QuickSlotIndex].WeaponInstance);
-				}
-			}
-		}
-	}
-	
-	OnInventoryUpdated.Broadcast();
-	OnQuickSlotUpdated.Broadcast();
-	
-	return true;
-}
-
-bool UNCPlayerInventoryComponent::UnequipFromQuickSlot(int32 QuickSlotIndex, int32 MainSlotIndex)
-{
-	if (!GetOwner()->HasAuthority())
+    if (CurrentEquippedPresetIndex == -1)
     {
-       return false;
+        return;
     }
 
-    if (!QuickSlots.IsValidIndex(QuickSlotIndex) || !Items.IsValidIndex(MainSlotIndex))
+    if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
     {
-       return false;
+        if (APawn* NCPawn = NCPS->GetPawn())
+        {
+            if (UNCCombatComponent* NCCombatComp = NCPawn->FindComponentByClass<UNCCombatComponent>())
+            {
+                NCCombatComp->UnEquipWeapon();
+                CurrentEquippedPresetIndex = -1;
+
+                GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::White, TEXT("[H키 : 맨손 전환]"));
+            }
+        }
     }
-    if (QuickSlots[QuickSlotIndex].IsEmpty())
+}
+
+void UNCPlayerInventoryComponent::ApplyPreset(int32 PresetIndex)
+{
+    Server_ApplyPreset(PresetIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_ApplyPreset_Implementation(int32 PresetIndex)
+{
+    if (!GetOwner()->HasAuthority() || !EquipmentPresets.IsValidIndex(PresetIndex))
     {
-       return false;
+        return;
+    }
+
+    ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner());
+    APawn* Pawn = PS ? PS->GetPawn() : nullptr;
+    UNCCombatComponent* Combat = Pawn ? Pawn->FindComponentByClass<UNCCombatComponent>() : nullptr;
+    if (!Combat)
+    {
+        return;
+    }
+
+    const FEquipmentPreset& Preset = EquipmentPresets[PresetIndex];
+
+    if (CurrentEquippedPresetIndex == PresetIndex)
+    {
+        Combat->UnEquipWeapon();
+        CurrentEquippedPresetIndex = -1;
+        return;
+    }
+
+    Combat->UnEquipWeapon();
+
+    auto EnsureInstance = [](FInventorySlot Slot)
+    {
+        FNCWeaponInstance W = Slot.WeaponInstance;
+        if (W.WeaponID.IsNone())
+        {
+            W.WeaponID = Slot.ItemID;
+            W.UniqueID = FGuid::NewGuid();
+            W.CurrentDurability = 100.0f;
+            W.bIsBroken = false;
+        }
+        return W;
+    };
+
+    if (Preset.IsTwoHandActive())
+    {
+        Combat->EquipWeapon(EnsureInstance(Preset.TwoHand));
+    }
+    else if (!Preset.RightHand.IsEmpty())
+    {
+        Combat->EquipWeapon(EnsureInstance(Preset.RightHand));
+    }
+    // TODO(왼손): if (!Preset.LeftHand.IsEmpty()) Combat->EquipOffHand(Preset.LeftHand.ItemID);
+
+    CurrentEquippedPresetIndex = PresetIndex;
+
+    GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow,
+        FString::Printf(TEXT("[프리셋 %d 적용]"), PresetIndex));
+}
+
+bool UNCPlayerInventoryComponent::EquipToPreset(int32 MainSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
+{
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty() || !EquipmentPresets.IsValidIndex(PresetIndex))
+    {
+        return false;
+    }
+
+    const FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
+    const FName ItemID = Items[MainSlotIndex].ItemID;
+    const FGameplayTag WeaponType = GetWeaponTypeTag(ItemID);
+
+    if (Cell == ENCPresetCell::Right)
+    {
+        if (!ItemTag.MatchesTag(NCItemTag::Weapon)) return false;
+        if (WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded))
+            Cell = ENCPresetCell::Two;
+        else if (!WeaponType.MatchesTagExact(NCWeapon::Type_OneHanded))
+            return false;
+    }
+    else if (Cell == ENCPresetCell::Two)
+    {
+        if (!ItemTag.MatchesTag(NCItemTag::Weapon) || !WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded))
+            return false;
+    }
+    else
+    {
+        if (ItemTag.MatchesTag(NCItemTag::Weapon) && WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded))
+        {
+            Cell = ENCPresetCell::Two;
+        }
+        else if (ItemTag.MatchesTag(NCItemTag::Weapon) && WeaponType.MatchesTagExact(NCWeapon::Type_OneHanded))
+        {
+            Cell = ENCPresetCell::Right;
+        }
+        else
+        {
+            FItemData ItemData;
+            if (!GetItemDataByTag(ItemID, ItemTag, ItemData)) return false;
+            if (!ItemData.EquipTags.HasTag(NCEquip::Hand_Left)) return false;
+        }
+    }
+
+    FEquipmentPreset& P = EquipmentPresets[PresetIndex];
+
+    auto ReturnCell = [&](FInventorySlot& C) -> bool
+    {
+        if (C.IsEmpty()) return true;
+        for (int32 i = 0; i < Items.Num(); ++i)
+        {
+            if (Items[i].IsEmpty())
+            {
+                Items[i] = C;
+                C = FInventorySlot();
+                return true;
+            }
+        }
+        return false;
+    };
+
+    if (Cell == ENCPresetCell::Two)
+    {
+        if (!ReturnCell(P.RightHand) || !ReturnCell(P.LeftHand)) return false;
+    }
+    else
+    {
+        if (!ReturnCell(P.TwoHand)) return false;
+    }
+
+    FInventorySlot& Target =
+        (Cell == ENCPresetCell::Right) ? P.RightHand :
+        (Cell == ENCPresetCell::Two)   ? P.TwoHand   : P.LeftHand;
+
+    FInventorySlot Temp = Target;
+    Target = Items[MainSlotIndex];
+    Items[MainSlotIndex] = Temp;
+
+    OnInventoryUpdated.Broadcast();
+    OnPresetUpdated.Broadcast();
+    return true;
+}
+
+bool UNCPlayerInventoryComponent::UnequipFromPreset(int32 PresetIndex, ENCPresetCell Cell, int32 MainSlotIndex)
+{
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!EquipmentPresets.IsValidIndex(PresetIndex) || !Items.IsValidIndex(MainSlotIndex))
+    {
+        return false;
+    }
+
+    FEquipmentPreset& P = EquipmentPresets[PresetIndex];
+    FInventorySlot& Source =
+        (Cell == ENCPresetCell::Two)  ? P.TwoHand :
+        (Cell == ENCPresetCell::Left) ? ((P.LeftHand.IsEmpty()  && !P.TwoHand.IsEmpty()) ? P.TwoHand : P.LeftHand) :
+                                        ((P.RightHand.IsEmpty() && !P.TwoHand.IsEmpty()) ? P.TwoHand : P.RightHand);
+
+    if (Source.IsEmpty())
+    {
+        return false;
     }
 
     if (!Items[MainSlotIndex].IsEmpty())
     {
-       FGameplayTag IncomingTag = Items[MainSlotIndex].ItemTypeTag;
-       if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
-       {
-       	if (!IncomingTag.MatchesTag(NCItemTag::Weapon)) return false;
-       }
-       else if (QuickSlotIndex == 2)
-       {
-       	if (!IncomingTag.MatchesTag(NCItemTag::Heal)) return false;
-       }
-       else if (QuickSlotIndex == 3)
-       {
-       	if (!IncomingTag.MatchesTag(NCItemTag::Food)) return false;
-       }
+        const FGameplayTag InTag = Items[MainSlotIndex].ItemTypeTag;
+        const FGameplayTag InWeapon = GetWeaponTypeTag(Items[MainSlotIndex].ItemID);
+        if (Cell == ENCPresetCell::Right && (!InTag.MatchesTag(NCItemTag::Weapon) || !InWeapon.MatchesTagExact(NCWeapon::Type_OneHanded)))
+        {
+            return false;
+        }
+        if (Cell == ENCPresetCell::Two && (!InTag.MatchesTag(NCItemTag::Weapon) || !InWeapon.MatchesTagExact(NCWeapon::Type_TwoHanded)))
+        {
+            return false;
+        }
+        if (Cell == ENCPresetCell::Left)
+        {
+            FItemData InData;
+            if (!GetItemDataByTag(Items[MainSlotIndex].ItemID, InTag, InData) ||
+                !InData.EquipTags.HasTag(NCEquip::Hand_Left))
+                return false;
+        }
     }
 
-    if (QuickSlotIndex == 0 || QuickSlotIndex == 1)
+    const bool bSourceIsTwoHand = (&Source == &P.TwoHand);
+    const bool bSourceIsRight   = (&Source == &P.RightHand);
+    const bool bWasActiveWeapon =
+        (CurrentEquippedPresetIndex == PresetIndex) &&
+        (bSourceIsTwoHand || (bSourceIsRight && P.TwoHand.IsEmpty()));
+
+    if (bWasActiveWeapon)
     {
-       if (CurrentEquippedSlotIndex == QuickSlotIndex)
-       {
-          if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
-          {
-             if (APawn* NCPawn = NCPS->GetPawn())
-             {
-                if (UNCCombatComponent* NCCombatComp = NCPawn->FindComponentByClass<UNCCombatComponent>())
+        if (ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner()))
+        {
+            if (APawn* Pawn = PS->GetPawn())
+            {
+                if (UNCCombatComponent* Combat = Pawn->FindComponentByClass<UNCCombatComponent>())
                 {
-                   NCCombatComp->UnEquipWeapon();
-                   CurrentEquippedSlotIndex = -1;
-                   
-                   FString DebugMsg = FString::Printf(TEXT("[장비 해제] %d번 슬롯 무기를 가방으로 이동 및 맨손 전환"), QuickSlotIndex);
-                   GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, DebugMsg);
+                    Combat->UnEquipWeapon();
+                    CurrentEquippedPresetIndex = -1;
                 }
-             }
-          }
-       }
+            }
+        }
     }
 
-    FInventorySlot TempSlot = QuickSlots[QuickSlotIndex];
-    QuickSlots[QuickSlotIndex] = Items[MainSlotIndex];
-    Items[MainSlotIndex] = TempSlot;
+    FInventorySlot Temp = Source;
+    Source = Items[MainSlotIndex];
+    Items[MainSlotIndex] = Temp;
 
     OnInventoryUpdated.Broadcast();
-    OnQuickSlotUpdated.Broadcast();
-
+    OnPresetUpdated.Broadcast();
     return true;
 }
 
-bool UNCPlayerInventoryComponent::UseQuickSlot(int32 QuickSlotIndex)
+bool UNCPlayerInventoryComponent::EquipToConsumable(int32 MainSlotIndex, int32 ConsumableSlotIndex)
 {
-	if (!GetOwner()->HasAuthority())
-	{
-		return false;
-	}
-	
-	if (!QuickSlots.IsValidIndex(QuickSlotIndex) || QuickSlots[QuickSlotIndex].IsEmpty())
-	{
-		return false;
-	}
-	
-	FGameplayTag ItemTag = QuickSlots[QuickSlotIndex].ItemTypeTag;
-	FName ItemID = QuickSlots[QuickSlotIndex].ItemID;
-	
-	if (ItemTag.MatchesTag(NCItemType::Consumable))
-	{
-		QuickSlots[QuickSlotIndex].Quantity -= 1;
-        
-		if (QuickSlots[QuickSlotIndex].Quantity <= 0)
-		{
-			QuickSlots[QuickSlotIndex].ItemID = NAME_None;
-			QuickSlots[QuickSlotIndex].ItemTypeTag = FGameplayTag::EmptyTag;
-			QuickSlots[QuickSlotIndex].Quantity = 0;
-		}
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty() || !ConsumableQuickSlots.IsValidIndex(ConsumableSlotIndex))
+    {
+        return false;
+    }
 
-		OnQuickSlotUpdated.Broadcast();
-		
-		if (ItemTag.MatchesTag(NCItemTag::Heal) || ItemTag.MatchesTag(NCItemTag::Food))
-		{
-			if (ConsumableDataTable)
-			{
-				if (FConsumableItemData* Data = ConsumableDataTable->FindRow<FConsumableItemData>(ItemID, TEXT("UseQuickSlot")))
-				{
-					PendingConsumableData = *Data;
-					bHasPendingConsumable = true;
-				}
-			}
-		}
-		
-		Multicast_OnItemUsed(ItemTag); //헌호수정 - 멀티캐스트로 모든 클라이언트에 전파
+    const FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
+    const FName ItemID = Items[MainSlotIndex].ItemID;
+    
+    if (!ItemTag.MatchesTag(NCItemType::Consumable)) return false;
+    if (!Items[MainSlotIndex].ItemTypeTag.MatchesTag(NCItemType::Consumable)) return false;
+    
+    FInventorySlot& Slot = ConsumableQuickSlots[ConsumableSlotIndex];
 
-		FString DebugMsg = FString::Printf(TEXT("[소모품 사용] %s (남은 수량: %d)"), *ItemTag.ToString(), QuickSlots[QuickSlotIndex].Quantity);
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, DebugMsg);
+    if (!Slot.IsEmpty() && Slot.ItemID == ItemID && Slot.ItemTypeTag == ItemTag)
+    {
+        FItemData ItemData;
+        if (GetItemDataByTag(ItemID, ItemTag, ItemData))
+        {
+            int32 Room = ItemData.MaxStackSize - Slot.Quantity;
+            if (Room > 0)
+            {
+                if (Items[MainSlotIndex].Quantity <= Room)
+                {
+                    Slot.Quantity += Items[MainSlotIndex].Quantity;
+                    Items[MainSlotIndex] = FInventorySlot();
+                }
+                else
+                {
+                    Slot.Quantity = ItemData.MaxStackSize;
+                    Items[MainSlotIndex].Quantity -= Room;
+                }
+                OnInventoryUpdated.Broadcast();
+                OnQuickSlotUpdated.Broadcast();
+                return true;
+            }
+        }
+    }
 
-		return true;
-	}
-	
-	else if (ItemTag.MatchesTag(NCItemTag::Weapon))
-	{
-		if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
-		{
-			if (APawn* NCPawn =	NCPS->GetPawn())
-			{
-				if (UNCCombatComponent* NCCombatComp = NCPawn->FindComponentByClass<UNCCombatComponent>())
-				{
-					if (CurrentEquippedSlotIndex == QuickSlotIndex)
-					{
-						return true;
-					}
-					
-					if (CurrentEquippedSlotIndex != -1)
-					{
-						NCCombatComp->UnEquipWeapon();
-					}
-					
-					FNCWeaponInstance WeapontoEquip = QuickSlots[QuickSlotIndex].WeaponInstance;
-					
-					if (WeapontoEquip.WeaponID.IsNone())
-					{
-						WeapontoEquip.WeaponID = QuickSlots[QuickSlotIndex].ItemID;
-						WeapontoEquip.UniqueID = FGuid::NewGuid();
-						WeapontoEquip.CurrentDurability = 100.0f;
-						WeapontoEquip.bIsBroken = false;
-					}
-					
-					NCCombatComp->EquipWeapon(WeapontoEquip);
-					CurrentEquippedSlotIndex = QuickSlotIndex;
-					
-					FString DebugMsg = FString::Printf(TEXT("[무기 장착] 슬롯: %d, 아이디: %s"), QuickSlotIndex, *WeapontoEquip.WeaponID.ToString());
-					GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMsg);
-				}
-			}
-		}
-		
-		OnItemUsed.Broadcast(ItemTag);
-		return true;
-	}
-		
-	return false;
+    // 스왑
+    FInventorySlot Temp = Slot;
+    Slot = Items[MainSlotIndex];
+    Items[MainSlotIndex] = Temp;
+
+    OnInventoryUpdated.Broadcast();
+    OnQuickSlotUpdated.Broadcast();
+    return true;
+}
+
+bool UNCPlayerInventoryComponent::UnequipFromConsumable(int32 ConsumableSlotIndex, int32 MainSlotIndex)
+{
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!ConsumableQuickSlots.IsValidIndex(ConsumableSlotIndex) || !Items.IsValidIndex(MainSlotIndex))
+    {
+        return false;
+    }
+    if (ConsumableQuickSlots[ConsumableSlotIndex].IsEmpty())
+    {
+        return false;
+    }
+
+    if (!Items[MainSlotIndex].IsEmpty())
+    {
+        if (!Items[MainSlotIndex].ItemTypeTag.MatchesTag(NCItemType::Consumable)) return false;
+    }
+
+    FInventorySlot Temp = ConsumableQuickSlots[ConsumableSlotIndex];
+    ConsumableQuickSlots[ConsumableSlotIndex] = Items[MainSlotIndex];
+    Items[MainSlotIndex] = Temp;
+
+    OnInventoryUpdated.Broadcast();
+    OnQuickSlotUpdated.Broadcast();
+    return true;
+}
+
+bool UNCPlayerInventoryComponent::MovePresetToPreset(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell)
+{
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!EquipmentPresets.IsValidIndex(FromPresetIndex) || !EquipmentPresets.IsValidIndex(ToPresetIndex))
+    {
+        return false;
+    }
+    if (FromPresetIndex == ToPresetIndex && FromCell == ToCell)
+    {
+        return false;
+    }
+
+    FEquipmentPreset& PFrom = EquipmentPresets[FromPresetIndex];
+    FEquipmentPreset& PTo   = EquipmentPresets[ToPresetIndex];
+
+    auto ResolveCell = [](FEquipmentPreset& P, ENCPresetCell Cell) -> FInventorySlot&
+    {
+        if (Cell == ENCPresetCell::Two)  return P.TwoHand;
+        if (Cell == ENCPresetCell::Left) return P.LeftHand;
+        return !P.TwoHand.IsEmpty() ? P.TwoHand : P.RightHand;
+    };
+
+    FInventorySlot& Src = ResolveCell(PFrom, FromCell);
+    if (Src.IsEmpty())
+    {
+        return false;
+    }
+
+    const FGameplayTag SrcTag    = Src.ItemTypeTag;
+    const FGameplayTag SrcWeapon = GetWeaponTypeTag(Src.ItemID);
+    ENCPresetCell DestCell = ToCell;
+    if (SrcTag.MatchesTag(NCItemTag::Weapon))
+    {
+        if (SrcWeapon.MatchesTagExact(NCWeapon::Type_TwoHanded))      DestCell = ENCPresetCell::Two;
+        else if (SrcWeapon.MatchesTagExact(NCWeapon::Type_OneHanded)) DestCell = ENCPresetCell::Right;
+    }
+
+    if (DestCell == ENCPresetCell::Two)
+    {
+        if (!PTo.RightHand.IsEmpty() || !PTo.LeftHand.IsEmpty()) return false;
+    }
+    else
+    {
+        if (!PTo.TwoHand.IsEmpty()) return false;
+    }
+
+    FInventorySlot& Dst =
+        (DestCell == ENCPresetCell::Two)  ? PTo.TwoHand  :
+        (DestCell == ENCPresetCell::Left) ? PTo.LeftHand : PTo.RightHand;
+
+    if (CurrentEquippedPresetIndex == FromPresetIndex || CurrentEquippedPresetIndex == ToPresetIndex)
+    {
+        if (ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner()))
+        {
+            if (APawn* Pawn = PS->GetPawn())
+            {
+                if (UNCCombatComponent* Combat = Pawn->FindComponentByClass<UNCCombatComponent>())
+                {
+                    Combat->UnEquipWeapon();
+                    CurrentEquippedPresetIndex = -1;
+                }
+            }
+        }
+    }
+
+    FInventorySlot Temp = Dst;
+    Dst = Src;
+    Src = Temp;
+
+    OnPresetUpdated.Broadcast();
+    return true;
+}
+
+bool UNCPlayerInventoryComponent::MoveConsumableToConsumable(int32 FromIndex, int32 ToIndex)
+{
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!ConsumableQuickSlots.IsValidIndex(FromIndex) || !ConsumableQuickSlots.IsValidIndex(ToIndex))
+    {
+        return false;
+    }
+    if (FromIndex == ToIndex || ConsumableQuickSlots[FromIndex].IsEmpty())
+    {
+        return false;
+    }
+
+    FInventorySlot& A = ConsumableQuickSlots[FromIndex];
+    FInventorySlot& B = ConsumableQuickSlots[ToIndex];
+
+    if (!B.IsEmpty() && B.ItemID == A.ItemID && B.ItemTypeTag == A.ItemTypeTag)
+    {
+        FItemData Data;
+        if (GetItemDataByTag(A.ItemID, A.ItemTypeTag, Data))
+        {
+            const int32 Room = Data.MaxStackSize - B.Quantity;
+            if (Room > 0)
+            {
+                const int32 MoveAmount = FMath::Min(Room, A.Quantity);
+                B.Quantity += MoveAmount;
+                A.Quantity -= MoveAmount;
+                if (A.Quantity <= 0) A = FInventorySlot();
+                OnQuickSlotUpdated.Broadcast();
+                return true;
+            }
+        }
+    }
+
+    FInventorySlot Temp = B;
+    B = A;
+    A = Temp;
+
+    OnQuickSlotUpdated.Broadcast();
+    return true;
+}
+
+bool UNCPlayerInventoryComponent::UseConsumableSlot(int32 SlotIndex)
+{
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!ConsumableQuickSlots.IsValidIndex(SlotIndex) || ConsumableQuickSlots[SlotIndex].IsEmpty())
+    {
+        return false;
+    }
+
+    const FGameplayTag ItemTag = ConsumableQuickSlots[SlotIndex].ItemTypeTag;
+    const FName ItemID = ConsumableQuickSlots[SlotIndex].ItemID;
+
+    if (!ItemTag.MatchesTag(NCItemType::Consumable))
+    {
+        return false;
+    }
+
+    ConsumableQuickSlots[SlotIndex].Quantity -= 1;
+    if (ConsumableQuickSlots[SlotIndex].Quantity <= 0)
+    {
+        ConsumableQuickSlots[SlotIndex] = FInventorySlot();
+    }
+    OnQuickSlotUpdated.Broadcast();
+
+    if (ItemTag.MatchesTag(NCItemTag::Heal) || ItemTag.MatchesTag(NCItemTag::Food))
+    {
+        if (ConsumableDataTable)
+        {
+            if (FConsumableItemData* Data = ConsumableDataTable->FindRow<FConsumableItemData>(ItemID, TEXT("UseConsumableSlot")))
+            {
+                PendingConsumableData = *Data;
+                bHasPendingConsumable = true;
+            }
+        }
+    }
+
+    OnItemUsed.Broadcast(ItemTag);
+    return true;
+}
+
+bool UNCPlayerInventoryComponent::AutoEquipItem(int32 MainSlotIndex)
+{
+     if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty())
+    {
+        return false;
+    }
+
+    const FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
+
+    if (ItemTag.MatchesTag(NCItemTag::Weapon))
+    {
+        const FGameplayTag WeaponType = GetWeaponTypeTag(Items[MainSlotIndex].ItemID);
+        const ENCPresetCell Cell = WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded) ? ENCPresetCell::Two : ENCPresetCell::Right;
+
+        const FEquipmentPreset& P0 = EquipmentPresets[0];
+        const bool bP0CellEmpty = (Cell == ENCPresetCell::Two) ? P0.TwoHand.IsEmpty() : P0.RightHand.IsEmpty();
+        return EquipToPreset(MainSlotIndex, bP0CellEmpty ? 0 : 1, Cell);
+    }
+    else if (ItemTag.MatchesTag(NCItemTag::Heal))
+    {
+        return EquipToConsumable(MainSlotIndex, 0);
+    }
+    else if (ItemTag.MatchesTag(NCItemTag::Food))
+    {
+        return EquipToConsumable(MainSlotIndex, 1);
+    }
+
+    return false;
+}
+
+bool UNCPlayerInventoryComponent::UseItem(int32 SlotIndex)
+{
+    if (!GetOwner()->HasAuthority())
+    {
+        return false;
+    }
+    if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty())
+    {
+        return false;
+    }
+
+    const FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
+    if (!ItemTag.MatchesTag(NCItemType::Consumable))
+    {
+        return false;
+    }
+
+    return RemoveItem(SlotIndex, 1);
 }
 
 bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
 {
-	Server_DropItem(SlotIndex, Quantity); 
-	return true;
+    Server_DropItem(SlotIndex, Quantity);
+    return true;
 }
 
 void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex, int32 Quantity)
 {
-	if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty() || Quantity <= 0)
-	{
-		return;
-	}
+    if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty() || Quantity <= 0)
+    {
+        return;
+    }
 
-	FName DropItemID = Items[SlotIndex].ItemID;
-	FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
-	int32 DropQuantity = FMath::Min(Quantity, Items[SlotIndex].Quantity);
+    FName DropItemID = Items[SlotIndex].ItemID;
+    FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
+    int32 DropQuantity = FMath::Min(Quantity, Items[SlotIndex].Quantity);
 
-	
-	ANCPlayerState* OwningPlayerState = Cast<ANCPlayerState>(GetOwner());
-	if (!OwningPlayerState) return;
-	
-	AActor* OwnerActor = OwningPlayerState->GetPawn();
-	if (!OwnerActor) return; 
-	
-	FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
-	SpawnLocation.Z -= 20.0f; 
-	FRotator SpawnRotation = OwnerActor->GetActorRotation();
+    ANCPlayerState* OwningPlayerState = Cast<ANCPlayerState>(GetOwner());
+    if (!OwningPlayerState) return;
 
-	if (BaseItemActorClass)
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    AActor* OwnerActor = OwningPlayerState->GetPawn();
+    if (!OwnerActor) return;
 
-		AActor* DroppedItem = GetWorld()->SpawnActor<AActor>(BaseItemActorClass, SpawnLocation, SpawnRotation, SpawnParams);
+    FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
+    SpawnLocation.Z -= 20.0f;
+    FRotator SpawnRotation = OwnerActor->GetActorRotation();
 
-		ANCItemActor* SpawnedItemActor = Cast<ANCItemActor>(DroppedItem);
-		if (SpawnedItemActor)
-		{
-			UStaticMesh* MeshToSet = nullptr;
-			
-			UDataTable* LoadedItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/NakwonClone/Blueprints/Item/ItemData/DT_ItemTypeData.DT_ItemTypeData"));
-           
-			if (LoadedItemDataTable && !DropItemID.IsNone())
-			{
-				FItemData* FoundData = LoadedItemDataTable->FindRow<FItemData>(DropItemID, TEXT("DropItemLookup"));
-				if (FoundData)
-				{
-					MeshToSet = FoundData->ItemMesh; // 옷 찾기 성공!
-				}
-			}
-			
-			SpawnedItemActor->InitializeItemData(DropItemID, ItemTag, DropQuantity, MeshToSet);
-		}
-	}
+    if (BaseItemActorClass)
+    {
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-	FString DebugMsg = FString::Printf(TEXT("[Server] %s 아이템 %d개 드롭"), *ItemTag.ToString(), DropQuantity);
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMsg);
+        AActor* DroppedItem = GetWorld()->SpawnActor<AActor>(BaseItemActorClass, SpawnLocation, SpawnRotation, SpawnParams);
 
-	RemoveItem(SlotIndex, DropQuantity);
-} 
+        ANCItemActor* SpawnedItemActor = Cast<ANCItemActor>(DroppedItem);
+        if (SpawnedItemActor)
+        {
+            UStaticMesh* MeshToSet = nullptr;
+            UDataTable* LoadedItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/NakwonClone/Blueprints/Item/ItemData/DT_ItemTypeData.DT_ItemTypeData"));
+
+            if (LoadedItemDataTable && !DropItemID.IsNone())
+            {
+                FItemData* FoundData = LoadedItemDataTable->FindRow<FItemData>(DropItemID, TEXT("DropItemLookup"));
+                if (FoundData)
+                {
+                    MeshToSet = FoundData->ItemMesh;
+                }
+            }
+            SpawnedItemActor->InitializeItemData(DropItemID, ItemTag, DropQuantity, MeshToSet);
+        }
+    }
+
+    RemoveItem(SlotIndex, DropQuantity);
+}
 
 bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
 {
-	Server_LootItem(ItemToLoot); 
-	return true;
+    Server_LootItem(ItemToLoot);
+    return true;
 }
 
 void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemActor* ItemToLoot)
 {
-	if (!GetOwner()->HasAuthority() || !ItemToLoot)
-	{
-		return;
-	}
-	
-	FName LootID = ItemToLoot->ItemID;
-	FGameplayTag LootTag = ItemToLoot->ItemTypeTag; 
-	int32 LootQuantity = ItemToLoot->Quantity;
-	
-	if (LootTag.MatchesTag(NCItemTag::Credit))
-	{
-		if (CreditDataTable)
-		{
-			if (FCreditItemData* Data = CreditDataTable->FindRow<FCreditItemData>(LootID, TEXT("LootCredit")))
-			{
-				int32 RandomCredits = FMath::RandRange(Data->MinValue, Data->MaxValue);
-				if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
-				{
-					NCPS->AddCredits(RandomCredits);
-				}
-			}
-		}
-		ItemToLoot->Destroy();
-		return;
-	}
-	
-	bool bAdded = AddItem(LootID, LootTag, LootQuantity);
+  if (!GetOwner()->HasAuthority() || !ItemToLoot)
+    {
+        return;
+    }
 
-	if (bAdded)
-	{
-		ItemToLoot->Destroy();
-		return;
-	}
+    FName LootID = ItemToLoot->ItemID;
+    FGameplayTag LootTag = ItemToLoot->ItemTypeTag;
+    int32 LootQuantity = ItemToLoot->Quantity;
+
+    if (LootTag.MatchesTag(NCItemTag::Credit))
+    {
+        if (CreditDataTable)
+        {
+            if (FCreditItemData* Data = CreditDataTable->FindRow<FCreditItemData>(LootID, TEXT("LootCredit")))
+            {
+                int32 RandomCredits = FMath::RandRange(Data->MinValue, Data->MaxValue);
+                if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+                {
+                    NCPS->AddCredits(RandomCredits);
+                }
+            }
+        }
+        ItemToLoot->Destroy();
+        return;
+    }
+
+    bool bAdded = AddItem(LootID, LootTag, LootQuantity);
+    if (bAdded)
+    {
+        ItemToLoot->Destroy();
+    }
 }
 
-// 헌호수정 - 서버에서 호출 → 모든 클라이언트에서 OnItemUsed 델리게이트 실행
+void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+    Server_TakeItemFromLootBox(LootBox, BoxSlotIndex, PlayerSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+    UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
+    if (!LootInventory)
+    {
+        return;
+    }
+    int32 TargetSlot = PlayerSlotIndex;
+    if (TargetSlot == -1)
+    {
+        for (int32 i = 0; i < Items.Num(); ++i)
+        {
+            if (Items[i].IsEmpty())
+            {
+                TargetSlot = i;
+                break;
+            }
+        }
+    }
+    if (TargetSlot == -1)
+    {
+        return;
+    }
+
+    LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
+}
+
+// 헌호 - 서버에서 호출 → 모든 클라에서 OnItemUsed 델리게이트 실행
 void UNCPlayerInventoryComponent::Multicast_OnItemUsed_Implementation(FGameplayTag ItemTag)
 {
-	OnItemUsed.Broadcast(ItemTag);
+    OnItemUsed.Broadcast(ItemTag);
 }
