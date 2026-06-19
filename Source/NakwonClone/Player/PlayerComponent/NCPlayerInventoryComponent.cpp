@@ -174,6 +174,21 @@ void UNCPlayerInventoryComponent::Server_ApplyPreset_Implementation(int32 Preset
 
 bool UNCPlayerInventoryComponent::EquipToPreset(int32 MainSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
 {
+    if (GetOwner()->HasAuthority())
+    {
+        return EquipToPreset_Internal(MainSlotIndex, PresetIndex, Cell);
+    }
+    Server_EquipToPreset(MainSlotIndex, PresetIndex, Cell);
+    return true; // 클라이언트: 서버에 요청 전송됨, 결과는 OnRep_Presets 등으로 반영
+}
+
+void UNCPlayerInventoryComponent::Server_EquipToPreset_Implementation(int32 MainSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
+{
+    EquipToPreset_Internal(MainSlotIndex, PresetIndex, Cell);
+}
+
+bool UNCPlayerInventoryComponent::EquipToPreset_Internal(int32 MainSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
+{
     if (!GetOwner()->HasAuthority())
     {
         return false;
@@ -259,6 +274,21 @@ bool UNCPlayerInventoryComponent::EquipToPreset(int32 MainSlotIndex, int32 Prese
 
 bool UNCPlayerInventoryComponent::UnequipFromPreset(int32 PresetIndex, ENCPresetCell Cell, int32 MainSlotIndex)
 {
+    if (GetOwner()->HasAuthority())
+    {
+        return UnequipFromPreset_Internal(PresetIndex, Cell, MainSlotIndex);
+    }
+    Server_UnequipFromPreset(PresetIndex, Cell, MainSlotIndex);
+    return true;
+}
+
+void UNCPlayerInventoryComponent::Server_UnequipFromPreset_Implementation(int32 PresetIndex, ENCPresetCell Cell, int32 MainSlotIndex)
+{
+    UnequipFromPreset_Internal(PresetIndex, Cell, MainSlotIndex);
+}
+
+bool UNCPlayerInventoryComponent::UnequipFromPreset_Internal(int32 PresetIndex, ENCPresetCell Cell, int32 MainSlotIndex)
+{
     if (!GetOwner()->HasAuthority())
     {
         return false;
@@ -332,6 +362,21 @@ bool UNCPlayerInventoryComponent::UnequipFromPreset(int32 PresetIndex, ENCPreset
 
 bool UNCPlayerInventoryComponent::EquipToConsumable(int32 MainSlotIndex, int32 ConsumableSlotIndex)
 {
+    if (GetOwner()->HasAuthority())
+    {
+        return EquipToConsumable_Internal(MainSlotIndex, ConsumableSlotIndex);
+    }
+    Server_EquipToConsumable(MainSlotIndex, ConsumableSlotIndex);
+    return true;
+}
+
+void UNCPlayerInventoryComponent::Server_EquipToConsumable_Implementation(int32 MainSlotIndex, int32 ConsumableSlotIndex)
+{
+    EquipToConsumable_Internal(MainSlotIndex, ConsumableSlotIndex);
+}
+
+bool UNCPlayerInventoryComponent::EquipToConsumable_Internal(int32 MainSlotIndex, int32 ConsumableSlotIndex)
+{
     if (!GetOwner()->HasAuthority())
     {
         return false;
@@ -386,6 +431,21 @@ bool UNCPlayerInventoryComponent::EquipToConsumable(int32 MainSlotIndex, int32 C
 
 bool UNCPlayerInventoryComponent::UnequipFromConsumable(int32 ConsumableSlotIndex, int32 MainSlotIndex)
 {
+    if (GetOwner()->HasAuthority())
+    {
+        return UnequipFromConsumable_Internal(ConsumableSlotIndex, MainSlotIndex);
+    }
+    Server_UnequipFromConsumable(ConsumableSlotIndex, MainSlotIndex);
+    return true;
+}
+
+void UNCPlayerInventoryComponent::Server_UnequipFromConsumable_Implementation(int32 ConsumableSlotIndex, int32 MainSlotIndex)
+{
+    UnequipFromConsumable_Internal(ConsumableSlotIndex, MainSlotIndex);
+}
+
+bool UNCPlayerInventoryComponent::UnequipFromConsumable_Internal(int32 ConsumableSlotIndex, int32 MainSlotIndex)
+{
     if (!GetOwner()->HasAuthority())
     {
         return false;
@@ -414,6 +474,21 @@ bool UNCPlayerInventoryComponent::UnequipFromConsumable(int32 ConsumableSlotInde
 }
 
 bool UNCPlayerInventoryComponent::MovePresetToPreset(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell)
+{
+    if (GetOwner()->HasAuthority())
+    {
+        return MovePresetToPreset_Internal(FromPresetIndex, FromCell, ToPresetIndex, ToCell);
+    }
+    Server_MovePresetToPreset(FromPresetIndex, FromCell, ToPresetIndex, ToCell);
+    return true;
+}
+
+void UNCPlayerInventoryComponent::Server_MovePresetToPreset_Implementation(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell)
+{
+    MovePresetToPreset_Internal(FromPresetIndex, FromCell, ToPresetIndex, ToCell);
+}
+
+bool UNCPlayerInventoryComponent::MovePresetToPreset_Internal(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell)
 {
     if (!GetOwner()->HasAuthority())
     {
@@ -525,6 +600,21 @@ bool UNCPlayerInventoryComponent::MovePresetToPreset(int32 FromPresetIndex, ENCP
 
 bool UNCPlayerInventoryComponent::MoveConsumableToConsumable(int32 FromIndex, int32 ToIndex)
 {
+    if (GetOwner()->HasAuthority())
+    {
+        return MoveConsumableToConsumable_Internal(FromIndex, ToIndex);
+    }
+    Server_MoveConsumableToConsumable(FromIndex, ToIndex);
+    return true;
+}
+
+void UNCPlayerInventoryComponent::Server_MoveConsumableToConsumable_Implementation(int32 FromIndex, int32 ToIndex)
+{
+    MoveConsumableToConsumable_Internal(FromIndex, ToIndex);
+}
+
+bool UNCPlayerInventoryComponent::MoveConsumableToConsumable_Internal(int32 FromIndex, int32 ToIndex)
+{
     if (!GetOwner()->HasAuthority())
     {
         return false;
@@ -569,6 +659,21 @@ bool UNCPlayerInventoryComponent::MoveConsumableToConsumable(int32 FromIndex, in
 
 bool UNCPlayerInventoryComponent::UseConsumableSlot(int32 SlotIndex)
 {
+    if (GetOwner()->HasAuthority())
+    {
+        return UseConsumableSlot_Internal(SlotIndex);
+    }
+    Server_UseConsumableSlot(SlotIndex);
+    return true;
+}
+
+void UNCPlayerInventoryComponent::Server_UseConsumableSlot_Implementation(int32 SlotIndex)
+{
+    UseConsumableSlot_Internal(SlotIndex);
+}
+
+bool UNCPlayerInventoryComponent::UseConsumableSlot_Internal(int32 SlotIndex)
+{
     if (!GetOwner()->HasAuthority())
     {
         return false;
@@ -611,6 +716,21 @@ bool UNCPlayerInventoryComponent::UseConsumableSlot(int32 SlotIndex)
 
 bool UNCPlayerInventoryComponent::AutoEquipItem(int32 MainSlotIndex)
 {
+    if (GetOwner()->HasAuthority())
+    {
+        return AutoEquipItem_Internal(MainSlotIndex);
+    }
+    Server_AutoEquipItem(MainSlotIndex);
+    return true;
+}
+
+void UNCPlayerInventoryComponent::Server_AutoEquipItem_Implementation(int32 MainSlotIndex)
+{
+    AutoEquipItem_Internal(MainSlotIndex);
+}
+
+bool UNCPlayerInventoryComponent::AutoEquipItem_Internal(int32 MainSlotIndex)
+{
      if (!GetOwner()->HasAuthority())
     {
         return false;
@@ -629,21 +749,36 @@ bool UNCPlayerInventoryComponent::AutoEquipItem(int32 MainSlotIndex)
 
         const FEquipmentPreset& P0 = EquipmentPresets[0];
         const bool bP0CellEmpty = (Cell == ENCPresetCell::Two) ? P0.TwoHand.IsEmpty() : P0.RightHand.IsEmpty();
-        return EquipToPreset(MainSlotIndex, bP0CellEmpty ? 0 : 1, Cell);
+        return EquipToPreset_Internal(MainSlotIndex, bP0CellEmpty ? 0 : 1, Cell);
     }
     else if (ItemTag.MatchesTag(NCItemTag::Heal))
     {
-        return EquipToConsumable(MainSlotIndex, 0);
+        return EquipToConsumable_Internal(MainSlotIndex, 0);
     }
     else if (ItemTag.MatchesTag(NCItemTag::Food))
     {
-        return EquipToConsumable(MainSlotIndex, 1);
+        return EquipToConsumable_Internal(MainSlotIndex, 1);
     }
 
     return false;
 }
 
 bool UNCPlayerInventoryComponent::UseItem(int32 SlotIndex)
+{
+    if (GetOwner()->HasAuthority())
+    {
+        return UseItem_Internal(SlotIndex);
+    }
+    Server_UseItem(SlotIndex);
+    return true;
+}
+
+void UNCPlayerInventoryComponent::Server_UseItem_Implementation(int32 SlotIndex)
+{
+    UseItem_Internal(SlotIndex);
+}
+
+bool UNCPlayerInventoryComponent::UseItem_Internal(int32 SlotIndex)
 {
     if (!GetOwner()->HasAuthority())
     {
