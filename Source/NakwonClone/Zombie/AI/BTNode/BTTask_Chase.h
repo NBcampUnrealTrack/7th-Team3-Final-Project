@@ -6,7 +6,6 @@
 #include "BehaviorTree/BTTaskNode.h"
 #include "BTTask_Chase.generated.h"
 
-
 UCLASS()
 class NAKWONCLONE_API UBTTask_Chase : public UBTTaskNode
 {
@@ -14,7 +13,9 @@ class NAKWONCLONE_API UBTTask_Chase : public UBTTaskNode
 	
 public:
 	UBTTask_Chase();
-	
+
 protected:
-	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	virtual EBTNodeResult::Type ExecuteTask(
+		UBehaviorTreeComponent& OwnerComp, 
+		uint8* NodeMemory) override;
 };

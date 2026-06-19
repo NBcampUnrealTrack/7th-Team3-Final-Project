@@ -39,6 +39,11 @@ public:
 	FGameplayAttributeData BiteInfection;
 	ATTRIBUTE_ACCESSORS(UVGMonsterAttributeSet, BiteInfection)
 	
+	// 이동 속도
+	UPROPERTY(BlueprintReadWrite, Category = "Stats")
+	FGameplayAttributeData MoveSpeed;
+	ATTRIBUTE_ACCESSORS(UVGMonsterAttributeSet, MoveSpeed)
+	
 	// BlueprintAssignable = 블루 프린트에서도 이 델리게이트에 함수를 연결할 수 있게 함
 	// 몬스터 피격
 	UPROPERTY(BlueprintAssignable)

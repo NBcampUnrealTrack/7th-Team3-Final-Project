@@ -13,6 +13,8 @@ class UAbilitySystemComponent;
 class UVGMonsterAttributeSet;
 class UAnimMontage;
 
+struct FOnAttributeChangeData;
+
 UCLASS()
 class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbilitySystemInterface
 {
@@ -105,4 +107,17 @@ public:
 	
 	void OnStartRagdoll();
 #pragma endregion
+	
+#pragma region GAS GE
+public:
+	// 에디터에서 GE_Attack 에셋 할당
+	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
+	TSubclassOf<class UGameplayEffect> AttackEffectClass;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
+	TSubclassOf<UGameplayEffect> SpeedEffectClass;
+
+#pragma endregion 	
+private:
+	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
 };

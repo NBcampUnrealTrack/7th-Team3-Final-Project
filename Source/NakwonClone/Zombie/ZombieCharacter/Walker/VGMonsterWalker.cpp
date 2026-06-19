@@ -1,16 +1,17 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Common/NCGameplayTags.h"
+#include "NakwonClone\GAS\AttributeSet\VGMonsterAttributeSet.h"
 
 AVGMonsterWalker::AVGMonsterWalker()
 {
 	if (GetCharacterMovement())
 	{
-		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
 	}
@@ -21,9 +22,9 @@ void AVGMonsterWalker::BeginPlay()
 	Super::BeginPlay();
 
 	// 이동 속도를 BeginPlay에서도 적용 (에디터 값 반영)
-	if (GetCharacterMovement())
+	if (GetCharacterMovement() && MonsterAttributeSet)
 	{
-		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = MonsterAttributeSet->GetMoveSpeed();
 	}
 }
 

@@ -2,6 +2,7 @@
 
 
 #include "VGMonsterCharacterBase.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
@@ -52,6 +53,12 @@ void AVGMonsterCharacterBase::BeginPlay()
 		MonsterAttributeSet->OnHitReceived.AddDynamic(this, &AVGMonsterCharacterBase::HandleHit);
 	}
 	
+	if (AbilitySystemComponent && MonsterAttributeSet)
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			UVGMonsterAttributeSet::GetMoveSpeedAttribute()).AddUObject(this, &AVGMonsterCharacterBase::OnMoveSpeedChanged);
+	}
+	
 	SelectedMoveMontage = GetRandomMoveMontage();
 	SelectedChaseMontage = GetRandomChaseMontage();
 	SelectedStopMontage = GetRandomStopMontage();
@@ -70,16 +77,6 @@ void AVGMonsterCharacterBase::HandleDead()
 			Blackboard->SetValueAsBool(FName("bIsDead"), true);
 		}
 	}
-	
-	if (AAIController* AIC = Cast<AAIController>(GetController()))
-	{
-		AIC->StopMovement();
-		AIC->UnPossess();
-	}
-	
-	// 래그돌 전환
-	OnStartRagdoll();
-	SetLifeSpan(200.f);
 }
 
 void AVGMonsterCharacterBase::OnStartRagdoll()
@@ -131,4 +128,11 @@ UAnimMontage* AVGMonsterCharacterBase::GetRandomMontage(const TArray<TObjectPtr<
 		return nullptr;
 	}
 	return Montages[FMath::RandRange(0, Montages.Num() - 1)];
+}
+void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& Data)
+{
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
+	}
 }
