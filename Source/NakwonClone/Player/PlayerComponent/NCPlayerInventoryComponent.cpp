@@ -136,6 +136,7 @@ void UNCPlayerInventoryComponent::Server_ApplyPreset_Implementation(int32 Preset
     {
         Combat->UnEquipWeapon();
         CurrentEquippedPresetIndex = -1;
+        OnPresetUpdated.Broadcast();
         return;
     }
 
@@ -165,6 +166,7 @@ void UNCPlayerInventoryComponent::Server_ApplyPreset_Implementation(int32 Preset
     // TODO(왼손): if (!Preset.LeftHand.IsEmpty()) Combat->EquipOffHand(Preset.LeftHand.ItemID);
 
     CurrentEquippedPresetIndex = PresetIndex;
+    OnPresetUpdated.Broadcast();
 
     GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow,
         FString::Printf(TEXT("[프리셋 %d 적용]"), PresetIndex));
@@ -432,8 +434,9 @@ bool UNCPlayerInventoryComponent::MovePresetToPreset(int32 FromPresetIndex, ENCP
     auto ResolveCell = [](FEquipmentPreset& P, ENCPresetCell Cell) -> FInventorySlot&
     {
         if (Cell == ENCPresetCell::Two)  return P.TwoHand;
+        if (!P.TwoHand.IsEmpty())        return P.TwoHand;
         if (Cell == ENCPresetCell::Left) return P.LeftHand;
-        return !P.TwoHand.IsEmpty() ? P.TwoHand : P.RightHand;
+        return P.RightHand;
     };
 
     FInventorySlot& Src = ResolveCell(PFrom, FromCell);
@@ -442,22 +445,13 @@ bool UNCPlayerInventoryComponent::MovePresetToPreset(int32 FromPresetIndex, ENCP
         return false;
     }
 
-    const FGameplayTag SrcTag    = Src.ItemTypeTag;
+    const FGameplayTag SrcTag = Src.ItemTypeTag;
     const FGameplayTag SrcWeapon = GetWeaponTypeTag(Src.ItemID);
     ENCPresetCell DestCell = ToCell;
     if (SrcTag.MatchesTag(NCItemTag::Weapon))
     {
         if (SrcWeapon.MatchesTagExact(NCWeapon::Type_TwoHanded))      DestCell = ENCPresetCell::Two;
         else if (SrcWeapon.MatchesTagExact(NCWeapon::Type_OneHanded)) DestCell = ENCPresetCell::Right;
-    }
-
-    if (DestCell == ENCPresetCell::Two)
-    {
-        if (!PTo.RightHand.IsEmpty() || !PTo.LeftHand.IsEmpty()) return false;
-    }
-    else
-    {
-        if (!PTo.TwoHand.IsEmpty()) return false;
     }
 
     FInventorySlot& Dst =
@@ -467,22 +461,64 @@ bool UNCPlayerInventoryComponent::MovePresetToPreset(int32 FromPresetIndex, ENCP
     if (CurrentEquippedPresetIndex == FromPresetIndex || CurrentEquippedPresetIndex == ToPresetIndex)
     {
         if (ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner()))
-        {
             if (APawn* Pawn = PS->GetPawn())
-            {
                 if (UNCCombatComponent* Combat = Pawn->FindComponentByClass<UNCCombatComponent>())
                 {
                     Combat->UnEquipWeapon();
                     CurrentEquippedPresetIndex = -1;
                 }
-            }
-        }
     }
 
-    FInventorySlot Temp = Dst;
-    Dst = Src;
-    Src = Temp;
+    const FInventorySlot Moving = Src;
+    Src = FInventorySlot();
 
+    TArray<FInventorySlot> Displaced;
+    auto Take = [&Displaced](FInventorySlot& Cell)
+    {
+        if (!Cell.IsEmpty()) { Displaced.Add(Cell); Cell = FInventorySlot(); }
+    };
+
+    if (DestCell == ENCPresetCell::Two)
+    {
+        Take(PTo.RightHand);
+        Take(PTo.LeftHand);
+        Take(PTo.TwoHand);
+        PTo.TwoHand = Moving;
+    }
+    else
+    {
+        Take(PTo.TwoHand);
+        FInventorySlot& DstRef = (DestCell == ENCPresetCell::Left) ? PTo.LeftHand : PTo.RightHand;
+        Take(DstRef);
+        DstRef = Moving;
+    }
+
+    auto PlaceBack = [&](const FInventorySlot& Item)
+    {
+        const FGameplayTag WType = GetWeaponTypeTag(Item.ItemID);
+        if (WType.MatchesTagExact(NCWeapon::Type_TwoHanded))
+        {
+            if (PFrom.TwoHand.IsEmpty() && PFrom.RightHand.IsEmpty() && PFrom.LeftHand.IsEmpty())
+            {
+                PFrom.TwoHand = Item;
+                return;
+            }
+        }
+        else
+        {
+            if (PFrom.RightHand.IsEmpty()) { PFrom.RightHand = Item; return; }
+            if (PFrom.LeftHand.IsEmpty())  { PFrom.LeftHand  = Item; return; }
+        }
+        for (int32 i = 0; i < Items.Num(); ++i)
+            if (Items[i].IsEmpty()) { Items[i] = Item; return; }
+    };
+
+    for (const FInventorySlot& Item : Displaced)
+    {
+        PlaceBack(Item);
+    }
+
+    OnInventoryUpdated.Broadcast();
     OnPresetUpdated.Broadcast();
     return true;
 }
