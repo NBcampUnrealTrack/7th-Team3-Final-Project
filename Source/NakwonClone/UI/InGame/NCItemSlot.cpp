@@ -17,6 +17,7 @@ void UNCItemSlot::NativeConstruct()
 	{
 		InventoryComp->OnQuickSlotUpdated.RemoveDynamic(this, &UNCItemSlot::UpdateSlotVisual);
 		InventoryComp->OnQuickSlotUpdated.AddDynamic(this, &UNCItemSlot::UpdateSlotVisual);
+		InventoryComp->OnPresetUpdated.AddDynamic(this, &UNCItemSlot::UpdateSlotVisual);
 
 		UpdateSlotVisual();
 	}
@@ -32,11 +33,16 @@ void UNCItemSlot::UpdateSlotVisual()
 
 	if (!InventoryComp) return;
 	
-	FEquipmentPreset Preset0 = InventoryComp->GetPresetData(0);
-	FInventorySlot LeftSlotData = Preset0.IsTwoHandActive() ? Preset0.TwoHand : Preset0.RightHand;
+	int32 PresetIndex = InventoryComp->CurrentEquippedPresetIndex;
+	if (PresetIndex < 0)
+	{
+		PresetIndex = 0;
+	}
 
-	FEquipmentPreset Preset1 = InventoryComp->GetPresetData(1);
-	FInventorySlot RightSlotData = Preset1.IsTwoHandActive() ? Preset1.TwoHand : Preset1.RightHand;
+	FEquipmentPreset Preset = InventoryComp->GetPresetData(PresetIndex);
+
+	FInventorySlot LeftSlotData  = Preset.IsTwoHandActive() ? Preset.TwoHand : Preset.LeftHand;
+	FInventorySlot RightSlotData = Preset.IsTwoHandActive() ? Preset.TwoHand : Preset.RightHand;
 
 	UpdateImage(LeftSlotImage, LeftSlotData);
 	UpdateImage(RightSlotImage, RightSlotData);
