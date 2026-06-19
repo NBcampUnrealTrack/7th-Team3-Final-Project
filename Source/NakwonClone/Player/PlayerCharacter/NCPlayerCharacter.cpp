@@ -350,3 +350,28 @@ void ANCPlayerCharacter::PlayHitReactMontage()
         PlayAnimMontage(HitReactMontage);
     }
 }
+
+float ANCPlayerCharacter::GetFootstepVolumeMultiplier() const
+{
+    if (CurrentGaitTag.MatchesTagExact(NCCharacter::Sprint))
+    {
+        return 1.0f;
+    }
+
+    if (CurrentGaitTag.MatchesTagExact(NCCharacter::CrouchSprint))
+    {
+        return 0.5f;
+    }
+
+    if (CurrentStanceTag.MatchesTagExact(NCCharacter::Crouch))
+    {
+        return 0.3f;
+    }
+
+    if (CurrentGaitTag.MatchesTagExact(NCCharacter::Jog))
+    {
+        return 0.7f;
+    }
+
+    return 0.7f;
+}
