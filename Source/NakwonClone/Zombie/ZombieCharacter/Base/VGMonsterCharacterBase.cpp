@@ -61,17 +61,24 @@ void AVGMonsterCharacterBase::BeginPlay()
 // HandleDead()
 void AVGMonsterCharacterBase::HandleDead()
 {
-	SetActorEnableCollision(false);
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleDead 호출됨: %s"), *GetName());
+	
+	if (AIController)
+	{
+		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
+		{
+			Blackboard->SetValueAsBool(FName("bIsDead"), true);
+		}
+	}
 	
 	if (AAIController* AIC = Cast<AAIController>(GetController()))
- 	{
+	{
 		AIC->StopMovement();
 		AIC->UnPossess();
 	}
 	
 	// 래그돌 전환
 	OnStartRagdoll();
-	
 	SetLifeSpan(200.f);
 }
 
@@ -83,10 +90,11 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 		return;
 	}
 	
-	SkelMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-	
 	SkelMesh->SetAllBodiesSimulatePhysics(true);
 	SkelMesh->SetPhysicsBlendWeight(1.f);
+	
+	SkelMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	SkelMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
@@ -106,7 +114,7 @@ void AVGMonsterCharacterBase::HandleHit()
 		{
 			if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
 			{
-				Blackboard->SetValueAsBool(FName("BIsHit"), false);
+				Blackboard->SetValueAsBool(FName("bIsHit"), false);
 			}
 		}
 	}, 0.5f, false);

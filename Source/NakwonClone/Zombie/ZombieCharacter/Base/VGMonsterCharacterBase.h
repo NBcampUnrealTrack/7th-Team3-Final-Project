@@ -103,7 +103,6 @@ public:
 	UFUNCTION()
 	void HandleDead();
 	
-private:
 	void OnStartRagdoll();
 #pragma endregion
 };
