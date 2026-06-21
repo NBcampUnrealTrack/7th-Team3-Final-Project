@@ -23,6 +23,17 @@ EBTNodeResult::Type UBTTask_FindPatrolLocation::ExecuteTask(UBehaviorTreeCompone
 	UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
 	if (!NavSystem) return EBTNodeResult::Failed;
 
+	UBlackboardComponent* Blackboard = OwnerComp.GetBlackboardComponent();
+	
+	int32 CurrentCount = Blackboard->GetValueAsInt(AVGMonsterAIControllerBase::PatrolCountKey);
+	if (CurrentCount >= MaxPatrolCount)
+	{
+		Blackboard->SetValueAsInt(AVGMonsterAIControllerBase::PatrolCountKey, 0);
+		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, false);
+		return EBTNodeResult::Failed;
+	}
+	Blackboard->SetValueAsInt(AVGMonsterAIControllerBase::PatrolCountKey, CurrentCount + 1);
+	
 	FNavLocation RandomLocation;
 	if (NavSystem->GetRandomReachablePointInRadius(Monster->GetActorLocation(), SearchRadius, RandomLocation))
 	{

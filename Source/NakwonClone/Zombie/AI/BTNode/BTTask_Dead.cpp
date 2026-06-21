@@ -23,7 +23,6 @@ EBTNodeResult::Type UBTTask_Dead::ExecuteTask(UBehaviorTreeComponent& OwnerComp,
 	UE_LOG(LogMonster, Warning, TEXT("[BTTask_Dead] ExecuteTask 호출됨"));
 	
 	CurrentMontage = Monster->GetSelectedDeadMontage();
-	Monster->PlayAnimMontage(CurrentMontage);
 	float Duration = Monster->PlayAnimMontage(CurrentMontage);
 	
 	UE_LOG(LogMonster, Warning, TEXT("DeadMontage: %s, Duration: %f"), 

@@ -12,6 +12,7 @@ class AVGMonsterAIControllerBase;
 class UAbilitySystemComponent;
 class UVGMonsterAttributeSet;
 class UAnimMontage;
+class UCapsuleComponent;
 
 struct FOnAttributeChangeData;
 
@@ -115,4 +116,20 @@ public:
 	
 private:
 	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
+	
+#pragma region 충돌 감지
+protected:
+	UPROPERTY(VisibleAnywhere, Category = "Monster|Detection")
+	TObjectPtr<UCapsuleComponent> DetectionCapsule;
+	
+	UFUNCTION()
+	void OnDetectionOverlap(
+		UPrimitiveComponent* OverlappedComponent, 
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, 
+		int32 OtherBodyIndex,
+		bool bFromSweep, 
+		const FHitResult& SweepResult);
+	
+#pragma endregion
 };

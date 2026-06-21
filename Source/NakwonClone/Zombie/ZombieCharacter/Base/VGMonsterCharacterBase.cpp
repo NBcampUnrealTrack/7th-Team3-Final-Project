@@ -2,11 +2,14 @@
 
 
 #include "VGMonsterCharacterBase.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Common/NCGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
@@ -22,6 +25,13 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	bUseControllerRotationRoll = false;
 	
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	
+	DetectionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("DetectionCapsule"));
+	DetectionCapsule->SetupAttachment(RootComponent);
+	DetectionCapsule->SetCapsuleSize(40.f, 90.f);
+	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	DetectionCapsule->SetCollisionResponseToAllChannels(ECR_Ignore);
+	DetectionCapsule->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 }
 
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
@@ -63,6 +73,8 @@ void AVGMonsterCharacterBase::BeginPlay()
 	SelectedChaseMontage = GetRandomChaseMontage();
 	SelectedStopMontage = GetRandomStopMontage();
 	SelectedDeadMontage = GetRandomDeadMontage();
+	
+	DetectionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AVGMonsterCharacterBase::OnDetectionOverlap);
 }
 
 // HandleDead()
@@ -74,7 +86,7 @@ void AVGMonsterCharacterBase::HandleDead()
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
 		{
-			Blackboard->SetValueAsBool(FName("bIsDead"), true);
+			Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsDeadKey, true);
 		}
 	}
 }
@@ -82,7 +94,7 @@ void AVGMonsterCharacterBase::HandleDead()
 void AVGMonsterCharacterBase::OnStartRagdoll()
 {
 	USkeletalMeshComponent* SkelMesh  = GetMesh();
-	if (!SkelMesh) return
+	if (!SkelMesh) return;
 	
 	SkelMesh->SetAllBodiesSimulatePhysics(true);
 	SkelMesh->SetPhysicsBlendWeight(1.f);
@@ -103,7 +115,7 @@ void AVGMonsterCharacterBase::HandleHit()
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
 		{
-			Blackboard->SetValueAsBool(FName("bIsHit"), true);
+			Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsHitKey, true);
 			UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] bIsHit Set: true"));
 		}
 	}
@@ -124,5 +136,20 @@ void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& D
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
+	}
+}
+
+void AVGMonsterCharacterBase::OnDetectionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!AIController) return;
+
+	UAbilitySystemComponent* TargetASC =
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor);
+	if (!TargetASC || !TargetASC->HasMatchingGameplayTag(NCCharacter::Player)) return;
+
+	if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
+	{
+		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
 	}
 }

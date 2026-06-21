@@ -22,9 +22,21 @@ protected:
 	virtual void BeginPlay() override;
 	
 #pragma region 애니메이션
+protected:
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> SelectedWakeUpMontage;
+	
+public:
+	UAnimMontage* GetSleepMontage() const { return AnimSleep; }
+	UAnimMontage* GetSelectedWakeUpMontage() const { return SelectedWakeUpMontage; }
+
+protected:
 	// 워커 전용 Idle 애니메이션
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
-	TObjectPtr<UAnimMontage> AnimIdle;
+	TObjectPtr<UAnimMontage> AnimSleep;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TArray<TObjectPtr<UAnimMontage>> AnimWakeUp;
 #pragma endregion
 
 #pragma region 공격 트레이스

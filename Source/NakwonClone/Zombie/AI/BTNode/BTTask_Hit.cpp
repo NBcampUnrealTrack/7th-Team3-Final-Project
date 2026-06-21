@@ -57,15 +57,6 @@ void UBTTask_Hit::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	if (Montage != CurrentMontage) return;
 	if (!CachedOwnerComp) return;
 	
-	if (CachedOwnerComp)
-	{
-		// BIsHit 초기화
-		/*if (UBlackboardComponent* Blackboard = CachedOwnerComp->GetBlackboardComponent())
-		{
-			Blackboard->SetValueAsBool(FName("bIsHit"), false);
-		}*/
-
-		FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
-		CachedOwnerComp = nullptr;
-	}
+	FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
+	CachedOwnerComp = nullptr;
 }
