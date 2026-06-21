@@ -21,6 +21,9 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<UBehaviorTreeComponent> CachedOwnerComp;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentMontage;
 
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);

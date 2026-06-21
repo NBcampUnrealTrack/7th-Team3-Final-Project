@@ -5,10 +5,12 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AIController.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
+#include "Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 
 UBTTask_Hit::UBTTask_Hit()
 {
 	NodeName = TEXT("Hit");
+	bCreateNodeInstance = true;
 }
 
 EBTNodeResult::Type UBTTask_Hit::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -22,7 +24,13 @@ EBTNodeResult::Type UBTTask_Hit::ExecuteTask(UBehaviorTreeComponent& OwnerComp, 
 	UAnimInstance* AnimInstance = Monster->GetMesh()->GetAnimInstance();
 	if (!AnimInstance) return EBTNodeResult::Failed;
 
+	UE_LOG(LogMonster, Warning, TEXT("[BTTask_Hit] ExecuteTask 호출됨"));
+	
+	CurrentMontage = Monster->GetRandomHitMontage();
+	Monster->PlayAnimMontage(CurrentMontage);
 	CachedOwnerComp = &OwnerComp;
+	
+	AnimInstance->OnMontageEnded.RemoveDynamic(this, &UBTTask_Hit::OnMontageEnded);
 	AnimInstance->OnMontageEnded.AddDynamic(this, &UBTTask_Hit::OnMontageEnded);
 
 	return EBTNodeResult::InProgress;
@@ -46,13 +54,16 @@ void UBTTask_Hit::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 
 void UBTTask_Hit::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
+	if (Montage != CurrentMontage) return;
+	if (!CachedOwnerComp) return;
+	
 	if (CachedOwnerComp)
 	{
 		// BIsHit 초기화
-		if (UBlackboardComponent* Blackboard = CachedOwnerComp->GetBlackboardComponent())
+		/*if (UBlackboardComponent* Blackboard = CachedOwnerComp->GetBlackboardComponent())
 		{
-			Blackboard->SetValueAsBool(FName("BIsHit"), false);
-		}
+			Blackboard->SetValueAsBool(FName("bIsHit"), false);
+		}*/
 
 		FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
 		CachedOwnerComp = nullptr;

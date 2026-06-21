@@ -82,10 +82,7 @@ void AVGMonsterCharacterBase::HandleDead()
 void AVGMonsterCharacterBase::OnStartRagdoll()
 {
 	USkeletalMeshComponent* SkelMesh  = GetMesh();
-	if (!SkelMesh )
-	{
-		return;
-	}
+	if (!SkelMesh) return
 	
 	SkelMesh->SetAllBodiesSimulatePhysics(true);
 	SkelMesh->SetPhysicsBlendWeight(1.f);
@@ -100,33 +97,26 @@ void AVGMonsterCharacterBase::HandleHit()
 {
 	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
 	
-	bIsHit = true;
-	PlayAnimMontage(GetRandomMontage(AnimHit));
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit 호출됨: %s"), *GetName());
 	
-	GetWorldTimerManager().SetTimer(HitTimerHandle, [this]()
+	if (AIController)
 	{
-		bIsHit = false;
-		
-		if (AIController)
+		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
 		{
-			if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
-			{
-				Blackboard->SetValueAsBool(FName("bIsHit"), false);
-			}
+			Blackboard->SetValueAsBool(FName("bIsHit"), true);
+			UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] bIsHit Set: true"));
 		}
-	}, 0.5f, false);
+	}
 	
-	// 뒤로 밀려남
+	/*// 뒤로 밀려남
 	FVector PushBack = -GetActorForwardVector();
-	LaunchCharacter(PushBack * 300.f, true, false);
+	LaunchCharacter(PushBack * 300.f, true, false);*/
 }
 
 UAnimMontage* AVGMonsterCharacterBase::GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages)
 {
-	if (Montages.IsEmpty())
-	{
-		return nullptr;
-	}
+	if (Montages.IsEmpty()) return nullptr;
+	
 	return Montages[FMath::RandRange(0, Montages.Num() - 1)];
 }
 void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& Data)
