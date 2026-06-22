@@ -2,8 +2,9 @@
 #include "NCGameInstance.h"
 
 #include "MoviePlayer.h"
-#include "Widgets/Images/SThrobber.h"
 #include "Fonts/SlateFontInfo.h"
+#include "Styling/SlateTypes.h"
+#include "Widgets/Images/SThrobber.h"
 #include "Widgets/Notifications/SProgressBar.h"
 
 void UNCGameInstance::Init()
@@ -58,27 +59,29 @@ void UNCGameInstance::BeginLoadingScreen(const FString& MapName)
 	LoadingScreen.MinimumLoadingScreenDisplayTime = 2.0f;
 	LoadingScreen.WidgetLoadingScreen = SNew(SOverlay)
 	
-	// Layer1 : Image
+		// Layer1 : Image
 		+ SOverlay::Slot().HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 		[
 			SNew(SImage).Image(&BackgroundBrush)	
 		]
 	
-	// Layer2 : Text
-		+ SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Bottom).Padding(0.f, 0.f, 0.f, 70.f)
+		// Layer2 : Text + Spinner
+		+ SOverlay::Slot().HAlign(HAlign_Right).VAlign(VAlign_Bottom).Padding(0.f, 0.f, 20.f, 20.f)
 		[
-			SNew(STextBlock)
-			.Text(FText::FromString(TEXT("로딩중...")))
-			.ColorAndOpacity(FLinearColor::White)
-			.Font(FCoreStyle::GetDefaultFontStyle("Regular", 18))
-		]
-	
-	// Layer3 : Loading Bar
-		+ SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Bottom).Padding(0.f, 0.f, 0.f, 50.f)
-		[
-			SNew(SBox).WidthOverride(300.f).HeightOverride(12.f)
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center)
 			[
-				SNew(SProgressBar)
+				SNew(SCircularThrobber)
+				.Radius(16.f)
+				.Period(1.0f)
+				.NumPieces(4)
+			]
+			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0.f, 4.f, 0.f, 0.f)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(TEXT("Loading...")))
+				.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1.f))
+				.Font(FCoreStyle::GetDefaultFontStyle("Regular", 11))
 			]
 		];
 	
@@ -89,6 +92,7 @@ void UNCGameInstance::EndLoadingScreen(UWorld* InLoadedWorld)
 {
 	// 엔진이 자동으로 처리함(true)
 }
+
 #pragma endregion
 
 #pragma region Preloading

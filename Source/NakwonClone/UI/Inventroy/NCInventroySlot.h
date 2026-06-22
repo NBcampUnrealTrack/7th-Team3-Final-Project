@@ -20,7 +20,7 @@ protected:
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	void SetSlotData(int32 InIndex, FGameplayTag InTag, int32 InQuantity, FName InItemID);
+	void SetSlotData(int32 InIndex, int32 InQuantity, FGameplayTag InTag, FName InItemID);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UDataTable* ItemDataTable;

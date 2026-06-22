@@ -17,6 +17,7 @@ void UNCItemSlot::NativeConstruct()
 	{
 		InventoryComp->OnQuickSlotUpdated.RemoveDynamic(this, &UNCItemSlot::UpdateSlotVisual);
 		InventoryComp->OnQuickSlotUpdated.AddDynamic(this, &UNCItemSlot::UpdateSlotVisual);
+		InventoryComp->OnPresetUpdated.AddDynamic(this, &UNCItemSlot::UpdateSlotVisual);
 
 		UpdateSlotVisual();
 	}
@@ -32,14 +33,38 @@ void UNCItemSlot::UpdateSlotVisual()
 
 	if (!InventoryComp) return;
 	
-	FEquipmentPreset Preset0 = InventoryComp->GetPresetData(0);
-	FInventorySlot LeftSlotData = Preset0.IsTwoHandActive() ? Preset0.TwoHand : Preset0.RightHand;
+	int32 PresetIndex = InventoryComp->CurrentEquippedPresetIndex;
+	if (PresetIndex < 0)
+	{
+		PresetIndex = 0;
+	}
 
-	FEquipmentPreset Preset1 = InventoryComp->GetPresetData(1);
-	FInventorySlot RightSlotData = Preset1.IsTwoHandActive() ? Preset1.TwoHand : Preset1.RightHand;
+	FEquipmentPreset Preset = InventoryComp->GetPresetData(PresetIndex);
+
+	FInventorySlot LeftSlotData  = Preset.IsTwoHandActive() ? Preset.TwoHand : Preset.LeftHand;
+	FInventorySlot RightSlotData = Preset.IsTwoHandActive() ? Preset.TwoHand : Preset.RightHand;
 
 	UpdateImage(LeftSlotImage, LeftSlotData);
 	UpdateImage(RightSlotImage, RightSlotData);
+
+	const int32 RawPresetIndex = InventoryComp->CurrentEquippedPresetIndex; // -1 = 맨손, 0 = 프리셋1, 1 = 프리셋2
+	const FLinearColor HighlightColor(0.7f, 0.7f, 0.7f, 1.f);
+	const FLinearColor DimColor(0.3f, 0.3f, 0.3f, 0.5f);
+	
+	if (RawPresetIndex == 0)
+	{
+		FirstItemSlotImage->SetColorAndOpacity(HighlightColor);
+		FirstItemSlotNumber->SetColorAndOpacity(FSlateColor(HighlightColor));
+		SecondItemSlotImage->SetColorAndOpacity(DimColor);
+		SecondItemSlotNumber->SetColorAndOpacity(FSlateColor(DimColor));
+	}
+	if (RawPresetIndex == 1)
+	{
+		FirstItemSlotImage->SetColorAndOpacity(DimColor);
+		FirstItemSlotNumber->SetColorAndOpacity(FSlateColor(DimColor));
+		SecondItemSlotImage->SetColorAndOpacity(HighlightColor);
+		SecondItemSlotNumber->SetColorAndOpacity(FSlateColor(HighlightColor));
+	}
 }
 
 void UNCItemSlot::UpdateImage(UImage* TargetImage, const FInventorySlot& SlotData)

@@ -10,6 +10,8 @@ class UCameraComponent;
 class UNCPlayerInventoryComponent;
 class UNCLocomotionComponent;
 class UNCCombatComponent;
+class USpotLightComponent;
+class UStaticMeshComponent;
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
@@ -43,8 +45,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	TObjectPtr<UAnimMontage> FoodItemMontage;
 
+	// 헌호수정 - 사망 몽타지
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> DeathMontage;
+
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void OnUseItemMontageEnded();
+
+	UFUNCTION(BlueprintPure, Category = "Sound|Footstep")
+	float GetFootstepVolumeMultiplier() const;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -60,12 +69,26 @@ public:
 	void ToggleCrouch();
 	virtual void OnDead() override;
 
+	// 헌호수정 - 플래시라이트 토글 (T키 입력 시 호출)
+	void ToggleFlashlight();
+
 protected:
 	UFUNCTION(Server, Reliable)
 	void Server_SetGait(FGameplayTag NewGaitTag);
 
 	UFUNCTION(Server, Reliable)
 	void Server_SetStance(FGameplayTag NewStanceTag);
+
+	// 헌호수정 - 플래시라이트 서버 RPC
+	UFUNCTION(Server, Reliable)
+	void Server_ToggleFlashlight();
+
+	// 헌호수정 - 플래시라이트 상태 복제 콜백
+	UFUNCTION()
+	void OnRep_bFlashlightOn();
+
+	// 헌호수정 - 실제 켜고 끄기 (서버/클라 공통)
+	void ApplyFlashlightState();
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
@@ -85,18 +108,18 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
 	TObjectPtr<UNCCombatComponent> CombatComponent;
+
+	// 헌호수정 - 플래시라이트 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
+	TObjectPtr<UStaticMeshComponent> FlashlightMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
+	TObjectPtr<USpotLightComponent> FlashlightLight;
+
+	// 헌호수정 - 플래시라이트 상태 (Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_bFlashlightOn)
+	bool bFlashlightOn = false; //헌호수정
 	
-	//H Movement 카테고리
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float WalkSpeed = 200.f;
-	//H
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float SprintSpeed = 600.f;
-
-	//H Input 카테고리 (Enhanced Input 쓴다면)
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	TObjectPtr<class UInputAction> SprintAction;
-
 	//H 피격 리액션 몽타주
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	TObjectPtr<UAnimMontage> HitReactMontage;
@@ -110,10 +133,6 @@ protected:
 private:
 	void InitCamera();
 	void InitComponents();
-
-	//H 입력 콜백 함수
-	void OnSprintStarted(const struct FInputActionValue& Value);
-	void OnSprintStopped(const struct FInputActionValue& Value);
 
 	//하상빈 추가
 	UFUNCTION()

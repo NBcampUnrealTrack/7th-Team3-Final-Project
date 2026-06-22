@@ -54,12 +54,15 @@ private:
 	void QuickSlot1();
 	void QuickSlot2();
 	void QuickSlot3();
-	void QuickSlot4();
+	void QuickSlot3Hold();
 	void UnArm();
 	// ----------
 	
 	void Attack();
-	
+
+	// 헌호수정 - 플래시라이트 토글
+	void ToggleFlashlight();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
@@ -94,7 +97,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> QuickSlot3Action;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> QuickSlot4Action;
+	TObjectPtr<UInputAction> QuickSlot3HoldAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> UnArmAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -108,5 +111,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> AttackAction;
+
+	// 헌호수정 - 플래시라이트 토글 액션
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> FlashlightAction;
 
 };

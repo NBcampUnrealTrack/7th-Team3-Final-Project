@@ -21,7 +21,11 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Action")
 	void Interact();
-	
+
+	// 헌호수정 - 사망 시 상호작용 완전 비활성화
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Action")
+	void StopInteraction();
+
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Animation")
 	void OnLootMontageEnded();
 	

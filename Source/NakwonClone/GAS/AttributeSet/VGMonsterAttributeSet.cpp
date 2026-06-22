@@ -6,9 +6,10 @@
 
 UVGMonsterAttributeSet::UVGMonsterAttributeSet()
 {
-	InitHealth(25.f);
+	InitHealth(100.f);
 	InitDamage(8.f);
 	InitBiteInfection(30.f);
+	InitMoveSpeed(40.f);
 }
 
 // GE가 Attribute 값을 변경한 직후에 자동으로 호출되는 함수

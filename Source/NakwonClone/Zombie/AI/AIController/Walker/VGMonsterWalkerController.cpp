@@ -3,6 +3,8 @@
 
 #include "VGMonsterWalkerController.h"
 
+#include "BehaviorTree/BlackboardComponent.h"
+
 
 AVGMonsterWalkerController::AVGMonsterWalkerController()
 {
@@ -12,5 +14,10 @@ AVGMonsterWalkerController::AVGMonsterWalkerController()
 void AVGMonsterWalkerController::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (Blackboard)
+	{
+		Blackboard->SetValueAsBool(IsAwakeKey, false);
+	}
 }
 

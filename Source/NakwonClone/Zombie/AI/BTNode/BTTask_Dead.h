@@ -16,5 +16,21 @@ public:
 	UBTTask_Dead();
 	
 protected:
-	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	virtual EBTNodeResult::Type ExecuteTask(
+		UBehaviorTreeComponent& OwnerComp, 
+		uint8* NodeMemory) override;
+	virtual void OnTaskFinished(
+		UBehaviorTreeComponent& OwnerComp, 
+		uint8* NodeMemory, 
+		EBTNodeResult::Type TaskResult) override;
+	
+private:
+	UPROPERTY()
+	TObjectPtr<UBehaviorTreeComponent> CachedOwnerComp;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentMontage;
+	
+	UFUNCTION()
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

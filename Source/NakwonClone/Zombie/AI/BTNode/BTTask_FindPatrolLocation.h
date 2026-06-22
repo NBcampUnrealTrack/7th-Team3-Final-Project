@@ -22,4 +22,8 @@ private:
 	// 랜덤 좌표 탐색 반경
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 	float SearchRadius = 500.0f;
+	
+protected:
+	UPROPERTY(EditAnywhere, Category = "Patrol")
+	int32 MaxPatrolCount = 3;
 };

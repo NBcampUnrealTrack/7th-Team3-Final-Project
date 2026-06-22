@@ -40,11 +40,11 @@ void UNCPlayerInventoryHud::UpdateItemSlot()
 		if (i < InventoryComp->Items.Num())
 		{
 			const FInventorySlot& InventorySlot  = InventoryComp->Items[i];
-			SlotWidgets[i]->SetSlotData(i, InventorySlot.ItemTypeTag, InventorySlot.Quantity, InventorySlot.ItemID);
+			SlotWidgets[i]->SetSlotData(i, InventorySlot.Quantity, InventorySlot.ItemTypeTag, InventorySlot.ItemID);
 		}
 		else
 		{
-			SlotWidgets[i]->SetSlotData(i, FGameplayTag(), 0, NAME_None);
+			SlotWidgets[i]->SetSlotData(i, 0, FGameplayTag() ,NAME_None);
 		}
 	}
 }

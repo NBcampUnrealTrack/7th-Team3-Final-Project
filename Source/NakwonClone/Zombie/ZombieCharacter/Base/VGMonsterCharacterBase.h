@@ -12,6 +12,11 @@ class AVGMonsterAIControllerBase;
 class UAbilitySystemComponent;
 class UVGMonsterAttributeSet;
 class UAnimMontage;
+class UCapsuleComponent;
+class USoundBase;    
+class USoundAttenuation;
+
+struct FOnAttributeChangeData;
 
 UCLASS()
 class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -41,6 +46,20 @@ protected:
 #pragma endregion
 	
 #pragma region 애니메이션
+public:
+	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
+	UAnimMontage* GetRandomMoveMontage()   { return GetRandomMontage(AnimMove); }
+	UAnimMontage* GetRandomStopMontage()   { return GetRandomMontage(AnimStop); }
+	UAnimMontage* GetRandomChaseMontage()  { return GetRandomMontage(AnimChase); }
+	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
+	UAnimMontage* GetRandomHitMontage()    { return GetRandomMontage(AnimHit); }
+	UAnimMontage* GetRandomDeadMontage()   { return GetRandomMontage(AnimDead); }
+	
+	UAnimMontage* GetSelectedMoveMontage() { return SelectedMoveMontage; }
+	UAnimMontage* GetSelectedChaseMontage() { return SelectedChaseMontage; }
+	UAnimMontage* GetSelectedStopMontage() { return SelectedStopMontage; }
+	UAnimMontage* GetSelectedDeadMontage() { return SelectedDeadMontage; }
+	
 protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimMove;
@@ -60,24 +79,34 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimDead;
 	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> SelectedMoveMontage;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> SelectedChaseMontage;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> SelectedStopMontage;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> SelectedDeadMontage;
+	
 public:
-	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
-	UAnimMontage* GetRandomMoveMontage()   { return GetRandomMontage(AnimMove); }
-	UAnimMontage* GetRandomStopMontage()   { return GetRandomMontage(AnimStop); }
-	UAnimMontage* GetRandomChaseMontage()  { return GetRandomMontage(AnimChase); }
-	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
-	UAnimMontage* GetRandomHitMontage()    { return GetRandomMontage(AnimHit); }
-	UAnimMontage* GetRandomDeadMontage()   { return GetRandomMontage(AnimDead); }
+	int32 GetSelectedMoveLevel() const { return SelectedMoveLevel; }
+	int32 GetSelectedChaseLevel() const { return SelectedChaseLevel; }
+	
+protected:
+	UPROPERTY()
+	int32 SelectedMoveLevel;
+	
+	UPROPERTY()
+	int32 SelectedChaseLevel;
 #pragma endregion
 	
-#pragma region 피격
+#pragma region 피격 처리
 public:
 	UFUNCTION()
 	void HandleHit();
-	
-private:
-	bool bIsHit = false;
-	FTimerHandle HitTimerHandle;
 #pragma endregion
 	
 #pragma region 사망 처리
@@ -85,8 +114,58 @@ public:
 	UFUNCTION()
 	void HandleDead();
 	
-private:
 	void OnStartRagdoll();
-	FTimerHandle DeadTimerHandle;
+#pragma endregion
+	
+private:
+	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
+	
+#pragma region 충돌 감지
+protected:
+	UPROPERTY(VisibleAnywhere, Category = "Monster|Detection")
+	TObjectPtr<UCapsuleComponent> DetectionCapsule;
+	
+	UFUNCTION()
+	virtual void OnDetectionOverlap(
+		UPrimitiveComponent* OverlappedComponent, 
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, 
+		int32 OtherBodyIndex,
+		bool bFromSweep, 
+		const FHitResult& SweepResult);
+#pragma endregion
+
+#pragma region 사운드 
+	//H
+public:
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlaySound(USoundBase* Sound);
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> HitSound;      
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> DeathSound;  
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> DetectSound; 
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> HowlSound; 
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundAttenuation> SoundAttenuation;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	float HowlIntervalMin = 6.f;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	float HowlIntervalMax = 14.f;
+
+	FTimerHandle HowlTimerHandle;
+
+	void StartHowlTimer();
+	void HandleHowl();
 #pragma endregion
 };
