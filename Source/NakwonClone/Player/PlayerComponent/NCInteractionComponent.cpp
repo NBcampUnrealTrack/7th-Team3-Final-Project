@@ -119,6 +119,9 @@ void UNCInteractionComponent::UpdateInteractableTarget()
             
 			if (HitActor && HitActor->Implements<UNCInteractableInterface>())
 			{
+				// 헌호수정 - 캐릭터에 부착된 액터(장착된 무기 등)는 상호작용 대상 제외
+				if (HitActor->IsAttachedTo(OwnerCharacter)) continue;
+
 				if (INCInteractableInterface::Execute_CanInteract(HitActor, OwnerCharacter))
 				{
 					float Distance = FVector::Dist(SearchLocation, HitActor->GetActorLocation());

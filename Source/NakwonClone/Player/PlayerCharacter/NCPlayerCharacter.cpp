@@ -5,6 +5,9 @@
 #include "Common/NCGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SpotLightComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "GameFramework/PlayerState.h"
 #include "GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "Item/NCItemActor.h"
@@ -40,6 +43,14 @@ void ANCPlayerCharacter::InitComponents()
     InteractionComponent = CreateDefaultSubobject<UNCInteractionComponent>(TEXT("InteractionComponent"));
     LocomotionComponent = CreateDefaultSubobject<UNCLocomotionComponent>(TEXT("LocomotionComponent"));
     CombatComponent = CreateDefaultSubobject<UNCCombatComponent>(TEXT("CombatComponent"));
+
+    // 헌호수정 - 플래시라이트 컴포넌트 생성 및 소켓에 부착
+    FlashlightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FlashlightMesh"));
+    FlashlightMesh->SetupAttachment(GetMesh(), TEXT("Flashlight_Socket"));
+
+    FlashlightLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashlightLight"));
+    FlashlightLight->SetupAttachment(FlashlightMesh);
+    FlashlightLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
 }
 
 void ANCPlayerCharacter::BeginPlay()
@@ -374,4 +385,36 @@ float ANCPlayerCharacter::GetFootstepVolumeMultiplier() const
     }
 
     return 0.7f;
+}
+
+void ANCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(ANCPlayerCharacter, bFlashlightOn); //헌호수정
+}
+
+// 헌호수정 - T키 입력 시 호출
+void ANCPlayerCharacter::ToggleFlashlight()
+{
+    Server_ToggleFlashlight();
+}
+
+// 헌호수정 - 서버에서 상태 토글
+void ANCPlayerCharacter::Server_ToggleFlashlight_Implementation()
+{
+    bFlashlightOn = !bFlashlightOn;
+    ApplyFlashlightState(); // 서버 적용
+}
+
+// 헌호수정 - 클라이언트 복제 콜백
+void ANCPlayerCharacter::OnRep_bFlashlightOn()
+{
+    ApplyFlashlightState();
+}
+
+// 헌호수정 - 실제 켜고 끄기 (서버/클라 공통)
+void ANCPlayerCharacter::ApplyFlashlightState()
+{
+    if (FlashlightLight)
+        FlashlightLight->SetVisibility(bFlashlightOn);
 }
