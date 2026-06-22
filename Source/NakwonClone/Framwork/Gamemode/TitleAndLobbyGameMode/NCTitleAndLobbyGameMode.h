@@ -21,5 +21,5 @@ protected:
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "GameFlow")
-	void MoveToGameLevel();
+	void MoveToLobbyLevel();
 };
