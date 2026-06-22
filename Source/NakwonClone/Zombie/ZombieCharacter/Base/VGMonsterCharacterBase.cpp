@@ -71,8 +71,6 @@ void AVGMonsterCharacterBase::BeginPlay()
 			UVGMonsterAttributeSet::GetMoveSpeedAttribute()).AddUObject(this, &AVGMonsterCharacterBase::OnMoveSpeedChanged);
 	}
 	
-	SelectedMoveMontage = GetRandomMoveMontage();
-	SelectedChaseMontage = GetRandomChaseMontage();
 	SelectedStopMontage = GetRandomStopMontage();
 	SelectedDeadMontage = GetRandomDeadMontage();
 	
@@ -83,6 +81,14 @@ void AVGMonsterCharacterBase::BeginPlay()
 	{
 		StartHowlTimer();
 	}
+	
+	int32 MoveIndex = FMath::RandRange(0, AnimMove.Num()-1);
+	SelectedMoveMontage = AnimMove[MoveIndex];
+	SelectedMoveLevel = MoveIndex + 1;
+	
+	int32 ChaseIndex = FMath::RandRange(0, AnimChase.Num() - 1);
+	SelectedChaseMontage = AnimChase[ChaseIndex];
+	SelectedChaseLevel = ChaseIndex + 1;
 }
 
 // HandleDead()
@@ -155,71 +161,5 @@ void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& D
 void AVGMonsterCharacterBase::OnDetectionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!AIController) return;
-
-	UAbilitySystemComponent* TargetASC =
-		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor);
-	if (!TargetASC || !TargetASC->HasMatchingGameplayTag(NCCharacter::Player)) return;
-
-	WakeUpWithDelay();
-}
-
-void AVGMonsterCharacterBase::WakeUpWithDelay()
-{
-	float Delay = FMath::RandRange(0.f, 3.f);
-	GetWorldTimerManager().SetTimer(WakeUpTimerHandle, this, &AVGMonsterCharacterBase::WakeUp, Delay, false);
-}
-
-void AVGMonsterCharacterBase::WakeUp()
-{
-	if (!AIController) return;
-	if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
-	{
-		//H
-		if (!Blackboard->GetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey))
-		{
-			Multicast_PlaySound(DetectSound);
-		}
-		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
-	}
-}
-
-//H
-void AVGMonsterCharacterBase::Multicast_PlaySound_Implementation(USoundBase* Sound)
-{
-	if (Sound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this, Sound, GetActorLocation(), 1.f, 1.f, 0.f, SoundAttenuation);
-	}
-}
-
-void AVGMonsterCharacterBase::StartHowlTimer()
-{
-	const float Delay = FMath::FRandRange(HowlIntervalMin, HowlIntervalMax);
-	GetWorldTimerManager().SetTimer(
-		HowlTimerHandle, this, &AVGMonsterCharacterBase::HandleHowl, Delay, false);
-}
-
-void AVGMonsterCharacterBase::HandleHowl()
-{
-
-	if (MonsterAttributeSet && MonsterAttributeSet->GetHealth() <= 0.f) return;
-
-
-	bool bAwake = false;
-	if (AIController)
-	{
-		if (UBlackboardComponent* BB = AIController->GetBlackboardComponent())
-		{
-			bAwake = BB->GetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey);
-		}
-	}
-
-	if (!bAwake)
-	{
-		Multicast_PlaySound(HowlSound);
-	}
-
-	StartHowlTimer();
+	
 }
