@@ -11,7 +11,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISenseConfig_Hearing.h"
-#include "Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
+#include "Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 
 DEFINE_LOG_CATEGORY(LogMonster);
 DEFINE_LOG_CATEGORY(LogAIPc);
@@ -149,10 +149,10 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 			// UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 청각 감지 위치: %s"), *Stimulus.StimulusLocation.ToString());
 			Blackboard->SetValueAsVector(HeardLocationKey, Stimulus.StimulusLocation);
     
-			AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(GetPawn());
-			if (Monster)
+			AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(GetPawn());
+			if (Walker)
 			{
-				Monster->WakeUpWithDelay();
+				Walker->WakeUpWithDelay();
 			}
 		}
 	}

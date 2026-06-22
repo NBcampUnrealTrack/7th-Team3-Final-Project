@@ -5,8 +5,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Common/NCGameplayTags.h"
 #include "NakwonClone\GAS\AttributeSet\VGMonsterAttributeSet.h"
+#include "Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 
 AVGMonsterWalker::AVGMonsterWalker()
 {
@@ -80,5 +82,32 @@ void AVGMonsterWalker::PerformAttackTrace()
 			}
 			return;
 		}
+	}
+}
+
+void AVGMonsterWalker::OnDetectionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!AIController) return;
+	
+	UAbilitySystemComponent* TargetASC =
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor);
+	if (!TargetASC || !TargetASC->HasMatchingGameplayTag(NCCharacter::Player)) return;
+	
+	WakeUpWithDelay();
+}
+
+void AVGMonsterWalker::WakeUpWithDelay()
+{
+	float Delay = FMath::RandRange(0.f, 3.f);
+	GetWorldTimerManager().SetTimer(WakeUpTimerHandle, this, &AVGMonsterWalker::WakeUp, Delay, false);
+}
+
+void AVGMonsterWalker::WakeUp()
+{
+	if (!AIController) return;
+	if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
+	{
+		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
 	}
 }
