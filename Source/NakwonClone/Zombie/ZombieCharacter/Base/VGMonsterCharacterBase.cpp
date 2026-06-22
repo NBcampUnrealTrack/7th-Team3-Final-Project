@@ -163,3 +163,41 @@ void AVGMonsterCharacterBase::OnDetectionOverlap(UPrimitiveComponent* Overlapped
 {
 	
 }
+
+//H 사운드 재생 본체 (모든 사운드가 여기로 모임)
+void AVGMonsterCharacterBase::Multicast_PlaySound_Implementation(USoundBase* Sound)
+{
+	if (Sound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this, Sound, GetActorLocation(), 1.f, 1.f, 0.f, SoundAttenuation);
+	}
+}
+
+void AVGMonsterCharacterBase::StartHowlTimer()
+{
+	const float Delay = FMath::FRandRange(HowlIntervalMin, HowlIntervalMax);
+	GetWorldTimerManager().SetTimer(
+		HowlTimerHandle, this, &AVGMonsterCharacterBase::HandleHowl, Delay, false);
+}
+
+void AVGMonsterCharacterBase::HandleHowl()
+{
+	if (MonsterAttributeSet && MonsterAttributeSet->GetHealth() <= 0.f) return;
+
+	bool bAwake = false;
+	if (AIController)
+	{
+		if (UBlackboardComponent* BB = AIController->GetBlackboardComponent())
+		{
+			bAwake = BB->GetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey);
+		}
+	}
+
+	if (!bAwake)
+	{
+		Multicast_PlaySound(HowlSound);
+	}
+
+	StartHowlTimer();
+}

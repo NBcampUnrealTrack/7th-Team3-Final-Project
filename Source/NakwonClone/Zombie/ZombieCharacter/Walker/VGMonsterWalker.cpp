@@ -108,6 +108,12 @@ void AVGMonsterWalker::WakeUp()
 	if (!AIController) return;
 	if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
 	{
+		//H 아직 안 깨어났을 때만 발견 사운드
+		if (!Blackboard->GetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey))
+		{
+			Multicast_PlaySound(DetectSound);
+		}
+
 		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
 	}
 }
