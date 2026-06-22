@@ -43,8 +43,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	TObjectPtr<UAnimMontage> FoodItemMontage;
 
+	// 헌호수정 - 사망 몽타지
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> DeathMontage;
+
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void OnUseItemMontageEnded();
+
+	UFUNCTION(BlueprintPure, Category = "Sound|Footstep")
+	float GetFootstepVolumeMultiplier() const;
 	
 protected:
 	virtual void BeginPlay() override;

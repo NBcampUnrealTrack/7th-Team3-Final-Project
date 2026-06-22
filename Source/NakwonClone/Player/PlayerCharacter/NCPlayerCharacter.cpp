@@ -245,18 +245,39 @@ void ANCPlayerCharacter::ToggleCrouch()
 void ANCPlayerCharacter::OnDead()
 {
     UE_LOG(LogTemp, Warning, TEXT("[OnDead] 호출됨!"));
+
+    // 헌호수정 - 모든 입력 완전 차단 (이동/공격/아이템/상호작용 전부)
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
-    {
-        PC->SetIgnoreMoveInput(true);
-        PC->SetIgnoreLookInput(true);
-    }
+        PC->DisableInput(PC);
+
+    // 헌호수정 - Dead 태그 추가로 GAS 어빌리티 차단
+    if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+        ASC->AddLooseGameplayTag(NCCharacter::Dead);
+
+    // 헌호수정 - 상호작용 타이머 중지
+    if (InteractionComponent)
+        InteractionComponent->StopInteraction();
+
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->DisableMovement();
 
-    // 헌호수정 - 사망 시 스태미나 타이머 정리
+    // 헌호수정 - 스태미나 타이머 정리
     if (LocomotionComponent)
         LocomotionComponent->ClearAllStaminaTimers();
+
+    // 헌호수정 - 사망 몽타지 재생 후 5초 뒤 제거
+    float MontageLength = 0.f;
+    if (DeathMontage)
+        MontageLength = PlayAnimMontage(DeathMontage);
+
+    FTimerHandle DeathTimerHandle;
+    GetWorld()->GetTimerManager().SetTimer(
+        DeathTimerHandle,
+        [this]() { Destroy(); },
+        MontageLength + 5.f,
+        false
+    );
 }
 
 void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
@@ -328,4 +349,29 @@ void ANCPlayerCharacter::PlayHitReactMontage()
     {
         PlayAnimMontage(HitReactMontage);
     }
+}
+
+float ANCPlayerCharacter::GetFootstepVolumeMultiplier() const
+{
+    if (CurrentGaitTag.MatchesTagExact(NCCharacter::Sprint))
+    {
+        return 1.0f;
+    }
+
+    if (CurrentGaitTag.MatchesTagExact(NCCharacter::CrouchSprint))
+    {
+        return 0.5f;
+    }
+
+    if (CurrentStanceTag.MatchesTagExact(NCCharacter::Crouch))
+    {
+        return 0.3f;
+    }
+
+    if (CurrentGaitTag.MatchesTagExact(NCCharacter::Jog))
+    {
+        return 0.7f;
+    }
+
+    return 0.7f;
 }
