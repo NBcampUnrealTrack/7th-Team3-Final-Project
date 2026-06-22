@@ -11,6 +11,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISenseConfig_Hearing.h"
+#include "Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 
 DEFINE_LOG_CATEGORY(LogMonster);
 DEFINE_LOG_CATEGORY(LogAIPc);
@@ -145,9 +146,14 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 		if (Stimulus.WasSuccessfullySensed())
 		{
 			// 청각 감지 성공 → 소리 발생 위치 등록
-			UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 청각 감지 위치: %s"), *Stimulus.StimulusLocation.ToString());
-			Blackboard->SetValueAsBool(IsAwakeKey, true);
+			// UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 청각 감지 위치: %s"), *Stimulus.StimulusLocation.ToString());
 			Blackboard->SetValueAsVector(HeardLocationKey, Stimulus.StimulusLocation);
+    
+			AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(GetPawn());
+			if (Walker)
+			{
+				Walker->WakeUpWithDelay();
+			}
 		}
 	}
 #pragma endregion

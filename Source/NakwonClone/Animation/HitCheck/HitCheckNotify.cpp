@@ -11,11 +11,34 @@
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
 
-void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+    float TotalDuration, const FAnimNotifyEventReference& EventReference)
+{
+    Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+
+    // 헌호수정 - 공격 시작 시 이전 히트 기록 초기화
+    HitActors.Empty();
+}
+
+void UHitCheckNotify::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+    float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
+{
+    Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
+
+    DoHitCheck(MeshComp);
+}
+
+void UHitCheckNotify::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
     const FAnimNotifyEventReference& EventReference)
 {
-    Super::Notify(MeshComp, Animation, EventReference);
+    Super::NotifyEnd(MeshComp, Animation, EventReference);
 
+    // 헌호수정 - 공격 끝나면 히트 기록 비우기
+    HitActors.Empty();
+}
+
+void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
+{
     if (!MeshComp) return;
 
     ACharacter* OwnerChar = Cast<ACharacter>(MeshComp->GetOwner());
@@ -38,10 +61,9 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
     TArray<FHitResult> HitResults;
     bool bHit = false;
 
-    // 헌호수정 - 소켓 있으면 소켓 간 스피어트레이스, 없으면 전방 스피어트레이스 (둘 다 스피어)
+    // 헌호수정 - 소켓 있으면 소켓 간 스피어트레이스 (도끼), 없으면 전방 스피어트레이스 (크로우바)
     if (WeaponData->TrailStartSocket != NAME_None && WeaponData->TrailEndSocket != NAME_None)
     {
-        // 헌호수정 - 도끼 등 양손무기 - 소켓 간 스피어트레이스
         AActor* WeaponActor = Combat->GetSpawnedWeaponActor();
         if (WeaponActor)
         {
@@ -63,15 +85,14 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
                 );
 
                 DrawDebugSphere(World, TrailStart, Radius, 12,
-                    bHit ? FColor::Red : FColor::Green, false, 3.f, 0, 1.f);
+                    bHit ? FColor::Red : FColor::Green, false, 0.05f, 0, 1.f);
                 DrawDebugSphere(World, TrailEnd, Radius, 12,
-                    bHit ? FColor::Red : FColor::Green, false, 3.f, 0, 1.f);
+                    bHit ? FColor::Red : FColor::Green, false, 0.05f, 0, 1.f);
             }
         }
     }
     else
     {
-        // 크로우바 등 한손무기 - 전방 스피어트레이스
         const FVector Start = OwnerChar->GetActorLocation();
         const FVector End = Start + OwnerChar->GetActorForwardVector() * WeaponData->HitTraceRange;
         const float Radius = WeaponData->HitSphereRadius;
@@ -84,7 +105,7 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
         );
 
         DrawDebugSphere(World, End, Radius, 12,
-            bHit ? FColor::Red : FColor::Green, false, 3.f, 0, 2.f);
+            bHit ? FColor::Red : FColor::Green, false, 0.05f, 0, 2.f);
     }
 
     UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OwnerChar);
@@ -97,6 +118,10 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
     {
         AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(Hit.GetActor());
         if (!Monster) continue;
+
+        // 헌호수정 - 이미 이번 공격에서 맞은 액터는 스킵 (중복 히트 방지)
+        if (HitActors.Contains(Monster)) continue;
+        HitActors.Add(Monster);
 
         UAbilitySystemComponent* TargetASC = Monster->GetAbilitySystemComponent();
         if (!TargetASC) continue;
@@ -120,13 +145,10 @@ void UHitCheckNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
         }
     }
 
-    // 좀비 맞았을 때 히트 사운드 재생
     if (bHitMonster && !WeaponData->HitSound.IsNull())
     {
         USoundBase* Sound = WeaponData->HitSound.LoadSynchronous();
         if (Sound)
-        {
             UGameplayStatics::PlaySoundAtLocation(World, Sound, FirstHitLocation);
-        }
     }
 }

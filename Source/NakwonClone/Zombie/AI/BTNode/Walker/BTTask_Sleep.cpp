@@ -25,11 +25,35 @@ EBTNodeResult::Type UBTTask_Sleep::ExecuteTask(UBehaviorTreeComponent& OwnerComp
 EBTNodeResult::Type UBTTask_Sleep::AbortTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	AVGMonsterWalker* Monster = Cast<AVGMonsterWalker>(OwnerComp.GetAIOwner()->GetPawn());
-	if (Monster)
+	if (!Monster) return EBTNodeResult::Aborted;
+
+	UAnimInstance* AnimInstance = Monster->GetMesh()->GetAnimInstance();
+	if (!AnimInstance) return EBTNodeResult::Aborted;
+
+	Monster->StopAnimMontage(Monster->GetSleepMontage());
+    
+	CurrentMontage = Monster->GetSelectedWakeUpMontage();
+	Monster->PlayAnimMontage(CurrentMontage);
+    
+	CachedOwnerComp = &OwnerComp;
+	AnimInstance->OnMontageEnded.RemoveDynamic(this, &UBTTask_Sleep::OnWakeUpMontageEnded);
+	AnimInstance->OnMontageEnded.AddDynamic(this, &UBTTask_Sleep::OnWakeUpMontageEnded);
+
+	return EBTNodeResult::InProgress;
+}
+
+void UBTTask_Sleep::OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (Montage != CurrentMontage) return;
+	if (!CachedOwnerComp) return;
+
+	UAnimInstance* AnimInstance = Cast<AVGMonsterWalker>(CachedOwnerComp->GetAIOwner()->GetPawn())
+		->GetMesh()->GetAnimInstance();
+	if (AnimInstance)
 	{
-		Monster->StopAnimMontage(Monster->GetSleepMontage());
-		Monster->PlayAnimMontage(Monster->GetSelectedWakeUpMontage());
+		AnimInstance->OnMontageEnded.RemoveDynamic(this, &UBTTask_Sleep::OnWakeUpMontageEnded);
 	}
 
-	return EBTNodeResult::Aborted;
+	FinishLatentAbort(*CachedOwnerComp);
+	CachedOwnerComp = nullptr;
 }

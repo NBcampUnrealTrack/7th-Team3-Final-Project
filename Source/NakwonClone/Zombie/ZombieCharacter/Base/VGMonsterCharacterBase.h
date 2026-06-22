@@ -13,6 +13,8 @@ class UAbilitySystemComponent;
 class UVGMonsterAttributeSet;
 class UAnimMontage;
 class UCapsuleComponent;
+class USoundBase;    
+class USoundAttenuation;
 
 struct FOnAttributeChangeData;
 
@@ -88,6 +90,17 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> SelectedDeadMontage;
+	
+public:
+	int32 GetSelectedMoveLevel() const { return SelectedMoveLevel; }
+	int32 GetSelectedChaseLevel() const { return SelectedChaseLevel; }
+	
+protected:
+	UPROPERTY()
+	int32 SelectedMoveLevel;
+	
+	UPROPERTY()
+	int32 SelectedChaseLevel;
 #pragma endregion
 	
 #pragma region 피격 처리
@@ -104,16 +117,6 @@ public:
 	void OnStartRagdoll();
 #pragma endregion
 	
-#pragma region GAS GE 슬롯
-public:
-	// 에디터에서 GE_Attack 에셋 할당
-	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
-	TSubclassOf<class UGameplayEffect> AttackEffectClass;
-	
-	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
-	TSubclassOf<UGameplayEffect> SpeedEffectClass;
-#pragma endregion 	
-	
 private:
 	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
 	
@@ -123,13 +126,46 @@ protected:
 	TObjectPtr<UCapsuleComponent> DetectionCapsule;
 	
 	UFUNCTION()
-	void OnDetectionOverlap(
+	virtual void OnDetectionOverlap(
 		UPrimitiveComponent* OverlappedComponent, 
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, 
 		int32 OtherBodyIndex,
 		bool bFromSweep, 
 		const FHitResult& SweepResult);
-	
+#pragma endregion
+
+#pragma region 사운드 
+	//H
+public:
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlaySound(USoundBase* Sound);
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> HitSound;      
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> DeathSound;  
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> DetectSound; 
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> HowlSound; 
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundAttenuation> SoundAttenuation;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	float HowlIntervalMin = 6.f;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	float HowlIntervalMax = 14.f;
+
+	FTimerHandle HowlTimerHandle;
+
+	void StartHowlTimer();
+	void HandleHowl();
 #pragma endregion
 };

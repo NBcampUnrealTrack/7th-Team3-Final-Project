@@ -59,7 +59,10 @@ private:
 	// ----------
 	
 	void Attack();
-	
+
+	// 헌호수정 - 플래시라이트 토글
+	void ToggleFlashlight();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
@@ -108,5 +111,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> AttackAction;
+
+	// 헌호수정 - 플래시라이트 토글 액션
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> FlashlightAction;
 
 };

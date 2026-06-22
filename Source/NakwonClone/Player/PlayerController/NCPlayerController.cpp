@@ -99,6 +99,10 @@ void ANCPlayerController::SetupInputComponent()
         
         if (AttackAction)
             EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ANCPlayerController::Attack);
+
+        // 헌호수정 - 플래시라이트 T키 바인딩
+        if (FlashlightAction)
+            EIC->BindAction(FlashlightAction, ETriggerEvent::Started, this, &ANCPlayerController::ToggleFlashlight);
     }
 }
 
@@ -144,7 +148,7 @@ void ANCPlayerController::StartSprint()
         UAISense_Hearing::ReportNoiseEvent(
             GetWorld(),
             GetPawn()->GetActorLocation(),
-            1.0f,
+            1.0f, // 소음 크기 : 최대 범위 x 1.0f = 청각 범위 (UI 필요)
             MyPawn,
             0.0f);
     }
@@ -305,6 +309,12 @@ void ANCPlayerController::UnArm()
     {
         NCInventoryComp->ForceUnArm();
     }
+}
+
+void ANCPlayerController::ToggleFlashlight() //헌호수정
+{
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        PC->ToggleFlashlight();
 }
 
 void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)

@@ -99,6 +99,18 @@ public:
     void Server_UnequipFromConsumable(int32 ConsumableSlotIndex, int32 MainSlotIndex);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|Preset")
+    void UnequipPresetToBag(int32 PresetIndex, ENCPresetCell Cell);
+
+    UFUNCTION(Server, Reliable)
+    void Server_UnequipPresetToBag(int32 PresetIndex, ENCPresetCell Cell);
+
+    UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
+    void UnequipConsumableToBag(int32 ConsumableSlotIndex);
+
+    UFUNCTION(Server, Reliable)
+    void Server_UnequipConsumableToBag(int32 ConsumableSlotIndex);
+
+    UFUNCTION(BlueprintCallable, Category = "Inventory|Preset")
     bool MovePresetToPreset(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell);
 
     UFUNCTION(Server, Reliable)
@@ -163,15 +175,27 @@ public:
 	FInventorySlot GetMainSlotData(int32 SlotIndex) const;
 	
 	TArray<FEquipmentPreset> GetPresetsArray() const { return EquipmentPresets; }
-	void SetPresetsArray(const TArray<FEquipmentPreset>& In) { EquipmentPresets = In; }
+	void SetPresetsArray(const TArray<FEquipmentPreset>& In) { EquipmentPresets = In; if (EquipmentPresets.Num() != 2) EquipmentPresets.Init(FEquipmentPreset(), 2); }
 	TArray<FInventorySlot> GetConsumableArray() const { return ConsumableQuickSlots; }
-	void SetConsumableArray(const TArray<FInventorySlot>& In) { ConsumableQuickSlots = In; }
+	void SetConsumableArray(const TArray<FInventorySlot>& In) { ConsumableQuickSlots = In; if (ConsumableQuickSlots.Num() != 6) ConsumableQuickSlots.Init(FInventorySlot(), 6); }
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
 	void TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
 
 	UFUNCTION(Server, Reliable)
 	void Server_TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void TakeLootBoxItemToPreset(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell);
+
+	UFUNCTION(Server, Reliable)
+	void Server_TakeLootBoxItemToPreset(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex);
 	
 	FConsumableItemData PendingConsumableData;
 	bool bHasPendingConsumable = false;

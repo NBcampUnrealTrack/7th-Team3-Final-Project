@@ -59,4 +59,35 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
 	float AttackTraceDistance = 100.f;
 #pragma endregion
+	
+#pragma region GAS GE 슬롯
+public:
+	// 에디터에서 GE_Attack 에셋 할당
+	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
+	TSubclassOf<class UGameplayEffect> AttackEffectClass;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
+	TSubclassOf<UGameplayEffect> WalkSpeedEffectClass;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
+	TSubclassOf<UGameplayEffect> ChaseSpeedEffectClass;
+#pragma endregion
+	
+#pragma region WakeUp
+public:
+	virtual void OnDetectionOverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult) override;
+	
+	// 랜덤 딜레이
+	void WakeUpWithDelay();
+	
+private:
+	void WakeUp();
+	FTimerHandle WakeUpTimerHandle;
+#pragma endregion
 };

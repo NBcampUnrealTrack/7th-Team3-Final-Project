@@ -25,4 +25,14 @@ protected:
 	virtual EBTNodeResult::Type AbortTask(
 		UBehaviorTreeComponent& OwnerComp, 
 		uint8* NodeMemory) override;
+	
+private:
+	UPROPERTY()
+	TObjectPtr<UBehaviorTreeComponent> CachedOwnerComp;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentMontage;
+	
+	UFUNCTION()
+	void OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };
