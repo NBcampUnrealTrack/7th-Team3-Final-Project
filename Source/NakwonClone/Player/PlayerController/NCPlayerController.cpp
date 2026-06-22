@@ -144,7 +144,7 @@ void ANCPlayerController::StartSprint()
         UAISense_Hearing::ReportNoiseEvent(
             GetWorld(),
             GetPawn()->GetActorLocation(),
-            1.0f,
+            1.0f, // 소음 크기 : 최대 범위 x 1.0f = 청각 범위 (UI 필요)
             MyPawn,
             0.0f);
     }

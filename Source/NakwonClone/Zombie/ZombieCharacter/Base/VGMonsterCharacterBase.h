@@ -88,6 +88,17 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> SelectedDeadMontage;
+	
+public:
+	int32 GetSelectedMoveLevel() const { return SelectedMoveLevel; }
+	int32 GetSelectedChaseLevel() const { return SelectedChaseLevel; }
+	
+protected:
+	UPROPERTY()
+	int32 SelectedMoveLevel;
+	
+	UPROPERTY()
+	int32 SelectedChaseLevel;
 #pragma endregion
 	
 #pragma region 피격 처리
@@ -104,16 +115,6 @@ public:
 	void OnStartRagdoll();
 #pragma endregion
 	
-#pragma region GAS GE 슬롯
-public:
-	// 에디터에서 GE_Attack 에셋 할당
-	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
-	TSubclassOf<class UGameplayEffect> AttackEffectClass;
-	
-	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
-	TSubclassOf<UGameplayEffect> SpeedEffectClass;
-#pragma endregion 	
-	
 private:
 	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
 	
@@ -123,21 +124,12 @@ protected:
 	TObjectPtr<UCapsuleComponent> DetectionCapsule;
 	
 	UFUNCTION()
-	void OnDetectionOverlap(
+	virtual void OnDetectionOverlap(
 		UPrimitiveComponent* OverlappedComponent, 
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, 
 		int32 OtherBodyIndex,
 		bool bFromSweep, 
 		const FHitResult& SweepResult);
-	
-public:
-	// 랜덤 딜레이
-	void WakeUpWithDelay();
-	
-private:
-	void WakeUp();
-	FTimerHandle WakeUpTimerHandle;
-	
 #pragma endregion
 };
