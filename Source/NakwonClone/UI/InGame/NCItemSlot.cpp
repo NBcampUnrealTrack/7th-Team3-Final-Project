@@ -46,6 +46,25 @@ void UNCItemSlot::UpdateSlotVisual()
 
 	UpdateImage(LeftSlotImage, LeftSlotData);
 	UpdateImage(RightSlotImage, RightSlotData);
+
+	const int32 RawPresetIndex = InventoryComp->CurrentEquippedPresetIndex; // -1 = 맨손, 0 = 프리셋1, 1 = 프리셋2
+	const FLinearColor HighlightColor(0.7f, 0.7f, 0.7f, 1.f);
+	const FLinearColor DimColor(0.3f, 0.3f, 0.3f, 0.5f);
+	
+	if (RawPresetIndex == 0)
+	{
+		FirstItemSlotImage->SetColorAndOpacity(HighlightColor);
+		FirstItemSlotNumber->SetColorAndOpacity(FSlateColor(HighlightColor));
+		SecondItemSlotImage->SetColorAndOpacity(DimColor);
+		SecondItemSlotNumber->SetColorAndOpacity(FSlateColor(DimColor));
+	}
+	if (RawPresetIndex == 1)
+	{
+		FirstItemSlotImage->SetColorAndOpacity(DimColor);
+		FirstItemSlotNumber->SetColorAndOpacity(FSlateColor(DimColor));
+		SecondItemSlotImage->SetColorAndOpacity(HighlightColor);
+		SecondItemSlotNumber->SetColorAndOpacity(FSlateColor(HighlightColor));
+	}
 }
 
 void UNCItemSlot::UpdateImage(UImage* TargetImage, const FInventorySlot& SlotData)
