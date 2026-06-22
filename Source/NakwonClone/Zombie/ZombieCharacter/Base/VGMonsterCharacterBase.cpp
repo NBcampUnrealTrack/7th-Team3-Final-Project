@@ -11,6 +11,8 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Common/NCGameplayTags.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 {
@@ -75,13 +77,22 @@ void AVGMonsterCharacterBase::BeginPlay()
 	SelectedDeadMontage = GetRandomDeadMontage();
 	
 	DetectionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AVGMonsterCharacterBase::OnDetectionOverlap);
+
+	// H
+	if (HasAuthority())
+	{
+		StartHowlTimer();
+	}
 }
 
 // HandleDead()
 void AVGMonsterCharacterBase::HandleDead()
 {
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleDead 호출됨: %s"), *GetName());
-	
+	//H
+	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
+	Multicast_PlaySound(DeathSound);
+
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
@@ -110,7 +121,9 @@ void AVGMonsterCharacterBase::HandleHit()
 	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
 	
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit 호출됨: %s"), *GetName());
-	
+	//H
+	Multicast_PlaySound(HitSound);
+
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
@@ -162,6 +175,51 @@ void AVGMonsterCharacterBase::WakeUp()
 	if (!AIController) return;
 	if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
 	{
+		//H
+		if (!Blackboard->GetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey))
+		{
+			Multicast_PlaySound(DetectSound);
+		}
 		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
 	}
+}
+
+//H
+void AVGMonsterCharacterBase::Multicast_PlaySound_Implementation(USoundBase* Sound)
+{
+	if (Sound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this, Sound, GetActorLocation(), 1.f, 1.f, 0.f, SoundAttenuation);
+	}
+}
+
+void AVGMonsterCharacterBase::StartHowlTimer()
+{
+	const float Delay = FMath::FRandRange(HowlIntervalMin, HowlIntervalMax);
+	GetWorldTimerManager().SetTimer(
+		HowlTimerHandle, this, &AVGMonsterCharacterBase::HandleHowl, Delay, false);
+}
+
+void AVGMonsterCharacterBase::HandleHowl()
+{
+
+	if (MonsterAttributeSet && MonsterAttributeSet->GetHealth() <= 0.f) return;
+
+
+	bool bAwake = false;
+	if (AIController)
+	{
+		if (UBlackboardComponent* BB = AIController->GetBlackboardComponent())
+		{
+			bAwake = BB->GetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey);
+		}
+	}
+
+	if (!bAwake)
+	{
+		Multicast_PlaySound(HowlSound);
+	}
+
+	StartHowlTimer();
 }

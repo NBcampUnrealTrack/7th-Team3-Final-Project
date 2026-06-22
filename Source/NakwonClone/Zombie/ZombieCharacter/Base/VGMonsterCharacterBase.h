@@ -13,6 +13,8 @@ class UAbilitySystemComponent;
 class UVGMonsterAttributeSet;
 class UAnimMontage;
 class UCapsuleComponent;
+class USoundBase;    
+class USoundAttenuation;
 
 struct FOnAttributeChangeData;
 
@@ -139,5 +141,39 @@ private:
 	void WakeUp();
 	FTimerHandle WakeUpTimerHandle;
 	
+#pragma endregion
+
+#pragma region 사운드 
+	//H
+public:
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlaySound(USoundBase* Sound);
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> HitSound;      
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> DeathSound;  
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> DetectSound; 
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundBase> HowlSound; 
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundAttenuation> SoundAttenuation;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	float HowlIntervalMin = 6.f;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	float HowlIntervalMax = 14.f;
+
+	FTimerHandle HowlTimerHandle;
+
+	void StartHowlTimer();
+	void HandleHowl();
 #pragma endregion
 };
