@@ -23,7 +23,7 @@ void ANCTitleAndLobbyGameMode::BeginPlay()
 	UE_LOG(LogTemp, Warning, TEXT("StartPreloading 호출됨"));
 }
 
-void ANCTitleAndLobbyGameMode::MoveToGameLevel()
+void ANCTitleAndLobbyGameMode::MoveToLobbyLevel()
 {
-	GetWorld()->ServerTravel("/Game/Maps/L_MVP?listen");
+	GetWorld()->ServerTravel("/Game/Maps/Lobby/L_Lobby"); // todo : 싱글모드 전환 시 OpenLevel() 사용
 }
