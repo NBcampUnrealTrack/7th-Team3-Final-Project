@@ -131,5 +131,13 @@ protected:
 		bool bFromSweep, 
 		const FHitResult& SweepResult);
 	
+public:
+	// 랜덤 딜레이
+	void WakeUpWithDelay();
+	
+private:
+	void WakeUp();
+	FTimerHandle WakeUpTimerHandle;
+	
 #pragma endregion
 };

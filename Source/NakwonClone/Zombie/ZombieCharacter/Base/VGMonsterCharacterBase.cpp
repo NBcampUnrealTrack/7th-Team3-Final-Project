@@ -148,6 +148,18 @@ void AVGMonsterCharacterBase::OnDetectionOverlap(UPrimitiveComponent* Overlapped
 		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor);
 	if (!TargetASC || !TargetASC->HasMatchingGameplayTag(NCCharacter::Player)) return;
 
+	WakeUpWithDelay();
+}
+
+void AVGMonsterCharacterBase::WakeUpWithDelay()
+{
+	float Delay = FMath::RandRange(0.f, 3.f);
+	GetWorldTimerManager().SetTimer(WakeUpTimerHandle, this, &AVGMonsterCharacterBase::WakeUp, Delay, false);
+}
+
+void AVGMonsterCharacterBase::WakeUp()
+{
+	if (!AIController) return;
 	if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
 	{
 		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
