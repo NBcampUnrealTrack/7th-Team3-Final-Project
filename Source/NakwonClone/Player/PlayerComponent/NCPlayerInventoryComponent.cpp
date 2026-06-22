@@ -202,34 +202,27 @@ bool UNCPlayerInventoryComponent::EquipToPreset_Internal(int32 MainSlotIndex, in
     const FName ItemID = Items[MainSlotIndex].ItemID;
     const FGameplayTag WeaponType = GetWeaponTypeTag(ItemID);
 
-    if (Cell == ENCPresetCell::Right)
     {
-        if (!ItemTag.MatchesTag(NCItemTag::Weapon)) return false;
-        if (WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded))
-            Cell = ENCPresetCell::Two;
-        else if (!WeaponType.MatchesTagExact(NCWeapon::Type_OneHanded))
-            return false;
-    }
-    else if (Cell == ENCPresetCell::Two)
-    {
-        if (!ItemTag.MatchesTag(NCItemTag::Weapon) || !WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded))
-            return false;
-    }
-    else
-    {
-        if (ItemTag.MatchesTag(NCItemTag::Weapon) && WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded))
+        FItemData ItemData;
+        const bool bGotData = GetItemDataByTag(ItemID, ItemTag, ItemData);
+        const bool bHasLeftTag = bGotData && ItemData.EquipTags.HasTag(NCEquip::Hand_Left);
+        const bool bIsWeapon = ItemTag.MatchesTag(NCItemTag::Weapon);
+
+        if (bIsWeapon && WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded))
         {
             Cell = ENCPresetCell::Two;
         }
-        else if (ItemTag.MatchesTag(NCItemTag::Weapon) && WeaponType.MatchesTagExact(NCWeapon::Type_OneHanded))
+        else if (Cell == ENCPresetCell::Left && bHasLeftTag)
+        {
+            Cell = ENCPresetCell::Left;
+        }
+        else if (bIsWeapon || bHasLeftTag)
         {
             Cell = ENCPresetCell::Right;
         }
         else
         {
-            FItemData ItemData;
-            if (!GetItemDataByTag(ItemID, ItemTag, ItemData)) return false;
-            if (!ItemData.EquipTags.HasTag(NCEquip::Hand_Left)) return false;
+            return false;
         }
     }
 
@@ -442,6 +435,52 @@ bool UNCPlayerInventoryComponent::UnequipFromConsumable(int32 ConsumableSlotInde
 void UNCPlayerInventoryComponent::Server_UnequipFromConsumable_Implementation(int32 ConsumableSlotIndex, int32 MainSlotIndex)
 {
     UnequipFromConsumable_Internal(ConsumableSlotIndex, MainSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::UnequipPresetToBag(int32 PresetIndex, ENCPresetCell Cell)
+{
+    if (GetOwner()->HasAuthority())
+    {
+        int32 EmptySlot = -1;
+        if (FindEmptySlot(EmptySlot))
+        {
+            UnequipFromPreset_Internal(PresetIndex, Cell, EmptySlot);
+        }
+        return;
+    }
+    Server_UnequipPresetToBag(PresetIndex, Cell);
+}
+
+void UNCPlayerInventoryComponent::Server_UnequipPresetToBag_Implementation(int32 PresetIndex, ENCPresetCell Cell)
+{
+    int32 EmptySlot = -1;
+    if (FindEmptySlot(EmptySlot))
+    {
+        UnequipFromPreset_Internal(PresetIndex, Cell, EmptySlot);
+    }
+}
+
+void UNCPlayerInventoryComponent::UnequipConsumableToBag(int32 ConsumableSlotIndex)
+{
+    if (GetOwner()->HasAuthority())
+    {
+        int32 EmptySlot = -1;
+        if (FindEmptySlot(EmptySlot))
+        {
+            UnequipFromConsumable_Internal(ConsumableSlotIndex, EmptySlot);
+        }
+        return;
+    }
+    Server_UnequipConsumableToBag(ConsumableSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_UnequipConsumableToBag_Implementation(int32 ConsumableSlotIndex)
+{
+    int32 EmptySlot = -1;
+    if (FindEmptySlot(EmptySlot))
+    {
+        UnequipFromConsumable_Internal(ConsumableSlotIndex, EmptySlot);
+    }
 }
 
 bool UNCPlayerInventoryComponent::UnequipFromConsumable_Internal(int32 ConsumableSlotIndex, int32 MainSlotIndex)
@@ -901,6 +940,74 @@ void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox,
         return;
     }
     Server_TakeItemFromLootBox(LootBox, BoxSlotIndex, PlayerSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::TakeLootBoxItemToPreset(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+    
+    Server_TakeLootBoxItemToPreset(LootBox, BoxSlotIndex, PresetIndex, Cell);
+}
+
+void UNCPlayerInventoryComponent::TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+    
+    Server_TakeLootBoxItemToConsumable(LootBox, BoxSlotIndex, ConsumableSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_TakeLootBoxItemToPreset_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+    
+    UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
+    if (!LootInventory)
+    {
+        return;
+    }
+    
+    int32 TempSlot = -1;
+    if (!FindEmptySlot(TempSlot))
+    {
+        return;
+    }
+
+    if (!LootInventory->TransferItemTo(this, BoxSlotIndex, TempSlot)) return;
+
+    EquipToPreset(TempSlot, PresetIndex, Cell);
+}
+
+void UNCPlayerInventoryComponent::Server_TakeLootBoxItemToConsumable_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+    
+    UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
+    if (!LootInventory)
+    {
+        return;
+    }
+    
+    int32 TempSlot = -1;
+    if (!FindEmptySlot(TempSlot))
+    {
+        return;
+    }
+    
+    if (!LootInventory->TransferItemTo(this, BoxSlotIndex, TempSlot)) return;
+
+    EquipToConsumable(TempSlot, ConsumableSlotIndex);
 }
 
 void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
