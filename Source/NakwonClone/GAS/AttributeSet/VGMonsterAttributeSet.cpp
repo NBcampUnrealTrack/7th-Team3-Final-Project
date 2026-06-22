@@ -6,7 +6,7 @@
 
 UVGMonsterAttributeSet::UVGMonsterAttributeSet()
 {
-	InitHealth(25.f);
+	InitHealth(100.f);
 	InitDamage(8.f);
 	InitBiteInfection(30.f);
 	InitMoveSpeed(40.f);

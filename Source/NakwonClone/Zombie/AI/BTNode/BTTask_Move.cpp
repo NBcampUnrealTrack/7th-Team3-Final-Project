@@ -10,6 +10,7 @@
 UBTTask_Move::UBTTask_Move()
 {
 	NodeName = "Move";
+	bCreateNodeInstance = true;
 }
 
 EBTNodeResult::Type UBTTask_Move::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

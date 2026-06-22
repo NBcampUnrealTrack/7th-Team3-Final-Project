@@ -22,6 +22,10 @@ protected:
 		uint8* NodeMemory, 
 		EBTNodeResult::Type TaskResult) override;
 	
+	virtual EBTNodeResult::Type AbortTask(
+		UBehaviorTreeComponent& OwnerComp, 
+		uint8* NodeMemory) override;
+	
 private:
 	// 몽타주 종료 시 FinishLatentTask 호출
 	UPROPERTY()

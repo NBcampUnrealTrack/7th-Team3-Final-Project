@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
-
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Common/NCGameplayTags.h"
@@ -18,11 +17,14 @@ DEFINE_LOG_CATEGORY(LogAIPc);
 
 #pragma region 블랙보드 키 이름 정의
 const FName AVGMonsterAIControllerBase::PatrolLocationKey = "PatrolLocation";
-const FName AVGMonsterAIControllerBase::PatrolIndexKey    = "PatrolIndex";
 const FName AVGMonsterAIControllerBase::TargetActorKey    = "TargetActor";
 const FName AVGMonsterAIControllerBase::HeardLocationKey  = "HeardLocation";
-const FName AVGMonsterAIControllerBase::IsDeadKey         = "IsDead";
-const FName AVGMonsterAIControllerBase::IsAttackKey		  = "bIsAttack";
+const FName AVGMonsterAIControllerBase::IsDeadKey         = "bIsDead";
+const FName AVGMonsterAIControllerBase::IsAttackKey       = "bIsAttack";
+const FName AVGMonsterAIControllerBase::IsHitKey          = "bIsHit";
+const FName AVGMonsterAIControllerBase::IsAwakeKey        = "bIsAwake";
+const FName AVGMonsterAIControllerBase::IsWanderingKey    = "bIsWandering";
+const FName AVGMonsterAIControllerBase::PatrolCountKey    = "PatrolCount";
 #pragma endregion
 
 AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
@@ -119,6 +121,8 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 #pragma region 시각 감지 처리
 	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
+		if (!Blackboard->GetValueAsBool(IsAwakeKey)) return;
+		
 		if (Stimulus.WasSuccessfullySensed())
 		{
 			// 시각 감지 성공 → TargetActor 등록
@@ -142,6 +146,7 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 		{
 			// 청각 감지 성공 → 소리 발생 위치 등록
 			UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 청각 감지 위치: %s"), *Stimulus.StimulusLocation.ToString());
+			Blackboard->SetValueAsBool(IsAwakeKey, true);
 			Blackboard->SetValueAsVector(HeardLocationKey, Stimulus.StimulusLocation);
 		}
 	}

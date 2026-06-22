@@ -11,6 +11,7 @@ UBTTask_Stop::UBTTask_Stop()
 {
 	NodeName = "Stop";
 	bNotifyTick = true;
+	bCreateNodeInstance = true;
 }
 
 EBTNodeResult::Type UBTTask_Stop::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

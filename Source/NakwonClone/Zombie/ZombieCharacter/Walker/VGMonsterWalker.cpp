@@ -26,6 +26,11 @@ void AVGMonsterWalker::BeginPlay()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MonsterAttributeSet->GetMoveSpeed();
 	}
+	
+	if (AnimWakeUp.Num() > 0)
+	{
+		SelectedWakeUpMontage = AnimWakeUp[FMath::RandRange(0, AnimWakeUp.Num() - 1)];
+	}
 }
 
 void AVGMonsterWalker::PerformAttackTrace()

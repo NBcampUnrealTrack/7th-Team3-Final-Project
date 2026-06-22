@@ -27,19 +27,24 @@ public:
 	
 #pragma region 블랙보드 키 이름
 	static const FName PatrolLocationKey;
-	static const FName PatrolIndexKey;
 	static const FName TargetActorKey;
 	static const FName HeardLocationKey;
 	static const FName IsDeadKey;
 	static const FName IsAttackKey;
+	static const FName IsHitKey;
+	static const FName IsAwakeKey;
+	static const FName IsWanderingKey;
+	static const FName PatrolCountKey;
 #pragma endregion
 
 #pragma region Behavior Tree & Blackboard
+protected:
 	UPROPERTY(EditAnywhere, Category = "AI|BehaviorTree")
 	UBehaviorTree* BehaviorTree;
 #pragma endregion
 	
 #pragma region AIPerception
+protected:
 	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
 	UAIPerceptionComponent* MonsterPerceptionComponent;
 
@@ -48,14 +53,14 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "AI|Perception")
 	UAISenseConfig_Hearing* HearingConfig;
+	
+private:
+	// 감지 콜백
+	UFUNCTION()
+	void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 #pragma endregion
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
-
-private:
-	// 감지 콜백
-	UFUNCTION()
-	void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 };

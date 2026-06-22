@@ -12,6 +12,7 @@ class AVGMonsterAIControllerBase;
 class UAbilitySystemComponent;
 class UVGMonsterAttributeSet;
 class UAnimMontage;
+class UCapsuleComponent;
 
 struct FOnAttributeChangeData;
 
@@ -89,16 +90,11 @@ protected:
 	TObjectPtr<UAnimMontage> SelectedDeadMontage;
 #pragma endregion
 	
-#pragma region 피격
+#pragma region 피격 처리
 public:
 	UFUNCTION()
 	void HandleHit();
-	
-private:
-	bool bIsHit = false;
-	FTimerHandle HitTimerHandle;
 #pragma endregion
-	
 	
 #pragma region 사망 처리
 public:
@@ -108,7 +104,7 @@ public:
 	void OnStartRagdoll();
 #pragma endregion
 	
-#pragma region GAS GE
+#pragma region GAS GE 슬롯
 public:
 	// 에디터에서 GE_Attack 에셋 할당
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
@@ -116,8 +112,24 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
 	TSubclassOf<UGameplayEffect> SpeedEffectClass;
-
 #pragma endregion 	
+	
 private:
 	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
+	
+#pragma region 충돌 감지
+protected:
+	UPROPERTY(VisibleAnywhere, Category = "Monster|Detection")
+	TObjectPtr<UCapsuleComponent> DetectionCapsule;
+	
+	UFUNCTION()
+	void OnDetectionOverlap(
+		UPrimitiveComponent* OverlappedComponent, 
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, 
+		int32 OtherBodyIndex,
+		bool bFromSweep, 
+		const FHitResult& SweepResult);
+	
+#pragma endregion
 };

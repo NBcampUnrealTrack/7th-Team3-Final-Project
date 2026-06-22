@@ -11,7 +11,7 @@
 UBTTask_Dead::UBTTask_Dead()
 {
 	NodeName = "Dead";
-	
+	bCreateNodeInstance = true;
 	CachedOwnerComp = nullptr;
 }
 
@@ -20,8 +20,9 @@ EBTNodeResult::Type UBTTask_Dead::ExecuteTask(UBehaviorTreeComponent& OwnerComp,
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!Monster) return EBTNodeResult::Failed;
 
+	UE_LOG(LogMonster, Warning, TEXT("[BTTask_Dead] ExecuteTask 호출됨"));
+	
 	CurrentMontage = Monster->GetSelectedDeadMontage();
-	Monster->PlayAnimMontage(CurrentMontage);
 	float Duration = Monster->PlayAnimMontage(CurrentMontage);
 	
 	UE_LOG(LogMonster, Warning, TEXT("DeadMontage: %s, Duration: %f"), 
@@ -56,15 +57,8 @@ void UBTTask_Dead::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* Node
 
 void UBTTask_Dead::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage != CurrentMontage)
-	{
-		return;
-	}
-	
-	if (!CachedOwnerComp)
-	{
-		return;
-	}
+	if (Montage != CurrentMontage) return;
+	if (!CachedOwnerComp) return;
 	
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(CachedOwnerComp->GetAIOwner()->GetPawn());
 	if (Monster)
