@@ -11,6 +11,8 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Common/NCGameplayTags.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 {
@@ -73,6 +75,12 @@ void AVGMonsterCharacterBase::BeginPlay()
 	SelectedDeadMontage = GetRandomDeadMontage();
 	
 	DetectionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AVGMonsterCharacterBase::OnDetectionOverlap);
+
+	// H
+	if (HasAuthority())
+	{
+		StartHowlTimer();
+	}
 	
 	int32 MoveIndex = FMath::RandRange(0, AnimMove.Num()-1);
 	SelectedMoveMontage = AnimMove[MoveIndex];
@@ -87,7 +95,10 @@ void AVGMonsterCharacterBase::BeginPlay()
 void AVGMonsterCharacterBase::HandleDead()
 {
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleDead 호출됨: %s"), *GetName());
-	
+	//H
+	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
+	Multicast_PlaySound(DeathSound);
+
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
@@ -116,7 +127,9 @@ void AVGMonsterCharacterBase::HandleHit()
 	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
 	
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit 호출됨: %s"), *GetName());
-	
+	//H
+	Multicast_PlaySound(HitSound);
+
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
