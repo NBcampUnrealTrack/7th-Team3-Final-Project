@@ -643,6 +643,7 @@ bool UNCPlayerInventoryComponent::MoveConsumableToConsumable_Internal(int32 From
     if (!GetOwner()->HasAuthority()) return false;
     if (!EquipmentPresets.IsValidIndex(FromPreset) || !EquipmentPresets.IsValidIndex(ToPreset)) return false;
     if (FromPreset == ToPreset && FromSlot == ToSlot) return false;
+    if (FromSlot != ToSlot) return false;
 
     FInventorySlot& A = (FromSlot == 0) ? EquipmentPresets[FromPreset].ConsumableHeal : EquipmentPresets[FromPreset].ConsumableFood;
     FInventorySlot& B = (ToSlot == 0)   ? EquipmentPresets[ToPreset].ConsumableHeal   : EquipmentPresets[ToPreset].ConsumableFood;
