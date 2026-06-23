@@ -203,6 +203,12 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex);
 	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void PutItemToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_PutItemToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+	
 	FConsumableItemData PendingConsumableData;
 	bool bHasPendingConsumable = false;
 

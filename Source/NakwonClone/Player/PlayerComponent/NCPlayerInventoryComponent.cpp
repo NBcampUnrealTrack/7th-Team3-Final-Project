@@ -983,7 +983,40 @@ void UNCPlayerInventoryComponent::MoveLootBoxItem(AANCLootBoxActor* LootBox, int
     Server_MoveLootBoxItem(LootBox, FromSlotIndex, ToSlotIndex);
 }
 
-void UNCPlayerInventoryComponent::Server_MoveLootBoxItem_Implementation(AANCLootBoxActor* LootBox, int32 FromSlotIndex,int32 ToSlotIndex)
+void UNCPlayerInventoryComponent::PutItemToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
+{
+    Server_PutItemToLootBox(LootBox, BoxSlotIndex, PlayerSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_PutItemToLootBox_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+    UNCInventoryBaseComponent* LootInv = LootBox->GetLootInventory();
+    if (!LootInv)
+    {
+        return;
+    }
+    if (!Items.IsValidIndex(PlayerSlotIndex) || Items[PlayerSlotIndex].IsEmpty())
+    {
+        return;
+    }
+    if (!LootInv->Items.IsValidIndex(BoxSlotIndex))
+    {
+        return;
+    }
+    
+    FInventorySlot Temp = LootInv->Items[BoxSlotIndex];
+    LootInv->Items[BoxSlotIndex] = Items[PlayerSlotIndex];
+    Items[PlayerSlotIndex] = Temp;
+
+    OnInventoryUpdated.Broadcast();
+    LootInv->OnInventoryUpdated.Broadcast();
+}
+
+void UNCPlayerInventoryComponent::Server_MoveLootBoxItem_Implementation(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex)
 {
     if (!LootBox)
     {
