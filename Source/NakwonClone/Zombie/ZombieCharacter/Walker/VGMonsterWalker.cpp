@@ -105,7 +105,7 @@ void AVGMonsterWalker::OnDetectionOverlap(UPrimitiveComponent* OverlappedCompone
 
 void AVGMonsterWalker::WakeUpWithDelay()
 {
-	float Delay = FMath::RandRange(0.f, 3.f);
+	float Delay = FMath::RandRange(0.f, 2.f);
 	GetWorldTimerManager().SetTimer(WakeUpTimerHandle, this, &AVGMonsterWalker::WakeUp, Delay, false);
 }
 
@@ -119,7 +119,8 @@ void AVGMonsterWalker::WakeUp()
 		{
 			Multicast_PlaySound(DetectSound);
 		}
-
+		// 몬스터 기상
 		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
 	}
 }
+
