@@ -71,7 +71,7 @@ private:
 	void QuickSlot1();
 	void QuickSlot2();
 	void QuickSlot3();
-	void QuickSlot3Hold();
+	void QuickSlot4();
 	void UnArm();
 	// ----------
 	
@@ -114,7 +114,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> QuickSlot3Action;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> QuickSlot3HoldAction;
+	TObjectPtr<UInputAction> QuickSlot4Action;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> UnArmAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
