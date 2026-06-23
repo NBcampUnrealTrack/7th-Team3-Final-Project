@@ -371,6 +371,10 @@ bool UNCPlayerInventoryComponent::EquipToConsumable_Internal(int32 MainSlotIndex
     const FName ItemID = Items[MainSlotIndex].ItemID;
     if (!ItemTag.MatchesTag(NCItemType::Consumable)) return false;
 
+    if (ItemTag.MatchesTag(NCItemTag::Heal))      ConsumableSlotIndex = 0;
+    else if (ItemTag.MatchesTag(NCItemTag::Food)) ConsumableSlotIndex = 1;
+    else return false;
+    
     FEquipmentPreset& Preset = EquipmentPresets[PresetIndex];
     FInventorySlot& Slot = (ConsumableSlotIndex == 0) ? Preset.ConsumableHeal : Preset.ConsumableFood;
 
