@@ -211,7 +211,8 @@ public:
 	
 	FConsumableItemData PendingConsumableData;
 	bool bHasPendingConsumable = false;
-
+	int32 PendingReEquipPresetIndex = -1;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
 	TObjectPtr<UDataTable> ConsumableDataTable;
 

@@ -748,6 +748,13 @@ bool UNCPlayerInventoryComponent::UseConsumableSlot_Internal(int32 SlotIndex)
             }
         }
     }
+    
+    const int32 PresetToRestore = CurrentEquippedPresetIndex;
+    if (PresetToRestore != -1)
+    {
+        ForceUnArm();
+        PendingReEquipPresetIndex = PresetToRestore;
+    }
 
     OnItemUsed.Broadcast(ItemTag);
     return true;
