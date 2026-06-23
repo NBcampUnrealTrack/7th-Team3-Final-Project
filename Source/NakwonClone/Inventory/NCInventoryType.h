@@ -99,6 +99,8 @@ struct FEquipmentPreset
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FInventorySlot RightHand; 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FInventorySlot LeftHand;  
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FInventorySlot TwoHand; 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FInventorySlot ConsumableHeal;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FInventorySlot ConsumableFood;
 
 	bool IsTwoHandActive() const { return !TwoHand.IsEmpty(); }
 	bool IsEmpty() const { return RightHand.IsEmpty() && LeftHand.IsEmpty() && TwoHand.IsEmpty(); }

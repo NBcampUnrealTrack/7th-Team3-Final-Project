@@ -15,8 +15,7 @@ void UNCItemSlot::NativeConstruct()
 	UNCPlayerInventoryComponent* InventoryComp = PC->PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>();
 	if (InventoryComp)
 	{
-		InventoryComp->OnQuickSlotUpdated.RemoveDynamic(this, &UNCItemSlot::UpdateSlotVisual);
-		InventoryComp->OnQuickSlotUpdated.AddDynamic(this, &UNCItemSlot::UpdateSlotVisual);
+		InventoryComp->OnPresetUpdated.RemoveDynamic(this, &UNCItemSlot::UpdateSlotVisual);
 		InventoryComp->OnPresetUpdated.AddDynamic(this, &UNCItemSlot::UpdateSlotVisual);
 
 		UpdateSlotVisual();
