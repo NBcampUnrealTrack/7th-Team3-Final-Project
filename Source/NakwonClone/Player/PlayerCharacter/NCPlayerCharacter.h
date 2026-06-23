@@ -21,6 +21,7 @@ class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
 
 public:
 	ANCPlayerCharacter();
+
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
@@ -47,16 +48,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	TObjectPtr<UAnimMontage> DeathMontage;
 
-	// 헌호수정 - 피격 시 카메라 쉐이크
 	UPROPERTY(EditDefaultsOnly, Category = "CameraShake")
 	TSubclassOf<UCameraShakeBase> TakeDamageShakeClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> EscapeResultWidgetClass;
-
-private:
-	bool bCameraShaking = false;
-	FTimerHandle ShakeTimerHandle;
 
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void OnUseItemMontageEnded();
@@ -86,11 +82,9 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void Server_SetStance(FGameplayTag NewStanceTag);
 
-	// 헌호수정 - 사망 처리 멀티캐스트 (모든 클라이언트에 몽타지 재생)
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_OnDead();
 
-	// 헌호수정 - 플래시라이트 서버 RPC
 	UFUNCTION(Server, Reliable)
 	void Server_ToggleFlashlight();
 
@@ -139,10 +133,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation|HitReact")
 	TObjectPtr<UAnimMontage> HitReactRightMontage;
 
-	void HandleHealthChanged(const struct FOnAttributeChangeData& Data);
-
 	UPROPERTY(EditDefaultsOnly, Category = "Animation|HitReact")
 	float HitReactCooldown = 0.5f;
+
+	void HandleHealthChanged(const struct FOnAttributeChangeData& Data);
 
 private:
 	void InitCamera();
@@ -151,7 +145,11 @@ private:
 	UFUNCTION()
 	void OnItemUsed(FGameplayTag UsedItemTag);
 
-	float LastHitReactTime = -999.f;
 	UFUNCTION()
 	void OnConsumableMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	bool bCameraShaking = false;
+	FTimerHandle ShakeTimerHandle;
+
+	float LastHitReactTime = -999.f;
 };
