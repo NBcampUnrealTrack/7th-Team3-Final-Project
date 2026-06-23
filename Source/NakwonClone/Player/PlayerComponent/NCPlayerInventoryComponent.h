@@ -197,9 +197,22 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex);
 	
+	UFUNCTION(BlueprintCallable)
+	void MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void PutItemToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_PutItemToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+	
 	FConsumableItemData PendingConsumableData;
 	bool bHasPendingConsumable = false;
-
+	int32 PendingReEquipPresetIndex = -1;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
 	TObjectPtr<UDataTable> ConsumableDataTable;
 

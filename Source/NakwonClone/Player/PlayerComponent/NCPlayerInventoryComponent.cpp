@@ -748,6 +748,13 @@ bool UNCPlayerInventoryComponent::UseConsumableSlot_Internal(int32 SlotIndex)
             }
         }
     }
+    
+    const int32 PresetToRestore = CurrentEquippedPresetIndex;
+    if (PresetToRestore != -1)
+    {
+        ForceUnArm();
+        PendingReEquipPresetIndex = PresetToRestore;
+    }
 
     OnItemUsed.Broadcast(ItemTag);
     return true;
@@ -787,9 +794,25 @@ bool UNCPlayerInventoryComponent::AutoEquipItem_Internal(int32 MainSlotIndex)
         const ENCPresetCell Cell = WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded) ? ENCPresetCell::Two : ENCPresetCell::Right;
 
         const FEquipmentPreset& P0 = EquipmentPresets[0];
+        const FEquipmentPreset& P1 = EquipmentPresets[1];
         const bool bP0CellEmpty = (Cell == ENCPresetCell::Two) ? P0.TwoHand.IsEmpty() : P0.RightHand.IsEmpty();
-        return EquipToPreset_Internal(MainSlotIndex, bP0CellEmpty ? 0 : 1, Cell);
+        const bool bP1CellEmpty = (Cell == ENCPresetCell::Two) ? P1.TwoHand.IsEmpty() : P1.RightHand.IsEmpty();
+        const bool bP0Ready = bP0CellEmpty && P0.TwoHand.IsEmpty() && (Cell != ENCPresetCell::Two || (P0.RightHand.IsEmpty() && P0.LeftHand.IsEmpty()));
+        const bool bP1Ready = bP1CellEmpty && P1.TwoHand.IsEmpty() && (Cell != ENCPresetCell::Two || (P1.RightHand.IsEmpty() && P1.LeftHand.IsEmpty()));
+        
+        if (bP0Ready)
+        {
+            return EquipToPreset_Internal(MainSlotIndex, 0, Cell);
+        }
+        
+        if (bP1Ready)
+        {
+            return EquipToPreset_Internal(MainSlotIndex, 1, Cell);
+        }
+        
+        return false;
     }
+    
     else if (ItemTag.MatchesTag(NCItemTag::Heal))
     {
         return EquipToConsumable_Internal(MainSlotIndex, 0);
@@ -962,6 +985,65 @@ void UNCPlayerInventoryComponent::TakeLootBoxItemToConsumable(AANCLootBoxActor* 
     Server_TakeLootBoxItemToConsumable(LootBox, BoxSlotIndex, ConsumableSlotIndex);
 }
 
+void UNCPlayerInventoryComponent::MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex)
+{
+    Server_MoveLootBoxItem(LootBox, FromSlotIndex, ToSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::PutItemToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
+{
+    Server_PutItemToLootBox(LootBox, BoxSlotIndex, PlayerSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_PutItemToLootBox_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+    UNCInventoryBaseComponent* LootInv = LootBox->GetLootInventory();
+    if (!LootInv)
+    {
+        return;
+    }
+    if (!Items.IsValidIndex(PlayerSlotIndex) || Items[PlayerSlotIndex].IsEmpty())
+    {
+        return;
+    }
+    if (!LootInv->Items.IsValidIndex(BoxSlotIndex))
+    {
+        return;
+    }
+    
+    FInventorySlot Temp = LootInv->Items[BoxSlotIndex];
+    LootInv->Items[BoxSlotIndex] = Items[PlayerSlotIndex];
+    Items[PlayerSlotIndex] = Temp;
+
+    OnInventoryUpdated.Broadcast();
+    LootInv->OnInventoryUpdated.Broadcast();
+}
+
+void UNCPlayerInventoryComponent::Server_MoveLootBoxItem_Implementation(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+
+    UNCInventoryBaseComponent* LootInv = LootBox->GetLootInventory();
+    if (!LootInv)
+    {
+        return;
+    }
+    if (!LootInv->Items.IsValidIndex(FromSlotIndex) || !LootInv->Items.IsValidIndex(ToSlotIndex))
+    {
+        return;
+    }
+    
+    LootInv->Items.Swap(FromSlotIndex, ToSlotIndex);
+    LootInv->OnInventoryUpdated.Broadcast();
+}
+
 void UNCPlayerInventoryComponent::Server_TakeLootBoxItemToPreset_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
 {
     if (!LootBox)
@@ -1037,8 +1119,19 @@ void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANC
     {
         return;
     }
-
-    LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
+    
+    if (!Items[TargetSlot].IsEmpty())
+    {
+        FInventorySlot Temp = LootInventory->Items[BoxSlotIndex];
+        LootInventory->Items[BoxSlotIndex] = Items[TargetSlot];
+        Items[TargetSlot] = Temp;
+        OnInventoryUpdated.Broadcast();
+        LootInventory->OnInventoryUpdated.Broadcast();
+    }
+    else
+    {
+        LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
+    }
 }
 
 // 헌호 - 서버에서 호출 → 모든 클라에서 OnItemUsed 델리게이트 실행

@@ -12,6 +12,7 @@ struct FInputActionValue;
 
 //하상빈 추가
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryToggledSignature, bool, bIsOpen);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPauseRequestedSignature);
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerController : public APlayerController
@@ -31,7 +32,22 @@ public:
 		
 	UFUNCTION(BlueprintCallable)
 	bool TryCloseTopUI();
-	
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void HandleCloseUI();
+
+	UPROPERTY(BlueprintAssignable, Category = "UI|Pause")
+	FOnPauseRequestedSignature OnPauseRequested;
+
+	UFUNCTION(BlueprintCallable, Category = "UI|Pause")
+	void SetPauseMenuOpen(bool bOpen);
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	bool IsMenuBlockingInput() const { return bIsInventoryOpen || LootBoxWidget != nullptr || bIsPauseMenuOpen; }
+
+	UPROPERTY(BlueprintReadOnly, Category = "UI|Pause")
+	bool bIsPauseMenuOpen = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsInventoryOpen = false;
 	
@@ -50,6 +66,7 @@ private:
 	void ToggleCrouch();
 	
 	// 하상빈 추가
+	void OnInventoryKey();
 	void Interact();
 	void QuickSlot1();
 	void QuickSlot2();

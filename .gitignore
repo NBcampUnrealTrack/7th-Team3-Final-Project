@@ -23,3 +23,5 @@ BuildOutput
 # Visual Studio cache
 .vs/
 *.ipch
+
+Plugins/Developer/
