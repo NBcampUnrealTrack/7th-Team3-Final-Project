@@ -15,6 +15,8 @@
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "GameFramework/PlayerController.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
@@ -283,17 +285,34 @@ void ANCPlayerCharacter::OnDead()
         MontageLength + 5.f,
         false
     );
+    
+    
 }
 
 void ANCPlayerCharacter::Multicast_OnDead_Implementation() //헌호수정
 {
+    APlayerController* PC = Cast<APlayerController>(GetController());
+
     // 헌호수정 - 입력 차단 (로컬 컨트롤러에만 의미 있음)
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    if (PC)
         PC->DisableInput(PC);
 
     // 헌호수정 - 사망 몽타지 재생 (모든 클라이언트)
     if (DeathMontage)
         PlayAnimMontage(DeathMontage);
+
+    // 사망 결과 UI - 본인 화면에만 표시 (탈출 실패, bSuccess 기본값 false)
+    if (IsLocallyControlled() && PC && EscapeResultWidgetClass)
+    {
+        if (UUserWidget* ResultWidget = CreateWidget<UUserWidget>(PC, EscapeResultWidgetClass))
+        {
+            ResultWidget->AddToViewport();
+
+            FInputModeUIOnly InputMode;
+            PC->SetInputMode(InputMode);
+            PC->bShowMouseCursor = true;
+        }
+    }
 }
 
 void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
