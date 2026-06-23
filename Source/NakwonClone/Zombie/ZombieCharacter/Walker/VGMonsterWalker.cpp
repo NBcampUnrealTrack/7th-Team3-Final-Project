@@ -33,6 +33,12 @@ void AVGMonsterWalker::BeginPlay()
 	{
 		SelectedWakeUpMontage = AnimWakeUp[FMath::RandRange(0, AnimWakeUp.Num() - 1)];
 	}
+	
+	if (RandomMesh.Num() > 0)
+	{
+		int32 RandIndex = FMath::RandRange(0, RandomMesh.Num() - 1);
+		GetMesh()->SetSkeletalMesh(RandomMesh[RandIndex]);
+	}
 }
 
 void AVGMonsterWalker::PerformAttackTrace()
@@ -99,7 +105,7 @@ void AVGMonsterWalker::OnDetectionOverlap(UPrimitiveComponent* OverlappedCompone
 
 void AVGMonsterWalker::WakeUpWithDelay()
 {
-	float Delay = FMath::RandRange(0.f, 3.f);
+	float Delay = FMath::RandRange(0.f, 2.f);
 	GetWorldTimerManager().SetTimer(WakeUpTimerHandle, this, &AVGMonsterWalker::WakeUp, Delay, false);
 }
 
@@ -113,7 +119,8 @@ void AVGMonsterWalker::WakeUp()
 		{
 			Multicast_PlaySound(DetectSound);
 		}
-
+		// 몬스터 기상
 		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
 	}
 }
+
