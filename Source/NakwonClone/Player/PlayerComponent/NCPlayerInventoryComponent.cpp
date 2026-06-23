@@ -787,9 +787,25 @@ bool UNCPlayerInventoryComponent::AutoEquipItem_Internal(int32 MainSlotIndex)
         const ENCPresetCell Cell = WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded) ? ENCPresetCell::Two : ENCPresetCell::Right;
 
         const FEquipmentPreset& P0 = EquipmentPresets[0];
+        const FEquipmentPreset& P1 = EquipmentPresets[1];
         const bool bP0CellEmpty = (Cell == ENCPresetCell::Two) ? P0.TwoHand.IsEmpty() : P0.RightHand.IsEmpty();
-        return EquipToPreset_Internal(MainSlotIndex, bP0CellEmpty ? 0 : 1, Cell);
+        const bool bP1CellEmpty = (Cell == ENCPresetCell::Two) ? P1.TwoHand.IsEmpty() : P1.RightHand.IsEmpty();
+        const bool bP0Ready = bP0CellEmpty && P0.TwoHand.IsEmpty() && (Cell != ENCPresetCell::Two || (P0.RightHand.IsEmpty() && P0.LeftHand.IsEmpty()));
+        const bool bP1Ready = bP1CellEmpty && P1.TwoHand.IsEmpty() && (Cell != ENCPresetCell::Two || (P1.RightHand.IsEmpty() && P1.LeftHand.IsEmpty()));
+        
+        if (bP0Ready)
+        {
+            return EquipToPreset_Internal(MainSlotIndex, 0, Cell);
+        }
+        
+        if (bP1Ready)
+        {
+            return EquipToPreset_Internal(MainSlotIndex, 1, Cell);
+        }
+        
+        return false;
     }
+    
     else if (ItemTag.MatchesTag(NCItemTag::Heal))
     {
         return EquipToConsumable_Internal(MainSlotIndex, 0);
