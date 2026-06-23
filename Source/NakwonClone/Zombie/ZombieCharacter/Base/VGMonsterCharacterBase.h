@@ -115,6 +115,7 @@ public:
 	void HandleDead();
 	
 	void OnStartRagdoll();
+
 #pragma endregion
 	
 private:

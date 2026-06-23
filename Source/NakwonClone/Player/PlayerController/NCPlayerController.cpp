@@ -69,7 +69,7 @@ void ANCPlayerController::SetupInputComponent()
         }
         if (InventoryAction)
         {
-            EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &ANCPlayerController::ToggleInventory);
+            EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &ANCPlayerController::OnInventoryKey);
         }
         if (QuickSlot1Action)
         {
@@ -83,9 +83,9 @@ void ANCPlayerController::SetupInputComponent()
         {
             EIC->BindAction(QuickSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot3);
         }
-        if (QuickSlot3HoldAction)
+        if (QuickSlot4Action)
         {
-            EIC->BindAction(QuickSlot3HoldAction, ETriggerEvent::Triggered, this, &ANCPlayerController::QuickSlot3Hold);
+            EIC->BindAction(QuickSlot4Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot4);
         }
         if (UnArmAction)
         {
@@ -93,7 +93,7 @@ void ANCPlayerController::SetupInputComponent()
         }
         if (CloseUIAction)
         {
-            EIC->BindAction(CloseUIAction, ETriggerEvent::Started, this, &ANCPlayerController::CloseLootBoxUI);
+            EIC->BindAction(CloseUIAction, ETriggerEvent::Started, this, &ANCPlayerController::HandleCloseUI);
         }
         // -----------
         
@@ -108,11 +108,11 @@ void ANCPlayerController::SetupInputComponent()
 
 void ANCPlayerController::Move(const FInputActionValue& Value)
 {
-    if (LootBoxWidget)
+    if (IsMenuBlockingInput())
     {
-        CloseLootBoxUI();
+        return;
     }
-    
+
     ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PlayerCharacter) return;
 
@@ -129,6 +129,10 @@ void ANCPlayerController::Move(const FInputActionValue& Value)
 
 void ANCPlayerController::Look(const FInputActionValue& Value)
 {
+    if (IsMenuBlockingInput())
+    {
+        return;
+    }
     FVector2D LookAxisVector = Value.Get<FVector2D>();
     AddYawInput(LookAxisVector.X);
     AddPitchInput(LookAxisVector.Y);
@@ -136,6 +140,10 @@ void ANCPlayerController::Look(const FInputActionValue& Value)
 
 void ANCPlayerController::StartSprint()
 {
+    if (IsMenuBlockingInput())
+    {
+        return;
+    }
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
     {
         PC->StartSprint();
@@ -168,6 +176,10 @@ void ANCPlayerController::ToggleWalk()
 
 void ANCPlayerController::Jump()
 {
+    if (IsMenuBlockingInput())
+    {
+        return;
+    }
     if (ACharacter* Char = Cast<ACharacter>(GetPawn()))
         Char->Jump();
 }
@@ -187,6 +199,10 @@ void ANCPlayerController::ToggleCrouch()
 void ANCPlayerController::Interact()
 {
     if (IsAttacking()) return; //헌호수정 - 공격 중 상호작용 차단
+    if (IsMenuBlockingInput())
+    {
+        return;
+    }
     if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(GetPawn()))
     {
         if (UNCInteractionComponent* InteractionComp = PlayerCharacter->FindComponentByClass<UNCInteractionComponent>())
@@ -198,6 +214,10 @@ void ANCPlayerController::Interact()
 
 void ANCPlayerController::Attack()
 {
+    if (IsMenuBlockingInput())
+    {
+        return;
+    }
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
 
@@ -213,6 +233,15 @@ void ANCPlayerController::Attack()
             Combat->MeleeAttack();
         }
     }
+}
+
+void ANCPlayerController::OnInventoryKey()
+{
+    if (bIsPauseMenuOpen)
+    {
+        return;
+    }
+    ToggleInventory();
 }
 
 void ANCPlayerController::ToggleInventory()
@@ -235,10 +264,15 @@ void ANCPlayerController::ToggleInventory()
     }
     else
     {
+        if (LootBoxWidget)
+        {
+            CloseLootBoxUI();
+        }
+
         bShowMouseCursor = false;
         FInputModeGameOnly InputMode;
         SetInputMode(InputMode);
-        
+
         if (PlayerCharacter)
         {
             PlayerCharacter->StateTags.RemoveTag(NCCharacter::InventoryOpen);
@@ -246,6 +280,20 @@ void ANCPlayerController::ToggleInventory()
     }
 
     OnInventoryToggled.Broadcast(bIsInventoryOpen);
+}
+
+void ANCPlayerController::HandleCloseUI()
+{
+    if (TryCloseTopUI())
+    {
+        return;
+    }
+    OnPauseRequested.Broadcast();
+}
+
+void ANCPlayerController::SetPauseMenuOpen(bool bOpen)
+{
+    bIsPauseMenuOpen = bOpen;
 }
 
 void ANCPlayerController::CloseLootBoxUI()
@@ -259,14 +307,14 @@ void ANCPlayerController::CloseLootBoxUI()
 
 bool ANCPlayerController::TryCloseTopUI()
 {
-    if (LootBoxWidget)
-    {
-        CloseLootBoxUI();
-        return true;
-    }
     if (bIsInventoryOpen)
     {
         ToggleInventory();
+        return true;
+    }
+    if (LootBoxWidget)
+    {
+        CloseLootBoxUI();
         return true;
     }
     return false;
@@ -295,16 +343,16 @@ void ANCPlayerController::QuickSlot3()
     if (IsAttacking()) return; //헌호수정 - 공격 중 아이템 사용 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseConsumableSlot(NCInventoryComp->SelectedConsumableIndex);
+        NCInventoryComp->UseConsumableSlot(0);
     }
 }
 
-void ANCPlayerController::QuickSlot3Hold()
+void ANCPlayerController::QuickSlot4()
 {
     if (IsAttacking()) return; //헌호수정 - 공격 중 아이템 선택 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->OnConsumableSelectionRequested.Broadcast();
+        NCInventoryComp->UseConsumableSlot(0);
     }
 }
 

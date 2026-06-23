@@ -44,15 +44,9 @@ protected:
 	UFUNCTION()
 	void OnRep_Presets();
 	
-	UFUNCTION()
-	virtual void OnRep_QuickSlots();
-	
 public:
     UPROPERTY(ReplicatedUsing = OnRep_Presets, EditAnywhere, BlueprintReadOnly, Category = "Inventory|Preset")
     TArray<FEquipmentPreset> EquipmentPresets;
-
-  UPROPERTY(ReplicatedUsing = OnRep_QuickSlots, EditAnywhere, BlueprintReadOnly, Category = "Inventory|QuickSlot")
-    TArray<FInventorySlot> ConsumableQuickSlots;
 
     UPROPERTY(BlueprintReadOnly, Category = "Inventory")
     int32 CurrentEquippedPresetIndex = -1;
@@ -87,16 +81,16 @@ public:
     void Server_UnequipFromPreset(int32 PresetIndex, ENCPresetCell Cell, int32 MainSlotIndex);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
-    bool EquipToConsumable(int32 MainSlotIndex, int32 ConsumableSlotIndex);
+    bool EquipToConsumable(int32 MainSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex);
 
     UFUNCTION(Server, Reliable)
-    void Server_EquipToConsumable(int32 MainSlotIndex, int32 ConsumableSlotIndex);
+    void Server_EquipToConsumable(int32 MainSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
-    bool UnequipFromConsumable(int32 ConsumableSlotIndex, int32 MainSlotIndex);
+    bool UnequipFromConsumable(int32 PresetIndex, int32 ConsumableSlotIndex, int32 MainSlotIndex);
 
     UFUNCTION(Server, Reliable)
-    void Server_UnequipFromConsumable(int32 ConsumableSlotIndex, int32 MainSlotIndex);
+    void Server_UnequipFromConsumable(int32 PresetIndex, int32 ConsumableSlotIndex, int32 MainSlotIndex);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|Preset")
     void UnequipPresetToBag(int32 PresetIndex, ENCPresetCell Cell);
@@ -105,10 +99,10 @@ public:
     void Server_UnequipPresetToBag(int32 PresetIndex, ENCPresetCell Cell);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
-    void UnequipConsumableToBag(int32 ConsumableSlotIndex);
+    void UnequipConsumableToBag(int32 PresetIndex, int32 ConsumableSlotIndex);
 
     UFUNCTION(Server, Reliable)
-    void Server_UnequipConsumableToBag(int32 ConsumableSlotIndex);
+    void Server_UnequipConsumableToBag(int32 PresetIndex, int32 ConsumableSlotIndex);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|Preset")
     bool MovePresetToPreset(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell);
@@ -117,10 +111,10 @@ public:
     void Server_MovePresetToPreset(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
-    bool MoveConsumableToConsumable(int32 FromIndex, int32 ToIndex);
+    bool MoveConsumableToConsumable(int32 FromPreset, int32 FromSlot, int32 ToPreset, int32 ToSlot);
 
     UFUNCTION(Server, Reliable)
-    void Server_MoveConsumableToConsumable(int32 FromIndex, int32 ToIndex);
+    void Server_MoveConsumableToConsumable(int32 FromPreset, int32 FromSlot, int32 ToPreset, int32 ToSlot);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|Consumable")
     bool UseConsumableSlot(int32 SlotIndex);
@@ -169,15 +163,13 @@ public:
 	FInventorySlot GetPresetActiveWeapon(int32 PresetIndex) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Getters")
-	FInventorySlot GetConsumableData(int32 SlotIndex) const;
+	FInventorySlot GetConsumableData(int32 PresetIndex, int32 SlotIndex) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Getters")
 	FInventorySlot GetMainSlotData(int32 SlotIndex) const;
 	
 	TArray<FEquipmentPreset> GetPresetsArray() const { return EquipmentPresets; }
 	void SetPresetsArray(const TArray<FEquipmentPreset>& In) { EquipmentPresets = In; if (EquipmentPresets.Num() != 2) EquipmentPresets.Init(FEquipmentPreset(), 2); }
-	TArray<FInventorySlot> GetConsumableArray() const { return ConsumableQuickSlots; }
-	void SetConsumableArray(const TArray<FInventorySlot>& In) { ConsumableQuickSlots = In; if (ConsumableQuickSlots.Num() != 6) ConsumableQuickSlots.Init(FInventorySlot(), 6); }
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
 	void TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
@@ -192,14 +184,27 @@ public:
 	void Server_TakeLootBoxItemToPreset(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
-	void TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex);
+	void TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex);
 
 	UFUNCTION(Server, Reliable)
-	void Server_TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex);
+	void Server_TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex);
+	
+	UFUNCTION(BlueprintCallable)
+	void MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void PutItemToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_PutItemToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
 	
 	FConsumableItemData PendingConsumableData;
 	bool bHasPendingConsumable = false;
-
+	int32 PendingReEquipPresetIndex = -1;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
 	TObjectPtr<UDataTable> ConsumableDataTable;
 
@@ -212,10 +217,10 @@ private:
 	// 실제 인벤토리 변경 로직 — 항상 서버(Authority)에서만 실행됨
 	bool EquipToPreset_Internal(int32 MainSlotIndex, int32 PresetIndex, ENCPresetCell Cell);
 	bool UnequipFromPreset_Internal(int32 PresetIndex, ENCPresetCell Cell, int32 MainSlotIndex);
-	bool EquipToConsumable_Internal(int32 MainSlotIndex, int32 ConsumableSlotIndex);
-	bool UnequipFromConsumable_Internal(int32 ConsumableSlotIndex, int32 MainSlotIndex);
+	bool EquipToConsumable_Internal(int32 MainSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex);
+	bool UnequipFromConsumable_Internal(int32 PresetIndex, int32 ConsumableSlotIndex, int32 MainSlotIndex);
 	bool MovePresetToPreset_Internal(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell);
-	bool MoveConsumableToConsumable_Internal(int32 FromIndex, int32 ToIndex);
+	bool MoveConsumableToConsumable_Internal(int32 FromPreset, int32 FromSlot, int32 ToPreset, int32 ToSlot);
 	bool UseConsumableSlot_Internal(int32 SlotIndex);
 	bool AutoEquipItem_Internal(int32 MainSlotIndex);
 	bool UseItem_Internal(int32 SlotIndex);

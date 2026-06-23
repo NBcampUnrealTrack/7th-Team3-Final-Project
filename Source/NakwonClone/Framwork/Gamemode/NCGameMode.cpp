@@ -137,7 +137,7 @@ void ANCGameMode::MoveToLobby()
 {
 	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
 	
-	GetWorld()->ServerTravel("/Game/Maps/L_TitleAndLobby?listen");
+	GetWorld()->ServerTravel("/Game/Maps/Lobby/L_Lobby?listen");
 }
 
 void ANCGameMode::HandlePlayerDowned(ANCPlayerState* PlayerState)
