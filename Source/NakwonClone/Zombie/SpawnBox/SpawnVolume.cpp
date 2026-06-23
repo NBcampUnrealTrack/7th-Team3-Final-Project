@@ -30,10 +30,10 @@ ASpawnVolume::ASpawnVolume()
 void ASpawnVolume::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	for (int i = 0; i < SpawnInit; i++)
+
+	if (bAutoStart)
 	{
-		SpawnRandomMonster();
+		ActivateSpawner();
 	}
 }
 
@@ -118,21 +118,30 @@ void ASpawnVolume::SpawnMonster(TSubclassOf<AActor> MonsterClass)
 	{
 		return;
 	}
-	
-	FVector SpawnLocation = SpawnBox->GetComponentLocation();
+
+	// 박스 범위 안 랜덤 위치
+	const FVector BoxOrigin = SpawnBox->GetComponentLocation();
+	const FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
+
+	FVector SpawnLocation = BoxOrigin + FVector(
+		FMath::FRandRange(-BoxExtent.X, BoxExtent.X),
+		FMath::FRandRange(-BoxExtent.Y, BoxExtent.Y),
+		0.f   // 바닥 높이 유지 (Z는 박스 중심)
+	);
+
 	FRotator SpawnRotation = FRotator::ZeroRotator;
-	
+
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 	SpawnParams.Instigator = GetInstigator();
-	
+
 	AActor* NewActor = GetWorld()->SpawnActor<AActor>(
 		MonsterClass,
 		SpawnLocation,
 		SpawnRotation,
 		SpawnParams
-		);
-	
+	);
+
 	if (NewActor)
 	{
 		APawn* MonsterPawn = Cast<APawn>(NewActor);
@@ -143,11 +152,24 @@ void ASpawnVolume::SpawnMonster(TSubclassOf<AActor> MonsterClass)
 			{
 				// 상대 좌표(위젯)를 월드 좌표로 변환하여 전달
 				FVector WorldTarget = GetActorLocation() + TargetEndingLocation;
-                
+
 				// 블랙보드 키 이름 'EndingLocation'은 BT의 이름과 반드시 일치해야 함
 				AIC->GetBlackboardComponent()->SetValueAsVector(TEXT("EndingLocation"), WorldTarget);
 			}
 		}
-	}}
+	}
+}
 
+void ASpawnVolume::ActivateSpawner()
+{
+	if (bActivated)
+	{
+		return; 
+	}
+	bActivated = true;
 
+	for (int i = 0; i < SpawnInit; i++)
+	{
+		SpawnRandomMonster();
+	}
+}
