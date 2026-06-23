@@ -46,6 +46,14 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
 	float SpawnInit;
+
+	// 시작하자마자 스폰할지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+	bool bAutoStart = true;
+
+	// 외부(문 등)에서 스폰 발동
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
+	void ActivateSpawner();
 	
 	float LastSpawnCheckTime = -1.0f;
 	
@@ -58,4 +66,5 @@ protected:
 private:
 	void SpawnMonsters(int32 Count);
 	void SpawnMonster(TSubclassOf<AActor> MonsterClass);
+	bool bActivated = false;
 };
