@@ -78,6 +78,7 @@ void AVGMonsterWalker::PerformAttackTrace()
 			{
 				FGameplayEffectContextHandle EffectContext = MonsterASC->MakeEffectContext();
 				EffectContext.AddSourceObject(this);
+				EffectContext.AddHitResult(Hit);
 				FGameplayEffectSpecHandle  SpecHandle = MonsterASC->MakeOutgoingSpec(
 					AttackEffectClass, 2.f, EffectContext);
 			

@@ -89,13 +89,12 @@ void ANCPlayerCharacter::BeginPlay()
 
 void ANCPlayerCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)
 {
-    if (Data.NewValue >= Data.OldValue) return; // 체력 감소(피격)만
-    if (Data.NewValue <= 0.f) return;           // 사망은 OnDead가 처리
+    if (Data.NewValue >= Data.OldValue) return;
+    if (Data.NewValue <= 0.f) return;
 
     UE_LOG(LogTemp, Warning, TEXT("[HitReact] 피격! HP %.1f -> %.1f"),
         Data.OldValue, Data.NewValue);
 
-    PlayHitReactMontage();
 }
 
 void ANCPlayerCharacter::PossessedBy(AController* NewController)
@@ -354,11 +353,53 @@ void ANCPlayerCharacter::OnUseItemMontageEnded()
 }
 
 //H
-void ANCPlayerCharacter::PlayHitReactMontage()
+void ANCPlayerCharacter::HandleHitReact(AActor* Attacker)
 {
-    if (HitReactMontage)
+    const float Now = GetWorld()->GetTimeSeconds();
+
+    if (Now - LastHitReactTime < HitReactCooldown)
     {
-        PlayAnimMontage(HitReactMontage);
+        return;
+    }
+
+    LastHitReactTime = Now;
+
+    if (!Attacker)
+    {
+        return;
+    }
+
+    const FVector ToAttacker =
+        (Attacker->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+
+    const float ForwardDot =
+        FVector::DotProduct(GetActorForwardVector(), ToAttacker);
+
+    const float RightDot =
+        FVector::DotProduct(GetActorRightVector(), ToAttacker);
+
+    UAnimMontage* SelectedMontage = nullptr;
+
+    if (ForwardDot > 0.5f)
+    {
+        SelectedMontage = HitReactFrontMontage;
+    }
+    else if (ForwardDot < -0.5f)
+    {
+        SelectedMontage = HitReactBackMontage;
+    }
+    else if (RightDot > 0.f)
+    {
+        SelectedMontage = HitReactRightMontage;
+    }
+    else
+    {
+        SelectedMontage = HitReactLeftMontage;
+    }
+
+    if (SelectedMontage)
+    {
+        PlayAnimMontage(SelectedMontage);
     }
 }
 
