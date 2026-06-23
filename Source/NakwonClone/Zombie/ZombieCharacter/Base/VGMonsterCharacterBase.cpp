@@ -115,13 +115,19 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 	USkeletalMeshComponent* SkelMesh  = GetMesh();
 	if (!SkelMesh) return;
 	
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
 	SkelMesh->SetAllBodiesSimulatePhysics(true);
 	SkelMesh->SetPhysicsBlendWeight(1.f);
-	
-	SkelMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	SkelMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	for (FBodyInstance* Body : SkelMesh->Bodies)
+	{
+		if (Body)
+		{
+			Body->SetCollisionProfileName(TEXT("Ragdoll"));
+		}
+	}
 }
 
 void AVGMonsterCharacterBase::HandleHit()

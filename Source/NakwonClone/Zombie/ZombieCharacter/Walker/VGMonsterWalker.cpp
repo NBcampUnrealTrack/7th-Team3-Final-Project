@@ -10,6 +10,8 @@
 #include "NakwonClone\GAS\AttributeSet\VGMonsterAttributeSet.h"
 #include "Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 
+#include "PhysicsEngine/PhysicsAsset.h"
+
 AVGMonsterWalker::AVGMonsterWalker()
 {
 	if (GetCharacterMovement())
@@ -38,6 +40,8 @@ void AVGMonsterWalker::BeginPlay()
 	{
 		int32 RandIndex = FMath::RandRange(0, RandomMesh.Num() - 1);
 		GetMesh()->SetSkeletalMesh(RandomMesh[RandIndex]);
+		/*UE_LOG(LogMonster, Warning, TEXT("[Mesh] Physics Asset: %s"), 
+		GetMesh()->GetPhysicsAsset() ? *GetMesh()->GetPhysicsAsset()->GetName() : TEXT("None"));*/
 	}
 }
 
