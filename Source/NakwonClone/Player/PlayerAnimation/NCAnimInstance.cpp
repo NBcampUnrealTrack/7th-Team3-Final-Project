@@ -311,7 +311,7 @@ void UNCAnimInstance::UpdateLeftHandIK()
             ->GetComponentTransform()
             .InverseTransformPosition(SocketWorldLocation);
 
-        bUseRightHandIK = true;
+        bUseRightHandIK = false;
     }
     else
     {
