@@ -137,6 +137,7 @@ void AANCLootBoxActor::ToggleHighlight_Implementation(bool bHighlight)
 	if (BoxMesh)
 	{
 		BoxMesh->SetRenderCustomDepth(bHighlight);
+		BoxMesh->SetCustomDepthStencilValue(1);
 	}
 }
 
