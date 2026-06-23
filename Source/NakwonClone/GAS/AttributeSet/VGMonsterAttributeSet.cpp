@@ -23,16 +23,24 @@ void UVGMonsterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 		if (GetHealth() <= 0.f)
 		{
 			// 사망
-			OnDead.Broadcast();
+			if (!bIsDead)
+			{
+				bIsDead = true;
+				OnDead.Broadcast();
+			}
 		}
 		else
 		{
 			// 피격
-			OnHitReceived.Broadcast(); 
+			if (!bIsDead)
+			{
+				OnHitReceived.Broadcast();
+			}
 		}
 	}
 }
 
+// GE가 Attribute 값을 변경하기 직전에 호출되는 함수
 void UVGMonsterAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
