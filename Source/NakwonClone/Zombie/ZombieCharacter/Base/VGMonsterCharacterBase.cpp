@@ -126,6 +126,8 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 		if (Body)
 		{
 			Body->SetCollisionProfileName(TEXT("Ragdoll"));
+			Body->SetLinearVelocity(FVector::ZeroVector, false);
+			Body->SetAngularVelocityInRadians(FVector::ZeroVector, false);
 		}
 	}
 }
