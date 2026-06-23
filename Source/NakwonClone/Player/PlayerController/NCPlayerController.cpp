@@ -352,7 +352,7 @@ void ANCPlayerController::QuickSlot4()
     if (IsAttacking()) return; //헌호수정 - 공격 중 아이템 선택 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
-        NCInventoryComp->UseConsumableSlot(0);
+        NCInventoryComp->UseConsumableSlot(1);
     }
 }
 
