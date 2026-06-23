@@ -149,4 +149,7 @@ private:
 	//하상빈 추가
 	UFUNCTION()
 	void OnItemUsed(FGameplayTag UsedItemTag);
+
+	UFUNCTION()
+	void OnConsumableMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

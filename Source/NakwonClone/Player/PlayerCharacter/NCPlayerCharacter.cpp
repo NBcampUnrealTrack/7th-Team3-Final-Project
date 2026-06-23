@@ -298,63 +298,82 @@ void ANCPlayerCharacter::Multicast_OnDead_Implementation() //헌호수정
 
 void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
 {
-    // 헌호수정 - 아이템 태그에 따라 다른 몽타지 재생
-    UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] 태그: %s"), *UsedItemTag.ToString());
-    UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] HealMontage: %s, FoodMontage: %s"),
-        HealItemMontage ? TEXT("있음") : TEXT("없음"),
-        FoodItemMontage ? TEXT("있음") : TEXT("없음"));
+    UAnimMontage* MontageToPlay = nullptr;
 
     if (UsedItemTag.MatchesTag(NCItemTag::Heal) && HealItemMontage)
-    {
-        float Duration = PlayAnimMontage(HealItemMontage);
-        UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] Heal 몽타지 duration: %.2f"), Duration);
-    }
+        MontageToPlay = HealItemMontage;
     else if (UsedItemTag.MatchesTag(NCItemTag::Food) && FoodItemMontage)
-    {
-        float Duration = PlayAnimMontage(FoodItemMontage); //헌호수정
-        UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] Food 몽타지 duration: %.2f"), Duration);
-    }
+        MontageToPlay = FoodItemMontage;
     else if (UseItemMontage)
-        PlayAnimMontage(UseItemMontage);
+        MontageToPlay = UseItemMontage;
+
+    if (MontageToPlay)
+    {
+        float Duration = PlayAnimMontage(MontageToPlay);
+        UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] 몽타지 duration: %.2f"), Duration);
+
+        if (UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+        {
+            AnimInst->OnMontageEnded.RemoveDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
+            AnimInst->OnMontageEnded.AddDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
+        }
+    }
+}
+
+void ANCPlayerCharacter::OnConsumableMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+    if (Montage != HealItemMontage && Montage != FoodItemMontage && Montage != UseItemMontage)
+        return;
+
+    if (UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+        AnimInst->OnMontageEnded.RemoveDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
+
+    OnUseItemMontageEnded();
 }
 
 void ANCPlayerCharacter::OnUseItemMontageEnded()
 {
-    if (!PlayerInventoryRef || !PlayerInventoryRef->bHasPendingConsumable)
+    if (!PlayerInventoryRef) return;
+    UE_LOG(LogTemp, Warning, TEXT("[MontageEnded] Called. PendingReEquip=%d bHasPending=%d"),
+        PlayerInventoryRef->PendingReEquipPresetIndex, PlayerInventoryRef->bHasPendingConsumable);
+
+    // 소모품 효과 적용
+    if (PlayerInventoryRef->bHasPendingConsumable)
     {
-        return;
+        FConsumableItemData& Data = PlayerInventoryRef->PendingConsumableData;
+        PlayerInventoryRef->bHasPendingConsumable = false;
+
+        if (UAbilitySystemComponent* NCASC = GetAbilitySystemComponent())
+        {
+            if (Data.HealAmount > 0.f)
+            {
+                const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetHealthAttribute());
+                const float Max = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxHealthAttribute());
+                NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetHealthAttribute(),
+                    FMath::Clamp(Current + Data.HealAmount, 0.f, Max));
+            }
+            if (Data.StaminaAmount > 0.f)
+            {
+                const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetStaminaAttribute());
+                const float Max = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxStaminaAttribute());
+                NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(),
+                    FMath::Clamp(Current + Data.StaminaAmount, 0.f, Max));
+            }
+            if (Data.InfectionReduceAmount > 0.f)
+            {
+                const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetInfectionAttribute());
+                NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetInfectionAttribute(),
+                    FMath::Max(Current - Data.InfectionReduceAmount, 0.f));
+            }
+        }
     }
 
-    FConsumableItemData& Data = PlayerInventoryRef->PendingConsumableData;
-    PlayerInventoryRef->bHasPendingConsumable = false;
-
-    UAbilitySystemComponent* NCASC = GetAbilitySystemComponent();
-    if (!NCASC)
+    // 소모품 사용 전 장착중이던 프리셋 복귀 (효과 적용 성공 여부와 무관하게 항상 실행)
+    const int32 ReEquipIndex = PlayerInventoryRef->PendingReEquipPresetIndex;
+    PlayerInventoryRef->PendingReEquipPresetIndex = -1;
+    if (ReEquipIndex != -1)
     {
-        return;
-    }
-    
-    if (Data.HealAmount > 0.f)
-    {
-        const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetHealthAttribute());
-        const float Max = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxHealthAttribute());
-        NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetHealthAttribute(),
-            FMath::Clamp(Current + Data.HealAmount, 0.f, Max));
-    }
-
-    if (Data.StaminaAmount > 0.f)
-    {
-        const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetStaminaAttribute());
-        const float Max = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxStaminaAttribute());
-        NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(),
-            FMath::Clamp(Current + Data.StaminaAmount, 0.f, Max));
-    }
-
-    if (Data.InfectionReduceAmount > 0.f)
-    {
-        const float Current = NCASC->GetNumericAttribute(UVGPlayerAttributeSet::GetInfectionAttribute());
-        NCASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetInfectionAttribute(),
-            FMath::Max(Current - Data.InfectionReduceAmount, 0.f));
+        PlayerInventoryRef->ApplyPreset(ReEquipIndex);
     }
 }
 
