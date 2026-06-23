@@ -20,6 +20,8 @@ protected:
 
 	UFUNCTION()
 	void UpdateItemSlot();
+
+	void CreateSlots();
 	
 	UPROPERTY(meta = (BindWidget))
 	UUniformGridPanel* InventoryGrid;
