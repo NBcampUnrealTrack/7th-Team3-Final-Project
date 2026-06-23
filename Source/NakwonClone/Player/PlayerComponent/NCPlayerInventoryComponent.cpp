@@ -20,16 +20,12 @@ void UNCPlayerInventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UNCPlayerInventoryComponent, EquipmentPresets);
-	DOREPLIFETIME(UNCPlayerInventoryComponent, ConsumableQuickSlots);
 }
 
 void UNCPlayerInventoryComponent::SetSelectedConsumableIndex(int32 Index)
 {
-    if (ConsumableQuickSlots.IsValidIndex(Index))
-    {
-        SelectedConsumableIndex = Index;
-        OnQuickSlotUpdated.Broadcast();
-    }
+    SelectedConsumableIndex = Index;
+    OnPresetUpdated.Broadcast();
 }
 
 void UNCPlayerInventoryComponent::InitializeInventory()
@@ -37,16 +33,11 @@ void UNCPlayerInventoryComponent::InitializeInventory()
 	Super::InitializeInventory();
 
 	EquipmentPresets.Init(FEquipmentPreset(), 2);
-	ConsumableQuickSlots.Init(FInventorySlot(), 6);
 }
 
 void UNCPlayerInventoryComponent::OnRep_Presets()
 {
 	OnPresetUpdated.Broadcast();
-}
-void UNCPlayerInventoryComponent::OnRep_QuickSlots()
-{
-    OnQuickSlotUpdated.Broadcast();
 }
 
 FGameplayTag UNCPlayerInventoryComponent::GetWeaponTypeTag(FName WeaponID) const
@@ -78,9 +69,11 @@ FInventorySlot UNCPlayerInventoryComponent::GetPresetActiveWeapon(int32 PresetIn
     return P.IsTwoHandActive() ? P.TwoHand : P.RightHand;
 }
 
-FInventorySlot UNCPlayerInventoryComponent::GetConsumableData(int32 SlotIndex) const
+FInventorySlot UNCPlayerInventoryComponent::GetConsumableData(int32 PresetIndex, int32 SlotIndex) const
 {
-    return ConsumableQuickSlots.IsValidIndex(SlotIndex) ? ConsumableQuickSlots[SlotIndex] : FInventorySlot();
+    if (!EquipmentPresets.IsValidIndex(PresetIndex)) return FInventorySlot();
+    const FEquipmentPreset& P = EquipmentPresets[PresetIndex];
+    return SlotIndex == 0 ? P.ConsumableHeal : P.ConsumableFood;
 }
 
 FInventorySlot UNCPlayerInventoryComponent::GetMainSlotData(int32 SlotIndex) const
@@ -353,39 +346,37 @@ bool UNCPlayerInventoryComponent::UnequipFromPreset_Internal(int32 PresetIndex, 
     return true;
 }
 
-bool UNCPlayerInventoryComponent::EquipToConsumable(int32 MainSlotIndex, int32 ConsumableSlotIndex)
+bool UNCPlayerInventoryComponent::EquipToConsumable(int32 MainSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex)
 {
     if (GetOwner()->HasAuthority())
     {
-        return EquipToConsumable_Internal(MainSlotIndex, ConsumableSlotIndex);
+        return EquipToConsumable_Internal(MainSlotIndex, PresetIndex, ConsumableSlotIndex);
     }
-    Server_EquipToConsumable(MainSlotIndex, ConsumableSlotIndex);
+    Server_EquipToConsumable(MainSlotIndex, PresetIndex, ConsumableSlotIndex);
     return true;
 }
 
-void UNCPlayerInventoryComponent::Server_EquipToConsumable_Implementation(int32 MainSlotIndex, int32 ConsumableSlotIndex)
+void UNCPlayerInventoryComponent::Server_EquipToConsumable_Implementation(int32 MainSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex)
 {
-    EquipToConsumable_Internal(MainSlotIndex, ConsumableSlotIndex);
+    EquipToConsumable_Internal(MainSlotIndex, PresetIndex, ConsumableSlotIndex);
 }
 
-bool UNCPlayerInventoryComponent::EquipToConsumable_Internal(int32 MainSlotIndex, int32 ConsumableSlotIndex)
+bool UNCPlayerInventoryComponent::EquipToConsumable_Internal(int32 MainSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex)
 {
-    if (!GetOwner()->HasAuthority())
-    {
-        return false;
-    }
-    if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty() || !ConsumableQuickSlots.IsValidIndex(ConsumableSlotIndex))
-    {
-        return false;
-    }
+    if (!GetOwner()->HasAuthority()) return false;
+    if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty()) return false;
+    if (!EquipmentPresets.IsValidIndex(PresetIndex)) return false;
 
     const FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
     const FName ItemID = Items[MainSlotIndex].ItemID;
-    
     if (!ItemTag.MatchesTag(NCItemType::Consumable)) return false;
-    if (!Items[MainSlotIndex].ItemTypeTag.MatchesTag(NCItemType::Consumable)) return false;
+
+    if (ItemTag.MatchesTag(NCItemTag::Heal))      ConsumableSlotIndex = 0;
+    else if (ItemTag.MatchesTag(NCItemTag::Food)) ConsumableSlotIndex = 1;
+    else return false;
     
-    FInventorySlot& Slot = ConsumableQuickSlots[ConsumableSlotIndex];
+    FEquipmentPreset& Preset = EquipmentPresets[PresetIndex];
+    FInventorySlot& Slot = (ConsumableSlotIndex == 0) ? Preset.ConsumableHeal : Preset.ConsumableFood;
 
     if (!Slot.IsEmpty() && Slot.ItemID == ItemID && Slot.ItemTypeTag == ItemTag)
     {
@@ -406,7 +397,7 @@ bool UNCPlayerInventoryComponent::EquipToConsumable_Internal(int32 MainSlotIndex
                     Items[MainSlotIndex].Quantity -= Room;
                 }
                 OnInventoryUpdated.Broadcast();
-                OnQuickSlotUpdated.Broadcast();
+                OnPresetUpdated.Broadcast();
                 return true;
             }
         }
@@ -418,23 +409,23 @@ bool UNCPlayerInventoryComponent::EquipToConsumable_Internal(int32 MainSlotIndex
     Items[MainSlotIndex] = Temp;
 
     OnInventoryUpdated.Broadcast();
-    OnQuickSlotUpdated.Broadcast();
+    OnPresetUpdated.Broadcast();
     return true;
 }
 
-bool UNCPlayerInventoryComponent::UnequipFromConsumable(int32 ConsumableSlotIndex, int32 MainSlotIndex)
+bool UNCPlayerInventoryComponent::UnequipFromConsumable(int32 PresetIndex, int32 ConsumableSlotIndex, int32 MainSlotIndex)
 {
     if (GetOwner()->HasAuthority())
     {
-        return UnequipFromConsumable_Internal(ConsumableSlotIndex, MainSlotIndex);
+        return UnequipFromConsumable_Internal(PresetIndex, ConsumableSlotIndex, MainSlotIndex);
     }
-    Server_UnequipFromConsumable(ConsumableSlotIndex, MainSlotIndex);
+    Server_UnequipFromConsumable(PresetIndex, ConsumableSlotIndex, MainSlotIndex);
     return true;
 }
 
-void UNCPlayerInventoryComponent::Server_UnequipFromConsumable_Implementation(int32 ConsumableSlotIndex, int32 MainSlotIndex)
+void UNCPlayerInventoryComponent::Server_UnequipFromConsumable_Implementation(int32 PresetIndex, int32 ConsumableSlotIndex, int32 MainSlotIndex)
 {
-    UnequipFromConsumable_Internal(ConsumableSlotIndex, MainSlotIndex);
+    UnequipFromConsumable_Internal(PresetIndex, ConsumableSlotIndex, MainSlotIndex);
 }
 
 void UNCPlayerInventoryComponent::UnequipPresetToBag(int32 PresetIndex, ENCPresetCell Cell)
@@ -460,55 +451,50 @@ void UNCPlayerInventoryComponent::Server_UnequipPresetToBag_Implementation(int32
     }
 }
 
-void UNCPlayerInventoryComponent::UnequipConsumableToBag(int32 ConsumableSlotIndex)
+void UNCPlayerInventoryComponent::UnequipConsumableToBag(int32 PresetIndex, int32 ConsumableSlotIndex)
 {
     if (GetOwner()->HasAuthority())
     {
         int32 EmptySlot = -1;
         if (FindEmptySlot(EmptySlot))
         {
-            UnequipFromConsumable_Internal(ConsumableSlotIndex, EmptySlot);
+            UnequipFromConsumable_Internal(PresetIndex, ConsumableSlotIndex, EmptySlot);
         }
         return;
     }
-    Server_UnequipConsumableToBag(ConsumableSlotIndex);
+    Server_UnequipConsumableToBag(PresetIndex, ConsumableSlotIndex);
 }
 
-void UNCPlayerInventoryComponent::Server_UnequipConsumableToBag_Implementation(int32 ConsumableSlotIndex)
+void UNCPlayerInventoryComponent::Server_UnequipConsumableToBag_Implementation(int32 PresetIndex, int32 ConsumableSlotIndex)
 {
     int32 EmptySlot = -1;
     if (FindEmptySlot(EmptySlot))
     {
-        UnequipFromConsumable_Internal(ConsumableSlotIndex, EmptySlot);
+        UnequipFromConsumable_Internal(PresetIndex, ConsumableSlotIndex, EmptySlot);
     }
 }
 
-bool UNCPlayerInventoryComponent::UnequipFromConsumable_Internal(int32 ConsumableSlotIndex, int32 MainSlotIndex)
+bool UNCPlayerInventoryComponent::UnequipFromConsumable_Internal(int32 PresetIndex, int32 ConsumableSlotIndex, int32 MainSlotIndex)
 {
-    if (!GetOwner()->HasAuthority())
-    {
-        return false;
-    }
-    if (!ConsumableQuickSlots.IsValidIndex(ConsumableSlotIndex) || !Items.IsValidIndex(MainSlotIndex))
-    {
-        return false;
-    }
-    if (ConsumableQuickSlots[ConsumableSlotIndex].IsEmpty())
-    {
-        return false;
-    }
+    if (!GetOwner()->HasAuthority()) return false;
+    if (!EquipmentPresets.IsValidIndex(PresetIndex) || !Items.IsValidIndex(MainSlotIndex)) return false;
+
+    FEquipmentPreset& Preset = EquipmentPresets[PresetIndex];
+    FInventorySlot& Slot = (ConsumableSlotIndex == 0) ? Preset.ConsumableHeal : Preset.ConsumableFood;
+
+    if (Slot.IsEmpty()) return false;
 
     if (!Items[MainSlotIndex].IsEmpty())
     {
         if (!Items[MainSlotIndex].ItemTypeTag.MatchesTag(NCItemType::Consumable)) return false;
     }
 
-    FInventorySlot Temp = ConsumableQuickSlots[ConsumableSlotIndex];
-    ConsumableQuickSlots[ConsumableSlotIndex] = Items[MainSlotIndex];
+    FInventorySlot Temp = Slot;
+    Slot = Items[MainSlotIndex];
     Items[MainSlotIndex] = Temp;
 
     OnInventoryUpdated.Broadcast();
-    OnQuickSlotUpdated.Broadcast();
+    OnPresetUpdated.Broadcast();
     return true;
 }
 
@@ -637,38 +623,32 @@ bool UNCPlayerInventoryComponent::MovePresetToPreset_Internal(int32 FromPresetIn
     return true;
 }
 
-bool UNCPlayerInventoryComponent::MoveConsumableToConsumable(int32 FromIndex, int32 ToIndex)
+bool UNCPlayerInventoryComponent::MoveConsumableToConsumable(int32 FromPreset, int32 FromSlot, int32 ToPreset, int32 ToSlot)
 {
     if (GetOwner()->HasAuthority())
     {
-        return MoveConsumableToConsumable_Internal(FromIndex, ToIndex);
+        return MoveConsumableToConsumable_Internal(FromPreset, FromSlot, ToPreset, ToSlot);
     }
-    Server_MoveConsumableToConsumable(FromIndex, ToIndex);
+    Server_MoveConsumableToConsumable(FromPreset, FromSlot, ToPreset, ToSlot);
     return true;
 }
 
-void UNCPlayerInventoryComponent::Server_MoveConsumableToConsumable_Implementation(int32 FromIndex, int32 ToIndex)
+void UNCPlayerInventoryComponent::Server_MoveConsumableToConsumable_Implementation(int32 FromPreset, int32 FromSlot, int32 ToPreset, int32 ToSlot)
 {
-    MoveConsumableToConsumable_Internal(FromIndex, ToIndex);
+    MoveConsumableToConsumable_Internal(FromPreset, FromSlot, ToPreset, ToSlot);
 }
 
-bool UNCPlayerInventoryComponent::MoveConsumableToConsumable_Internal(int32 FromIndex, int32 ToIndex)
+bool UNCPlayerInventoryComponent::MoveConsumableToConsumable_Internal(int32 FromPreset, int32 FromSlot, int32 ToPreset, int32 ToSlot)
 {
-    if (!GetOwner()->HasAuthority())
-    {
-        return false;
-    }
-    if (!ConsumableQuickSlots.IsValidIndex(FromIndex) || !ConsumableQuickSlots.IsValidIndex(ToIndex))
-    {
-        return false;
-    }
-    if (FromIndex == ToIndex || ConsumableQuickSlots[FromIndex].IsEmpty())
-    {
-        return false;
-    }
+    if (!GetOwner()->HasAuthority()) return false;
+    if (!EquipmentPresets.IsValidIndex(FromPreset) || !EquipmentPresets.IsValidIndex(ToPreset)) return false;
+    if (FromPreset == ToPreset && FromSlot == ToSlot) return false;
+    if (FromSlot != ToSlot) return false;
 
-    FInventorySlot& A = ConsumableQuickSlots[FromIndex];
-    FInventorySlot& B = ConsumableQuickSlots[ToIndex];
+    FInventorySlot& A = (FromSlot == 0) ? EquipmentPresets[FromPreset].ConsumableHeal : EquipmentPresets[FromPreset].ConsumableFood;
+    FInventorySlot& B = (ToSlot == 0)   ? EquipmentPresets[ToPreset].ConsumableHeal   : EquipmentPresets[ToPreset].ConsumableFood;
+
+    if (A.IsEmpty()) return false;
 
     if (!B.IsEmpty() && B.ItemID == A.ItemID && B.ItemTypeTag == A.ItemTypeTag)
     {
@@ -682,7 +662,7 @@ bool UNCPlayerInventoryComponent::MoveConsumableToConsumable_Internal(int32 From
                 B.Quantity += MoveAmount;
                 A.Quantity -= MoveAmount;
                 if (A.Quantity <= 0) A = FInventorySlot();
-                OnQuickSlotUpdated.Broadcast();
+                OnPresetUpdated.Broadcast();
                 return true;
             }
         }
@@ -692,7 +672,7 @@ bool UNCPlayerInventoryComponent::MoveConsumableToConsumable_Internal(int32 From
     B = A;
     A = Temp;
 
-    OnQuickSlotUpdated.Broadcast();
+    OnPresetUpdated.Broadcast();
     return true;
 }
 
@@ -716,26 +696,28 @@ bool UNCPlayerInventoryComponent::UseConsumableSlot_Internal(int32 SlotIndex)
     if (!GetOwner()->HasAuthority())
     {
         return false;
-    }
-    if (!ConsumableQuickSlots.IsValidIndex(SlotIndex) || ConsumableQuickSlots[SlotIndex].IsEmpty())
+    }   
+    if (CurrentEquippedPresetIndex == -1 || !EquipmentPresets.IsValidIndex(CurrentEquippedPresetIndex))
     {
         return false;
     }
+    FInventorySlot& ConsumableSlot = (SlotIndex == 0)
+        ? EquipmentPresets[CurrentEquippedPresetIndex].ConsumableHeal
+        : EquipmentPresets[CurrentEquippedPresetIndex].ConsumableFood;
 
-    const FGameplayTag ItemTag = ConsumableQuickSlots[SlotIndex].ItemTypeTag;
-    const FName ItemID = ConsumableQuickSlots[SlotIndex].ItemID;
+    if (ConsumableSlot.IsEmpty()) return false;
 
-    if (!ItemTag.MatchesTag(NCItemType::Consumable))
+    const FGameplayTag ItemTag = ConsumableSlot.ItemTypeTag;
+    const FName ItemID = ConsumableSlot.ItemID;
+
+    if (!ItemTag.MatchesTag(NCItemType::Consumable)) return false;
+
+    ConsumableSlot.Quantity -= 1;
+    if (ConsumableSlot.Quantity <= 0)
     {
-        return false;
+        ConsumableSlot = FInventorySlot();
     }
-
-    ConsumableQuickSlots[SlotIndex].Quantity -= 1;
-    if (ConsumableQuickSlots[SlotIndex].Quantity <= 0)
-    {
-        ConsumableQuickSlots[SlotIndex] = FInventorySlot();
-    }
-    OnQuickSlotUpdated.Broadcast();
+    OnPresetUpdated.Broadcast();
 
     if (ItemTag.MatchesTag(NCItemTag::Heal) || ItemTag.MatchesTag(NCItemTag::Food))
     {
@@ -815,11 +797,23 @@ bool UNCPlayerInventoryComponent::AutoEquipItem_Internal(int32 MainSlotIndex)
     
     else if (ItemTag.MatchesTag(NCItemTag::Heal))
     {
-        return EquipToConsumable_Internal(MainSlotIndex, 0);
+        const int32 ActivePreset = (CurrentEquippedPresetIndex != -1) ? CurrentEquippedPresetIndex : 0;
+        const int32 OtherPreset  = 1 - ActivePreset;
+        if (EquipmentPresets[ActivePreset].ConsumableHeal.IsEmpty())
+            return EquipToConsumable_Internal(MainSlotIndex, ActivePreset, 0);
+        if (EquipmentPresets[OtherPreset].ConsumableHeal.IsEmpty())
+            return EquipToConsumable_Internal(MainSlotIndex, OtherPreset, 0);
+        return EquipToConsumable_Internal(MainSlotIndex, ActivePreset, 0);
     }
     else if (ItemTag.MatchesTag(NCItemTag::Food))
     {
-        return EquipToConsumable_Internal(MainSlotIndex, 1);
+        const int32 ActivePreset = (CurrentEquippedPresetIndex != -1) ? CurrentEquippedPresetIndex : 0;
+        const int32 OtherPreset  = 1 - ActivePreset;
+        if (EquipmentPresets[ActivePreset].ConsumableFood.IsEmpty())
+            return EquipToConsumable_Internal(MainSlotIndex, ActivePreset, 1);
+        if (EquipmentPresets[OtherPreset].ConsumableFood.IsEmpty())
+            return EquipToConsumable_Internal(MainSlotIndex, OtherPreset, 1);
+        return EquipToConsumable_Internal(MainSlotIndex, ActivePreset, 1);
     }
 
     return false;
@@ -975,14 +969,10 @@ void UNCPlayerInventoryComponent::TakeLootBoxItemToPreset(AANCLootBoxActor* Loot
     Server_TakeLootBoxItemToPreset(LootBox, BoxSlotIndex, PresetIndex, Cell);
 }
 
-void UNCPlayerInventoryComponent::TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex)
+void UNCPlayerInventoryComponent::TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex)
 {
-    if (!LootBox)
-    {
-        return;
-    }
-    
-    Server_TakeLootBoxItemToConsumable(LootBox, BoxSlotIndex, ConsumableSlotIndex);
+    if (!LootBox) return;
+    Server_TakeLootBoxItemToConsumable(LootBox, BoxSlotIndex, PresetIndex, ConsumableSlotIndex);
 }
 
 void UNCPlayerInventoryComponent::MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex)
@@ -1068,28 +1058,18 @@ void UNCPlayerInventoryComponent::Server_TakeLootBoxItemToPreset_Implementation(
     EquipToPreset(TempSlot, PresetIndex, Cell);
 }
 
-void UNCPlayerInventoryComponent::Server_TakeLootBoxItemToConsumable_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex)
+void UNCPlayerInventoryComponent::Server_TakeLootBoxItemToConsumable_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex)
 {
-    if (!LootBox)
-    {
-        return;
-    }
-    
+    if (!LootBox) return;
     UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
-    if (!LootInventory)
-    {
-        return;
-    }
-    
+    if (!LootInventory) return;
+
     int32 TempSlot = -1;
-    if (!FindEmptySlot(TempSlot))
-    {
-        return;
-    }
-    
+    if (!FindEmptySlot(TempSlot)) return;
+
     if (!LootInventory->TransferItemTo(this, BoxSlotIndex, TempSlot)) return;
 
-    EquipToConsumable(TempSlot, ConsumableSlotIndex);
+    EquipToConsumable_Internal(TempSlot, PresetIndex, ConsumableSlotIndex);
 }
 
 void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)

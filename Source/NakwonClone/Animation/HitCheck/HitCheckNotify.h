@@ -10,6 +10,9 @@ class NAKWONCLONE_API UHitCheckNotify : public UAnimNotifyState //헌호수정
     GENERATED_BODY()
 
 public:
+    // 헌호수정 - 적 히트 시 카메라 쉐이크 (무기별로 다르게 할당)
+    UPROPERTY(EditAnywhere, Category = "CameraShake")
+    TSubclassOf<UCameraShakeBase> HitShakeClass;
     // 헌호수정 - 구간 시작: HitActors 초기화
     virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
         float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
