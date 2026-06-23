@@ -8,6 +8,7 @@
 #include "NCInventroySlot.generated.h"
 
 class AANCLootBoxActor;
+class UNCInventoryBaseComponent;
 
 UCLASS()
 class NAKWONCLONE_API UNCInventroySlot : public UUserWidget
@@ -49,4 +50,8 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<AANCLootBoxActor> LootBoxRef;
+
+	// 이 슬롯이 속한 인벤토리 (가방=PlayerInventory, 창고=StashInventory)
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<UNCInventoryBaseComponent> OwningInventory;
 };
