@@ -978,6 +978,32 @@ void UNCPlayerInventoryComponent::TakeLootBoxItemToConsumable(AANCLootBoxActor* 
     Server_TakeLootBoxItemToConsumable(LootBox, BoxSlotIndex, ConsumableSlotIndex);
 }
 
+void UNCPlayerInventoryComponent::MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex)
+{
+    Server_MoveLootBoxItem(LootBox, FromSlotIndex, ToSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_MoveLootBoxItem_Implementation(AANCLootBoxActor* LootBox, int32 FromSlotIndex,int32 ToSlotIndex)
+{
+    if (!LootBox)
+    {
+        return;
+    }
+
+    UNCInventoryBaseComponent* LootInv = LootBox->GetLootInventory();
+    if (!LootInv)
+    {
+        return;
+    }
+    if (!LootInv->Items.IsValidIndex(FromSlotIndex) || !LootInv->Items.IsValidIndex(ToSlotIndex))
+    {
+        return;
+    }
+    
+    LootInv->Items.Swap(FromSlotIndex, ToSlotIndex);
+    LootInv->OnInventoryUpdated.Broadcast();
+}
+
 void UNCPlayerInventoryComponent::Server_TakeLootBoxItemToPreset_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
 {
     if (!LootBox)
@@ -1053,8 +1079,19 @@ void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANC
     {
         return;
     }
-
-    LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
+    
+    if (!Items[TargetSlot].IsEmpty())
+    {
+        FInventorySlot Temp = LootInventory->Items[BoxSlotIndex];
+        LootInventory->Items[BoxSlotIndex] = Items[TargetSlot];
+        Items[TargetSlot] = Temp;
+        OnInventoryUpdated.Broadcast();
+        LootInventory->OnInventoryUpdated.Broadcast();
+    }
+    else
+    {
+        LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
+    }
 }
 
 // 헌호 - 서버에서 호출 → 모든 클라에서 OnItemUsed 델리게이트 실행

@@ -197,6 +197,12 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 ConsumableSlotIndex);
 	
+	UFUNCTION(BlueprintCallable)
+	void MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex);
+	
 	FConsumableItemData PendingConsumableData;
 	bool bHasPendingConsumable = false;
 
