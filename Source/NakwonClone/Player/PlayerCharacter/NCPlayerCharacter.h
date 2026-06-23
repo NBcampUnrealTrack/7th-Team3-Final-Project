@@ -12,6 +12,7 @@ class UNCLocomotionComponent;
 class UNCCombatComponent;
 class USpotLightComponent;
 class UStaticMeshComponent;
+class UUserWidget;
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
@@ -52,6 +53,9 @@ public:
 	// 헌호수정 - 피격 시 카메라 쉐이크
 	UPROPERTY(EditDefaultsOnly, Category = "CameraShake")
 	TSubclassOf<UCameraShakeBase> TakeDamageShakeClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> EscapeResultWidgetClass;
 
 private:
 	bool bCameraShaking = false;
