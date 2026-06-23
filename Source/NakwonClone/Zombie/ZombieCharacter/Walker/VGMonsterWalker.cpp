@@ -33,6 +33,12 @@ void AVGMonsterWalker::BeginPlay()
 	{
 		SelectedWakeUpMontage = AnimWakeUp[FMath::RandRange(0, AnimWakeUp.Num() - 1)];
 	}
+	
+	if (RandomMesh.Num() > 0)
+	{
+		int32 RandIndex = FMath::RandRange(0, RandomMesh.Num() - 1);
+		GetMesh()->SetSkeletalMesh(RandomMesh[RandIndex]);
+	}
 }
 
 void AVGMonsterWalker::PerformAttackTrace()

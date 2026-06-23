@@ -38,6 +38,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimWakeUp;
 #pragma endregion
+	
+	
+#pragma region 좀비 메시
+	UPROPERTY(EditDefaultsOnly, Category = "Mesh")
+	TArray<USkeletalMesh*> RandomMesh;
+#pragma endregion
 
 #pragma region 공격 트레이스
 public:
