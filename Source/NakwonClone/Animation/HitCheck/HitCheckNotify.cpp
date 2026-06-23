@@ -49,6 +49,7 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
     UWorld* World = OwnerChar->GetWorld();
     if (!World) return;
 
+
     UNCCombatComponent* Combat = OwnerChar->FindComponentByClass<UNCCombatComponent>();
     if (!Combat) return;
 
@@ -74,7 +75,7 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
             if (WeaponMesh)
             {
                 const FVector TrailStart = WeaponMesh->GetSocketLocation(WeaponData->TrailStartSocket);
-                const FVector TrailEnd = WeaponMesh->GetSocketLocation(WeaponData->TrailEndSocket);
+                const FVector TrailEnd   = WeaponMesh->GetSocketLocation(WeaponData->TrailEndSocket);
                 const float Radius = WeaponData->HitSphereRadius;
 
                 bHit = World->SweepMultiByChannel(
@@ -94,7 +95,7 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
     else
     {
         const FVector Start = OwnerChar->GetActorLocation();
-        const FVector End = Start + OwnerChar->GetActorForwardVector() * WeaponData->HitTraceRange;
+        const FVector End   = Start + OwnerChar->GetActorForwardVector() * WeaponData->HitTraceRange;
         const float Radius = WeaponData->HitSphereRadius;
 
         bHit = World->SweepMultiByChannel(
