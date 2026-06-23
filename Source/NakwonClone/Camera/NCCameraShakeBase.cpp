@@ -1,0 +1,1 @@
+#include "NCCameraShakeBase.h"

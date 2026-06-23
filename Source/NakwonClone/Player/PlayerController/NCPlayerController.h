@@ -80,6 +80,9 @@ private:
 	// 헌호수정 - 플래시라이트 토글
 	void ToggleFlashlight();
 
+	// 헌호수정 - 공격 중 여부 체크
+	bool IsAttacking() const;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;

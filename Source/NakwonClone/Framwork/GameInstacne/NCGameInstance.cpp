@@ -102,7 +102,23 @@ void UNCGameInstance::StartPreloading()
 	// FSoftObjectPath — 에셋을 직접 로딩하지 않고 경로만 참조하는 타입
 	// (직접 참조하면 게임 시작 시 전부 로딩되어 버림 — 그걸 방지하기 위해 경로만 들고 있는 것)
 	TArray<FSoftObjectPath> AssetsToPreload;
-	
+
+	// 무기 에셋 프리로드 — Internal_EquipWeapon의 LoadSynchronous() 블로킹 방지
+	if (WeaponDataTable)
+	{
+		TArray<FNCWeaponData*> Rows;
+		WeaponDataTable->GetAllRows<FNCWeaponData>(TEXT("Preload"), Rows);
+		for (const FNCWeaponData* Row : Rows)
+		{
+			if (Row)
+			{
+				if (!Row->AttackMontage.IsNull())      AssetsToPreload.Add(Row->AttackMontage.ToSoftObjectPath());
+				if (!Row->HeavyAttackMontage.IsNull()) AssetsToPreload.Add(Row->HeavyAttackMontage.ToSoftObjectPath());
+				if (!Row->WeaponActorClass.IsNull())   AssetsToPreload.Add(Row->WeaponActorClass.ToSoftObjectPath());
+			}
+		}
+	}
+
 	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_Clothes01.SM_Merged_Clothes01")));
 	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_RackBoot02.SM_Merged_RackBoot02")));
 	AssetsToPreload.Add(FSoftObjectPath(TEXT("/Game/Asset/Map/ShoppingMall/Meshes/Interior/Clothes/SM_Merged_RackBoot01.SM_Merged_RackBoot01")));

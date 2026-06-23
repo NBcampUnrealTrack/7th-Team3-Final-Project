@@ -198,6 +198,7 @@ void ANCPlayerController::ToggleCrouch()
 
 void ANCPlayerController::Interact()
 {
+    if (IsAttacking()) return; //헌호수정 - 공격 중 상호작용 차단
     if (IsMenuBlockingInput())
     {
         return;
@@ -321,6 +322,7 @@ bool ANCPlayerController::TryCloseTopUI()
 
 void ANCPlayerController::QuickSlot1()
 {
+    if (IsAttacking()) return; //헌호수정 - 공격 중 무기 변경 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
         NCInventoryComp->ApplyPreset(0);
@@ -329,6 +331,7 @@ void ANCPlayerController::QuickSlot1()
 
 void ANCPlayerController::QuickSlot2()
 {
+    if (IsAttacking()) return; //헌호수정 - 공격 중 무기 변경 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
         NCInventoryComp->ApplyPreset(1);
@@ -337,6 +340,7 @@ void ANCPlayerController::QuickSlot2()
 
 void ANCPlayerController::QuickSlot3()
 {
+    if (IsAttacking()) return; //헌호수정 - 공격 중 아이템 사용 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
         NCInventoryComp->UseConsumableSlot(0);
@@ -345,6 +349,7 @@ void ANCPlayerController::QuickSlot3()
 
 void ANCPlayerController::QuickSlot4()
 {
+    if (IsAttacking()) return; //헌호수정 - 공격 중 아이템 선택 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
         NCInventoryComp->UseConsumableSlot(0);
@@ -353,10 +358,20 @@ void ANCPlayerController::QuickSlot4()
 
 void ANCPlayerController::UnArm()
 {
+    if (IsAttacking()) return; //헌호수정 - 공격 중 무기 해제 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
         NCInventoryComp->ForceUnArm();
     }
+}
+
+bool ANCPlayerController::IsAttacking() const //헌호수정 - 공격 중 체크
+{
+    ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
+    if (!PC) return false;
+    UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent();
+    if (!ASC) return false;
+    return ASC->HasMatchingGameplayTag(NCWeapon::Action_Attacking);
 }
 
 void ANCPlayerController::ToggleFlashlight() //헌호수정

@@ -13,6 +13,13 @@ void UNCEquipmentInventorySlot::NativeConstruct()
 
 void UNCEquipmentInventorySlot::SetSlotData(int32 InIndex, int32 InQuantity, FGameplayTag InTag, FName InItemID)
 {
+	if (bIsConsumableSlot && !InItemID.IsNone())
+	{
+		const bool bExpectHeal = (ConsumableIndex == 0);
+		if (bExpectHeal  && !InTag.MatchesTag(NCItemTag::Heal)) return;
+		if (!bExpectHeal && !InTag.MatchesTag(NCItemTag::Food)) return;
+	}
+
 	SlotIndex = InIndex;
 	ItemTag = InTag;
 	ItemID = InItemID;
