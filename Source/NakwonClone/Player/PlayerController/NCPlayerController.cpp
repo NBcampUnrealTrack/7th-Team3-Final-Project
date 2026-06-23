@@ -221,6 +221,10 @@ void ANCPlayerController::Attack()
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
 
+    // 헌호수정 - 공격 시 카메라 방향으로 캐릭터 즉시 회전
+    FRotator ControlRot = GetControlRotation();
+    PC->SetActorRotation(FRotator(0.f, ControlRot.Yaw, 0.f));
+
     UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent();
     if (!ASC) return;
 
