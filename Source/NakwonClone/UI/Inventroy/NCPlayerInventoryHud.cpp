@@ -37,6 +37,8 @@ void UNCPlayerInventoryHud::UpdateItemSlot()
 {
 	for (int32 i = 0; i < SlotWidgets.Num(); i++)
 	{
+		SlotWidgets[i]->OwningInventory = InventoryComp;
+
 		if (i < InventoryComp->Items.Num())
 		{
 			const FInventorySlot& InventorySlot  = InventoryComp->Items[i];
