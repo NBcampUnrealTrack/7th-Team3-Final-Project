@@ -257,15 +257,10 @@ void ANCPlayerCharacter::OnDead()
 {
     UE_LOG(LogTemp, Warning, TEXT("[OnDead] 호출됨!"));
 
-    // 헌호수정 - 모든 입력 완전 차단 (이동/공격/아이템/상호작용 전부)
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
-        PC->DisableInput(PC);
-
-    // 헌호수정 - Dead 태그 추가로 GAS 어빌리티 차단
+    // 헌호수정 - 서버: 물리/GAS/컴포넌트 처리
     if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
         ASC->AddLooseGameplayTag(NCCharacter::Dead);
 
-    // 헌호수정 - 상호작용 타이머 중지
     if (InteractionComponent)
         InteractionComponent->StopInteraction();
 
@@ -273,15 +268,14 @@ void ANCPlayerCharacter::OnDead()
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->DisableMovement();
 
-    // 헌호수정 - 스태미나 타이머 정리
     if (LocomotionComponent)
         LocomotionComponent->ClearAllStaminaTimers();
 
-    // 헌호수정 - 사망 몽타지 재생 후 5초 뒤 제거
-    float MontageLength = 0.f;
-    if (DeathMontage)
-        MontageLength = PlayAnimMontage(DeathMontage);
+    // 헌호수정 - 모든 클라이언트에 사망 연출 전파
+    Multicast_OnDead();
 
+    // 헌호수정 - 몽타지 길이 + 5초 뒤 제거 (서버 기준)
+    float MontageLength = DeathMontage ? DeathMontage->GetPlayLength() : 0.f;
     FTimerHandle DeathTimerHandle;
     GetWorld()->GetTimerManager().SetTimer(
         DeathTimerHandle,
@@ -289,6 +283,17 @@ void ANCPlayerCharacter::OnDead()
         MontageLength + 5.f,
         false
     );
+}
+
+void ANCPlayerCharacter::Multicast_OnDead_Implementation() //헌호수정
+{
+    // 헌호수정 - 입력 차단 (로컬 컨트롤러에만 의미 있음)
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        PC->DisableInput(PC);
+
+    // 헌호수정 - 사망 몽타지 재생 (모든 클라이언트)
+    if (DeathMontage)
+        PlayAnimMontage(DeathMontage);
 }
 
 void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
@@ -357,8 +362,18 @@ void ANCPlayerCharacter::OnUseItemMontageEnded()
 void ANCPlayerCharacter::PlayHitReactMontage()
 {
     if (HitReactMontage)
-    {
         PlayAnimMontage(HitReactMontage);
+
+    // 헌호수정 - 피격 시 카메라 쉐이크 (재생 중이면 스킵)
+    if (TakeDamageShakeClass && !bCameraShaking)
+    {
+        if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        {
+            PC->ClientStartCameraShake(TakeDamageShakeClass);
+            bCameraShaking = true;
+            GetWorld()->GetTimerManager().SetTimer(ShakeTimerHandle,
+                [this]() { bCameraShaking = false; }, 0.6f, false);
+        }
     }
 }
 
