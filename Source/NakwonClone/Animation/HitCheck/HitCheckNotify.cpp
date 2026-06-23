@@ -151,4 +151,13 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
         if (Sound)
             UGameplayStatics::PlaySoundAtLocation(World, Sound, FirstHitLocation);
     }
+
+    // 헌호수정 - 적 히트 시 카메라 쉐이크 (로컬 플레이어에게만 적용)
+    if (bHitMonster && HitShakeClass)
+    {
+        if (APlayerController* PC = Cast<APlayerController>(OwnerChar->GetController()))
+        {
+            PC->ClientStartCameraShake(HitShakeClass);
+        }
+    }
 }
