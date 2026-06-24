@@ -3,11 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
+#include "NiagaraSystem.h"
 #include "NCGunType.generated.h"
 
 class ANCProjectile;
 class USoundBase;
-class UNiagaraSystem;
 
 UENUM(BlueprintType)
 enum class ENCGunSlot : uint8

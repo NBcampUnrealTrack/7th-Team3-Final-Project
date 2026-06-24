@@ -145,4 +145,5 @@ namespace NCGun
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Reloading);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_ADS);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_ToggleFireMode);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Swapping); // 무기 교체 중 (입력 차단용)
 };
