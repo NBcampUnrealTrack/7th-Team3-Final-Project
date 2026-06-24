@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGHitTypes.h"
 #include "VGMonsterCharacterBase.generated.h"
 
 // 전방 선언
@@ -106,7 +107,7 @@ protected:
 #pragma region 피격 처리
 public:
 	UFUNCTION()
-	void HandleHit();
+	void HandleHit(EVGHitBodyPart BodyPart);
 #pragma endregion
 	
 #pragma region 사망 처리
