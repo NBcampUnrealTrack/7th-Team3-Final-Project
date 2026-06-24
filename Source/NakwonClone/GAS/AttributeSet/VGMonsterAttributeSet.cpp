@@ -20,6 +20,23 @@ void UVGMonsterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 	// Health 어트리뷰트가 변경됐을 때만 처리
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
+		EVGHitBodyPart BodyPart = EVGHitBodyPart::None;
+		if (const FHitResult* Hit = Data.EffectSpec.GetContext().GetHitResult())
+		{
+			BodyPart = ClassifyBodyPart(Hit->BoneName);
+		}
+
+		const float Delta = Data.EvaluatedData.Magnitude;
+		if (Delta < 0.f)
+		{
+			const float Mult = GetBodyPartDamageMultiplier(BodyPart);
+			if (Mult != 1.f)
+			{
+				const float Extra = Delta * (Mult - 1.f);
+				SetHealth(FMath::Max(0.f, GetHealth() + Extra));
+			}
+		}
+
 		if (GetHealth() <= 0.f)
 		{
 			// 사망
