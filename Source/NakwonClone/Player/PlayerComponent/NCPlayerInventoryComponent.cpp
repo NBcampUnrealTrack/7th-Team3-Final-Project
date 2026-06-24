@@ -62,8 +62,7 @@ FEquipmentPreset UNCPlayerInventoryComponent::GetPresetData(int32 PresetIndex) c
 
 FInventorySlot UNCPlayerInventoryComponent::GetPresetActiveWeapon(int32 PresetIndex) const
 {
-    if (!EquipmentPresets.IsValidIndex(PresetIndex))
-        return FInventorySlot();
+    if (!EquipmentPresets.IsValidIndex(PresetIndex)) return FInventorySlot();
 
     const FEquipmentPreset& P = EquipmentPresets[PresetIndex];
     return P.IsTwoHandActive() ? P.TwoHand : P.RightHand;
@@ -83,10 +82,7 @@ FInventorySlot UNCPlayerInventoryComponent::GetMainSlotData(int32 SlotIndex) con
 
 void UNCPlayerInventoryComponent::ForceUnArm()
 {
-    if (CurrentEquippedPresetIndex == -1)
-    {
-        return;
-    }
+    if (CurrentEquippedPresetIndex == -1) return;
 
     if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
     {
@@ -110,18 +106,12 @@ void UNCPlayerInventoryComponent::ApplyPreset(int32 PresetIndex)
 
 void UNCPlayerInventoryComponent::Server_ApplyPreset_Implementation(int32 PresetIndex)
 {
-    if (!GetOwner()->HasAuthority() || !EquipmentPresets.IsValidIndex(PresetIndex))
-    {
-        return;
-    }
+    if (!GetOwner()->HasAuthority() || !EquipmentPresets.IsValidIndex(PresetIndex)) return;
 
     ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner());
     APawn* Pawn = PS ? PS->GetPawn() : nullptr;
     UNCCombatComponent* Combat = Pawn ? Pawn->FindComponentByClass<UNCCombatComponent>() : nullptr;
-    if (!Combat)
-    {
-        return;
-    }
+    if (!Combat) return;
 
     const FEquipmentPreset& Preset = EquipmentPresets[PresetIndex];
 
@@ -182,14 +172,8 @@ void UNCPlayerInventoryComponent::Server_EquipToPreset_Implementation(int32 Main
 
 bool UNCPlayerInventoryComponent::EquipToPreset_Internal(int32 MainSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
 {
-    if (!GetOwner()->HasAuthority())
-    {
-        return false;
-    }
-    if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty() || !EquipmentPresets.IsValidIndex(PresetIndex))
-    {
-        return false;
-    }
+    if (!GetOwner()->HasAuthority()) return false;
+    if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty() || !EquipmentPresets.IsValidIndex(PresetIndex)) return false;
 
     const FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
     const FName ItemID = Items[MainSlotIndex].ItemID;
@@ -275,14 +259,8 @@ void UNCPlayerInventoryComponent::Server_UnequipFromPreset_Implementation(int32 
 
 bool UNCPlayerInventoryComponent::UnequipFromPreset_Internal(int32 PresetIndex, ENCPresetCell Cell, int32 MainSlotIndex)
 {
-    if (!GetOwner()->HasAuthority())
-    {
-        return false;
-    }
-    if (!EquipmentPresets.IsValidIndex(PresetIndex) || !Items.IsValidIndex(MainSlotIndex))
-    {
-        return false;
-    }
+    if (!GetOwner()->HasAuthority()) return false;
+    if (!EquipmentPresets.IsValidIndex(PresetIndex) || !Items.IsValidIndex(MainSlotIndex)) return false;
 
     FEquipmentPreset& P = EquipmentPresets[PresetIndex];
     FInventorySlot& Source =
@@ -290,10 +268,7 @@ bool UNCPlayerInventoryComponent::UnequipFromPreset_Internal(int32 PresetIndex, 
         (Cell == ENCPresetCell::Left) ? ((P.LeftHand.IsEmpty()  && !P.TwoHand.IsEmpty()) ? P.TwoHand : P.LeftHand) :
                                         ((P.RightHand.IsEmpty() && !P.TwoHand.IsEmpty()) ? P.TwoHand : P.RightHand);
 
-    if (Source.IsEmpty())
-    {
-        return false;
-    }
+    if (Source.IsEmpty()) return false;
 
     if (!Items[MainSlotIndex].IsEmpty())
     {
@@ -311,8 +286,7 @@ bool UNCPlayerInventoryComponent::UnequipFromPreset_Internal(int32 PresetIndex, 
         {
             FItemData InData;
             if (!GetItemDataByTag(Items[MainSlotIndex].ItemID, InTag, InData) ||
-                !InData.EquipTags.HasTag(NCEquip::Hand_Left))
-                return false;
+                !InData.EquipTags.HasTag(NCEquip::Hand_Left)) return false;
         }
     }
 
@@ -515,18 +489,9 @@ void UNCPlayerInventoryComponent::Server_MovePresetToPreset_Implementation(int32
 
 bool UNCPlayerInventoryComponent::MovePresetToPreset_Internal(int32 FromPresetIndex, ENCPresetCell FromCell, int32 ToPresetIndex, ENCPresetCell ToCell)
 {
-    if (!GetOwner()->HasAuthority())
-    {
-        return false;
-    }
-    if (!EquipmentPresets.IsValidIndex(FromPresetIndex) || !EquipmentPresets.IsValidIndex(ToPresetIndex))
-    {
-        return false;
-    }
-    if (FromPresetIndex == ToPresetIndex && FromCell == ToCell)
-    {
-        return false;
-    }
+    if (!GetOwner()->HasAuthority()) return false;
+    if (!EquipmentPresets.IsValidIndex(FromPresetIndex) || !EquipmentPresets.IsValidIndex(ToPresetIndex)) return false;
+    if (FromPresetIndex == ToPresetIndex && FromCell == ToCell) return false;
 
     FEquipmentPreset& PFrom = EquipmentPresets[FromPresetIndex];
     FEquipmentPreset& PTo   = EquipmentPresets[ToPresetIndex];
@@ -540,10 +505,7 @@ bool UNCPlayerInventoryComponent::MovePresetToPreset_Internal(int32 FromPresetIn
     };
 
     FInventorySlot& Src = ResolveCell(PFrom, FromCell);
-    if (Src.IsEmpty())
-    {
-        return false;
-    }
+    if (Src.IsEmpty()) return false;
 
     const FGameplayTag SrcTag = Src.ItemTypeTag;
     const FGameplayTag SrcWeapon = GetWeaponTypeTag(Src.ItemID);
@@ -693,17 +655,12 @@ void UNCPlayerInventoryComponent::Server_UseConsumableSlot_Implementation(int32 
 
 bool UNCPlayerInventoryComponent::UseConsumableSlot_Internal(int32 SlotIndex)
 {
-    if (!GetOwner()->HasAuthority())
-    {
-        return false;
-    }   
-    if (CurrentEquippedPresetIndex == -1 || !EquipmentPresets.IsValidIndex(CurrentEquippedPresetIndex))
-    {
-        return false;
-    }
+    if (!GetOwner()->HasAuthority()) return false;
+    const int32 PresetIdx = (CurrentEquippedPresetIndex != -1) ? CurrentEquippedPresetIndex : 0;
+    if (!EquipmentPresets.IsValidIndex(PresetIdx)) return false;
     FInventorySlot& ConsumableSlot = (SlotIndex == 0)
-        ? EquipmentPresets[CurrentEquippedPresetIndex].ConsumableHeal
-        : EquipmentPresets[CurrentEquippedPresetIndex].ConsumableFood;
+        ? EquipmentPresets[PresetIdx].ConsumableHeal
+        : EquipmentPresets[PresetIdx].ConsumableFood;
 
     if (ConsumableSlot.IsEmpty()) return false;
 
@@ -759,14 +716,8 @@ void UNCPlayerInventoryComponent::Server_AutoEquipItem_Implementation(int32 Main
 
 bool UNCPlayerInventoryComponent::AutoEquipItem_Internal(int32 MainSlotIndex)
 {
-     if (!GetOwner()->HasAuthority())
-    {
-        return false;
-    }
-    if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty())
-    {
-        return false;
-    }
+    if (!GetOwner()->HasAuthority()) return false;
+    if (!Items.IsValidIndex(MainSlotIndex) || Items[MainSlotIndex].IsEmpty()) return false;
 
     const FGameplayTag ItemTag = Items[MainSlotIndex].ItemTypeTag;
 
@@ -836,20 +787,11 @@ void UNCPlayerInventoryComponent::Server_UseItem_Implementation(int32 SlotIndex)
 
 bool UNCPlayerInventoryComponent::UseItem_Internal(int32 SlotIndex)
 {
-    if (!GetOwner()->HasAuthority())
-    {
-        return false;
-    }
-    if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty())
-    {
-        return false;
-    }
+    if (!GetOwner()->HasAuthority()) return false;
+    if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty()) return false;
 
     const FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
-    if (!ItemTag.MatchesTag(NCItemType::Consumable))
-    {
-        return false;
-    }
+    if (!ItemTag.MatchesTag(NCItemType::Consumable)) return false;
 
     return RemoveItem(SlotIndex, 1);
 }
@@ -862,10 +804,7 @@ bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
 
 void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex, int32 Quantity)
 {
-    if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty() || Quantity <= 0)
-    {
-        return;
-    }
+    if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty() || Quantity <= 0) return;
 
     FName DropItemID = Items[SlotIndex].ItemID;
     FGameplayTag ItemTag = Items[SlotIndex].ItemTypeTag;
@@ -876,6 +815,7 @@ void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex
 
     AActor* OwnerActor = OwningPlayerState->GetPawn();
     if (!OwnerActor) return;
+
 
     FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
     SpawnLocation.Z -= 20.0f;
@@ -917,10 +857,7 @@ bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
 
 void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemActor* ItemToLoot)
 {
-  if (!GetOwner()->HasAuthority() || !ItemToLoot)
-    {
-        return;
-    }
+    if (!GetOwner()->HasAuthority() || !ItemToLoot) return;
 
     FName LootID = ItemToLoot->ItemID;
     FGameplayTag LootTag = ItemToLoot->ItemTypeTag;
@@ -952,20 +889,14 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 
 void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
 {
-    if (!LootBox)
-    {
-        return;
-    }
+    if (!LootBox) return;
     Server_TakeItemFromLootBox(LootBox, BoxSlotIndex, PlayerSlotIndex);
 }
 
 void UNCPlayerInventoryComponent::TakeLootBoxItemToPreset(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
 {
-    if (!LootBox)
-    {
-        return;
-    }
-    
+    if (!LootBox) return;
+
     Server_TakeLootBoxItemToPreset(LootBox, BoxSlotIndex, PresetIndex, Cell);
 }
 
@@ -987,24 +918,12 @@ void UNCPlayerInventoryComponent::PutItemToLootBox(AANCLootBoxActor* LootBox, in
 
 void UNCPlayerInventoryComponent::Server_PutItemToLootBox_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
 {
-    if (!LootBox)
-    {
-        return;
-    }
+    if (!LootBox) return;
     UNCInventoryBaseComponent* LootInv = LootBox->GetLootInventory();
-    if (!LootInv)
-    {
-        return;
-    }
-    if (!Items.IsValidIndex(PlayerSlotIndex) || Items[PlayerSlotIndex].IsEmpty())
-    {
-        return;
-    }
-    if (!LootInv->Items.IsValidIndex(BoxSlotIndex))
-    {
-        return;
-    }
-    
+    if (!LootInv) return;
+    if (!Items.IsValidIndex(PlayerSlotIndex) || Items[PlayerSlotIndex].IsEmpty()) return;
+    if (!LootInv->Items.IsValidIndex(BoxSlotIndex)) return;
+
     FInventorySlot Temp = LootInv->Items[BoxSlotIndex];
     LootInv->Items[BoxSlotIndex] = Items[PlayerSlotIndex];
     Items[PlayerSlotIndex] = Temp;
@@ -1015,43 +934,25 @@ void UNCPlayerInventoryComponent::Server_PutItemToLootBox_Implementation(AANCLoo
 
 void UNCPlayerInventoryComponent::Server_MoveLootBoxItem_Implementation(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex)
 {
-    if (!LootBox)
-    {
-        return;
-    }
+    if (!LootBox) return;
 
     UNCInventoryBaseComponent* LootInv = LootBox->GetLootInventory();
-    if (!LootInv)
-    {
-        return;
-    }
-    if (!LootInv->Items.IsValidIndex(FromSlotIndex) || !LootInv->Items.IsValidIndex(ToSlotIndex))
-    {
-        return;
-    }
-    
+    if (!LootInv) return;
+    if (!LootInv->Items.IsValidIndex(FromSlotIndex) || !LootInv->Items.IsValidIndex(ToSlotIndex)) return;
+
     LootInv->Items.Swap(FromSlotIndex, ToSlotIndex);
     LootInv->OnInventoryUpdated.Broadcast();
 }
 
 void UNCPlayerInventoryComponent::Server_TakeLootBoxItemToPreset_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
 {
-    if (!LootBox)
-    {
-        return;
-    }
-    
+    if (!LootBox) return;
+
     UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
-    if (!LootInventory)
-    {
-        return;
-    }
-    
+    if (!LootInventory) return;
+
     int32 TempSlot = -1;
-    if (!FindEmptySlot(TempSlot))
-    {
-        return;
-    }
+    if (!FindEmptySlot(TempSlot)) return;
 
     if (!LootInventory->TransferItemTo(this, BoxSlotIndex, TempSlot)) return;
 
@@ -1072,17 +973,75 @@ void UNCPlayerInventoryComponent::Server_TakeLootBoxItemToConsumable_Implementat
     EquipToConsumable_Internal(TempSlot, PresetIndex, ConsumableSlotIndex);
 }
 
+void UNCPlayerInventoryComponent::MovePresetToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
+{
+    Server_MovePresetToLootBox(LootBox, BoxSlotIndex, PresetIndex, Cell);
+}
+
+void UNCPlayerInventoryComponent::Server_MovePresetToLootBox_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
+{
+    if (!LootBox) return;
+    UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
+    if (!LootInventory) return;
+    if (!EquipmentPresets.IsValidIndex(PresetIndex)) return;
+
+    int32 TempSlot = -1;
+    if (!FindEmptySlot(TempSlot)) return;
+
+    UnequipFromPreset_Internal(PresetIndex, Cell, TempSlot);
+    if (Items[TempSlot].IsEmpty()) return;
+
+    FInventorySlot Temp = LootInventory->Items[BoxSlotIndex];
+    LootInventory->Items[BoxSlotIndex] = Items[TempSlot];
+    Items[TempSlot] = Temp;
+
+    if (!Items[TempSlot].IsEmpty())
+    {
+        AutoEquipItem(TempSlot);
+    }
+
+    OnInventoryUpdated.Broadcast();
+    OnPresetUpdated.Broadcast();
+    LootInventory->OnInventoryUpdated.Broadcast();
+}
+
+void UNCPlayerInventoryComponent::MoveConsumableToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex)
+{
+    Server_MoveConsumableToLootBox(LootBox, BoxSlotIndex, PresetIndex, ConsumableSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_MoveConsumableToLootBox_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex)
+{
+    if (!LootBox) return;
+    UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
+    if (!LootInventory) return;
+    if (!EquipmentPresets.IsValidIndex(PresetIndex)) return;
+
+    int32 TempSlot = -1;
+    if (!FindEmptySlot(TempSlot)) return;
+
+    UnequipFromConsumable_Internal(PresetIndex, ConsumableSlotIndex, TempSlot);
+    if (Items[TempSlot].IsEmpty()) return;
+
+    FInventorySlot Temp = LootInventory->Items[BoxSlotIndex];
+    LootInventory->Items[BoxSlotIndex] = Items[TempSlot];
+    Items[TempSlot] = Temp;
+
+    if (!Items[TempSlot].IsEmpty())
+    {
+        AutoEquipItem(TempSlot);
+    }
+
+    OnInventoryUpdated.Broadcast();
+    OnPresetUpdated.Broadcast();
+    LootInventory->OnInventoryUpdated.Broadcast();
+}
+
 void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
 {
-    if (!LootBox)
-    {
-        return;
-    }
+    if (!LootBox) return;
     UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
-    if (!LootInventory)
-    {
-        return;
-    }
+    if (!LootInventory) return;
     int32 TargetSlot = PlayerSlotIndex;
     if (TargetSlot == -1)
     {
@@ -1095,10 +1054,7 @@ void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANC
             }
         }
     }
-    if (TargetSlot == -1)
-    {
-        return;
-    }
+    if (TargetSlot == -1) return;
     
     if (!Items[TargetSlot].IsEmpty())
     {
