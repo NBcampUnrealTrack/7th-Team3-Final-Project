@@ -98,8 +98,6 @@ void AVGMonsterCharacterBase::HandleDead()
 	//H
 	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
 	Multicast_PlaySound(DeathSound);
-
-	
 	
 	if (AIController)
 	{
@@ -117,6 +115,12 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 	
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SkelMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->Deactivate();
+	GetCharacterMovement()->SetComponentTickEnabled(false);
+	SkelMesh->bPauseAnims = true;
 	SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
 	SkelMesh->SetAllBodiesSimulatePhysics(true);
 	SkelMesh->SetPhysicsBlendWeight(1.f);
@@ -130,6 +134,7 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 			Body->SetAngularVelocityInRadians(FVector::ZeroVector, false);
 		}
 	}
+	SkelMesh->bPauseAnims = true;
 }
 
 void AVGMonsterCharacterBase::HandleHit()

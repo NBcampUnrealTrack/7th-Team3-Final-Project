@@ -52,7 +52,6 @@ void UBTTask_Dead::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* Node
 		}
 	}
 	CachedOwnerComp = nullptr;
-	Super::OnTaskFinished(OwnerComp, NodeMemory, TaskResult);
 }
 
 void UBTTask_Dead::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -61,16 +60,17 @@ void UBTTask_Dead::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	if (!CachedOwnerComp) return;
 	
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(CachedOwnerComp->GetAIOwner()->GetPawn());
-	if (Monster)
-	{
-		Monster->OnStartRagdoll();
-		Monster->SetLifeSpan(200.f);
-	}
 
 	if (AAIController* AIC = Cast<AAIController>(Monster->GetController()))
 	{
 		AIC->StopMovement();
 		AIC->UnPossess();
+		
+		if (Monster)
+		{
+			Monster->OnStartRagdoll();
+			Monster->SetLifeSpan(200.f);
+		}
 	}
 
 	FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);

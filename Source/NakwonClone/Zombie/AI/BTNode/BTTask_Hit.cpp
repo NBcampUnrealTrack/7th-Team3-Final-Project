@@ -49,7 +49,6 @@ void UBTTask_Hit::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 	}
 
 	CachedOwnerComp = nullptr;
-	Super::OnTaskFinished(OwnerComp, NodeMemory, TaskResult);
 }
 
 void UBTTask_Hit::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
