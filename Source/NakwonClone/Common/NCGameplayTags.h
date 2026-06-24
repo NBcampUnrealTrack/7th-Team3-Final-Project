@@ -123,3 +123,26 @@ namespace NCGameStateTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SinglePlay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(MultiPlay);
 };
+
+// 총기 관련 태그
+namespace NCGun
+{
+	// 총기 슬롯
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Slot_Primary);    // 주무기 (라이플/샷건)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Slot_Secondary);  // 보조무기 (권총/리볼버)
+
+	// 총기 타입
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Rifle);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Shotgun);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Pistol);  // 권총/리볼버 통합
+
+	// 발사 모드
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(FireMode_Semi);   // 단발
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(FireMode_Auto);   // 연사
+
+	// 총기 액션
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Firing);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Reloading);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_ADS);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_ToggleFireMode);
+};
