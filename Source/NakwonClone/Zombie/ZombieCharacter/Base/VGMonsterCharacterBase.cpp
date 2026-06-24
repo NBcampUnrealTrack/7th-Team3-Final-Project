@@ -20,14 +20,14 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 
 	// 자식 클래스는 반드시 AI 컨트롤러를 장착하도록 강제
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-	
+
 	// 컨트롤러 회전 영향 제거
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
-	
+
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	
+
 	DetectionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("DetectionCapsule"));
 	DetectionCapsule->SetupAttachment(RootComponent);
 	DetectionCapsule->SetCapsuleSize(40.f, 90.f);
@@ -53,27 +53,27 @@ void AVGMonsterCharacterBase::BeginPlay()
 	{
 		UE_LOG(LogMonster, Error, TEXT("[MonsterBase] AIController 캐스팅 실패: %s"), *GetName());
 	}
-	
+
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	}
-	
+
 	if (MonsterAttributeSet)
 	{
 		MonsterAttributeSet->OnDead.AddDynamic(this, &AVGMonsterCharacterBase::HandleDead);
 		MonsterAttributeSet->OnHitReceived.AddDynamic(this, &AVGMonsterCharacterBase::HandleHit);
 	}
-	
+
 	if (AbilitySystemComponent && MonsterAttributeSet)
 	{
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			UVGMonsterAttributeSet::GetMoveSpeedAttribute()).AddUObject(this, &AVGMonsterCharacterBase::OnMoveSpeedChanged);
 	}
-	
+
 	SelectedStopMontage = GetRandomStopMontage();
 	SelectedDeadMontage = GetRandomDeadMontage();
-	
+
 	DetectionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AVGMonsterCharacterBase::OnDetectionOverlap);
 
 	// H
@@ -81,11 +81,11 @@ void AVGMonsterCharacterBase::BeginPlay()
 	{
 		StartHowlTimer();
 	}
-	
-	int32 MoveIndex = FMath::RandRange(0, AnimMove.Num()-1);
+
+	int32 MoveIndex = FMath::RandRange(0, AnimMove.Num() - 1);
 	SelectedMoveMontage = AnimMove[MoveIndex];
 	SelectedMoveLevel = MoveIndex + 1;
-	
+
 	int32 ChaseIndex = FMath::RandRange(0, AnimChase.Num() - 1);
 	SelectedChaseMontage = AnimChase[ChaseIndex];
 	SelectedChaseLevel = ChaseIndex + 1;
@@ -98,7 +98,7 @@ void AVGMonsterCharacterBase::HandleDead()
 	//H
 	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
 	Multicast_PlaySound(DeathSound);
-	
+
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
@@ -110,9 +110,9 @@ void AVGMonsterCharacterBase::HandleDead()
 
 void AVGMonsterCharacterBase::OnStartRagdoll()
 {
-	USkeletalMeshComponent* SkelMesh  = GetMesh();
+	USkeletalMeshComponent* SkelMesh = GetMesh();
 	if (!SkelMesh) return;
-	
+
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SkelMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
@@ -137,12 +137,13 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 	SkelMesh->bPauseAnims = true;
 }
 
-void AVGMonsterCharacterBase::HandleHit()
+void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
 {
 	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
-	
-	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit 호출됨: %s"), *GetName());
-	//H
+
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit 호출됨: %s (부위=%d)"),
+		*GetName(), static_cast<int32>(BodyPart));
+
 	Multicast_PlaySound(HitSound);
 
 	if (AIController)
@@ -150,10 +151,12 @@ void AVGMonsterCharacterBase::HandleHit()
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
 		{
 			Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsHitKey, true);
-			UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] bIsHit Set: true"));
 		}
 	}
-	
+
+	// TODO(Part 3): BodyPart 별 피격 몽타주 재생 + 즉시/딜레이 + 연속피격 중단
+	// PlayHitReactMontage(BodyPart);
+
 	/*// 뒤로 밀려남
 	FVector PushBack = -GetActorForwardVector();
 	LaunchCharacter(PushBack * 300.f, true, false);*/
@@ -162,7 +165,7 @@ void AVGMonsterCharacterBase::HandleHit()
 UAnimMontage* AVGMonsterCharacterBase::GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages)
 {
 	if (Montages.IsEmpty()) return nullptr;
-	
+
 	return Montages[FMath::RandRange(0, Montages.Num() - 1)];
 }
 void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& Data)
@@ -176,7 +179,7 @@ void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& D
 void AVGMonsterCharacterBase::OnDetectionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
+
 }
 
 //H 사운드 재생 본체 (모든 사운드가 여기로 모임)
