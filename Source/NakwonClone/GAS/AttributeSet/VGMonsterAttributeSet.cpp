@@ -51,7 +51,7 @@ void UVGMonsterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 			// 피격
 			if (!bIsDead)
 			{
-				OnHitReceived.Broadcast();
+				OnHitReceived.Broadcast(BodyPart);
 			}
 		}
 	}
