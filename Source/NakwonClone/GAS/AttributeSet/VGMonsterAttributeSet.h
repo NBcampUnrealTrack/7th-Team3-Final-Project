@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
-#include "NakwonClone/Zombie/VGHitTypes.h" 
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGHitTypes.h"
 #include "VGMonsterAttributeSet.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHitReceived, EVGHitBodyPart, BodyPart);
