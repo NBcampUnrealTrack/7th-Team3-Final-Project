@@ -252,10 +252,16 @@ void UNCGunComponent::FireOnce()
 		Params.Instigator = Cast<APawn>(Owner);
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		GetWorld()->SpawnActor<ANCProjectile>(Data->ProjectileClass, SpawnLocation, PelletRotation, Params);
+		if (ANCProjectile* NCProj = GetWorld()->SpawnActor<ANCProjectile>(Data->ProjectileClass, SpawnLocation, PelletRotation, Params))
+		{
+			NCProj->Damage          = Data->Damage;
+			NCProj->MaxRange        = Data->MaxRange;
+			NCProj->ProjectileSpeed = Data->ProjectileSpeed;
+			NCProj->ImpactFleshEffect   = Data->ImpactFleshEffect.Get();
+			NCProj->ImpactSurfaceEffect = Data->ImpactSurfaceEffect.Get();
+		}
 	}
 }
-
 // ─────────────────────────────────────────────
 // 재장전
 
