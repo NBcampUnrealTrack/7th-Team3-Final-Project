@@ -13,4 +13,8 @@ class NAKWONCLONE_API ANCGunActor : public ANCItemActor
 public:
 	ANCGunActor();
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gun")
+	FName GunID;
+
+	virtual void Interact_Implementation(AActor* Interactor) override;
 };
