@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "NakwonClone/Zombie/VGHitTypes.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGHitTypes.h"
 #include "VGMonsterCharacterBase.generated.h"
 
 // 전방 선언
