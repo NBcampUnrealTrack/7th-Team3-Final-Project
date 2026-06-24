@@ -237,6 +237,10 @@ void UNCGunComponent::FireOnce()
 		}
 	}
 
+	// 발사음 재생
+	if (!Data->FireSound.IsNull())
+		UGameplayStatics::PlaySoundAtLocation(this, Data->FireSound.LoadSynchronous(), SpawnLocation);
+
 	const int32 PelletCount = FMath::Max(1, Data->NumPellets);
 	for (int32 i = 0; i < PelletCount; ++i)
 	{
@@ -278,6 +282,10 @@ void UNCGunComponent::Reload()
 
 	StopFire();
 	ActiveGunActions.AddTag(NCGun::Action_Reloading);
+
+	// 재장전음 재생
+	if (!Data->ReloadSound.IsNull())
+		UGameplayStatics::PlaySoundAtLocation(this, Data->ReloadSound.LoadSynchronous(), GetOwner()->GetActorLocation());
 
 	GetWorld()->GetTimerManager().SetTimer(
 		ReloadTimerHandle,

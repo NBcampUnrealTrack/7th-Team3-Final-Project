@@ -14,7 +14,12 @@ ANCProjectile::ANCProjectile()
 
     CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
     CollisionComp->InitSphereRadius(5.f);
-    CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
+    CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    CollisionComp->SetCollisionObjectType(ECC_WorldDynamic);
+    CollisionComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+    CollisionComp->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+    CollisionComp->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+    CollisionComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
     CollisionComp->OnComponentHit.AddDynamic(this, &ANCProjectile::OnHit);
     RootComponent = CollisionComp;
 
@@ -45,11 +50,17 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
 {
     if (!OtherActor || OtherActor == GetOwner()) return;
 
+    UE_LOG(LogTemp, Warning, TEXT("[Projectile] OnHit: %s"), *OtherActor->GetName());
+
     // GAS 데미지 적용
     UAbilitySystemComponent* SourceASC =
         UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetInstigator());
     UAbilitySystemComponent* TargetASC =
         UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor);
+
+    UE_LOG(LogTemp, Warning, TEXT("[Projectile] SourceASC: %s / TargetASC: %s"),
+        SourceASC ? TEXT("OK") : TEXT("NULL"),
+        TargetASC ? TEXT("OK") : TEXT("NULL"));
 
     if (SourceASC && TargetASC)
     {
