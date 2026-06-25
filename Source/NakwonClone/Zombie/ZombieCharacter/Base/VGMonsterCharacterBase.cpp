@@ -12,6 +12,7 @@
 #include "Common/NCGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Animation/AnimInstance.h"
 #include "TimerManager.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
@@ -154,12 +155,78 @@ void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
 		}
 	}
 
-	// TODO(Part 3): BodyPart 별 피격 몽타주 재생 + 즉시/딜레이 + 연속피격 중단
-	// PlayHitReactMontage(BodyPart);
+	PendingHitBodyPart = BodyPart;
+	GetWorldTimerManager().ClearTimer(HitReactTimerHandle); // 대기 중이던 이전 피격 취소
+
+	if (HitReactDelay <= 0.f)
+	{
+		PlayHitReactMontage(BodyPart);
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(
+			HitReactTimerHandle, this,
+			&AVGMonsterCharacterBase::OnHitReactDelayElapsed, HitReactDelay, false);
+	}
 
 	/*// 뒤로 밀려남
 	FVector PushBack = -GetActorForwardVector();
 	LaunchCharacter(PushBack * 300.f, true, false);*/
+}
+
+UAnimMontage* AVGMonsterCharacterBase::GetRandomHitMontageByPart(EVGHitBodyPart BodyPart)
+{
+	// 1순위: 해당 부위 몽타주
+	if (const FVGHitMontageList* List = HitMontagesByPart.Find(BodyPart))
+	{
+		if (List->Montages.Num() > 0)
+		{
+			return GetRandomMontage(List->Montages);
+		}
+	}
+	// 2순위: None 부위에 넣어둔 공용 몽타주
+	if (const FVGHitMontageList* NoneList = HitMontagesByPart.Find(EVGHitBodyPart::None))
+	{
+		if (NoneList->Montages.Num() > 0)
+		{
+			return GetRandomMontage(NoneList->Montages);
+		}
+	}
+	// 3순위 폴백: 기존 AnimHit 배열 (에셋 아직 안 꽂았을 때)
+	return GetRandomHitMontage();
+}
+
+void AVGMonsterCharacterBase::PlayHitReactMontage(EVGHitBodyPart BodyPart)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	UAnimInstance* Anim = MeshComp ? MeshComp->GetAnimInstance() : nullptr;
+	if (!Anim) return;
+
+	UAnimMontage* Montage = GetRandomHitMontageByPart(BodyPart);
+	if (!Montage)
+	{
+		UE_LOG(LogMonster, Warning,
+			TEXT("[MonsterBase] 부위(%d) 피격 몽타주 없음 — 에셋 미설정"),
+			static_cast<int32>(BodyPart));
+		return;
+	}
+
+	// 무조건 끊고 새로: 재생 중이던 피격 몽타주를 짧게 블렌드아웃
+	if (CurrentHitMontage && Anim->Montage_IsPlaying(CurrentHitMontage))
+	{
+		Anim->Montage_Stop(HitReactBlendOutTime, CurrentHitMontage);
+	}
+
+	Anim->Montage_Play(Montage);
+	CurrentHitMontage = Montage;
+
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] 피격 몽타주 재생: 부위=%d"),
+		static_cast<int32>(BodyPart));
+}
+
+void AVGMonsterCharacterBase::OnHitReactDelayElapsed()
+{
+	PlayHitReactMontage(PendingHitBodyPart);
 }
 
 UAnimMontage* AVGMonsterCharacterBase::GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages)
