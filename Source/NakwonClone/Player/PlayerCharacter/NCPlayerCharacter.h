@@ -7,9 +7,11 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class ACameraActor;
 class UNCPlayerInventoryComponent;
 class UNCLocomotionComponent;
 class UNCCombatComponent;
+class UNCGunComponent;
 class USpotLightComponent;
 class UStaticMeshComponent;
 class UUserWidget;
@@ -30,6 +32,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Components|Combat")
 	UNCCombatComponent* GetCombatComponent() const { return CombatComponent; }
+
+	// 하상빈 추가
+	UFUNCTION(BlueprintPure, Category = "Components|Gun")
+	UNCGunComponent* GetGunComponent() const { return GunComponent; }
 
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryRef; }
 
@@ -68,6 +74,12 @@ public:
 
 	void ToggleFlashlight();
 
+	// 헌호수정 - 암살 기능
+	void TryAssassinate();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Assassination")
+	float AssassinationRange = 200.f;
+
 	UFUNCTION(BlueprintCallable, Category = "Animation|HitReact")
 	void HandleHitReact(AActor* Attacker);
 
@@ -87,6 +99,18 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Server_ToggleFlashlight();
+
+	// 헌호수정 - 암살 RPC
+	UFUNCTION(Server, Reliable)
+	void Server_TryAssassinate();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartAssassination(AVGMonsterCharacterBase* Target);
+
+	AVGMonsterCharacterBase* FindNearestAssassinationTarget() const;
+	void StartAssassinationSlowMo();
+	void StartAssassinationCamera(AVGMonsterCharacterBase* Target);
+	void FinishAssassination();
 
 	UFUNCTION()
 	void OnRep_bFlashlightOn();
@@ -111,6 +135,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
 	TObjectPtr<UNCCombatComponent> CombatComponent;
+
+	// 하상빈 추가
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")
+	TObjectPtr<UNCGunComponent> GunComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
 	TObjectPtr<UStaticMeshComponent> FlashlightMesh;
@@ -150,6 +178,13 @@ private:
 
 	bool bCameraShaking = false;
 	FTimerHandle ShakeTimerHandle;
+
+	// 헌호수정 - 암살
+	FTimerHandle AssassinationTimerHandle;
+	FTimerHandle AssassinationCameraTimerHandle;
+
+	UPROPERTY()
+	TObjectPtr<class ACameraActor> AssassinationCamera;
 
 	float LastHitReactTime = -999.f;
 };

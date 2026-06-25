@@ -8,7 +8,7 @@
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGHitTypes.h"
 #include "VGMonsterAttributeSet.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHitReceived, EVGHitBodyPart, BodyPart);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHitReceived, const FVGHitData&, HitData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDead);
 
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \

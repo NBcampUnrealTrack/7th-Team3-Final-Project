@@ -190,6 +190,7 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
         bIsTwoHandedWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_TwoHanded);
         bIsPistolWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Pistol);
         bIsShotgunWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Shotgun);
+        bIsRifleWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Rifle);
     }
     else
     {
@@ -201,6 +202,7 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
         bIsTwoHandedWeapon = false;
         bIsPistolWeapon = false;
         bIsShotgunWeapon = false;
+        bIsRifleWeapon = false;
     }
 
     CurrentLocomotionBlendSpace = nullptr;

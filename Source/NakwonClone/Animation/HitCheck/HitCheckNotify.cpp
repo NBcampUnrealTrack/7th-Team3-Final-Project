@@ -132,6 +132,7 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
         if (!TargetASC) continue;
 
         FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
+        Context.AddHitResult(Hit); //헌호수정 - 부위별 데미지 배율을 위해 HitResult 전달
         FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(
             UGE_Damage::StaticClass(), 1.f, Context);
 

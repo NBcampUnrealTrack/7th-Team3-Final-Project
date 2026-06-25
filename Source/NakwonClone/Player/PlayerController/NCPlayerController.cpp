@@ -6,6 +6,7 @@
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
+#include "Player/PlayerComponent/NCGunComponent.h" // 하상빈 추가
 #include "NakwonClone/Item/ANCLootBoxActor.h"
 #include "NakwonClone/UI/Inventroy/LootBox/NCLootBoxHud.h"
 #include "AbilitySystemComponent.h"
@@ -103,6 +104,31 @@ void ANCPlayerController::SetupInputComponent()
         // 헌호수정 - 플래시라이트 T키 바인딩
         if (FlashlightAction)
             EIC->BindAction(FlashlightAction, ETriggerEvent::Started, this, &ANCPlayerController::ToggleFlashlight);
+
+        // 하상빈 추가 - 총기 입력 바인딩
+        if (GunFireAction)
+        {
+            EIC->BindAction(GunFireAction, ETriggerEvent::Started,   this, &ANCPlayerController::GunStartFire);
+            EIC->BindAction(GunFireAction, ETriggerEvent::Completed, this, &ANCPlayerController::GunStopFire);
+        }
+        if (GunADSAction)
+        {
+            EIC->BindAction(GunADSAction, ETriggerEvent::Started,   this, &ANCPlayerController::GunStartADS);
+            EIC->BindAction(GunADSAction, ETriggerEvent::Completed, this, &ANCPlayerController::GunStopADS);
+        }
+        if (GunReloadAction)
+            EIC->BindAction(GunReloadAction,         ETriggerEvent::Started, this, &ANCPlayerController::GunReload);
+        if (GunToggleFireModeAction)
+            EIC->BindAction(GunToggleFireModeAction, ETriggerEvent::Started, this, &ANCPlayerController::GunToggleFireMode);
+        if (GunSlot1Action)
+            EIC->BindAction(GunSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectPrimary);
+        if (GunSlot2Action)
+            EIC->BindAction(GunSlot2Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectSecondary);
+        if (GunSlot3Action)
+            EIC->BindAction(GunSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectMelee);
+        // 헌호수정 - 암살 Q키 바인딩
+        if (AssassinateAction)
+            EIC->BindAction(AssassinateAction, ETriggerEvent::Started, this, &ANCPlayerController::Assassinate);
     }
 }
 
@@ -220,6 +246,10 @@ void ANCPlayerController::Attack()
     }
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
+
+    // 총기 장착 중이면 근접 공격 차단 (총기는 IA_GunFire가 담당)
+    if (UNCGunComponent* GunComp = PC->GetGunComponent())
+        if (GunComp->HasActiveGun()) return;
 
     // 헌호수정 - 공격 시 카메라 방향으로 캐릭터 즉시 회전
     FRotator ControlRot = GetControlRotation();
@@ -363,6 +393,12 @@ void ANCPlayerController::QuickSlot4()
 void ANCPlayerController::UnArm()
 {
     if (IsAttacking()) return; //헌호수정 - 공격 중 무기 해제 차단
+
+    // 하상빈 추가 - 총기 장착 중이면 먼저 해제 (메시 탈착 + 슬롯 초기화)
+    if (UNCGunComponent* NCGunComp = GetGunComp())
+        if (NCGunComp->HasActiveGun())
+            NCGunComp->SelectSlot(ENCGunSlot::None);
+
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
         NCInventoryComp->ForceUnArm();
@@ -382,6 +418,75 @@ void ANCPlayerController::ToggleFlashlight() //헌호수정
 {
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
         PC->ToggleFlashlight();
+}
+
+// ─────────────────────────────────────────────
+// 하상빈 추가 - 총기 입력
+
+UNCGunComponent* ANCPlayerController::GetGunComp() const
+{
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        return PC->GetGunComponent();
+    return nullptr;
+}
+
+void ANCPlayerController::GunStartFire()
+{
+    if (IsMenuBlockingInput()) return;
+    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->StartFire();
+}
+
+void ANCPlayerController::GunStopFire()
+{
+    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->StopFire();
+}
+
+void ANCPlayerController::GunStartADS()
+{
+    if (IsMenuBlockingInput()) return;
+    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->StartADS();
+}
+
+void ANCPlayerController::GunStopADS()
+{
+    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->StopADS();
+}
+
+void ANCPlayerController::GunReload()
+{
+    if (IsMenuBlockingInput()) return;
+    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->Reload();
+}
+
+void ANCPlayerController::GunToggleFireMode()
+{
+    if (IsMenuBlockingInput()) return;
+    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->ToggleFireMode();
+}
+
+void ANCPlayerController::GunSelectPrimary()
+{
+    if (IsMenuBlockingInput()) return;
+    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->SelectSlot(ENCGunSlot::Primary);
+}
+
+void ANCPlayerController::GunSelectSecondary()
+{
+    if (IsMenuBlockingInput()) return;
+    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->SelectSlot(ENCGunSlot::Secondary);
+}
+
+void ANCPlayerController::GunSelectMelee()
+{
+    if (IsMenuBlockingInput()) return;
+    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->SelectSlot(ENCGunSlot::None);
+void ANCPlayerController::Assassinate() //헌호수정 - 암살
+{
+    if (IsMenuBlockingInput()) return;
+    if (IsAttacking()) return;
+
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        PC->TryAssassinate();
 }
 
 void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)

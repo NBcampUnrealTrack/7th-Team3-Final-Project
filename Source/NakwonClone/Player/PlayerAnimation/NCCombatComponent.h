@@ -77,6 +77,20 @@ public:
 
 	UAnimMontage* GetCurrentComboMontage() const { return CurrentWeaponCombo.ComboMontage; }
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void GunAttack();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PlayReloadMontage();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PlayEquipMontage();
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
+	bool IsGunWeapon() const;
+
+	UAnimMontage* GetLastPlayedAttackMontage() const { return LastPlayedAttackMontage; }
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	FNCWeaponComboData CurrentWeaponCombo;
@@ -98,6 +112,9 @@ private:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> LastPlayedAttackMontage;
 
 private:
 	UPROPERTY()
