@@ -87,4 +87,14 @@ UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::GameClear, "GameState.State.Clear");
 
 // 싱글, 멀티 여부
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::SinglePlay, "GameState.State.SinglePlay");
+UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::MultiPlay, "GameState.State.MultiPlay")
+
+// 총기 이펙트
+UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_MuzzleFlash, "GameplayCue.Gun.MuzzleFlash");
+UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_ShellEject, "GameplayCue.Gun.ShellEject");
+UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_Tracer, "GameplayCue.Gun.Tracer");
+UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_Impact, "GameplayCue.Gun.Impact");
+
+// 근접무기 이펙트
+UE_DEFINE_GAMEPLAY_TAG(NCMeleeEffect::Melee_Impact, "GameplayCue.Melee.Impact");
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::MultiPlay, "GameState.State.MultiPlay");
