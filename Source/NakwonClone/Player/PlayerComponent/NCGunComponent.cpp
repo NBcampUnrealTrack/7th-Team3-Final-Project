@@ -9,6 +9,8 @@
 #include "Weapon/Gun/NCProjectile.h"
 #include "Components/StaticMeshComponent.h"
 #include "DrawDebugHelpers.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 
 UNCGunComponent::UNCGunComponent()
 {
@@ -276,6 +278,27 @@ void UNCGunComponent::FireOnce()
 	// 발사음 재생
 	if (!Data->FireSound.IsNull())
 		UGameplayStatics::PlaySoundAtLocation(this, Data->FireSound.LoadSynchronous(), SpawnLocation);
+
+	// 총구 플래시 / 탄피 이펙트 (메시 소켓 기준)
+	if (EquippedGunMeshComp)
+	{
+		auto SpawnEffect = [&](FName SocketName, TSoftObjectPtr<UNiagaraSystem> NiagaraSoft, TSoftObjectPtr<UParticleSystem> ParticleSoft)
+		{
+			if (!NiagaraSoft.IsNull())
+				UNiagaraFunctionLibrary::SpawnSystemAttached(
+					NiagaraSoft.LoadSynchronous(), EquippedGunMeshComp, SocketName,
+					FVector::ZeroVector, FRotator::ZeroRotator,
+					EAttachLocation::SnapToTarget, true);
+			else if (!ParticleSoft.IsNull())
+				UGameplayStatics::SpawnEmitterAttached(
+					ParticleSoft.LoadSynchronous(), EquippedGunMeshComp, SocketName,
+					FVector::ZeroVector, FRotator::ZeroRotator,
+					EAttachLocation::SnapToTarget);
+		};
+
+		SpawnEffect(Data->MuzzleSocketName, Data->MuzzleFlashEffect, Data->MuzzleFlashParticle);
+		SpawnEffect(Data->EjectSocketName,  Data->ShellCasingEffect,  Data->ShellCasingParticle);
+	}
 
 	const int32 PelletCount = FMath::Max(1, Data->NumPellets);
 	for (int32 i = 0; i < PelletCount; ++i)

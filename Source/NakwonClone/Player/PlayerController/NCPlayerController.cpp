@@ -390,6 +390,12 @@ void ANCPlayerController::QuickSlot4()
 void ANCPlayerController::UnArm()
 {
     if (IsAttacking()) return; //헌호수정 - 공격 중 무기 해제 차단
+
+    // 하상빈 추가 - 총기 장착 중이면 먼저 해제 (메시 탈착 + 슬롯 초기화)
+    if (UNCGunComponent* NCGunComp = GetGunComp())
+        if (NCGunComp->HasActiveGun())
+            NCGunComp->SelectSlot(ENCGunSlot::None);
+
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
     {
         NCInventoryComp->ForceUnArm();
