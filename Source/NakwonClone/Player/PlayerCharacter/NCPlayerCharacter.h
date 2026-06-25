@@ -37,6 +37,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Components|Gun")
 	UNCGunComponent* GetGunComponent() const { return GunComponent; }
 
+	// 근접무기 슬롯 — 줍는 순간 저장, 3번 키로 꺼냄 (임시)
+	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
+	FName StoredMeleeWeaponID;
+
+	// 드랍 시 스폰할 픽업 액터 클래스
+	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
+	TSubclassOf<AActor> StoredMeleePickupClass;
+
+	// 처음 주웠을 때 픽업 액터의 회전값 
+	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
+	FRotator StoredMeleePickupRotation;
+
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryRef; }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")

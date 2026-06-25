@@ -14,6 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChanged, int32, CurrentAmmo,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunEquipped, FName, GunID);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGunUnequipped);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFireModeChanged, ENCFireMode, NewFireMode);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSwapCompleted, ENCGunSlot, NewSlot); // 슬롯 전환 완료 시점
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NAKWONCLONE_API UNCGunComponent : public UActorComponent
@@ -35,6 +36,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Gun|Events")
 	FOnFireModeChanged OnFireModeChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Gun|Events")
+	FOnSwapCompleted OnSwapCompleted;
 
 	// ----- 데이터 -----
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Data")

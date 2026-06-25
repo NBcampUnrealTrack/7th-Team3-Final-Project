@@ -197,6 +197,8 @@ void UNCGunComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 		DetachGunMesh();
 		OnGunUnequipped.Broadcast();
 	}
+
+	OnSwapCompleted.Broadcast(TargetSlot);
 }
 
 // ─────────────────────────────────────────────
