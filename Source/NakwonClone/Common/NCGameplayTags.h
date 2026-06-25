@@ -136,4 +136,23 @@ namespace NCGun
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_ADS);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_ToggleFireMode);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Swapping); // 무기 교체 중 (입력 차단용)
-};
+}
+
+namespace NCGunEffect
+{
+	// 이펙트 시작 위치
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_MuzzleFlash);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_ShellEject);
+	
+	// 총알 궤적
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_Tracer);
+	
+	// 힛 이펙트
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_Impact);
+}
+
+namespace NCMeleeEffect
+{
+	// 힛 이펙트
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Melee_Impact);
+}

@@ -67,15 +67,35 @@ void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		AActor* Attacker =
 			Cast<AActor>(Data.EffectSpec.GetContext().GetSourceObject());
 
+		const float Delta = Data.EvaluatedData.Magnitude;   // 음수면 데미지
+
 		if (Player)
 		{
 			Player->HandleHitReact(Attacker);
-		}
-		else
-		{
+
+			// 피 튀김 cue — 데미지일 때만(회복은 제외)
+			if (Delta < 0.f)
+			{
+				if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
+				{
+					FGameplayCueParameters CueParams;
+					CueParams.Location = Player->GetActorLocation();
+
+					// 공격자 → 플레이어 방향 = 피가 튈 방향
+					if (Attacker)
+					{
+						CueParams.Normal =
+							(Player->GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal();
+					}
+
+					ASC->ExecuteGameplayCue(
+						FGameplayTag::RequestGameplayTag("GameplayCue.Melee.Impact"),
+						CueParams);
+				}
+			}
 		}
 	}
-
+	
 	if (Data.EvaluatedData.Attribute == GetCreditsAttribute())
 	{
 		UE_LOG(LogTemp, Log, TEXT("[Credits] 현재 크레딧: %.0f"), GetCredits());

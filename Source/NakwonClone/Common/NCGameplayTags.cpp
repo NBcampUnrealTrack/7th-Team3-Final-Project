@@ -109,3 +109,11 @@ UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_ADS,             "Gun.Action.ADS");
 UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_ToggleFireMode,  "Gun.Action.ToggleFireMode");
 UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_Swapping,        "Gun.Action.Swapping");
 
+// 총기 이펙트
+UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_MuzzleFlash, "GameplayCue.Gun.MuzzleFlash");
+UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_ShellEject, "GameplayCue.Gun.ShellEject");
+UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_Tracer, "GameplayCue.Gun.Tracer");
+UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_Impact, "GameplayCue.Gun.Impact");
+
+// 근접무기 이펙트
+UE_DEFINE_GAMEPLAY_TAG(NCMeleeEffect::Melee_Impact, "GameplayCue.Melee.Impact");
