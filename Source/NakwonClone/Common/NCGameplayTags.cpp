@@ -97,4 +97,3 @@ UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_Impact, "GameplayCue.Gun.Impact");
 
 // 근접무기 이펙트
 UE_DEFINE_GAMEPLAY_TAG(NCMeleeEffect::Melee_Impact, "GameplayCue.Melee.Impact");
-UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::MultiPlay, "GameState.State.MultiPlay");
