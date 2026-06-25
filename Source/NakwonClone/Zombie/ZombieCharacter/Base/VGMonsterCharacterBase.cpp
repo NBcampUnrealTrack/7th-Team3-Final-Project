@@ -140,7 +140,7 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 	SkelMesh->bPauseAnims = true;
 }
 
-void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
+void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 {
 	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
 
@@ -149,11 +149,13 @@ void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit: 부위=%d"),
 		static_cast<int32>(BodyPart));
 
+	// 사운드 (부위별, 없으면 기본 HitSound)  //H
 	if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
 	{
 		Multicast_PlaySound(Sound);
 	}
 
+	// VFX (부위별, 타격 위치에)
 	if (UNiagaraSystem* VFX = GetHitVFXByPart(BodyPart))
 	{
 		const FVector Loc = HitData.HitLocation.IsNearlyZero()
@@ -162,6 +164,7 @@ void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
 		Multicast_SpawnHitVFX(VFX, Loc);
 	}
 
+	// AI '맞는 중' 신호
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
@@ -170,9 +173,9 @@ void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
 		}
 	}
 
+	// 부위별 피격 몽타주 (무조건 끊고 새로)
 	PendingHitBodyPart = BodyPart;
-	GetWorldTimerManager().ClearTimer(HitReactTimerHandle); // 대기 중이던 이전 피격 취소
-
+	GetWorldTimerManager().ClearTimer(HitReactTimerHandle);
 	if (HitReactDelay <= 0.f)
 	{
 		PlayHitReactMontage(BodyPart);
@@ -183,7 +186,6 @@ void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
 			HitReactTimerHandle, this,
 			&AVGMonsterCharacterBase::OnHitReactDelayElapsed, HitReactDelay, false);
 	}
-
 	/*// 뒤로 밀려남
 	FVector PushBack = -GetActorForwardVector();
 	LaunchCharacter(PushBack * 300.f, true, false);*/
