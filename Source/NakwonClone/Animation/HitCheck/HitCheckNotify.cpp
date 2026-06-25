@@ -10,6 +10,8 @@
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 
 void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
     float TotalDuration, const FAnimNotifyEventReference& EventReference)
@@ -18,6 +20,53 @@ void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenc
 
     // 헌호수정 - 공격 시작 시 이전 히트 기록 초기화
     HitActors.Empty();
+
+    // ── 무기 휘두름 트레일 스폰 (디버그 메시지 포함 — 원인 확인 후 제거) ──
+    if (!MeshComp) return;
+
+    if (!TrailSystem)
+    {
+        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+            TEXT("[Trail] TrailSystem 비어있음 → 몽타주에 NS_SwordTrail 지정 필요"));
+        return;
+    }
+
+    ACharacter* OwnerChar = Cast<ACharacter>(MeshComp->GetOwner());
+    if (!OwnerChar) return;
+
+    UNCCombatComponent* Combat = OwnerChar->FindComponentByClass<UNCCombatComponent>();
+    if (!Combat) return;
+
+    AActor* WeaponActor = Combat->GetSpawnedWeaponActor();
+    if (!WeaponActor)
+    {
+        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+            TEXT("[Trail] 무기 액터 없음 → 무기 안 들었거나 별도 액터 아님"));
+        return;
+    }
+
+    UMeshComponent* WeaponMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>();
+    if (!WeaponMesh)
+        WeaponMesh = WeaponActor->FindComponentByClass<UStaticMeshComponent>();
+    if (!WeaponMesh)
+    {
+        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+            TEXT("[Trail] 무기 메시 없음"));
+        return;
+    }
+
+    // 칼끝 소켓 (무기 데이터의 TrailEndSocket 사용)
+    FName TipSocket = NAME_None;
+    if (FNCWeaponData* WeaponData = Combat->GetEquippedWeaponData())
+        TipSocket = WeaponData->TrailEndSocket;
+
+    TrailNiagara = UNiagaraFunctionLibrary::SpawnSystemAttached(
+        TrailSystem, WeaponMesh, TipSocket,
+        FVector::ZeroVector, FRotator::ZeroRotator,
+        EAttachLocation::SnapToTarget, true /*bAutoDestroy*/);
+
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+        FString::Printf(TEXT("[Trail] 스폰됨! 소켓=%s"), *TipSocket.ToString()));
 }
 
 void UHitCheckNotify::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -35,6 +84,13 @@ void UHitCheckNotify::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceB
 
     // 헌호수정 - 공격 끝나면 히트 기록 비우기
     HitActors.Empty();
+
+    // ── 트레일 끄기 (남은 띠는 자연스럽게 사라짐) ──
+    if (TrailNiagara)
+    {
+        TrailNiagara->Deactivate();
+        TrailNiagara = nullptr;
+    }
 }
 
 void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)

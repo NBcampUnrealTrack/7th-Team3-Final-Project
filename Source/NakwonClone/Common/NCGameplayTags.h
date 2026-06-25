@@ -123,3 +123,22 @@ namespace NCGameStateTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SinglePlay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(MultiPlay);
 };
+
+namespace NCGunEffect
+{
+	// 이펙트 시작 위치
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_MuzzleFlash);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_ShellEject);
+	
+	// 총알 궤적
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_Tracer);
+	
+	// 힛 이펙트
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_Impact);
+}
+
+namespace NCMeleeEffect
+{
+	// 힛 이펙트
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Melee_Impact);
+}
