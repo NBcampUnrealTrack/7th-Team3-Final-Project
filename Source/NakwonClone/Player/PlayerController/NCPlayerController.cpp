@@ -103,6 +103,10 @@ void ANCPlayerController::SetupInputComponent()
         // 헌호수정 - 플래시라이트 T키 바인딩
         if (FlashlightAction)
             EIC->BindAction(FlashlightAction, ETriggerEvent::Started, this, &ANCPlayerController::ToggleFlashlight);
+
+        // 헌호수정 - 암살 Q키 바인딩
+        if (AssassinateAction)
+            EIC->BindAction(AssassinateAction, ETriggerEvent::Started, this, &ANCPlayerController::Assassinate);
     }
 }
 
@@ -382,6 +386,15 @@ void ANCPlayerController::ToggleFlashlight() //헌호수정
 {
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
         PC->ToggleFlashlight();
+}
+
+void ANCPlayerController::Assassinate() //헌호수정 - 암살
+{
+    if (IsMenuBlockingInput()) return;
+    if (IsAttacking()) return;
+
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        PC->TryAssassinate();
 }
 
 void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)
