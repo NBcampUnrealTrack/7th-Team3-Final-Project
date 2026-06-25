@@ -50,17 +50,11 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
 {
     if (!OtherActor || OtherActor == GetOwner()) return;
 
-    UE_LOG(LogTemp, Warning, TEXT("[Projectile] OnHit: %s"), *OtherActor->GetName());
-
     // GAS 데미지 적용
     UAbilitySystemComponent* SourceASC =
         UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetInstigator());
     UAbilitySystemComponent* TargetASC =
         UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor);
-
-    UE_LOG(LogTemp, Warning, TEXT("[Projectile] SourceASC: %s / TargetASC: %s"),
-        SourceASC ? TEXT("OK") : TEXT("NULL"),
-        TargetASC ? TEXT("OK") : TEXT("NULL"));
 
     if (SourceASC && TargetASC)
     {
