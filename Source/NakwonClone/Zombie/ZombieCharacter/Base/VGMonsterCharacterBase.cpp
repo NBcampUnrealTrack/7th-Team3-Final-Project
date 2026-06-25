@@ -13,6 +13,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Animation/AnimInstance.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "TimerManager.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
@@ -142,10 +144,23 @@ void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
 {
 	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
 
-	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit 호출됨: %s (부위=%d)"),
-		*GetName(), static_cast<int32>(BodyPart));
+	const EVGHitBodyPart BodyPart = HitData.BodyPart;
 
-	Multicast_PlaySound(HitSound);
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit: 부위=%d"),
+		static_cast<int32>(BodyPart));
+
+	if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
+	{
+		Multicast_PlaySound(Sound);
+	}
+
+	if (UNiagaraSystem* VFX = GetHitVFXByPart(BodyPart))
+	{
+		const FVector Loc = HitData.HitLocation.IsNearlyZero()
+			? GetMesh()->GetComponentLocation()
+			: HitData.HitLocation;
+		Multicast_SpawnHitVFX(VFX, Loc);
+	}
 
 	if (AIController)
 	{
@@ -285,4 +300,29 @@ void AVGMonsterCharacterBase::HandleHowl()
 	}
 
 	StartHowlTimer();
+}
+
+USoundBase* AVGMonsterCharacterBase::GetHitSoundByPart(EVGHitBodyPart BodyPart) const
+{
+	if (const TObjectPtr<USoundBase>* Found = HitSoundsByPart.Find(BodyPart))
+	{
+		if (*Found) return *Found;
+	}
+	return HitSound;
+}
+
+UNiagaraSystem* AVGMonsterCharacterBase::GetHitVFXByPart(EVGHitBodyPart BodyPart) const
+{
+	if (const TObjectPtr<UNiagaraSystem>* Found = HitVFXByPart.Find(BodyPart))
+	{
+		return *Found;
+	}
+	return nullptr;
+}
+
+void AVGMonsterCharacterBase::Multicast_SpawnHitVFX_Implementation(
+	UNiagaraSystem* VFX, FVector Location)
+{
+	if (!VFX) return;
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, VFX, Location);
 }

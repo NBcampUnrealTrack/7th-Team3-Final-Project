@@ -16,6 +16,7 @@ class UAnimMontage;
 class UCapsuleComponent;
 class USoundBase;
 class USoundAttenuation;
+class UNiagaraSystem;
 
 struct FOnAttributeChangeData;
 
@@ -107,7 +108,7 @@ protected:
 #pragma region 피격 처리
 public:
 	UFUNCTION()
-	void HandleHit(EVGHitBodyPart BodyPart);
+	void HandleHit(const FVGHitData& HitData);
 
 	// 부위별 피격 몽타주(에디터에서 머리 / 상체 / 하체별로 채움.비면 AnimHit로 폴백)
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
@@ -167,6 +168,16 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_PlaySound(USoundBase* Sound);
 
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TMap<EVGHitBodyPart, TObjectPtr<USoundBase>> HitSoundsByPart;
+
+	// 부위별 피격 VFX (타격 위치에 스폰)
+	UPROPERTY(EditAnywhere, Category = "Monster|VFX")
+	TMap<EVGHitBodyPart, TObjectPtr<UNiagaraSystem>> HitVFXByPart;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SpawnHitVFX(UNiagaraSystem* VFX, FVector Location);
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
 	TObjectPtr<USoundBase> HitSound;
@@ -188,6 +199,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
 	float HowlIntervalMax = 14.f;
+
+	USoundBase* GetHitSoundByPart(EVGHitBodyPart BodyPart) const;
+	UNiagaraSystem* GetHitVFXByPart(EVGHitBodyPart BodyPart) const;
 
 	FTimerHandle HowlTimerHandle;
 
