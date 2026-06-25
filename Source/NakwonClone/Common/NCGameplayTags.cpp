@@ -52,6 +52,7 @@ UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_OneHanded, "Weapon.Type.OneHanded");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_TwoHanded, "Weapon.Type.TwoHanded");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_Pistol, "Weapon.Type.Pistol");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_Shotgun, "Weapon.Type.Shotgun");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_Rifle, "Weapon.Type.Rifle");
 
 // 무기 무게
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Weight_Light, "Weapon.Weight.Light");
