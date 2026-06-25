@@ -489,14 +489,6 @@ void ANCPlayerController::GunSelectSecondary()
 void ANCPlayerController::GunSelectMelee()
 {
     if (IsMenuBlockingInput()) return;
-    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->SelectSlot(ENCGunSlot::None);
-void ANCPlayerController::Assassinate() //헌호수정 - 암살
-{
-    if (IsMenuBlockingInput()) return;
-    if (IsAttacking()) return;
-
-    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
-        PC->TryAssassinate();
 
     UNCGunComponent* GunComp = GetGunComp();
     if (!GunComp) return;
@@ -513,7 +505,6 @@ void ANCPlayerController::Assassinate() //헌호수정 - 암살
         if (!PC || PC->StoredMeleeWeaponID.IsNone()) return;
         UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
         if (!Combat) return;
-        // 이미 손에 들려 있으면 중복 장착 방지
         if (Combat->IsWeaponEquipped()) return;
         FNCWeaponInstance Instance;
         Instance.WeaponID          = PC->StoredMeleeWeaponID;
@@ -521,6 +512,15 @@ void ANCPlayerController::Assassinate() //헌호수정 - 암살
         Instance.CurrentDurability = 100.f;
         Combat->EquipWeapon(Instance);
     }
+}
+
+void ANCPlayerController::Assassinate() //헌호수정 - 암살
+{
+    if (IsMenuBlockingInput()) return;
+    if (IsAttacking()) return;
+
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        PC->TryAssassinate();
 }
 
 void ANCPlayerController::OnGunSwapCompleted(ENCGunSlot NewSlot)
