@@ -3,6 +3,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Common/NCGameplayTags.h"
@@ -72,14 +73,21 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
     }
 
     // 피격 대상이 캐릭터(좀비)면 피격 이펙트, 아니면 표면 이펙트
+    // 나이아가라 우선 미설정 시 파티클
     const bool bIsCharacter = OtherActor->IsA<ACharacter>();
-    UNiagaraSystem* FX = bIsCharacter ? ImpactFleshEffect.Get() : ImpactSurfaceEffect.Get();
-    if (FX)
+
+    UNiagaraSystem* NiagaraFX = bIsCharacter ? ImpactFleshEffect.Get() : ImpactSurfaceEffect.Get();
+    if (NiagaraFX)
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-            this, FX,
-            Hit.ImpactPoint,
-            Hit.ImpactNormal.Rotation());
+            this, NiagaraFX, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
+    }
+    else
+    {
+        UParticleSystem* ParticleFX = bIsCharacter ? ImpactFleshParticle.Get() : ImpactSurfaceParticle.Get();
+        if (ParticleFX)
+            UGameplayStatics::SpawnEmitterAtLocation(
+                this, ParticleFX, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
     }
 
     Destroy();

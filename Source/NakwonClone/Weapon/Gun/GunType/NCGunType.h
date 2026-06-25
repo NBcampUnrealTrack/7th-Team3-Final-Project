@@ -4,6 +4,7 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
 #include "NiagaraSystem.h"
+#include "Particles/ParticleSystem.h"
 #include "NCGunType.generated.h"
 
 class ANCProjectile;
@@ -62,27 +63,67 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName HandSocketName   = TEXT("hand_rSocket");
 
     // 사운드
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<USoundBase> FireSound;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<USoundBase> ReloadSound;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<USoundBase> EmptyClickSound;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
+    TSoftObjectPtr<USoundBase> FireSound;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
+    TSoftObjectPtr<USoundBase> ReloadSound;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
+    TSoftObjectPtr<USoundBase> EmptyClickSound;
 
-    // 이펙트
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UNiagaraSystem> MuzzleFlashEffect;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UNiagaraSystem> ImpactFleshEffect;   // 좀비 피격
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UNiagaraSystem> ImpactSurfaceEffect; // 벽/바닥 피격
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UNiagaraSystem> ShellCasingEffect;   // 탄피 배출
+    // 이펙트 (나이아가라)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    TSoftObjectPtr<UNiagaraSystem> MuzzleFlashEffect;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    TSoftObjectPtr<UNiagaraSystem> ImpactFleshEffect;       // 좀비 피격
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    TSoftObjectPtr<UNiagaraSystem> ImpactSurfaceEffect;     // 벽/바닥 피격
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    TSoftObjectPtr<UNiagaraSystem> ShellCasingEffect;       // 탄피 배출
+
+    // 이펙트 (파티클 - 나이아가라 미설정 시)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParticleEffect")
+    TSoftObjectPtr<UParticleSystem> MuzzleFlashParticle;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParticleEffect")
+    TSoftObjectPtr<UParticleSystem> ImpactFleshParticle;    // 좀비 피격
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParticleEffect")
+    TSoftObjectPtr<UParticleSystem> ImpactSurfaceParticle;  // 벽/바닥 피격
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParticleEffect")
+    TSoftObjectPtr<UParticleSystem> ShellCasingParticle;    // 탄피 배출
 
     // 탄피 소켓
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName EjectSocketName = TEXT("Eject");
 
-    // 애니메이션 에셋
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UStaticMesh>   GunMesh;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSubclassOf<ANCProjectile>    ProjectileClass;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSubclassOf<ANCGunActor>     GunActorClass;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UAnimMontage>  FireMontage;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UAnimMontage>  ReloadMontage;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UAnimMontage>  ADSInMontage;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UAnimMontage>  ADSOutMontage;
+    // 에셋 클래스
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TSoftObjectPtr<UStaticMesh>   GunMesh;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TSubclassOf<ANCProjectile>    ProjectileClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TSubclassOf<ANCGunActor>      GunActorClass; // 드롭 시 스폰할 BP 액터 클래스
+
+    // 애니메이션
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  FireMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  ReloadMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  ADSInMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  ADSOutMontage;
 };
 
 USTRUCT(BlueprintType)

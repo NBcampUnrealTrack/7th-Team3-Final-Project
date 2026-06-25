@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "NiagaraSystem.h"
+#include "Particles/ParticleSystem.h"
 
 #include "NCProjectile.generated.h"
 
@@ -27,11 +28,19 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Projectile")
     float ProjectileSpeed = 10000.f;
 
-    UPROPERTY(BlueprintReadWrite, Category = "Projectile|FX")
+    // 나이아가라 이펙트 (우선 사용)
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile|Effect|Niagara")
     TObjectPtr<UNiagaraSystem> ImpactFleshEffect;
 
-    UPROPERTY(BlueprintReadWrite, Category = "Projectile|FX")
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile|Effect|Niagara")
     TObjectPtr<UNiagaraSystem> ImpactSurfaceEffect;
+
+    // 파티클 이펙트 (나이아가라 미설정 시)
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile|Effect|Particle")
+    TObjectPtr<UParticleSystem> ImpactFleshParticle;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile|Effect|Particle")
+    TObjectPtr<UParticleSystem> ImpactSurfaceParticle;
 
 protected:
     UPROPERTY(VisibleAnywhere, Category = "Projectile")

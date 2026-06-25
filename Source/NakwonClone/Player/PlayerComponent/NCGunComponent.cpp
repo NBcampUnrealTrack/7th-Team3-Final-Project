@@ -268,11 +268,13 @@ void UNCGunComponent::FireOnce()
 
 		if (ANCProjectile* NCProj = GetWorld()->SpawnActor<ANCProjectile>(Data->ProjectileClass, SpawnLocation, PelletRotation, Params))
 		{
-			NCProj->Damage          = Data->Damage;
-			NCProj->MaxRange        = Data->MaxRange;
-			NCProj->ProjectileSpeed = Data->ProjectileSpeed;
-			NCProj->ImpactFleshEffect   = Data->ImpactFleshEffect.Get();
-			NCProj->ImpactSurfaceEffect = Data->ImpactSurfaceEffect.Get();
+			NCProj->Damage               = Data->Damage;
+			NCProj->MaxRange             = Data->MaxRange;
+			NCProj->ProjectileSpeed      = Data->ProjectileSpeed;
+			NCProj->ImpactFleshEffect    = Data->ImpactFleshEffect.Get();
+			NCProj->ImpactSurfaceEffect  = Data->ImpactSurfaceEffect.Get();
+			NCProj->ImpactFleshParticle  = Data->ImpactFleshParticle.Get();
+			NCProj->ImpactSurfaceParticle = Data->ImpactSurfaceParticle.Get();
 		}
 	}
 }
