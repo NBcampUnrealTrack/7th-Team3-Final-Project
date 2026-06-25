@@ -70,6 +70,7 @@ namespace NCWeapon
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_TwoHanded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Pistol);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Shotgun);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Rifle);
 
 	// 무기 무게
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weight_Light);
@@ -112,4 +113,23 @@ namespace NCGameStateTags
 	// 싱글, 멀티 여부
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SinglePlay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(MultiPlay);
+};
+
+namespace NCGunEffect
+{
+	// 이펙트 시작 위치
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_MuzzleFlash);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_ShellEject);
+	
+	// 총알 궤적
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_Tracer);
+	
+	// 힛 이펙트
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_Impact);
+}
+
+namespace NCMeleeEffect
+{
+	// 힛 이펙트
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Melee_Impact);
 }
