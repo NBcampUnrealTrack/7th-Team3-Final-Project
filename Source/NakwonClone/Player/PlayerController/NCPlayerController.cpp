@@ -7,6 +7,7 @@
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerComponent/NCGunComponent.h" // 하상빈 추가
+#include "Player/PlayerData/NCWeaponData.h" // 하상빈 추가
 #include "NakwonClone/Item/ANCLootBoxActor.h"
 #include "NakwonClone/UI/Inventroy/LootBox/NCLootBoxHud.h"
 #include "AbilitySystemComponent.h"
@@ -29,6 +30,15 @@ void ANCPlayerController::BeginPlay()
         if (DefaultMappingContext)
         {
             Subsystem->AddMappingContext(DefaultMappingContext, 0);
+        }
+    }
+
+    // 총기 슬롯 전환 완료 시점에 근접무기 장착/해제 연동
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+    {
+        if (UNCGunComponent* GunComp = PC->GetGunComponent())
+        {
+            GunComp->OnSwapCompleted.AddDynamic(this, &ANCPlayerController::OnGunSwapCompleted);
         }
     }
 }
@@ -487,6 +497,57 @@ void ANCPlayerController::Assassinate() //헌호수정 - 암살
 
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
         PC->TryAssassinate();
+
+    UNCGunComponent* GunComp = GetGunComp();
+    if (!GunComp) return;
+
+    if (GunComp->HasActiveGun())
+    {
+        // 총기 → 근접: SwapDelay 후 OnGunSwapCompleted(None)에서 장착
+        GunComp->SelectSlot(ENCGunSlot::None);
+    }
+    else
+    {
+        // 이미 None 슬롯 (맨손/근접): SelectSlot은 early return하므로 직접 처리
+        ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
+        if (!PC || PC->StoredMeleeWeaponID.IsNone()) return;
+        UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
+        if (!Combat) return;
+        // 이미 손에 들려 있으면 중복 장착 방지
+        if (Combat->IsWeaponEquipped()) return;
+        FNCWeaponInstance Instance;
+        Instance.WeaponID          = PC->StoredMeleeWeaponID;
+        Instance.UniqueID          = FGuid::NewGuid();
+        Instance.CurrentDurability = 100.f;
+        Combat->EquipWeapon(Instance);
+    }
+}
+
+void ANCPlayerController::OnGunSwapCompleted(ENCGunSlot NewSlot)
+{
+    ANCPlayerCharacter* NCPC = Cast<ANCPlayerCharacter>(GetPawn());
+    if (!NCPC) return;
+
+    UNCCombatComponent* NCCombat = NCPC->FindComponentByClass<UNCCombatComponent>();
+    if (!NCCombat) return;
+
+    if (NewSlot == ENCGunSlot::None)
+    {
+        // 근접 슬롯 활성 — 저장된 근접무기 장착
+        if (!NCPC->StoredMeleeWeaponID.IsNone())
+        {
+            FNCWeaponInstance Instance;
+            Instance.WeaponID = NCPC->StoredMeleeWeaponID;
+            Instance.UniqueID = FGuid::NewGuid();
+            Instance.CurrentDurability = 100.f;
+            NCCombat->EquipWeapon(Instance);
+        }
+    }
+    else
+    {
+        // 총기 슬롯 활성 — 근접무기 해제
+        NCCombat->UnEquipWeapon();
+    }
 }
 
 void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)

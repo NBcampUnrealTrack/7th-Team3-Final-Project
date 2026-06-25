@@ -83,6 +83,9 @@ private:
 
 	// 하상빈 추가 - 총기 입력
 	UNCGunComponent* GetGunComp() const;
+
+	UFUNCTION()
+	void OnGunSwapCompleted(ENCGunSlot NewSlot);
 	void GunStartFire();
 	void GunStopFire();
 	void GunStartADS();
