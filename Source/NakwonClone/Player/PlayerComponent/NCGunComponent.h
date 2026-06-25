@@ -145,6 +145,13 @@ private:
 	void RestoreFOV();
 	UCameraComponent* FindCamera() const;
 
+	// TODO: 찬우님이 스켈레톤에 총기 전용 소켓 추가하면 DT_GunData HandSocketName에 입력
+	void AttachGunMesh(const FNCGunData* Data);
+	void DetachGunMesh();
+
+	UPROPERTY()
+	TObjectPtr<UStaticMeshComponent> EquippedGunMeshComp;
+
 	FNCGunSlotData& GetActiveSlotData();
 	const FNCGunData* FindGunData(FName GunID) const;
 

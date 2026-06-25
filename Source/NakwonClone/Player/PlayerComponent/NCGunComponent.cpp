@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapon/Gun/NCProjectile.h"
+#include "Components/StaticMeshComponent.h"
 
 UNCGunComponent::UNCGunComponent()
 {
@@ -87,6 +88,7 @@ bool UNCGunComponent::EquipGun(FName GunID)
 	{
 		CurrentFireMode = Data->DefaultFireMode;
 		OnFireModeChanged.Broadcast(CurrentFireMode);
+		AttachGunMesh(Data);
 	}
 
 	OnGunEquipped.Broadcast(GunID);
@@ -107,6 +109,7 @@ bool UNCGunComponent::EquipGunWithAmmo(FName GunID, int32 CurrentAmmo, int32 Res
 	{
 		CurrentFireMode = Data->DefaultFireMode;
 		OnFireModeChanged.Broadcast(CurrentFireMode);
+		AttachGunMesh(Data);
 	}
 
 	OnGunEquipped.Broadcast(GunID);
@@ -126,6 +129,7 @@ void UNCGunComponent::UnequipGun(ENCGunSlot Slot)
 		ActiveSlot = ENCGunSlot::None;
 		ActiveGunActions.Reset();
 		RestoreFOV();
+		DetachGunMesh();
 		OnGunUnequipped.Broadcast();
 	}
 }
@@ -160,6 +164,7 @@ void UNCGunComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 	{
 		CurrentFireMode = Data->DefaultFireMode;
 		OnFireModeChanged.Broadcast(CurrentFireMode);
+		AttachGunMesh(Data);
 
 		const FNCGunSlotData& SlotData = GetActiveSlotData();
 		OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
@@ -167,6 +172,7 @@ void UNCGunComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 	}
 	else
 	{
+		DetachGunMesh();
 		OnGunUnequipped.Broadcast();
 	}
 }
@@ -397,4 +403,40 @@ const FNCGunData* UNCGunComponent::FindGunData(FName GunID) const
 {
 	if (!GunDataTable || GunID.IsNone()) return nullptr;
 	return GunDataTable->FindRow<FNCGunData>(GunID, TEXT("NCGunComponent"));
+}
+
+// ─────────────────────────────────────────────
+// 총기 메시 부착 / 해제
+
+void UNCGunComponent::AttachGunMesh(const FNCGunData* Data)
+{
+	DetachGunMesh();
+	if (!Data || Data->GunMesh.IsNull()) return;
+
+	ACharacter* Char = Cast<ACharacter>(GetOwner());
+	if (!Char) return;
+
+	UStaticMesh* Mesh = Data->GunMesh.LoadSynchronous();
+	if (!Mesh) return;
+
+	EquippedGunMeshComp = NewObject<UStaticMeshComponent>(Char);
+	EquippedGunMeshComp->SetStaticMesh(Mesh);
+	EquippedGunMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EquippedGunMeshComp->RegisterComponent();
+
+	// TODO: 찬우님이 스켈레톤에 총기 전용 소켓 추가하면 DT_GunData HandSocketName에 입력
+	//       소켓 미존재 시 루트 본에 부착됨 (임시 확인용)
+	EquippedGunMeshComp->AttachToComponent(
+		Char->GetMesh(),
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		Data->HandSocketName);
+}
+
+void UNCGunComponent::DetachGunMesh()
+{
+	if (EquippedGunMeshComp)
+	{
+		EquippedGunMeshComp->DestroyComponent();
+		EquippedGunMeshComp = nullptr;
+	}
 }
