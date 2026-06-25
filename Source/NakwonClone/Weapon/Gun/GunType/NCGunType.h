@@ -56,7 +56,8 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float ReloadTime = 2.f;
 
     // ADS(정조준)
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) float ADSFOVMultiplier = 0.6f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float ADSFOVMultiplier    = 0.6f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float ADSSpreadMultiplier = 0.3f; // ADS 시 SpreadAngle 배율 (1.0 = 변화 없음)
 
     // 소켓
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName MuzzleSocketName = TEXT("Muzzle");

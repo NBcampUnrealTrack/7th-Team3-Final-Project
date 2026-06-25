@@ -8,10 +8,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "Weapon/Gun/NCProjectile.h"
 #include "Components/StaticMeshComponent.h"
+#include "DrawDebugHelpers.h"
 
 UNCGunComponent::UNCGunComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false; // 평상시 Tick 꺼둠
 }
 
 void UNCGunComponent::BeginPlay()
@@ -19,7 +21,25 @@ void UNCGunComponent::BeginPlay()
 	Super::BeginPlay();
 
 	if (UCameraComponent* Cam = FindCamera())
-		DefaultFOV = Cam->FieldOfView;
+		DefaultFOV = TargetFOV = Cam->FieldOfView;
+}
+
+void UNCGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	UCameraComponent* Cam = FindCamera();
+	if (!Cam) return;
+
+	const float Current = Cam->FieldOfView;
+	if (FMath::IsNearlyEqual(Current, TargetFOV, 0.1f))
+	{
+		Cam->SetFieldOfView(TargetFOV);
+		SetComponentTickEnabled(false); // 목표 도달 시 Tick 종료
+		return;
+	}
+
+	Cam->SetFieldOfView(FMath::FInterpTo(Current, TargetFOV, DeltaTime, ADSInterpSpeed));
 }
 
 // ─────────────────────────────────────────────
@@ -263,9 +283,16 @@ void UNCGunComponent::FireOnce()
 		FRotator PelletRotation = SpawnRotation;
 		if (Data->SpreadAngle > 0.f)
 		{
-			PelletRotation.Yaw   += FMath::RandRange(-Data->SpreadAngle, Data->SpreadAngle);
-			PelletRotation.Pitch += FMath::RandRange(-Data->SpreadAngle, Data->SpreadAngle);
+			const float Spread = Data->SpreadAngle * (IsADS() ? Data->ADSSpreadMultiplier : 1.f);
+			PelletRotation.Yaw   += FMath::RandRange(-Spread, Spread);
+			PelletRotation.Pitch += FMath::RandRange(-Spread, Spread);
 		}
+
+		// 탄도 디버그 라인 — ADS: 파란색 / 힙파이어: 빨간색 (총구 소켓 발사 전환 후 재테스트)
+		// DrawDebugLine(GetWorld(), SpawnLocation,
+		// 	SpawnLocation + PelletRotation.Vector() * Data->MaxRange,
+		// 	IsADS() ? FColor::Blue : FColor::Red,
+		// 	false, 3.f, 0, 1.f);
 
 		FActorSpawnParameters Params;
 		Params.Owner      = Owner;
@@ -348,14 +375,14 @@ void UNCGunComponent::ApplyADSFOV()
 	const FNCGunData* Data = GetActiveGunData();
 	if (!Data) return;
 
-	if (UCameraComponent* Cam = FindCamera())
-		Cam->SetFieldOfView(DefaultFOV * Data->ADSFOVMultiplier);
+	TargetFOV = DefaultFOV * Data->ADSFOVMultiplier;
+	SetComponentTickEnabled(true);
 }
 
 void UNCGunComponent::RestoreFOV()
 {
-	if (UCameraComponent* Cam = FindCamera())
-		Cam->SetFieldOfView(DefaultFOV);
+	TargetFOV = DefaultFOV;
+	SetComponentTickEnabled(true);
 }
 
 UCameraComponent* UNCGunComponent::FindCamera() const

@@ -135,6 +135,12 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+public:
+	// FOV 보간 속도 (BP에서 조정 가능)
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|ADS")
+	float ADSInterpSpeed = 10.f;
 
 private:
 	void FireOnce();
@@ -159,5 +165,6 @@ private:
 	FTimerHandle ReloadTimerHandle;
 	FTimerHandle SwapTimerHandle;
 
-	float DefaultFOV = 90.f; // 카메라 기본 FOV
+	float DefaultFOV  = 90.f;
+	float TargetFOV   = 90.f;
 };
