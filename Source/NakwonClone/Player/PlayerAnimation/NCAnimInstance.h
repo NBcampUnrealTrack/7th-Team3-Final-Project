@@ -77,6 +77,9 @@ public:
     UFUNCTION(BlueprintPure, Category = "Weapon")
     bool GetIsShotgunWeapon() const { return bIsShotgunWeapon; }
 
+    UFUNCTION(BlueprintPure, Category = "Weapon")
+    bool GetIsRifleWeapon() const { return bIsRifleWeapon; }
+
     UFUNCTION(BlueprintPure, Category = "Weapon|State")
     bool GetIsAttacking() const { return bIsAttacking; }
 
@@ -200,6 +203,9 @@ protected:
 
     UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
     bool bIsShotgunWeapon = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    bool bIsRifleWeapon = false;
 
     UPROPERTY(BlueprintReadOnly, Category = "Weapon|State", meta = (AllowPrivateAccess = "true"))
     bool bIsAttacking = false;
