@@ -86,6 +86,9 @@ private:
 
 	UFUNCTION()
 	void OnGunSwapCompleted(ENCGunSlot NewSlot);
+
+	// H키 맨손 전환 시 근접 자동장착 콜백 스킵용
+	bool bUnArmPending = false;
 	void GunStartFire();
 	void GunStopFire();
 	void GunStartADS();

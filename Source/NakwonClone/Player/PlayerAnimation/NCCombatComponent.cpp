@@ -220,6 +220,8 @@ void UNCCombatComponent::Internal_UnEquipWeapon()
 			// 헌호수정 - 파손 상태 태그도 제거 (다음 무기에 영향 방지)
 			if (EquippedWeapon.bIsBroken)
 				ASC->RemoveLooseGameplayTag(NCWeapon::State_Broken);
+			// 장착 모션 중 해제 시 Swapping 태그 잔류 방지
+			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Swapping);
 		}
 	}
 
@@ -404,11 +406,6 @@ void UNCCombatComponent::PlayEquipMontage()
 	if (!Montage)
 	{
 		return;
-	}
-
-	if (ASC)
-	{
-		ASC->AddLooseGameplayTag(NCWeapon::Action_Swapping);
 	}
 
 	Anim->Montage_Play(Montage);
