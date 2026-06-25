@@ -4,9 +4,6 @@
 #include "Animation/AnimNotifies/AnimNotifyState.h" //헌호수정 - AnimNotify → AnimNotifyState
 #include "HitCheckNotify.generated.h"
 
-class UNiagaraSystem;
-class UNiagaraComponent;
-
 UCLASS()
 class NAKWONCLONE_API UHitCheckNotify : public UAnimNotifyState //헌호수정
 {
@@ -16,10 +13,6 @@ public:
     // 헌호수정 - 적 히트 시 카메라 쉐이크 (무기별로 다르게 할당)
     UPROPERTY(EditAnywhere, Category = "CameraShake")
     TSubclassOf<UCameraShakeBase> HitShakeClass;
-
-    // 무기 휘두름 트레일 (에디터에서 NS_SwordTrail 지정)
-    UPROPERTY(EditAnywhere, Category = "Trail")
-    TObjectPtr<UNiagaraSystem> TrailSystem;
     // 헌호수정 - 구간 시작: HitActors 초기화
     virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
         float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
@@ -36,9 +29,8 @@ private:
     // 헌호수정 - 한 번의 공격에서 이미 맞은 액터 추적 (중복 히트 방지)
     TSet<AActor*> HitActors;
 
-    // 스폰된 트레일 핸들 (테스트용)
-    UPROPERTY()
-    TObjectPtr<UNiagaraComponent> TrailNiagara;
+    // 이번 스윙에서 월드(벽) 임팩트를 이미 냈는지 (스윙당 1회)
+    bool bImpactTriggeredThisSwing = false;
 
     void DoHitCheck(USkeletalMeshComponent* MeshComp);
 };
