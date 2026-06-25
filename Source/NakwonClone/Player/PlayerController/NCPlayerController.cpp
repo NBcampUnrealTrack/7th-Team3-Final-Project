@@ -259,7 +259,16 @@ void ANCPlayerController::Attack()
 
     // 총기 장착 중이면 근접 공격 차단 (총기는 IA_GunFire가 담당)
     if (UNCGunComponent* GunComp = PC->GetGunComponent())
-        if (GunComp->HasActiveGun()) return;
+    {
+        if (GunComp->HasActiveGun())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[Attack] blocked: HasActiveGun"));
+            return;
+        }
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("[Attack] called, AttackAbilityClass=%s"),
+        PC->AttackAbilityClass ? *PC->AttackAbilityClass->GetName() : TEXT("NULL"));
 
     // 헌호수정 - 공격 시 카메라 방향으로 캐릭터 즉시 회전
     FRotator ControlRot = GetControlRotation();
@@ -268,9 +277,19 @@ void ANCPlayerController::Attack()
     UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent();
     if (!ASC) return;
 
+    if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[Attack] bIsEquipped=%d, CanAttack=%d, Action_Swapping=%d"),
+            Combat->IsWeaponEquipped(),
+            Combat->CanAttack(),
+            ASC->HasMatchingGameplayTag(NCWeapon::Action_Swapping));
+    }
+
     // 첫 번째 공격: GA_Attack 활성화 시도
     // 실패(이미 공격 중) → 콤보 다음 섹션으로 전환
-    if (!ASC->TryActivateAbilityByClass(PC->AttackAbilityClass))
+    bool bActivated = ASC->TryActivateAbilityByClass(PC->AttackAbilityClass);
+    UE_LOG(LogTemp, Warning, TEXT("[Attack] TryActivateAbilityByClass=%d"), bActivated);
+    if (!bActivated)
     {
         if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
         {
@@ -404,15 +423,25 @@ void ANCPlayerController::UnArm()
 {
     if (IsAttacking()) return; //헌호수정 - 공격 중 무기 해제 차단
 
-    // 하상빈 추가 - 총기 장착 중이면 먼저 해제 (메시 탈착 + 슬롯 초기화)
-    if (UNCGunComponent* NCGunComp = GetGunComp())
-        if (NCGunComp->HasActiveGun())
-            NCGunComp->SelectSlot(ENCGunSlot::None);
+    ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
+    if (!PC) return;
+
+    // 총기 장착 중이면 해제 — bUnArmPending으로 콜백에서 근접 자동장착 방지
+    if (UNCGunComponent* GunComp = PC->GetGunComponent())
+    {
+        if (GunComp->HasActiveGun())
+        {
+            bUnArmPending = true;
+            GunComp->SelectSlot(ENCGunSlot::None);
+        }
+    }
+
+    // 근접무기 해제
+    if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
+        Combat->UnEquipWeapon();
 
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
-    {
         NCInventoryComp->ForceUnArm();
-    }
 }
 
 bool ANCPlayerController::IsAttacking() const //헌호수정 - 공격 중 체크
@@ -525,6 +554,13 @@ void ANCPlayerController::Assassinate() //헌호수정 - 암살
 
 void ANCPlayerController::OnGunSwapCompleted(ENCGunSlot NewSlot)
 {
+    // H키 맨손 전환 중이면 근접 자동장착 스킵
+    if (bUnArmPending)
+    {
+        bUnArmPending = false;
+        return;
+    }
+
     ANCPlayerCharacter* NCPC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!NCPC) return;
 
