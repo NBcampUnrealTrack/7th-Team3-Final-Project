@@ -60,6 +60,16 @@ FName UNCGunComponent::GetActiveGunID() const
 	return NAME_None;
 }
 
+FName UNCGunComponent::GetOccupantGunID(FName ForGunID) const
+{
+	const FNCGunData* Data = FindGunData(ForGunID);
+	if (!Data) return NAME_None;
+
+	if (Data->SlotType == ENCGunSlot::Primary)   return PrimarySlot.GunID;
+	if (Data->SlotType == ENCGunSlot::Secondary)  return SecondarySlot.GunID;
+	return NAME_None;
+}
+
 // ─────────────────────────────────────────────
 // 장착 / 해제
 

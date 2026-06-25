@@ -90,6 +90,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Gun|Getter")
 	FName GetActiveGunID() const;
 
+	//  ----- GunID와 같은 슬롯에 현재 장착된 GunID 반환 -----
+	FName GetOccupantGunID(FName ForGunID) const;
+
 	// ----- 무기 장착 / 해제 -----
 	UFUNCTION(BlueprintCallable, Category = "Gun|Equip")
 	bool EquipGun(FName GunID);
@@ -128,6 +131,7 @@ public:
 	void ToggleFireMode();
 
 	const FNCGunData* GetActiveGunData() const;
+	const FNCGunData* GetGunData(FName InGunID) const { return FindGunData(InGunID); }
 
 protected:
 	virtual void BeginPlay() override;

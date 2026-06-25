@@ -7,6 +7,7 @@
 #include "NCGunType.generated.h"
 
 class ANCProjectile;
+class ANCGunActor;
 class USoundBase;
 
 UENUM(BlueprintType)
@@ -77,6 +78,7 @@ struct FNCGunData : public FTableRowBase
     // 애니메이션 에셋
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UStaticMesh>   GunMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TSubclassOf<ANCProjectile>    ProjectileClass;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSubclassOf<ANCGunActor>     GunActorClass;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UAnimMontage>  FireMontage;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UAnimMontage>  ReloadMontage;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UAnimMontage>  ADSInMontage;
