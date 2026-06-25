@@ -189,6 +189,18 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_TakeLootBoxItemToConsumable(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex);
 	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void MovePresetToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell);
+
+	UFUNCTION(Server, Reliable)
+	void Server_MovePresetToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, ENCPresetCell Cell);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void MoveConsumableToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_MoveConsumableToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PresetIndex, int32 ConsumableSlotIndex);
+
 	UFUNCTION(BlueprintCallable)
 	void MoveLootBoxItem(AANCLootBoxActor* LootBox, int32 FromSlotIndex, int32 ToSlotIndex);
 
