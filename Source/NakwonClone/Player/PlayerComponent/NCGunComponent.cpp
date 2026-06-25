@@ -183,8 +183,8 @@ void UNCGunComponent::StartFire()
 		if (SlotData.CurrentAmmo <= 0)
 		{
 			const FNCGunData* Data = GetActiveGunData();
-			if (Data && Data->EmptyClickSound.IsValid())
-				UGameplayStatics::PlaySound2D(this, Data->EmptyClickSound.Get());
+			if (Data && !Data->EmptyClickSound.IsNull())
+				UGameplayStatics::PlaySound2D(this, Data->EmptyClickSound.LoadSynchronous());
 			return;
 		}
 	}
