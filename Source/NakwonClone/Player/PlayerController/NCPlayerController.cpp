@@ -259,16 +259,7 @@ void ANCPlayerController::Attack()
 
     // 총기 장착 중이면 근접 공격 차단 (총기는 IA_GunFire가 담당)
     if (UNCGunComponent* GunComp = PC->GetGunComponent())
-    {
-        if (GunComp->HasActiveGun())
-        {
-            UE_LOG(LogTemp, Warning, TEXT("[Attack] blocked: HasActiveGun"));
-            return;
-        }
-    }
-
-    UE_LOG(LogTemp, Warning, TEXT("[Attack] called, AttackAbilityClass=%s"),
-        PC->AttackAbilityClass ? *PC->AttackAbilityClass->GetName() : TEXT("NULL"));
+        if (GunComp->HasActiveGun()) return;
 
     // 헌호수정 - 공격 시 카메라 방향으로 캐릭터 즉시 회전
     FRotator ControlRot = GetControlRotation();
@@ -277,19 +268,9 @@ void ANCPlayerController::Attack()
     UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent();
     if (!ASC) return;
 
-    if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[Attack] bIsEquipped=%d, CanAttack=%d, Action_Swapping=%d"),
-            Combat->IsWeaponEquipped(),
-            Combat->CanAttack(),
-            ASC->HasMatchingGameplayTag(NCWeapon::Action_Swapping));
-    }
-
     // 첫 번째 공격: GA_Attack 활성화 시도
     // 실패(이미 공격 중) → 콤보 다음 섹션으로 전환
-    bool bActivated = ASC->TryActivateAbilityByClass(PC->AttackAbilityClass);
-    UE_LOG(LogTemp, Warning, TEXT("[Attack] TryActivateAbilityByClass=%d"), bActivated);
-    if (!bActivated)
+    if (!ASC->TryActivateAbilityByClass(PC->AttackAbilityClass))
     {
         if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
         {
