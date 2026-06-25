@@ -6,11 +6,12 @@
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "NakwonClone/Player/PlayerData/NCWeaponData.h"
 #include "NakwonClone/GAS/Effect/GE_Damage.h"
+#include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
-#include "GameplayEffectTypes.h"
-#include "GameFramework/Pawn.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 
 void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
     float TotalDuration, const FAnimNotifyEventReference& EventReference)
@@ -20,8 +21,52 @@ void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenc
     // 헌호수정 - 공격 시작 시 이전 히트 기록 초기화
     HitActors.Empty();
 
-    // 이번 스윙의 월드(벽) 임팩트 1회 트리거 플래그 리셋
-    bImpactTriggeredThisSwing = false;
+    // ── 무기 휘두름 트레일 스폰 (디버그 메시지 포함 — 원인 확인 후 제거) ──
+    if (!MeshComp) return;
+
+    if (!TrailSystem)
+    {
+        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+            TEXT("[Trail] TrailSystem 비어있음 → 몽타주에 NS_SwordTrail 지정 필요"));
+        return;
+    }
+
+    ACharacter* OwnerChar = Cast<ACharacter>(MeshComp->GetOwner());
+    if (!OwnerChar) return;
+
+    UNCCombatComponent* Combat = OwnerChar->FindComponentByClass<UNCCombatComponent>();
+    if (!Combat) return;
+
+    AActor* WeaponActor = Combat->GetSpawnedWeaponActor();
+    if (!WeaponActor)
+    {
+        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+            TEXT("[Trail] 무기 액터 없음 → 무기 안 들었거나 별도 액터 아님"));
+        return;
+    }
+
+    UMeshComponent* WeaponMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>();
+    if (!WeaponMesh)
+        WeaponMesh = WeaponActor->FindComponentByClass<UStaticMeshComponent>();
+    if (!WeaponMesh)
+    {
+        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+            TEXT("[Trail] 무기 메시 없음"));
+        return;
+    }
+
+    // 칼끝 소켓 (무기 데이터의 TrailEndSocket 사용)
+    FName TipSocket = NAME_None;
+    if (FNCWeaponData* WeaponData = Combat->GetEquippedWeaponData())
+        TipSocket = WeaponData->TrailEndSocket;
+
+    TrailNiagara = UNiagaraFunctionLibrary::SpawnSystemAttached(
+        TrailSystem, WeaponMesh, TipSocket,
+        FVector::ZeroVector, FRotator::ZeroRotator,
+        EAttachLocation::SnapToTarget, true /*bAutoDestroy*/);
+
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+        FString::Printf(TEXT("[Trail] 스폰됨! 소켓=%s"), *TipSocket.ToString()));
 }
 
 void UHitCheckNotify::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -39,6 +84,13 @@ void UHitCheckNotify::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceB
 
     // 헌호수정 - 공격 끝나면 히트 기록 비우기
     HitActors.Empty();
+
+    // ── 트레일 끄기 (남은 띠는 자연스럽게 사라짐) ──
+    if (TrailNiagara)
+    {
+        TrailNiagara->Deactivate();
+        TrailNiagara = nullptr;
+    }
 }
 
 void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
@@ -163,76 +215,6 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
         if (APlayerController* PC = Cast<APlayerController>(OwnerChar->GetController()))
         {
             PC->ClientStartCameraShake(HitShakeClass);
-        }
-    }
-
-    // ── 벽(월드) 임팩트: 칼날이 월드에 닿으면 표면 임팩트 큐 (스윙당 1회) ──
-    if (!bImpactTriggeredThisSwing)
-    {
-        AActor* WeaponActor = Combat->GetSpawnedWeaponActor();
-
-        FVector ImpStart = FVector::ZeroVector;
-        FVector ImpEnd = FVector::ZeroVector;
-        bool bHaveSegment = false;
-
-        // 데미지 판정과 동일한 칼날 세그먼트 사용 (소켓 방식 / 전방 방식)
-        if (WeaponData->TrailStartSocket != NAME_None && WeaponData->TrailEndSocket != NAME_None && WeaponActor)
-        {
-            UMeshComponent* WMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>();
-            if (!WMesh)
-                WMesh = WeaponActor->FindComponentByClass<UStaticMeshComponent>();
-            if (WMesh)
-            {
-                ImpStart = WMesh->GetSocketLocation(WeaponData->TrailStartSocket);
-                ImpEnd   = WMesh->GetSocketLocation(WeaponData->TrailEndSocket);
-                bHaveSegment = true;
-            }
-        }
-        else
-        {
-            ImpStart = OwnerChar->GetActorLocation();
-            ImpEnd   = ImpStart + OwnerChar->GetActorForwardVector() * WeaponData->HitTraceRange;
-            bHaveSegment = true;
-        }
-
-        if (bHaveSegment)
-        {
-            FCollisionQueryParams WorldParams;
-            WorldParams.AddIgnoredActor(OwnerChar);
-            if (WeaponActor) WorldParams.AddIgnoredActor(WeaponActor); // 무기 자체 충돌 무시 (공중 스윙 오발 방지)
-            WorldParams.bReturnPhysicalMaterial = true; // 표면 정보 받기
-            WorldParams.bTraceComplex = true; // 머티리얼의 PhysMaterial(표면) 읽으려면 필요
-
-            TArray<FHitResult> WorldHits;
-            const bool bWorldHit = World->SweepMultiByChannel(
-                WorldHits, ImpStart, ImpEnd, FQuat::Identity,
-                ECC_Visibility,
-                FCollisionShape::MakeSphere(WeaponData->HitSphereRadius),
-                WorldParams);
-
-            if (bWorldHit)
-            {
-                for (const FHitResult& WHit : WorldHits)
-                {
-                    AActor* HitActor = WHit.GetActor();
-                    if (!HitActor) continue;
-
-                    // 폰(좀비/플레이어)은 좀비 파트에서 처리 → 월드(벽/바닥)만 임팩트
-                    if (HitActor->IsA(APawn::StaticClass())) continue;
-
-                    bImpactTriggeredThisSwing = true;
-
-                    FGameplayCueParameters CueParams;
-                    CueParams.Location = WHit.ImpactPoint;
-                    CueParams.Normal = WHit.ImpactNormal;
-                    CueParams.PhysicalMaterial = WHit.PhysMaterial;
-
-                    SourceASC->ExecuteGameplayCue(
-                        FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Melee.Surface")),
-                        CueParams);
-                    break;
-                }
-            }
         }
     }
 }

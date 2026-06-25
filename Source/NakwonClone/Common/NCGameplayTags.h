@@ -130,6 +130,5 @@ namespace NCGunEffect
 namespace NCMeleeEffect
 {
 	// 힛 이펙트
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Melee_Hit);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Melee_Surface);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Melee_Impact);
 }
