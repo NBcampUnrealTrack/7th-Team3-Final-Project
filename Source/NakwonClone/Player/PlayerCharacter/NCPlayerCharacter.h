@@ -11,6 +11,7 @@ class ACameraActor;
 class UNCPlayerInventoryComponent;
 class UNCLocomotionComponent;
 class UNCCombatComponent;
+class UNCGunComponent;
 class USpotLightComponent;
 class UStaticMeshComponent;
 class UUserWidget;
@@ -31,6 +32,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Components|Combat")
 	UNCCombatComponent* GetCombatComponent() const { return CombatComponent; }
+
+	// 하상빈 추가
+	UFUNCTION(BlueprintPure, Category = "Components|Gun")
+	UNCGunComponent* GetGunComponent() const { return GunComponent; }
 
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryRef; }
 
@@ -130,6 +135,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
 	TObjectPtr<UNCCombatComponent> CombatComponent;
+
+	// 하상빈 추가
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")
+	TObjectPtr<UNCGunComponent> GunComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
 	TObjectPtr<UStaticMeshComponent> FlashlightMesh;

@@ -15,6 +15,7 @@
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
+#include "Player/PlayerComponent/NCGunComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -49,6 +50,7 @@ void ANCPlayerCharacter::InitComponents()
     InteractionComponent = CreateDefaultSubobject<UNCInteractionComponent>(TEXT("InteractionComponent"));
     LocomotionComponent = CreateDefaultSubobject<UNCLocomotionComponent>(TEXT("LocomotionComponent"));
     CombatComponent = CreateDefaultSubobject<UNCCombatComponent>(TEXT("CombatComponent"));
+    GunComponent    = CreateDefaultSubobject<UNCGunComponent>(TEXT("GunComponent"));
 
     // 헌호수정 - 플래시라이트 컴포넌트 생성 및 소켓에 부착
     FlashlightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FlashlightMesh"));

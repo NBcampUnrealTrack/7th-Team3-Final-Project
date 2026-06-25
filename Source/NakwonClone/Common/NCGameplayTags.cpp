@@ -90,6 +90,26 @@ UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::GameClear, "GameState.State.Clear");
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::SinglePlay, "GameState.State.SinglePlay");
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::MultiPlay, "GameState.State.MultiPlay")
 
+// 총기 장착 슬롯
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Slot_Primary,   "Gun.Slot.Primary");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Slot_Secondary, "Gun.Slot.Secondary");
+
+// 총기 타입
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Type_Rifle,   "Gun.Type.Rifle");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Type_Shotgun, "Gun.Type.Shotgun");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Type_Pistol,  "Gun.Type.Pistol");
+
+// 발사 모드
+UE_DEFINE_GAMEPLAY_TAG(NCGun::FireMode_Semi, "Gun.FireMode.Semi");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::FireMode_Auto, "Gun.FireMode.Auto");
+
+// 총기 액션
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_Firing,          "Gun.Action.Firing");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_Reloading,       "Gun.Action.Reloading");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_ADS,             "Gun.Action.ADS");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_ToggleFireMode,  "Gun.Action.ToggleFireMode");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_Swapping,        "Gun.Action.Swapping");
+
 // 총기 이펙트
 UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_MuzzleFlash, "GameplayCue.Gun.MuzzleFlash");
 UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_ShellEject, "GameplayCue.Gun.ShellEject");
