@@ -8,6 +8,7 @@ class UInputMappingContext;
 class UInputAction;
 class AANCLootBoxActor;
 class UNCLootBoxHud;
+class UNCGunComponent;
 struct FInputActionValue;
 
 //하상빈 추가
@@ -80,6 +81,23 @@ private:
 	// 헌호수정 - 플래시라이트 토글
 	void ToggleFlashlight();
 
+	// 하상빈 추가 - 총기 입력
+	UNCGunComponent* GetGunComp() const;
+
+	UFUNCTION()
+	void OnGunSwapCompleted(ENCGunSlot NewSlot);
+	void GunStartFire();
+	void GunStopFire();
+	void GunStartADS();
+	void GunStopADS();
+	void GunReload();
+	void GunToggleFireMode();
+	void GunSelectPrimary();
+	void GunSelectSecondary();
+	void GunSelectMelee();
+	// 헌호수정 - 암살
+	void Assassinate();
+
 	// 헌호수정 - 공격 중 여부 체크
 	bool IsAttacking() const;
 
@@ -135,5 +153,30 @@ protected:
 	// 헌호수정 - 플래시라이트 토글 액션
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> FlashlightAction;
+
+	// 하상빈 추가 - 총기 입력 액션
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
+	TObjectPtr<UInputAction> GunFireAction;       // LMB
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
+	TObjectPtr<UInputAction> GunADSAction;        // RMB
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
+	TObjectPtr<UInputAction> GunReloadAction;     // R
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
+	TObjectPtr<UInputAction> GunToggleFireModeAction; // B
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
+	TObjectPtr<UInputAction> GunSlot1Action;      // 1 — 주무기
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
+	TObjectPtr<UInputAction> GunSlot2Action;      // 2 — 보조무기
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
+	TObjectPtr<UInputAction> GunSlot3Action;      // 3 — 근접무기
+	// 헌호수정 - 암살 액션
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> AssassinateAction;
 
 };

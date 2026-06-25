@@ -1,4 +1,4 @@
-#include "GA_Attack.h"
+﻿#include "GA_Attack.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "NakwonClone/Player/PlayerData/NCWeaponData.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
@@ -12,65 +12,81 @@ UGA_Attack::UGA_Attack()
 }
 
 void UGA_Attack::ActivateAbility(
-    const FGameplayAbilitySpecHandle Handle,
-    const FGameplayAbilityActorInfo* ActorInfo,
-    const FGameplayAbilityActivationInfo ActivationInfo,
-    const FGameplayEventData* TriggerEventData)
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo,
+	const FGameplayEventData* TriggerEventData)
 {
-    Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-    // CombatComponent 확인
-    UNCCombatComponent* Combat = GetCombatComponent();
-    if (!Combat || !Combat->CanAttack())
-    {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
-    }
+	UNCCombatComponent* Combat = GetCombatComponent();
+	if (!Combat || !Combat->CanAttack())
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
 
-    // 무기 데이터 확인
-    if (!Combat->GetEquippedWeaponData())
-    {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
-    }
+	if (!Combat->GetEquippedWeaponData())
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
 
-    // 공격 태그 추가
-    UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-    if (ASC)
-        ASC->AddLooseGameplayTag(NCWeapon::Action_Attacking);
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (ASC)
+	{
+		ASC->AddLooseGameplayTag(NCWeapon::Action_Attacking);
+	}
 
-    // 첫 번째 콤보 공격 시작 (CombatComponent가 섹션 관리)
-    Combat->MeleeAttack();
+	if (Combat->IsGunWeapon())
+	{
+		Combat->GunAttack();
+	}
+	else
+	{
+		Combat->MeleeAttack();
+	}
 
-    // 몽타주 종료 델리게이트 등록 (몽타주가 끝나면 어빌리티 종료)
-    UAnimMontage* Montage = Combat->GetCurrentComboMontage();
-    if (Montage)
-    {
-        UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
-        if (AnimInstance)
-        {
-            FOnMontageEnded EndDelegate;
-            EndDelegate.BindUObject(this, &UGA_Attack::OnMontageEnded);
-            AnimInstance->Montage_SetEndDelegate(EndDelegate, Montage);
-        }
-    }
+	UAnimMontage* Montage = Combat->GetLastPlayedAttackMontage();
 
-    // 내구도 감소
-    Combat->ReduceDurability(1.f);
+	if (!Montage)
+	{
+		if (ASC)
+		{
+			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Attacking);
+		}
+
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
+	if (AnimInstance)
+	{
+		FOnMontageEnded EndDelegate;
+		EndDelegate.BindUObject(this, &UGA_Attack::OnMontageEnded);
+		AnimInstance->Montage_SetEndDelegate(EndDelegate, Montage);
+	}
+
+	Combat->ReduceDurability(1.f);
 }
 
 void UGA_Attack::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-    // 공격 태그 제거
-    UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-    if (ASC)
-        ASC->RemoveLooseGameplayTag(NCWeapon::Action_Attacking);
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (ASC)
+	{
+		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Attacking);
+		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Firing);
+	}
 
-    EndAbility(
-        GetCurrentAbilitySpecHandle(),
-        GetCurrentActorInfo(),
-        GetCurrentActivationInfo(),
-        true, bInterrupted);
+	EndAbility(
+		GetCurrentAbilitySpecHandle(),
+		GetCurrentActorInfo(),
+		GetCurrentActivationInfo(),
+		true,
+		bInterrupted
+	);
 }
 
 void UGA_Attack::EndAbility(
