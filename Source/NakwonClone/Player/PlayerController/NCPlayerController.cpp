@@ -126,6 +126,9 @@ void ANCPlayerController::SetupInputComponent()
             EIC->BindAction(GunSlot2Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectSecondary);
         if (GunSlot3Action)
             EIC->BindAction(GunSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectMelee);
+        // 헌호수정 - 암살 Q키 바인딩
+        if (AssassinateAction)
+            EIC->BindAction(AssassinateAction, ETriggerEvent::Started, this, &ANCPlayerController::Assassinate);
     }
 }
 
@@ -477,6 +480,13 @@ void ANCPlayerController::GunSelectMelee()
 {
     if (IsMenuBlockingInput()) return;
     if (UNCGunComponent* NCGC = GetGunComp()) NCGC->SelectSlot(ENCGunSlot::None);
+void ANCPlayerController::Assassinate() //헌호수정 - 암살
+{
+    if (IsMenuBlockingInput()) return;
+    if (IsAttacking()) return;
+
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        PC->TryAssassinate();
 }
 
 void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)

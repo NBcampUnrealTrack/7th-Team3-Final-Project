@@ -14,8 +14,9 @@ class UAbilitySystemComponent;
 class UVGMonsterAttributeSet;
 class UAnimMontage;
 class UCapsuleComponent;
-class USoundBase;    
+class USoundBase;
 class USoundAttenuation;
+class UNiagaraSystem;
 
 struct FOnAttributeChangeData;
 
@@ -26,114 +27,138 @@ class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbili
 
 public:
 	AVGMonsterCharacterBase();
-	
+
 protected:
 	virtual void BeginPlay() override;
-	
+
 	// AI 컨트롤러 참조 (읽기 전용, 블랙보드 직접 접근 금지)
 	UPROPERTY()
 	AVGMonsterAIControllerBase* AIController;
-	
+
 #pragma region ASC
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
+
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-	
+
 	UPROPERTY(VisibleAnywhere, Category = "GAS")
 	TObjectPtr<UVGMonsterAttributeSet> MonsterAttributeSet;
 #pragma endregion
-	
+
 #pragma region 애니메이션
 public:
 	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
-	UAnimMontage* GetRandomMoveMontage()   { return GetRandomMontage(AnimMove); }
-	UAnimMontage* GetRandomStopMontage()   { return GetRandomMontage(AnimStop); }
-	UAnimMontage* GetRandomChaseMontage()  { return GetRandomMontage(AnimChase); }
+	UAnimMontage* GetRandomMoveMontage() { return GetRandomMontage(AnimMove); }
+	UAnimMontage* GetRandomStopMontage() { return GetRandomMontage(AnimStop); }
+	UAnimMontage* GetRandomChaseMontage() { return GetRandomMontage(AnimChase); }
 	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
-	UAnimMontage* GetRandomHitMontage()    { return GetRandomMontage(AnimHit); }
-	UAnimMontage* GetRandomDeadMontage()   { return GetRandomMontage(AnimDead); }
-	
+	UAnimMontage* GetRandomHitMontage() { return GetRandomMontage(AnimHit); }
+	UAnimMontage* GetRandomDeadMontage() { return GetRandomMontage(AnimDead); }
+
 	UAnimMontage* GetSelectedMoveMontage() { return SelectedMoveMontage; }
 	UAnimMontage* GetSelectedChaseMontage() { return SelectedChaseMontage; }
 	UAnimMontage* GetSelectedStopMontage() { return SelectedStopMontage; }
 	UAnimMontage* GetSelectedDeadMontage() { return SelectedDeadMontage; }
-	
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimMove;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimStop;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimChase;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimAttack;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimHit;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimDead;
-	
+
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> SelectedMoveMontage;
-	
+
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> SelectedChaseMontage;
-	
+
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> SelectedStopMontage;
-	
+
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> SelectedDeadMontage;
-	
+
 public:
 	int32 GetSelectedMoveLevel() const { return SelectedMoveLevel; }
 	int32 GetSelectedChaseLevel() const { return SelectedChaseLevel; }
-	
+
 protected:
 	UPROPERTY()
 	int32 SelectedMoveLevel;
-	
+
 	UPROPERTY()
 	int32 SelectedChaseLevel;
 #pragma endregion
-	
+
 #pragma region 피격 처리
 public:
 	UFUNCTION()
-	void HandleHit(EVGHitBodyPart BodyPart);
+	void HandleHit(const FVGHitData& HitData);
+
+	// 부위별 피격 몽타주(에디터에서 머리 / 상체 / 하체별로 채움.비면 AnimHit로 폴백)
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TMap<EVGHitBodyPart, FVGHitMontageList> HitMontagesByPart;
+
+	// 피격 후 몽타주 재생까지 딜레이 (0 = 즉시)
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	float HitReactDelay = 0.f;
+
+	// 연속 피격 시 이전 몽타주 블렌드아웃 시간
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	float HitReactBlendOutTime = 0.1f;
+
+protected:
+	UAnimMontage* GetRandomHitMontageByPart(EVGHitBodyPart BodyPart);
+	void PlayHitReactMontage(EVGHitBodyPart BodyPart);
+	void OnHitReactDelayElapsed();
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentHitMontage;
+
+	EVGHitBodyPart PendingHitBodyPart = EVGHitBodyPart::None;
+
+	FTimerHandle HitReactTimerHandle;
 #pragma endregion
-	
+
 #pragma region 사망 처리
 public:
 	UFUNCTION()
 	void HandleDead();
-	
+
 	void OnStartRagdoll();
 
 #pragma endregion
-	
+
 private:
 	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
-	
+
 #pragma region 충돌 감지
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Monster|Detection")
 	TObjectPtr<UCapsuleComponent> DetectionCapsule;
-	
+
 	UFUNCTION()
 	virtual void OnDetectionOverlap(
-		UPrimitiveComponent* OverlappedComponent, 
+		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, 
+		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex,
-		bool bFromSweep, 
+		bool bFromSweep,
 		const FHitResult& SweepResult);
 #pragma endregion
 
@@ -143,18 +168,28 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_PlaySound(USoundBase* Sound);
 
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TMap<EVGHitBodyPart, TObjectPtr<USoundBase>> HitSoundsByPart;
+
+	// 부위별 피격 VFX (타격 위치에 스폰)
+	UPROPERTY(EditAnywhere, Category = "Monster|VFX")
+	TMap<EVGHitBodyPart, TObjectPtr<UNiagaraSystem>> HitVFXByPart;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SpawnHitVFX(UNiagaraSystem* VFX, FVector Location);
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
-	TObjectPtr<USoundBase> HitSound;      
+	TObjectPtr<USoundBase> HitSound;
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
-	TObjectPtr<USoundBase> DeathSound;  
+	TObjectPtr<USoundBase> DeathSound;
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
-	TObjectPtr<USoundBase> DetectSound; 
+	TObjectPtr<USoundBase> DetectSound;
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
-	TObjectPtr<USoundBase> HowlSound; 
+	TObjectPtr<USoundBase> HowlSound;
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
 	TObjectPtr<USoundAttenuation> SoundAttenuation;
@@ -164,6 +199,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
 	float HowlIntervalMax = 14.f;
+
+	USoundBase* GetHitSoundByPart(EVGHitBodyPart BodyPart) const;
+	UNiagaraSystem* GetHitVFXByPart(EVGHitBodyPart BodyPart) const;
 
 	FTimerHandle HowlTimerHandle;
 

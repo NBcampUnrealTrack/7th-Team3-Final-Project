@@ -92,6 +92,8 @@ private:
 	void GunSelectPrimary();
 	void GunSelectSecondary();
 	void GunSelectMelee();
+	// 헌호수정 - 암살
+	void Assassinate();
 
 	// 헌호수정 - 공격 중 여부 체크
 	bool IsAttacking() const;
@@ -170,5 +172,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
 	TObjectPtr<UInputAction> GunSlot3Action;      // 3 — 근접무기
+	// 헌호수정 - 암살 액션
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> AssassinateAction;
 
 };

@@ -7,6 +7,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class ACameraActor;
 class UNCPlayerInventoryComponent;
 class UNCLocomotionComponent;
 class UNCCombatComponent;
@@ -73,6 +74,12 @@ public:
 
 	void ToggleFlashlight();
 
+	// 헌호수정 - 암살 기능
+	void TryAssassinate();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Assassination")
+	float AssassinationRange = 200.f;
+
 	UFUNCTION(BlueprintCallable, Category = "Animation|HitReact")
 	void HandleHitReact(AActor* Attacker);
 
@@ -92,6 +99,18 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Server_ToggleFlashlight();
+
+	// 헌호수정 - 암살 RPC
+	UFUNCTION(Server, Reliable)
+	void Server_TryAssassinate();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartAssassination(AVGMonsterCharacterBase* Target);
+
+	AVGMonsterCharacterBase* FindNearestAssassinationTarget() const;
+	void StartAssassinationSlowMo();
+	void StartAssassinationCamera(AVGMonsterCharacterBase* Target);
+	void FinishAssassination();
 
 	UFUNCTION()
 	void OnRep_bFlashlightOn();
@@ -159,6 +178,13 @@ private:
 
 	bool bCameraShaking = false;
 	FTimerHandle ShakeTimerHandle;
+
+	// 헌호수정 - 암살
+	FTimerHandle AssassinationTimerHandle;
+	FTimerHandle AssassinationCameraTimerHandle;
+
+	UPROPERTY()
+	TObjectPtr<class ACameraActor> AssassinationCamera;
 
 	float LastHitReactTime = -999.f;
 };

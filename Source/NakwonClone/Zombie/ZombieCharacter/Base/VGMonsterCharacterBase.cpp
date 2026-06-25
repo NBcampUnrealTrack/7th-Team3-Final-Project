@@ -12,6 +12,9 @@
 #include "Common/NCGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Animation/AnimInstance.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "TimerManager.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
@@ -137,15 +140,31 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 	SkelMesh->bPauseAnims = true;
 }
 
-void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
+void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 {
 	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
 
-	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit 호출됨: %s (부위=%d)"),
-		*GetName(), static_cast<int32>(BodyPart));
+	const EVGHitBodyPart BodyPart = HitData.BodyPart;
 
-	Multicast_PlaySound(HitSound);
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit: 부위=%d"),
+		static_cast<int32>(BodyPart));
 
+	// 사운드 (부위별, 없으면 기본 HitSound)  //H
+	if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
+	{
+		Multicast_PlaySound(Sound);
+	}
+
+	// VFX (부위별, 타격 위치에)
+	if (UNiagaraSystem* VFX = GetHitVFXByPart(BodyPart))
+	{
+		const FVector Loc = HitData.HitLocation.IsNearlyZero()
+			? GetMesh()->GetComponentLocation()
+			: HitData.HitLocation;
+		Multicast_SpawnHitVFX(VFX, Loc);
+	}
+
+	// AI '맞는 중' 신호
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
@@ -154,12 +173,77 @@ void AVGMonsterCharacterBase::HandleHit(EVGHitBodyPart BodyPart)
 		}
 	}
 
-	// TODO(Part 3): BodyPart 별 피격 몽타주 재생 + 즉시/딜레이 + 연속피격 중단
-	// PlayHitReactMontage(BodyPart);
-
+	// 부위별 피격 몽타주 (무조건 끊고 새로)
+	PendingHitBodyPart = BodyPart;
+	GetWorldTimerManager().ClearTimer(HitReactTimerHandle);
+	if (HitReactDelay <= 0.f)
+	{
+		PlayHitReactMontage(BodyPart);
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(
+			HitReactTimerHandle, this,
+			&AVGMonsterCharacterBase::OnHitReactDelayElapsed, HitReactDelay, false);
+	}
 	/*// 뒤로 밀려남
 	FVector PushBack = -GetActorForwardVector();
 	LaunchCharacter(PushBack * 300.f, true, false);*/
+}
+
+UAnimMontage* AVGMonsterCharacterBase::GetRandomHitMontageByPart(EVGHitBodyPart BodyPart)
+{
+	// 1순위: 해당 부위 몽타주
+	if (const FVGHitMontageList* List = HitMontagesByPart.Find(BodyPart))
+	{
+		if (List->Montages.Num() > 0)
+		{
+			return GetRandomMontage(List->Montages);
+		}
+	}
+	// 2순위: None 부위에 넣어둔 공용 몽타주
+	if (const FVGHitMontageList* NoneList = HitMontagesByPart.Find(EVGHitBodyPart::None))
+	{
+		if (NoneList->Montages.Num() > 0)
+		{
+			return GetRandomMontage(NoneList->Montages);
+		}
+	}
+	// 3순위 폴백: 기존 AnimHit 배열 (에셋 아직 안 꽂았을 때)
+	return GetRandomHitMontage();
+}
+
+void AVGMonsterCharacterBase::PlayHitReactMontage(EVGHitBodyPart BodyPart)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	UAnimInstance* Anim = MeshComp ? MeshComp->GetAnimInstance() : nullptr;
+	if (!Anim) return;
+
+	UAnimMontage* Montage = GetRandomHitMontageByPart(BodyPart);
+	if (!Montage)
+	{
+		UE_LOG(LogMonster, Warning,
+			TEXT("[MonsterBase] 부위(%d) 피격 몽타주 없음 — 에셋 미설정"),
+			static_cast<int32>(BodyPart));
+		return;
+	}
+
+	// 무조건 끊고 새로: 재생 중이던 피격 몽타주를 짧게 블렌드아웃
+	if (CurrentHitMontage && Anim->Montage_IsPlaying(CurrentHitMontage))
+	{
+		Anim->Montage_Stop(HitReactBlendOutTime, CurrentHitMontage);
+	}
+
+	Anim->Montage_Play(Montage);
+	CurrentHitMontage = Montage;
+
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] 피격 몽타주 재생: 부위=%d"),
+		static_cast<int32>(BodyPart));
+}
+
+void AVGMonsterCharacterBase::OnHitReactDelayElapsed()
+{
+	PlayHitReactMontage(PendingHitBodyPart);
 }
 
 UAnimMontage* AVGMonsterCharacterBase::GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages)
@@ -218,4 +302,29 @@ void AVGMonsterCharacterBase::HandleHowl()
 	}
 
 	StartHowlTimer();
+}
+
+USoundBase* AVGMonsterCharacterBase::GetHitSoundByPart(EVGHitBodyPart BodyPart) const
+{
+	if (const TObjectPtr<USoundBase>* Found = HitSoundsByPart.Find(BodyPart))
+	{
+		if (*Found) return *Found;
+	}
+	return HitSound;
+}
+
+UNiagaraSystem* AVGMonsterCharacterBase::GetHitVFXByPart(EVGHitBodyPart BodyPart) const
+{
+	if (const TObjectPtr<UNiagaraSystem>* Found = HitVFXByPart.Find(BodyPart))
+	{
+		return *Found;
+	}
+	return nullptr;
+}
+
+void AVGMonsterCharacterBase::Multicast_SpawnHitVFX_Implementation(
+	UNiagaraSystem* VFX, FVector Location)
+{
+	if (!VFX) return;
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, VFX, Location);
 }
