@@ -149,7 +149,7 @@ namespace NCGunEffect
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_Tracer);
 	
 	// 힛 이펙트
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_Impact);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gun_Surface);
 }
 
 namespace NCMeleeEffect
