@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "VGPlayerAttributeSet.h"
 #include "GameplayEffectExtension.h"
@@ -78,14 +78,25 @@ void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 			{
 				if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
 				{
-					FGameplayCueParameters CueParams;
-					CueParams.Location = Player->GetActorLocation();
+					// 맞은 위치: 좀비 공격이 넘겨준 HitResult 사용
+					// (본 이름 있으면 그 본 위치 → 없으면 임팩트 지점 → 둘 다 없으면 액터 위치)
+					FVector BloodLocation = Player->GetActorLocation();
+					if (const FHitResult* Hit = Data.EffectSpec.GetContext().GetHitResult())
+					{
+						if (Hit->BoneName != NAME_None && Player->GetMesh())
+							BloodLocation = Player->GetMesh()->GetSocketLocation(Hit->BoneName);
+						else
+							BloodLocation = Hit->ImpactPoint;
+					}
 
-					// 공격자 → 플레이어 방향 = 피가 튈 방향
+					FGameplayCueParameters CueParams;
+					CueParams.Location = BloodLocation;
+
+					// 공격자 → 맞은 위치 방향 = 피가 튈 방향
 					if (Attacker)
 					{
 						CueParams.Normal =
-							(Player->GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal();
+							(BloodLocation - Attacker->GetActorLocation()).GetSafeNormal();
 					}
 
 					ASC->ExecuteGameplayCue(
@@ -95,7 +106,7 @@ void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 			}
 		}
 	}
-	
+
 	if (Data.EvaluatedData.Attribute == GetCreditsAttribute())
 	{
 		UE_LOG(LogTemp, Log, TEXT("[Credits] 현재 크레딧: %.0f"), GetCredits());
