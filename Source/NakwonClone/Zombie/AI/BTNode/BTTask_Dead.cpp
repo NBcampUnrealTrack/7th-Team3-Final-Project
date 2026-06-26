@@ -57,6 +57,7 @@ void UBTTask_Dead::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* Node
 void UBTTask_Dead::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (Montage != CurrentMontage) return;
+	if (bInterrupted) return;
 	if (!CachedOwnerComp) return;
 	
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(CachedOwnerComp->GetAIOwner()->GetPawn());

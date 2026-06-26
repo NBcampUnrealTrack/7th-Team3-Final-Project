@@ -47,7 +47,7 @@ void UBTTask_Hit::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 			AnimInstance->OnMontageEnded.RemoveDynamic(this, &UBTTask_Hit::OnMontageEnded);
 		}
 	}
-
+	
 	CachedOwnerComp = nullptr;
 }
 

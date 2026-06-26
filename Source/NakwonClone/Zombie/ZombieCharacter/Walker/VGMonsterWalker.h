@@ -38,17 +38,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimWakeUp;
 #pragma endregion
-	
-	
-#pragma region 좀비 메시
-	UPROPERTY(EditDefaultsOnly, Category = "Mesh")
-	TArray<USkeletalMesh*> RandomMesh;
-#pragma endregion
 
 #pragma region 공격 트레이스
-public:
-	void PerformAttackTrace();
 
+public:
+	const TArray<FName>& GetAttackSocketNames() const { return AttackSocketNames; }
+	float GetAttackTraceDistance() const { return AttackTraceDistance; }
+	
 private:
 	// 소켓 이름 (스켈레톤 에디터에서 추가한 이름과 동일하게)
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
@@ -63,7 +59,8 @@ private:
 	
 	// 트레이스 거리
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
-	float AttackTraceDistance = 100.f;
+	float AttackTraceDistance = 10.f;
+	
 #pragma endregion
 	
 #pragma region GAS GE 슬롯

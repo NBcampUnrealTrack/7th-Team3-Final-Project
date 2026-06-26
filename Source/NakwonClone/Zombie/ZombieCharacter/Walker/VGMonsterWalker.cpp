@@ -10,8 +10,6 @@
 #include "NakwonClone\GAS\AttributeSet\VGMonsterAttributeSet.h"
 #include "Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 
-#include "PhysicsEngine/PhysicsAsset.h"
-
 AVGMonsterWalker::AVGMonsterWalker()
 {
 	if (GetCharacterMovement())
@@ -42,57 +40,6 @@ void AVGMonsterWalker::BeginPlay()
 		GetMesh()->SetSkeletalMesh(RandomMesh[RandIndex]);
 		/*UE_LOG(LogMonster, Warning, TEXT("[Mesh] Physics Asset: %s"), 
 		GetMesh()->GetPhysicsAsset() ? *GetMesh()->GetPhysicsAsset()->GetName() : TEXT("None"));*/
-	}
-}
-
-void AVGMonsterWalker::PerformAttackTrace()
-{
-	USkeletalMeshComponent* SkeletalMesh = GetMesh();
-	if (!SkeletalMesh) return;
-	
-	for (const FName& SocketName : AttackSocketNames)
-	{
-		FVector SocketLocation = SkeletalMesh->GetSocketLocation(SocketName);
-		FVector TraceEnd = SocketLocation + GetActorForwardVector() * AttackTraceDistance;
-		
-		FHitResult Hit;
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(this);
-	
-		bool bHit = GetWorld()->LineTraceSingleByChannel(
-			Hit,
-			SocketLocation,
-			TraceEnd,
-			ECC_Pawn,
-			Params);
-		
-		DrawDebugLine(GetWorld(), SocketLocation, TraceEnd, bHit ? FColor::Red : FColor::Green, false, 1.f);
-		DrawDebugSphere(GetWorld(), SocketLocation, 5.f, 8, FColor::Yellow, false, 1.f);
-		
-		if (bHit)
-		{
-			UAbilitySystemComponent* TargetASC = 
-				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Hit.GetActor());
-			UAbilitySystemComponent* MonsterASC = 
-				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(this);
-		
-			if (TargetASC && !TargetASC->HasMatchingGameplayTag(NCCharacter::Player)) return;
-			
-			if (TargetASC && MonsterASC && AttackEffectClass)
-			{
-				FGameplayEffectContextHandle EffectContext = MonsterASC->MakeEffectContext();
-				EffectContext.AddSourceObject(this);
-				EffectContext.AddHitResult(Hit);
-				FGameplayEffectSpecHandle  SpecHandle = MonsterASC->MakeOutgoingSpec(
-					AttackEffectClass, 2.f, EffectContext);
-			
-				if (SpecHandle.IsValid())
-				{
-					MonsterASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-				}
-			}
-			return;
-		}
 	}
 }
 

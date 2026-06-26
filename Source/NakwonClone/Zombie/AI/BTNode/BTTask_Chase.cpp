@@ -25,7 +25,6 @@ EBTNodeResult::Type UBTTask_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp
 	{
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 		ASC->ApplyGameplayEffectToSelf(Walker->ChaseSpeedEffectClass.GetDefaultObject(), Walker->GetSelectedChaseLevel(), Context);
-		
 	}
 	
 	return EBTNodeResult::Succeeded;
