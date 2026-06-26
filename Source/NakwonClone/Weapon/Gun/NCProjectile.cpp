@@ -16,11 +16,12 @@ ANCProjectile::ANCProjectile()
     CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
     CollisionComp->InitSphereRadius(5.f);
     CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    CollisionComp->SetCollisionObjectType(ECC_WorldDynamic);
+    CollisionComp->SetCollisionObjectType(ECC_GameTraceChannel1);  // Projectile 채널
     CollisionComp->SetCollisionResponseToAllChannels(ECR_Ignore);
     CollisionComp->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
     CollisionComp->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
     CollisionComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+    CollisionComp->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore); // 발사체끼리 무시
     CollisionComp->OnComponentHit.AddDynamic(this, &ANCProjectile::OnHit);
     RootComponent = CollisionComp;
 
