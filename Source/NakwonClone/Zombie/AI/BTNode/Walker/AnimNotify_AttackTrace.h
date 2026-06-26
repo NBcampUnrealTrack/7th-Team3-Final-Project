@@ -29,6 +29,7 @@ public:
 
 private:
 	// 한 번의 공격에서 이미 맞은 액터 추적 (중복 히트 방지)
+	UPROPERTY()
 	TSet<AActor*> HitActors;
 
 	void DoHitCheck(USkeletalMeshComponent* MeshComp);
