@@ -35,6 +35,10 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Projectile|Effect|Niagara")
     TObjectPtr<UNiagaraSystem> ImpactSurfaceEffect;
 
+    // 총알 궤적 — 발사체에 붙어서 날아가는 동안 따라오는 트레일
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile|Effect|Niagara")
+    TObjectPtr<UNiagaraSystem> TracerEffect;
+
     // 파티클 이펙트 (나이아가라 미설정 시)
     UPROPERTY(BlueprintReadWrite, Category = "Projectile|Effect|Particle")
     TObjectPtr<UParticleSystem> ImpactFleshParticle;

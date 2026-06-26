@@ -86,6 +86,9 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
     TSoftObjectPtr<UNiagaraSystem> ShellCasingEffect;       // 탄피 배출
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    TSoftObjectPtr<UNiagaraSystem> TracerEffect;            // 총알 궤적(트레이서)
+
     // 이펙트 (파티클 - 나이아가라 미설정 시)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParticleEffect")
     TSoftObjectPtr<UParticleSystem> MuzzleFlashParticle;

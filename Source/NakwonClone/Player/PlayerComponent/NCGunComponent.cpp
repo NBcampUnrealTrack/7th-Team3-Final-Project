@@ -346,6 +346,7 @@ void UNCGunComponent::FireOnce()
 			NCProj->ProjectileSpeed      = Data->ProjectileSpeed;
 			NCProj->ImpactFleshEffect    = Data->ImpactFleshEffect.Get();
 			NCProj->ImpactSurfaceEffect  = Data->ImpactSurfaceEffect.Get();
+			NCProj->TracerEffect         = Data->TracerEffect.LoadSynchronous();
 			NCProj->ImpactFleshParticle  = Data->ImpactFleshParticle.Get();
 			NCProj->ImpactSurfaceParticle = Data->ImpactSurfaceParticle.Get();
 		}
