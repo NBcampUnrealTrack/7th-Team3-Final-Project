@@ -150,6 +150,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Monster|Death")
 	void OnStartDissolve();
+	
+private:
+	bool bIsDead = false;
 
 #pragma endregion
 
