@@ -48,13 +48,13 @@ void AVGMonsterCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] BeginPlay 호출됨: %s"), *GetName());
+	// UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] BeginPlay 호출됨: %s"), *GetName());
 
 	AIController = Cast<AVGMonsterAIControllerBase>(GetController());
 
 	if (!AIController)
 	{
-		UE_LOG(LogMonster, Error, TEXT("[MonsterBase] AIController 캐스팅 실패: %s"), *GetName());
+		// UE_LOG(LogMonster, Error, TEXT("[MonsterBase] AIController 캐스팅 실패: %s"), *GetName());
 	}
 
 	if (AbilitySystemComponent)
@@ -98,9 +98,16 @@ void AVGMonsterCharacterBase::BeginPlay()
 void AVGMonsterCharacterBase::HandleDead()
 {
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleDead 호출됨: %s"), *GetName());
+	
+	if (bIsDead) return;
+	bIsDead = true;
+	
 	//H
 	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
 	Multicast_PlaySound(DeathSound);
+	
+	// 레그돌
+	OnStartRagdoll();
 
 	OnStartDissolve();
 
@@ -110,6 +117,8 @@ void AVGMonsterCharacterBase::HandleDead()
 		{
 			Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsDeadKey, true);
 		}
+		AIController->StopMovement();
+		AIController->UnPossess();
 	}
 }
 
@@ -120,7 +129,7 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	SkelMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	//SkelMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->Deactivate();
@@ -129,8 +138,10 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 	SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
 	SkelMesh->SetAllBodiesSimulatePhysics(true);
 	SkelMesh->SetPhysicsBlendWeight(1.f);
+	SkelMesh->BodyInstance.SetLinearVelocity(FVector::ZeroVector, false);
+	SkelMesh->BodyInstance.SetAngularVelocityInRadians(FVector::ZeroVector, false);
 
-	for (FBodyInstance* Body : SkelMesh->Bodies)
+	/*for (FBodyInstance* Body : SkelMesh->Bodies)
 	{
 		if (Body)
 		{
@@ -138,8 +149,7 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 			Body->SetLinearVelocity(FVector::ZeroVector, false);
 			Body->SetAngularVelocityInRadians(FVector::ZeroVector, false);
 		}
-	}
-	SkelMesh->bPauseAnims = true;
+	}*/
 }
 
 void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)

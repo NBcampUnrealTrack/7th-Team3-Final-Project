@@ -40,9 +40,9 @@ AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
 	
 	// 시각 설정
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-	SightConfig->SightRadius = 1000.f;						 // 시야 반경
-	SightConfig->LoseSightRadius = 1200.f;					 // 시야 해제 반경
-	SightConfig->PeripheralVisionAngleDegrees = 60.f;		 // 시야각 (좌우 합산 120도)
+	SightConfig->SightRadius = 800.f;						 // 시야 반경
+	SightConfig->LoseSightRadius = 1100.f;					 // 시야 해제 반경
+	SightConfig->PeripheralVisionAngleDegrees = 70.f;		 // 시야각 (좌우 합산 120도)
 	SightConfig->SetMaxAge(5.f);							 // 감지 정보 유지 시간 (시각)
 	
 	// 적 | 중립 | 아군 모두 감지 설정
