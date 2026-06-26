@@ -12,6 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameplayEffectTypes.h"
 #include "GameFramework/Pawn.h"
+#include "Components/CapsuleComponent.h"
 
 void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
     float TotalDuration, const FAnimNotifyEventReference& EventReference)
@@ -132,8 +133,24 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
         UAbilitySystemComponent* TargetASC = Monster->GetAbilitySystemComponent();
         if (!TargetASC) continue;
 
+        // 헌호수정 - 좀비 스켈레탈 메시에 직접 LineTraceComponent로 BoneName 확보
+        FHitResult BoneHit;
+        FVector TraceStart = OwnerChar->GetActorLocation() + FVector(0, 0, 50.f);
+        FVector TraceEnd = Monster->GetActorLocation() + FVector(0, 0, 50.f);
+        FVector Direction = (TraceEnd - TraceStart).GetSafeNormal();
+        TraceEnd = TraceEnd + Direction * 100.f;
+
+        USkeletalMeshComponent* MonsterMesh = Monster->GetMesh();
+        if (MonsterMesh)
+        {
+            FCollisionResponseParams ResponseParams;
+            MonsterMesh->LineTraceComponent(BoneHit, TraceStart, TraceEnd, FCollisionQueryParams(NAME_None, true));
+        }
+
+        const FHitResult& ContextHit = BoneHit.BoneName.IsNone() ? Hit : BoneHit;
+
         FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
-        Context.AddHitResult(Hit); //헌호수정 - 부위별 데미지 배율을 위해 HitResult 전달
+        Context.AddHitResult(ContextHit); //헌호수정 - 부위별 데미지 배율을 위해 HitResult 전달
         FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(
             UGE_Damage::StaticClass(), 1.f, Context);
 
