@@ -150,6 +150,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Monster|Death")
 	void OnStartDissolve();
+	
+private:
+	bool bIsDead = false;
 
 #pragma endregion
 
@@ -216,5 +219,6 @@ protected:
 
 	void StartHowlTimer();
 	void HandleHowl();
+	// bool bIsDead = false;
 #pragma endregion
 };
