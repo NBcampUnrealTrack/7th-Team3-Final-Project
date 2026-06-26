@@ -97,6 +97,9 @@ void AVGMonsterCharacterBase::BeginPlay()
 // HandleDead()
 void AVGMonsterCharacterBase::HandleDead()
 {
+	if (bIsDead) return;   // 사망 처리도 한 번만
+	bIsDead = true;
+
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleDead 호출됨: %s"), *GetName());
 	//H
 	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
@@ -144,8 +147,8 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 
 void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 {
-	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
-
+	if (bIsDead || MonsterAttributeSet->GetHealth() <= 0.f) return;
+	
 	const EVGHitBodyPart BodyPart = HitData.BodyPart;
 
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit: 부위=%d"),
