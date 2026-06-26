@@ -35,6 +35,7 @@ ANCProjectile::ANCProjectile()
     MovementComp->MaxSpeed           = 10000.f;
     MovementComp->bRotationFollowsVelocity = true;
     MovementComp->bShouldBounce      = false;
+    MovementComp->bSweepCollision    = true;
 
     InitialLifeSpan = 3.f;
 }
