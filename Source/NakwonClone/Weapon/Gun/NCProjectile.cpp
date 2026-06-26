@@ -51,6 +51,15 @@ void ANCProjectile::BeginPlay()
     MovementComp->MaxSpeed     = ProjectileSpeed;
     if (ProjectileSpeed > 0.f)
         SetLifeSpan(MaxRange / ProjectileSpeed);
+
+    // 총알 궤적(트레이서) — 발사체에 붙여서 날아가는 동안 따라오게
+    if (TracerEffect)
+    {
+        UNiagaraFunctionLibrary::SpawnSystemAttached(
+            TracerEffect, CollisionComp, NAME_None,
+            FVector::ZeroVector, FRotator::ZeroRotator,
+            EAttachLocation::SnapToTarget, true);
+    }
 }
 
 void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
