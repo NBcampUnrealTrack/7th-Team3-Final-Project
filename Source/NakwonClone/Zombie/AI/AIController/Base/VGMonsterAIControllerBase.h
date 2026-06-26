@@ -35,6 +35,7 @@ public:
 	static const FName IsAwakeKey;
 	static const FName IsWanderingKey;
 	static const FName PatrolCountKey;
+	static const FName TargetActorLocationKey;
 #pragma endregion
 
 #pragma region Behavior Tree & Blackboard

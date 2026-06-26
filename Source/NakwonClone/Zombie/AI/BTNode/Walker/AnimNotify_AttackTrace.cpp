@@ -4,13 +4,29 @@
 #include "AnimNotify_AttackTrace.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 
-
-void UAnimNotify_AttackTrace::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UAnimNotify_AttackTrace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+	float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
-	if (!MeshComp) return;
-    
-	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(MeshComp->GetOwner());
-	if (!Walker) return;
-    
-	Walker->PerformAttackTrace();
+	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+	
+	HitActors.Empty();
+}
+
+void UAnimNotify_AttackTrace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+	float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
+{
+	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
+	
+	DoHitCheck(MeshComp);
+}
+
+void UAnimNotify_AttackTrace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+	const FAnimNotifyEventReference& EventReference)
+{
+	Super::NotifyEnd(MeshComp, Animation, EventReference);
+}
+
+void UAnimNotify_AttackTrace::DoHitCheck(USkeletalMeshComponent* MeshComp)
+{
+	
 }

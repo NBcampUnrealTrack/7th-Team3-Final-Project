@@ -103,6 +103,11 @@ protected:
 	int32 SelectedChaseLevel;
 #pragma endregion
 	
+#pragma region 좀비 메시
+	UPROPERTY(EditDefaultsOnly, Category = "Mesh")
+	TArray<USkeletalMesh*> RandomMesh;
+#pragma endregion
+	
 #pragma region 피격 처리
 public:
 	UFUNCTION()

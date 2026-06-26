@@ -17,15 +17,16 @@ DEFINE_LOG_CATEGORY(LogMonster);
 DEFINE_LOG_CATEGORY(LogAIPc);
 
 #pragma region 블랙보드 키 이름 정의
-const FName AVGMonsterAIControllerBase::PatrolLocationKey = "PatrolLocation";
-const FName AVGMonsterAIControllerBase::TargetActorKey    = "TargetActor";
-const FName AVGMonsterAIControllerBase::HeardLocationKey  = "HeardLocation";
-const FName AVGMonsterAIControllerBase::IsDeadKey         = "bIsDead";
-const FName AVGMonsterAIControllerBase::IsAttackKey       = "bIsAttack";
-const FName AVGMonsterAIControllerBase::IsHitKey          = "bIsHit";
-const FName AVGMonsterAIControllerBase::IsAwakeKey        = "bIsAwake";
-const FName AVGMonsterAIControllerBase::IsWanderingKey    = "bIsWandering";
-const FName AVGMonsterAIControllerBase::PatrolCountKey    = "PatrolCount";
+const FName AVGMonsterAIControllerBase::PatrolLocationKey	   = "PatrolLocation";
+const FName AVGMonsterAIControllerBase::TargetActorKey		   = "TargetActor";
+const FName AVGMonsterAIControllerBase::HeardLocationKey	   = "HeardLocation";
+const FName AVGMonsterAIControllerBase::IsDeadKey			   = "bIsDead";
+const FName AVGMonsterAIControllerBase::IsAttackKey			   = "bIsAttack";
+const FName AVGMonsterAIControllerBase::IsHitKey			   = "bIsHit";
+const FName AVGMonsterAIControllerBase::IsAwakeKey			   = "bIsAwake";
+const FName AVGMonsterAIControllerBase::IsWanderingKey		   = "bIsWandering";
+const FName AVGMonsterAIControllerBase::PatrolCountKey		   = "PatrolCount";
+const FName AVGMonsterAIControllerBase::TargetActorLocationKey = "TargetActorLocation";
 #pragma endregion
 
 AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
@@ -44,7 +45,7 @@ AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
 	SightConfig->PeripheralVisionAngleDegrees = 60.f;		 // 시야각 (좌우 합산 120도)
 	SightConfig->SetMaxAge(5.f);							 // 감지 정보 유지 시간 (시각)
 	
-	// 플레이어 태그를 가진 액터만 감지
+	// 적 | 중립 | 아군 모두 감지 설정
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
@@ -80,32 +81,31 @@ void AVGMonsterAIControllerBase::BeginPlay()
 			this,
 			&AVGMonsterAIControllerBase::OnPerceptionUpdated);
 
-		UE_LOG(LogMonster, Warning, TEXT("[AIController] Perception 콜백 바인딩 완료"));
+		// UE_LOG(LogMonster, Warning, TEXT("[AIController] Perception 콜백 바인딩 완료"));
 	}
 }
 
 void AVGMonsterAIControllerBase::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-	
 
 	if (BehaviorTree)
 	{
-		UE_LOG(LogMonster, Warning, TEXT("[AIController] BT 실행 시도"));
+		// UE_LOG(LogMonster, Warning, TEXT("[AIController] BT 실행 시도"));
 		UBlackboardComponent* BlackboardComp = Blackboard;
 		if (UseBlackboard(BehaviorTree->BlackboardAsset, BlackboardComp))
 		{
 			RunBehaviorTree(BehaviorTree);
-			UE_LOG(LogMonster, Warning, TEXT("[AIController] BT 실행 완료"));
+			// UE_LOG(LogMonster, Warning, TEXT("[AIController] BT 실행 완료"));
 		}
 		else
 		{
-			UE_LOG(LogMonster, Error, TEXT("[AIController] UseBlackboard 실패"));
+			// UE_LOG(LogMonster, Error, TEXT("[AIController] UseBlackboard 실패"));
 		}
 	}
 	else
 	{
-		UE_LOG(LogMonster, Error, TEXT("[AIController] BehaviorTree가 null"));
+		// UE_LOG(LogMonster, Error, TEXT("[AIController] BehaviorTree가 null"));
 	}
 }
 
@@ -127,14 +127,15 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 		if (Stimulus.WasSuccessfullySensed())
 		{
 			// 시각 감지 성공 → TargetActor 등록
-			UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지: %s"), *Actor->GetName());
+			// UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지: %s"), *Actor->GetName());
 			Blackboard->SetValueAsObject(TargetActorKey, Actor);
+			Blackboard->SetValueAsVector(TargetActorLocationKey, Actor->GetActorLocation());
 			Blackboard->ClearValue(HeardLocationKey);
 		}
 		else
 		{
 			// 시각 감지 해제 → TargetActor 초기화
-			UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지 해제: %s"), *Actor->GetName());
+			// UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지 해제: %s"), *Actor->GetName());
 			Blackboard->ClearValue(TargetActorKey);
 		}
 	}
