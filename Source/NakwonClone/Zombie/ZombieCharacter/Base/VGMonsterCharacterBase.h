@@ -216,5 +216,6 @@ protected:
 
 	void StartHowlTimer();
 	void HandleHowl();
+	bool bIsDead = false;
 #pragma endregion
 };
