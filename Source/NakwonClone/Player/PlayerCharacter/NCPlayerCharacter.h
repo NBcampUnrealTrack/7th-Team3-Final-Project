@@ -3,12 +3,13 @@
 #include "CoreMinimal.h"
 #include "NCBaseCharacter.h"
 #include "NakwonClone/GAS/Ability/GA_Attack.h"
+#include "Components/PointLightComponent.h"
 #include "NCPlayerCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
-class ACameraActor;
 class UNCPlayerInventoryComponent;
+class UNCAssassinationComponent;
 class UNCLocomotionComponent;
 class UNCCombatComponent;
 class UNCGunComponent;
@@ -89,9 +90,6 @@ public:
 	// 헌호수정 - 암살 기능
 	void TryAssassinate();
 
-	UPROPERTY(EditDefaultsOnly, Category = "Assassination")
-	float AssassinationRange = 200.f;
-
 	UFUNCTION(BlueprintCallable, Category = "Animation|HitReact")
 	void HandleHitReact(AActor* Attacker);
 
@@ -115,14 +113,6 @@ protected:
 	// 헌호수정 - 암살 RPC
 	UFUNCTION(Server, Reliable)
 	void Server_TryAssassinate();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_StartAssassination(AVGMonsterCharacterBase* Target);
-
-	AVGMonsterCharacterBase* FindNearestAssassinationTarget() const;
-	void StartAssassinationSlowMo();
-	void StartAssassinationCamera(AVGMonsterCharacterBase* Target);
-	void FinishAssassination();
 
 	UFUNCTION()
 	void OnRep_bFlashlightOn();
@@ -148,6 +138,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
 	TObjectPtr<UNCCombatComponent> CombatComponent;
 
+	// 헌호수정 - 암살 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Assassination")
+	TObjectPtr<UNCAssassinationComponent> AssassinationComponent;
+
 	// 하상빈 추가
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")
 	TObjectPtr<UNCGunComponent> GunComponent;
@@ -157,6 +151,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
 	TObjectPtr<USpotLightComponent> FlashlightLight;
+
+	// 헌호수정 - 플래시라이트 렌즈 발광 느낌용 Point Light
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
+	TObjectPtr<UPointLightComponent> FlashlightGlowLight;
 
 	UPROPERTY(ReplicatedUsing = OnRep_bFlashlightOn)
 	bool bFlashlightOn = false;
@@ -191,12 +189,6 @@ private:
 	bool bCameraShaking = false;
 	FTimerHandle ShakeTimerHandle;
 
-	// 헌호수정 - 암살
-	FTimerHandle AssassinationTimerHandle;
-	FTimerHandle AssassinationCameraTimerHandle;
-
-	UPROPERTY()
-	TObjectPtr<class ACameraActor> AssassinationCamera;
 
 	float LastHitReactTime = -999.f;
 };

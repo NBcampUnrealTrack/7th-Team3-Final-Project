@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/PlayerState.h"
@@ -18,10 +19,7 @@
 #include "Player/PlayerComponent/NCGunComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
-#include "Kismet/GameplayStatics.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
-#include "Camera/CameraActor.h"
-#include "Engine/OverlapResult.h"
+#include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
@@ -50,6 +48,7 @@ void ANCPlayerCharacter::InitComponents()
     InteractionComponent = CreateDefaultSubobject<UNCInteractionComponent>(TEXT("InteractionComponent"));
     LocomotionComponent = CreateDefaultSubobject<UNCLocomotionComponent>(TEXT("LocomotionComponent"));
     CombatComponent = CreateDefaultSubobject<UNCCombatComponent>(TEXT("CombatComponent"));
+    AssassinationComponent = CreateDefaultSubobject<UNCAssassinationComponent>(TEXT("AssassinationComponent")); //헌호수정
     GunComponent    = CreateDefaultSubobject<UNCGunComponent>(TEXT("GunComponent"));
 
     // 헌호수정 - 플래시라이트 컴포넌트 생성 및 소켓에 부착
@@ -59,6 +58,14 @@ void ANCPlayerCharacter::InitComponents()
     FlashlightLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashlightLight"));
     FlashlightLight->SetupAttachment(FlashlightMesh);
     FlashlightLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
+
+    // 헌호수정 - 렌즈 발광 느낌용 Point Light
+    FlashlightGlowLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("FlashlightGlowLight"));
+    FlashlightGlowLight->SetupAttachment(FlashlightMesh);
+    FlashlightGlowLight->SetIntensity(200.f);
+    FlashlightGlowLight->SetAttenuationRadius(50.f);
+    FlashlightGlowLight->SetLightColor(FLinearColor::White);
+    FlashlightGlowLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
 }
 
 void ANCPlayerCharacter::BeginPlay()
@@ -493,89 +500,7 @@ float ANCPlayerCharacter::GetFootstepVolumeMultiplier() const
     return 0.7f;
 }
 
-// 헌호수정 - 범위 내 가장 가까운 좀비 반환
-AVGMonsterCharacterBase* ANCPlayerCharacter::FindNearestAssassinationTarget() const
-{
-    TArray<FOverlapResult> Overlaps;
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);
-
-    GetWorld()->OverlapMultiByChannel(
-        Overlaps, GetActorLocation(), FQuat::Identity,
-        ECC_Pawn, FCollisionShape::MakeSphere(AssassinationRange), Params
-    );
-
-    AVGMonsterCharacterBase* Nearest = nullptr;
-    float NearestDist = MAX_FLT;
-
-    for (const FOverlapResult& Overlap : Overlaps)
-    {
-        AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(Overlap.GetActor());
-        if (!Monster) continue;
-
-        const float Dist = FVector::Dist(GetActorLocation(), Monster->GetActorLocation());
-        if (Dist < NearestDist)
-        {
-            NearestDist = Dist;
-            Nearest = Monster;
-        }
-    }
-
-    return Nearest;
-}
-
-// 헌호수정 - 슬로우모션 시작 + 공격 어빌리티 (서버 전용)
-void ANCPlayerCharacter::StartAssassinationSlowMo()
-{
-    UAbilitySystemComponent* MyASC = GetAbilitySystemComponent();
-    if (MyASC && AttackAbilityClass)
-        MyASC->TryActivateAbilityByClass(AttackAbilityClass);
-}
-
-// 헌호수정 - 액션 카메라 스폰 + 블렌드 (로컬 전용)
-void ANCPlayerCharacter::StartAssassinationCamera(AVGMonsterCharacterBase* Target)
-{
-    const FVector CamPos = Target->GetActorLocation()
-        + Target->GetActorRightVector() * 150.f
-        + FVector::UpVector * 80.f
-        + (-Target->GetActorForwardVector()) * 50.f;
-
-    const FRotator CamRot = (Target->GetActorLocation() - CamPos).Rotation();
-
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    AssassinationCamera = GetWorld()->SpawnActor<ACameraActor>(ACameraActor::StaticClass(), CamPos, CamRot, SpawnParams);
-
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
-        PC->SetViewTargetWithBlend(AssassinationCamera, 0.3f, EViewTargetBlendFunction::VTBlend_EaseInOut); //헌호수정
-}
-
-// 헌호수정 - 슬로우모션 해제 + 카메라 복귀 + 임시 카메라 제거
-void ANCPlayerCharacter::FinishAssassination()
-{
-    UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.f); //헌호수정
-
-    if (!IsLocallyControlled()) return;
-
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
-        PC->SetViewTargetWithBlend(this, 0.4f, EViewTargetBlendFunction::VTBlend_EaseInOut); //헌호수정
-
-    FTimerHandle DestroyTimer;
-    GetWorld()->GetTimerManager().SetTimer(
-        DestroyTimer,
-        [this]()
-        {
-            if (IsValid(AssassinationCamera))
-            {
-                AssassinationCamera->Destroy();
-                AssassinationCamera = nullptr;
-            }
-        },
-        0.5f, false
-    );
-}
-
-void ANCPlayerCharacter::TryAssassinate() //헌호수정 - 암살 진입점
+void ANCPlayerCharacter::TryAssassinate() //헌호수정 - 암살 컴포넌트에 위임
 {
     if (!HasAuthority())
     {
@@ -583,40 +508,13 @@ void ANCPlayerCharacter::TryAssassinate() //헌호수정 - 암살 진입점
         return;
     }
 
-    AVGMonsterCharacterBase* Target = FindNearestAssassinationTarget();
-    if (!Target) return;
-
-    Multicast_StartAssassination(Target);
-
-    AVGMonsterCharacterBase* TargetRef = Target;
-    GetWorld()->GetTimerManager().SetTimer(
-        AssassinationTimerHandle,
-        [TargetRef]() { if (IsValid(TargetRef)) TargetRef->HandleDead(); },
-        0.8f, false
-    );
+    if (AssassinationComponent)
+        AssassinationComponent->TryAssassinate();
 }
 
 void ANCPlayerCharacter::Server_TryAssassinate_Implementation()
 {
     TryAssassinate();
-}
-
-void ANCPlayerCharacter::Multicast_StartAssassination_Implementation(AVGMonsterCharacterBase* Target)
-{
-    UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.3f); //헌호수정
-
-    if (HasAuthority())
-        StartAssassinationSlowMo();
-
-    if (IsLocallyControlled() && Target)
-        StartAssassinationCamera(Target);
-
-    // TimeDilation 0.3 → 실제 1.5초 = 로컬 타이머 0.45초
-    GetWorld()->GetTimerManager().SetTimer(
-        AssassinationCameraTimerHandle,
-        [this]() { FinishAssassination(); },
-        1.5f * 0.3f, false
-    );
 }
 
 void ANCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -649,4 +547,8 @@ void ANCPlayerCharacter::ApplyFlashlightState()
 {
     if (FlashlightLight)
         FlashlightLight->SetVisibility(bFlashlightOn);
+
+    // 헌호수정 - Glow Light도 같이 토글
+    if (FlashlightGlowLight)
+        FlashlightGlowLight->SetVisibility(bFlashlightOn);
 }
