@@ -11,6 +11,7 @@
 #include "DrawDebugHelpers.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
+#include "Animation/AnimMontage.h"
 
 UNCGunComponent::UNCGunComponent()
 {
@@ -165,6 +166,9 @@ void UNCGunComponent::SelectSlot(ENCGunSlot Slot)
 	GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
 	RestoreFOV();
 
+	if (const FNCGunData* CurrentData = GetActiveGunData())
+		PlayGunMontage(CurrentData->UnequipMontage);
+
 	// 태그 정리 후 스왑
 	ActiveGunActions.Reset();
 	ActiveGunActions.AddTag(NCGun::Action_Swapping);
@@ -187,6 +191,7 @@ void UNCGunComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 		CurrentFireMode = Data->DefaultFireMode;
 		OnFireModeChanged.Broadcast(CurrentFireMode);
 		AttachGunMesh(Data);
+		PlayGunMontage(Data->EquipMontage);
 
 		const FNCGunSlotData& SlotData = GetActiveSlotData();
 		OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
@@ -265,6 +270,7 @@ void UNCGunComponent::FireOnce()
 	AActor* Owner = GetOwner();
 	if (!Owner) return;
 
+	// 기본 발사 방향: 카메라 전방 (조준 기준)
 	FVector  SpawnLocation = Owner->GetActorLocation();
 	FRotator SpawnRotation = Owner->GetActorRotation();
 
@@ -276,6 +282,15 @@ void UNCGunComponent::FireOnce()
 			SpawnRotation = Cam->GetComponentRotation();
 		}
 	}
+
+	// 머즐 소켓이 존재하면 발사 위치만 소켓으로 교체 (방향은 카메라 유지)
+	if (EquippedGunMeshComp && !Data->MuzzleSocketName.IsNone()
+		&& EquippedGunMeshComp->DoesSocketExist(Data->MuzzleSocketName))
+	{
+		SpawnLocation = EquippedGunMeshComp->GetSocketLocation(Data->MuzzleSocketName);
+	}
+
+	PlayGunMontage(Data->FireMontage);
 
 	// 발사음 재생
 	if (!Data->FireSound.IsNull())
@@ -353,6 +368,8 @@ void UNCGunComponent::Reload()
 	StopFire();
 	ActiveGunActions.AddTag(NCGun::Action_Reloading);
 
+	PlayGunMontage(Data->ReloadMontage);
+
 	// 재장전음 재생
 	if (!Data->ReloadSound.IsNull())
 		UGameplayStatics::PlaySoundAtLocation(this, Data->ReloadSound.LoadSynchronous(), GetOwner()->GetActorLocation());
@@ -387,12 +404,18 @@ void UNCGunComponent::StartADS()
 	if (!HasActiveGun() || IsSwapping()) return;
 	ActiveGunActions.AddTag(NCGun::Action_ADS);
 	ApplyADSFOV();
+
+	const FNCGunData* Data = GetActiveGunData();
+	if (Data) PlayGunMontage(Data->ADSInMontage);
 }
 
 void UNCGunComponent::StopADS()
 {
 	ActiveGunActions.RemoveTag(NCGun::Action_ADS);
 	RestoreFOV();
+
+	const FNCGunData* Data = GetActiveGunData();
+	if (Data) PlayGunMontage(Data->ADSOutMontage);
 }
 
 void UNCGunComponent::ApplyADSFOV()
@@ -455,6 +478,18 @@ const FNCGunData* UNCGunComponent::FindGunData(FName GunID) const
 {
 	if (!GunDataTable || GunID.IsNone()) return nullptr;
 	return GunDataTable->FindRow<FNCGunData>(GunID, TEXT("NCGunComponent"));
+}
+
+// ─────────────────────────────────────────────
+// 몽타주 재생
+
+void UNCGunComponent::PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& MontageSoft)
+{
+	if (MontageSoft.IsNull()) return;
+	ACharacter* Char = Cast<ACharacter>(GetOwner());
+	if (!Char) return;
+	if (UAnimMontage* Montage = MontageSoft.LoadSynchronous())
+		Char->PlayAnimMontage(Montage);
 }
 
 // ─────────────────────────────────────────────

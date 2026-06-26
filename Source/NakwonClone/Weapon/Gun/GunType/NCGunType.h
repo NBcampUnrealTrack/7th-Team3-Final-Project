@@ -125,6 +125,12 @@ struct FNCGunData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
     TSoftObjectPtr<UAnimMontage>  ADSOutMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  EquipMontage;    // 총기 꺼낼 때 (1,2번 키)
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  UnequipMontage;  // 총기 집어넣을 때 (H키,슬롯 전환)
 };
 
 USTRUCT(BlueprintType)
