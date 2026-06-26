@@ -9,6 +9,7 @@
 
 class UDataTable;
 class UCameraComponent;
+class UAnimMontage;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChanged, int32, CurrentAmmo, int32, ReserveAmmo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunEquipped, FName, GunID);
@@ -154,6 +155,9 @@ private:
 	void ApplyADSFOV();
 	void RestoreFOV();
 	UCameraComponent* FindCamera() const;
+
+	// 몽타주가 할당된 경우에만 재생, 없으면 스킵
+	void PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& MontageSoft);
 
 	// TODO: 찬우님이 스켈레톤에 총기 전용 소켓 추가하면 DT_GunData HandSocketName에 입력
 	void AttachGunMesh(const FNCGunData* Data);

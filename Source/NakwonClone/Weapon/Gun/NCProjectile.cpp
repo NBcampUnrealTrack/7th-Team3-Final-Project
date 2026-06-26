@@ -38,6 +38,9 @@ void ANCProjectile::BeginPlay()
 {
     Super::BeginPlay();
 
+    if (AActor* OwnerActor = GetOwner())
+        CollisionComp->IgnoreActorWhenMoving(OwnerActor, true);
+
     // ProjectileSpeed는 GunComponent가 SpawnActor 직후 설정
     MovementComp->InitialSpeed = ProjectileSpeed;
     MovementComp->MaxSpeed     = ProjectileSpeed;
