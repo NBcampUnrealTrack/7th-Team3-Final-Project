@@ -1,6 +1,5 @@
 #include "NCAssassinationComponent.h"
 #include "Camera/CameraActor.h"
-#include "Kismet/GameplayStatics.h"
 #include "AbilitySystemComponent.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/Character.h"
@@ -81,8 +80,6 @@ void UNCAssassinationComponent::StartCamera(AVGMonsterCharacterBase* Target)
 // 헌호수정 - 슬로우모션 해제 + 카메라 복귀 + 정리
 void UNCAssassinationComponent::Finish()
 {
-	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.f); //헌호수정
-
 	ACharacter* Owner = Cast<ACharacter>(GetOwner());
 	if (!Owner) return;
 
@@ -116,9 +113,6 @@ void UNCAssassinationComponent::TryAssassinate()
 	AVGMonsterCharacterBase* Target = FindNearestTarget();
 	if (!Target) return;
 
-	// 슬로우모션 시작
-	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.3f); //헌호수정
-
 	if (Owner->HasAuthority())
 		StartSlowMo();
 
@@ -133,10 +127,10 @@ void UNCAssassinationComponent::TryAssassinate()
 		0.8f, false
 	);
 
-	// 슬로우모션 해제 + 카메라 복귀 타이머
+	// 카메라 복귀 타이머
 	GetWorld()->GetTimerManager().SetTimer(
 		CameraTimerHandle,
 		[this]() { Finish(); },
-		1.5f * 0.3f, false
+		1.5f, false
 	);
 }
