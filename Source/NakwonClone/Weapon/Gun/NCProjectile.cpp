@@ -60,13 +60,12 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
     if (SourceASC && TargetASC)
     {
         FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
+        Context.AddHitResult(Hit);  // BoneName → 좀비 쪽 ClassifyBodyPart가 부위 배율 적용
         FGameplayEffectSpecHandle    Spec    = SourceASC->MakeOutgoingSpec(
             UGE_Damage::StaticClass(), 1.f, Context);
 
         if (Spec.IsValid())
         {
-            // TODO: 현준님에게 좀비 스켈레톤 본 이름(머리/팔/몸통/다리) 전달받으면
-            //       Hit.BoneName 기반 부위별 데미지 배율 로직 추가 예정
             Spec.Data->SetSetByCallerMagnitude(NCData::Damage, -Damage);
             SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
         }
