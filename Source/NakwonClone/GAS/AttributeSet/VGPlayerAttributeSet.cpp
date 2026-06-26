@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "VGPlayerAttributeSet.h"
 #include "GameplayEffectExtension.h"
@@ -67,12 +67,43 @@ void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		AActor* Attacker =
 			Cast<AActor>(Data.EffectSpec.GetContext().GetSourceObject());
 
+		const float Delta = Data.EvaluatedData.Magnitude;   // 음수면 데미지
+
 		if (Player)
 		{
 			Player->HandleHitReact(Attacker);
-		}
-		else
-		{
+
+			// 피 튀김 cue — 데미지일 때만(회복은 제외)
+			if (Delta < 0.f)
+			{
+				if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
+				{
+					// 맞은 위치: 좀비 공격이 넘겨준 HitResult 사용
+					// (본 이름 있으면 그 본 위치 → 없으면 임팩트 지점 → 둘 다 없으면 액터 위치)
+					FVector BloodLocation = Player->GetActorLocation();
+					if (const FHitResult* Hit = Data.EffectSpec.GetContext().GetHitResult())
+					{
+						if (Hit->BoneName != NAME_None && Player->GetMesh())
+							BloodLocation = Player->GetMesh()->GetSocketLocation(Hit->BoneName);
+						else
+							BloodLocation = Hit->ImpactPoint;
+					}
+
+					FGameplayCueParameters CueParams;
+					CueParams.Location = BloodLocation;
+
+					// 공격자 → 맞은 위치 방향 = 피가 튈 방향
+					if (Attacker)
+					{
+						CueParams.Normal =
+							(BloodLocation - Attacker->GetActorLocation()).GetSafeNormal();
+					}
+
+					ASC->ExecuteGameplayCue(
+						FGameplayTag::RequestGameplayTag("GameplayCue.Melee.Hit"),
+						CueParams);
+				}
+			}
 		}
 	}
 

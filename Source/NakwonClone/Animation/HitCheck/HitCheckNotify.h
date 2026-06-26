@@ -29,5 +29,8 @@ private:
     // 헌호수정 - 한 번의 공격에서 이미 맞은 액터 추적 (중복 히트 방지)
     TSet<AActor*> HitActors;
 
+    // 이번 스윙에서 월드(벽) 임팩트를 이미 냈는지 (스윙당 1회)
+    bool bImpactTriggeredThisSwing = false;
+
     void DoHitCheck(USkeletalMeshComponent* MeshComp);
 };

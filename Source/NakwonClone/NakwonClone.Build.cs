@@ -30,7 +30,9 @@ public class NakwonClone : ModuleRules
 			"GameplayTasks",
 			"GameplayTags",
             "AnimGraphRuntime",
-            "MoviePlayer"
+            "MoviePlayer",
+            "Niagara",
+            "PhysicsCore"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

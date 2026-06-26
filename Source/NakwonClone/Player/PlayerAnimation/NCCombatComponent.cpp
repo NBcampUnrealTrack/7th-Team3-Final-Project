@@ -73,6 +73,8 @@ void UNCCombatComponent::MeleeAttack()
 		return;
 	}
 
+	LastPlayedAttackMontage = Montage;
+
 	if (Anim->Montage_IsPlaying(Montage))
 	{
 		const FName CurrentSection = Anim->Montage_GetCurrentSection(Montage);
@@ -167,7 +169,6 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 			ASC->AddLooseGameplayTag(Data->WeightTag);
 			ASC->AddLooseGameplayTag(NCWeapon::State_Equipped);
 
-			// 헌호수정 - 콤보 섹션을 DataTable에서 가져옴 (없으면 Attack1 기본값)
 			FNCWeaponComboData ComboData;
 			ComboData.ComboMontage = Data->AttackMontage.LoadSynchronous();
 			ComboData.ComboSections = Data->AttackSections.Num() > 0
@@ -175,7 +176,6 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 				: TArray<FName>{ TEXT("Attack1") };
 			EquipWeaponCombo(ComboData);
 
-			// 무기 액터 스폰 후 손에 부착
 			if (!Data->WeaponActorClass.IsNull())
 			{
 				UClass* ActorClass = Data->WeaponActorClass.LoadSynchronous();
@@ -192,11 +192,14 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 					{
 						SpawnedWeaponActor->AttachToComponent(
 							OwnerCharacter->GetMesh(),
-							FAttachmentTransformRules::SnapToTargetIncludingScale, //헌호수정 - BP에서 설정한 Scale 유지
+							FAttachmentTransformRules::SnapToTargetIncludingScale,
 							Data->AttachSocketName);
 					}
 				}
 			}
+
+			// 장착 몽타주 재생
+			PlayEquipMontage();
 		}
 	}
 
@@ -217,6 +220,8 @@ void UNCCombatComponent::Internal_UnEquipWeapon()
 			// 헌호수정 - 파손 상태 태그도 제거 (다음 무기에 영향 방지)
 			if (EquippedWeapon.bIsBroken)
 				ASC->RemoveLooseGameplayTag(NCWeapon::State_Broken);
+			// 장착 모션 중 해제 시 Swapping 태그 잔류 방지
+			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Swapping);
 		}
 	}
 
@@ -297,4 +302,111 @@ bool UNCCombatComponent::CanAttack() const
 	}
 
 	return true;
+}
+
+bool UNCCombatComponent::IsGunWeapon() const
+{
+	const FNCWeaponData* Data = GetEquippedWeaponData();
+
+	if (!Data)
+	{
+		return false;
+	}
+
+	return !Data->FireMontage.IsNull();
+}
+
+void UNCCombatComponent::GunAttack()
+{
+	if (!CanAttack())
+	{
+		return;
+	}
+
+	FNCWeaponData* Data = GetEquippedWeaponData();
+
+	if (!Data || Data->FireMontage.IsNull())
+	{
+		return;
+	}
+
+	UAnimInstance* Anim = GetAnimInstance();
+
+	if (!Anim)
+	{
+		return;
+	}
+
+	UAnimMontage* Montage = Data->FireMontage.LoadSynchronous();
+
+	if (!Montage)
+	{
+		return;
+	}
+
+	LastPlayedAttackMontage = Montage;
+
+	if (ASC)
+	{
+		ASC->AddLooseGameplayTag(NCWeapon::Action_Firing);
+	}
+
+	Anim->Montage_Play(Montage);
+}
+
+void UNCCombatComponent::PlayReloadMontage()
+{
+	FNCWeaponData* Data = GetEquippedWeaponData();
+
+	if (!Data || Data->ReloadMontage.IsNull())
+	{
+		return;
+	}
+
+	UAnimInstance* Anim = GetAnimInstance();
+
+	if (!Anim)
+	{
+		return;
+	}
+
+	UAnimMontage* Montage = Data->ReloadMontage.LoadSynchronous();
+
+	if (!Montage)
+	{
+		return;
+	}
+
+	if (ASC)
+	{
+		ASC->AddLooseGameplayTag(NCWeapon::Action_Reloading);
+	}
+
+	Anim->Montage_Play(Montage);
+}
+
+void UNCCombatComponent::PlayEquipMontage()
+{
+	FNCWeaponData* Data = GetEquippedWeaponData();
+
+	if (!Data || Data->EquipMontage.IsNull())
+	{
+		return;
+	}
+
+	UAnimInstance* Anim = GetAnimInstance();
+
+	if (!Anim)
+	{
+		return;
+	}
+
+	UAnimMontage* Montage = Data->EquipMontage.LoadSynchronous();
+
+	if (!Montage)
+	{
+		return;
+	}
+
+	Anim->Montage_Play(Montage);
 }

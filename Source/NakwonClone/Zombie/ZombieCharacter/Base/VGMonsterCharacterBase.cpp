@@ -12,6 +12,9 @@
 #include "Common/NCGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Animation/AnimInstance.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "TimerManager.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
@@ -20,14 +23,14 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 
 	// 자식 클래스는 반드시 AI 컨트롤러를 장착하도록 강제
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-	
+
 	// 컨트롤러 회전 영향 제거
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
-	
+
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	
+
 	DetectionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("DetectionCapsule"));
 	DetectionCapsule->SetupAttachment(RootComponent);
 	DetectionCapsule->SetCapsuleSize(40.f, 90.f);
@@ -53,27 +56,27 @@ void AVGMonsterCharacterBase::BeginPlay()
 	{
 		UE_LOG(LogMonster, Error, TEXT("[MonsterBase] AIController 캐스팅 실패: %s"), *GetName());
 	}
-	
+
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	}
-	
+
 	if (MonsterAttributeSet)
 	{
 		MonsterAttributeSet->OnDead.AddDynamic(this, &AVGMonsterCharacterBase::HandleDead);
 		MonsterAttributeSet->OnHitReceived.AddDynamic(this, &AVGMonsterCharacterBase::HandleHit);
 	}
-	
+
 	if (AbilitySystemComponent && MonsterAttributeSet)
 	{
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			UVGMonsterAttributeSet::GetMoveSpeedAttribute()).AddUObject(this, &AVGMonsterCharacterBase::OnMoveSpeedChanged);
 	}
-	
+
 	SelectedStopMontage = GetRandomStopMontage();
 	SelectedDeadMontage = GetRandomDeadMontage();
-	
+
 	DetectionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AVGMonsterCharacterBase::OnDetectionOverlap);
 
 	// H
@@ -81,11 +84,11 @@ void AVGMonsterCharacterBase::BeginPlay()
 	{
 		StartHowlTimer();
 	}
-	
-	int32 MoveIndex = FMath::RandRange(0, AnimMove.Num()-1);
+
+	int32 MoveIndex = FMath::RandRange(0, AnimMove.Num() - 1);
 	SelectedMoveMontage = AnimMove[MoveIndex];
 	SelectedMoveLevel = MoveIndex + 1;
-	
+
 	int32 ChaseIndex = FMath::RandRange(0, AnimChase.Num() - 1);
 	SelectedChaseMontage = AnimChase[ChaseIndex];
 	SelectedChaseLevel = ChaseIndex + 1;
@@ -98,7 +101,9 @@ void AVGMonsterCharacterBase::HandleDead()
 	//H
 	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
 	Multicast_PlaySound(DeathSound);
-	
+
+	OnStartDissolve();
+
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
@@ -110,9 +115,9 @@ void AVGMonsterCharacterBase::HandleDead()
 
 void AVGMonsterCharacterBase::OnStartRagdoll()
 {
-	USkeletalMeshComponent* SkelMesh  = GetMesh();
+	USkeletalMeshComponent* SkelMesh = GetMesh(); 
 	if (!SkelMesh) return;
-	
+
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SkelMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
@@ -137,32 +142,116 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 	SkelMesh->bPauseAnims = true;
 }
 
-void AVGMonsterCharacterBase::HandleHit()
+void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 {
 	if (MonsterAttributeSet->GetHealth() <= 0.f) return;
-	
-	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit 호출됨: %s"), *GetName());
-	//H
-	Multicast_PlaySound(HitSound);
 
+	const EVGHitBodyPart BodyPart = HitData.BodyPart;
+
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleHit: 부위=%d"),
+		static_cast<int32>(BodyPart));
+
+	// 사운드 (부위별, 없으면 기본 HitSound)  //H
+	if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
+	{
+		Multicast_PlaySound(Sound);
+	}
+
+	// VFX (부위별, 타격 위치에)
+	if (UNiagaraSystem* VFX = GetHitVFXByPart(BodyPart))
+	{
+		const FVector Loc = HitData.HitLocation.IsNearlyZero()
+			? GetMesh()->GetComponentLocation()
+			: HitData.HitLocation;
+		Multicast_SpawnHitVFX(VFX, Loc);
+	}
+
+	// AI '맞는 중' 신호
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
 		{
 			Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsHitKey, true);
-			UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] bIsHit Set: true"));
 		}
 	}
-	
+
+	// 부위별 피격 몽타주 (무조건 끊고 새로)
+	PendingHitBodyPart = BodyPart;
+	GetWorldTimerManager().ClearTimer(HitReactTimerHandle);
+	if (HitReactDelay <= 0.f)
+	{
+		PlayHitReactMontage(BodyPart);
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(
+			HitReactTimerHandle, this,
+			&AVGMonsterCharacterBase::OnHitReactDelayElapsed, HitReactDelay, false);
+	}
 	/*// 뒤로 밀려남
 	FVector PushBack = -GetActorForwardVector();
 	LaunchCharacter(PushBack * 300.f, true, false);*/
 }
 
+UAnimMontage* AVGMonsterCharacterBase::GetRandomHitMontageByPart(EVGHitBodyPart BodyPart)
+{
+	// 1순위: 해당 부위 몽타주
+	if (const FVGHitMontageList* List = HitMontagesByPart.Find(BodyPart))
+	{
+		if (List->Montages.Num() > 0)
+		{
+			return GetRandomMontage(List->Montages);
+		}
+	}
+	// 2순위: None 부위에 넣어둔 공용 몽타주
+	if (const FVGHitMontageList* NoneList = HitMontagesByPart.Find(EVGHitBodyPart::None))
+	{
+		if (NoneList->Montages.Num() > 0)
+		{
+			return GetRandomMontage(NoneList->Montages);
+		}
+	}
+	// 3순위 폴백: 기존 AnimHit 배열 (에셋 아직 안 꽂았을 때)
+	return GetRandomHitMontage();
+}
+
+void AVGMonsterCharacterBase::PlayHitReactMontage(EVGHitBodyPart BodyPart)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	UAnimInstance* Anim = MeshComp ? MeshComp->GetAnimInstance() : nullptr;
+	if (!Anim) return;
+
+	UAnimMontage* Montage = GetRandomHitMontageByPart(BodyPart);
+	if (!Montage)
+	{
+		UE_LOG(LogMonster, Warning,
+			TEXT("[MonsterBase] 부위(%d) 피격 몽타주 없음 — 에셋 미설정"),
+			static_cast<int32>(BodyPart));
+		return;
+	}
+
+	// 무조건 끊고 새로: 재생 중이던 피격 몽타주를 짧게 블렌드아웃
+	if (CurrentHitMontage && Anim->Montage_IsPlaying(CurrentHitMontage))
+	{
+		Anim->Montage_Stop(HitReactBlendOutTime, CurrentHitMontage);
+	}
+
+	Anim->Montage_Play(Montage);
+	CurrentHitMontage = Montage;
+
+	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] 피격 몽타주 재생: 부위=%d"),
+		static_cast<int32>(BodyPart));
+}
+
+void AVGMonsterCharacterBase::OnHitReactDelayElapsed()
+{
+	PlayHitReactMontage(PendingHitBodyPart);
+}
+
 UAnimMontage* AVGMonsterCharacterBase::GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages)
 {
 	if (Montages.IsEmpty()) return nullptr;
-	
+
 	return Montages[FMath::RandRange(0, Montages.Num() - 1)];
 }
 void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& Data)
@@ -176,7 +265,7 @@ void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& D
 void AVGMonsterCharacterBase::OnDetectionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
+
 }
 
 //H 사운드 재생 본체 (모든 사운드가 여기로 모임)
@@ -215,4 +304,29 @@ void AVGMonsterCharacterBase::HandleHowl()
 	}
 
 	StartHowlTimer();
+}
+
+USoundBase* AVGMonsterCharacterBase::GetHitSoundByPart(EVGHitBodyPart BodyPart) const
+{
+	if (const TObjectPtr<USoundBase>* Found = HitSoundsByPart.Find(BodyPart))
+	{
+		if (*Found) return *Found;
+	}
+	return HitSound;
+}
+
+UNiagaraSystem* AVGMonsterCharacterBase::GetHitVFXByPart(EVGHitBodyPart BodyPart) const
+{
+	if (const TObjectPtr<UNiagaraSystem>* Found = HitVFXByPart.Find(BodyPart))
+	{
+		return *Found;
+	}
+	return nullptr;
+}
+
+void AVGMonsterCharacterBase::Multicast_SpawnHitVFX_Implementation(
+	UNiagaraSystem* VFX, FVector Location)
+{
+	if (!VFX) return;
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, VFX, Location);
 }

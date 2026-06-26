@@ -3,13 +3,16 @@
 #include "CoreMinimal.h"
 #include "NCBaseCharacter.h"
 #include "NakwonClone/GAS/Ability/GA_Attack.h"
+#include "Components/PointLightComponent.h"
 #include "NCPlayerCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UNCPlayerInventoryComponent;
+class UNCAssassinationComponent;
 class UNCLocomotionComponent;
 class UNCCombatComponent;
+class UNCGunComponent;
 class USpotLightComponent;
 class UStaticMeshComponent;
 class UUserWidget;
@@ -30,6 +33,22 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Components|Combat")
 	UNCCombatComponent* GetCombatComponent() const { return CombatComponent; }
+
+	// 하상빈 추가
+	UFUNCTION(BlueprintPure, Category = "Components|Gun")
+	UNCGunComponent* GetGunComponent() const { return GunComponent; }
+
+	// 근접무기 슬롯 — 줍는 순간 저장, 3번 키로 꺼냄 (임시)
+	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
+	FName StoredMeleeWeaponID;
+
+	// 드랍 시 스폰할 픽업 액터 클래스
+	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
+	TSubclassOf<AActor> StoredMeleePickupClass;
+
+	// 처음 주웠을 때 픽업 액터의 회전값 
+	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
+	FRotator StoredMeleePickupRotation;
 
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryRef; }
 
@@ -68,6 +87,9 @@ public:
 
 	void ToggleFlashlight();
 
+	// 헌호수정 - 암살 기능
+	void TryAssassinate();
+
 	UFUNCTION(BlueprintCallable, Category = "Animation|HitReact")
 	void HandleHitReact(AActor* Attacker);
 
@@ -87,6 +109,10 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Server_ToggleFlashlight();
+
+	// 헌호수정 - 암살 RPC
+	UFUNCTION(Server, Reliable)
+	void Server_TryAssassinate();
 
 	UFUNCTION()
 	void OnRep_bFlashlightOn();
@@ -112,11 +138,23 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
 	TObjectPtr<UNCCombatComponent> CombatComponent;
 
+	// 헌호수정 - 암살 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Assassination")
+	TObjectPtr<UNCAssassinationComponent> AssassinationComponent;
+
+	// 하상빈 추가
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")
+	TObjectPtr<UNCGunComponent> GunComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
 	TObjectPtr<UStaticMeshComponent> FlashlightMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
 	TObjectPtr<USpotLightComponent> FlashlightLight;
+
+	// 헌호수정 - 플래시라이트 렌즈 발광 느낌용 Point Light
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
+	TObjectPtr<UPointLightComponent> FlashlightGlowLight;
 
 	UPROPERTY(ReplicatedUsing = OnRep_bFlashlightOn)
 	bool bFlashlightOn = false;
@@ -150,6 +188,7 @@ private:
 
 	bool bCameraShaking = false;
 	FTimerHandle ShakeTimerHandle;
+
 
 	float LastHitReactTime = -999.f;
 };

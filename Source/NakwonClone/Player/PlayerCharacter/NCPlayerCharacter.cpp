@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/PlayerState.h"
@@ -15,8 +16,10 @@
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
+#include "Player/PlayerComponent/NCGunComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
+#include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
@@ -45,6 +48,8 @@ void ANCPlayerCharacter::InitComponents()
     InteractionComponent = CreateDefaultSubobject<UNCInteractionComponent>(TEXT("InteractionComponent"));
     LocomotionComponent = CreateDefaultSubobject<UNCLocomotionComponent>(TEXT("LocomotionComponent"));
     CombatComponent = CreateDefaultSubobject<UNCCombatComponent>(TEXT("CombatComponent"));
+    AssassinationComponent = CreateDefaultSubobject<UNCAssassinationComponent>(TEXT("AssassinationComponent")); //헌호수정
+    GunComponent    = CreateDefaultSubobject<UNCGunComponent>(TEXT("GunComponent"));
 
     // 헌호수정 - 플래시라이트 컴포넌트 생성 및 소켓에 부착
     FlashlightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FlashlightMesh"));
@@ -53,6 +58,14 @@ void ANCPlayerCharacter::InitComponents()
     FlashlightLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashlightLight"));
     FlashlightLight->SetupAttachment(FlashlightMesh);
     FlashlightLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
+
+    // 헌호수정 - 렌즈 발광 느낌용 Point Light
+    FlashlightGlowLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("FlashlightGlowLight"));
+    FlashlightGlowLight->SetupAttachment(FlashlightMesh);
+    FlashlightGlowLight->SetIntensity(200.f);
+    FlashlightGlowLight->SetAttenuationRadius(50.f);
+    FlashlightGlowLight->SetLightColor(FLinearColor::White);
+    FlashlightGlowLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
 }
 
 void ANCPlayerCharacter::BeginPlay()
@@ -487,6 +500,23 @@ float ANCPlayerCharacter::GetFootstepVolumeMultiplier() const
     return 0.7f;
 }
 
+void ANCPlayerCharacter::TryAssassinate() //헌호수정 - 암살 컴포넌트에 위임
+{
+    if (!HasAuthority())
+    {
+        Server_TryAssassinate();
+        return;
+    }
+
+    if (AssassinationComponent)
+        AssassinationComponent->TryAssassinate();
+}
+
+void ANCPlayerCharacter::Server_TryAssassinate_Implementation()
+{
+    TryAssassinate();
+}
+
 void ANCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -517,4 +547,8 @@ void ANCPlayerCharacter::ApplyFlashlightState()
 {
     if (FlashlightLight)
         FlashlightLight->SetVisibility(bFlashlightOn);
+
+    // 헌호수정 - Glow Light도 같이 토글
+    if (FlashlightGlowLight)
+        FlashlightGlowLight->SetVisibility(bFlashlightOn);
 }

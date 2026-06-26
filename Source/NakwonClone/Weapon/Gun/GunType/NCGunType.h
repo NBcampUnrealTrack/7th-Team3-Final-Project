@@ -1,0 +1,147 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "Engine/DataTable.h"
+#include "NiagaraSystem.h"
+#include "Particles/ParticleSystem.h"
+#include "NCGunType.generated.h"
+
+class ANCProjectile;
+class ANCGunActor;
+class USoundBase;
+
+UENUM(BlueprintType)
+enum class ENCGunSlot : uint8
+{
+    Primary,    // 1번 — 라이플/샷건
+    Secondary,  // 2번 — 권총/리볼버
+    None
+};
+
+UENUM(BlueprintType)
+enum class ENCFireMode : uint8
+{
+    SemiAuto,   // 단발
+    FullAuto    // 연사
+};
+
+USTRUCT(BlueprintType)
+struct FNCGunData : public FTableRowBase
+{
+    GENERATED_BODY()
+
+    // 슬롯 & 타입
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) ENCGunSlot   SlotType      = ENCGunSlot::Primary;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) ENCFireMode  DefaultFireMode = ENCFireMode::SemiAuto;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) bool         bCanToggleFireMode = false;  // 연사<->단발 전환 가능 여부
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) FGameplayTag GunTypeTag;
+
+    // UI
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) FText DisplayName;
+
+    // 전투 수치
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float Damage          = 30.f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float FireRate        = 10.f;   // 연사 시 초당 발사 수
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float ProjectileSpeed = 10000.f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float MaxRange        = 5000.f; // 발사체 최대 사거리
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 MagazineSize    = 30;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 MaxReserveAmmo  = 90;
+
+    // 샷건 전용
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 NumPellets   = 1;    // 샷건 펠릿 수량 조절용
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float SpreadAngle  = 0.f;  // 탄퍼짐
+
+    // 재장전
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float ReloadTime = 2.f;
+
+    // ADS(정조준)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float ADSFOVMultiplier    = 0.6f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float ADSSpreadMultiplier = 0.3f; // ADS 시 SpreadAngle 배율 (1.0 = 변화 없음)
+
+    // 소켓
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) FName MuzzleSocketName = TEXT("Muzzle");
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) FName HandSocketName   = TEXT("hand_rSocket");
+
+    // 사운드
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
+    TSoftObjectPtr<USoundBase> FireSound;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
+    TSoftObjectPtr<USoundBase> ReloadSound;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
+    TSoftObjectPtr<USoundBase> EmptyClickSound;
+
+    // 이펙트 (나이아가라)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    TSoftObjectPtr<UNiagaraSystem> MuzzleFlashEffect;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    TSoftObjectPtr<UNiagaraSystem> ImpactFleshEffect;       // 좀비 피격
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    TSoftObjectPtr<UNiagaraSystem> ImpactSurfaceEffect;     // 벽/바닥 피격
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    TSoftObjectPtr<UNiagaraSystem> ShellCasingEffect;       // 탄피 배출
+
+    // 이펙트 (파티클 - 나이아가라 미설정 시)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParticleEffect")
+    TSoftObjectPtr<UParticleSystem> MuzzleFlashParticle;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParticleEffect")
+    TSoftObjectPtr<UParticleSystem> ImpactFleshParticle;    // 좀비 피격
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParticleEffect")
+    TSoftObjectPtr<UParticleSystem> ImpactSurfaceParticle;  // 벽/바닥 피격
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParticleEffect")
+    TSoftObjectPtr<UParticleSystem> ShellCasingParticle;    // 탄피 배출
+
+    // 탄피 소켓
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) FName EjectSocketName = TEXT("Eject");
+
+    // 에셋 클래스
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TSoftObjectPtr<UStaticMesh>   GunMesh;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TSubclassOf<ANCProjectile>    ProjectileClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TSubclassOf<ANCGunActor>      GunActorClass; // 드롭 시 스폰할 BP 액터 클래스
+
+    // 애니메이션
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  FireMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  ReloadMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  ADSInMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  ADSOutMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  EquipMontage;    // 총기 꺼낼 때 (1,2번 키)
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimMontage>  UnequipMontage;  // 총기 집어넣을 때 (H키,슬롯 전환)
+};
+
+USTRUCT(BlueprintType)
+struct FNCGunSlotData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly) FName GunID;
+    UPROPERTY(BlueprintReadOnly) int32 CurrentAmmo  = 0;
+    UPROPERTY(BlueprintReadOnly) int32 ReserveAmmo  = 0;
+
+    bool IsEmpty() const { return GunID.IsNone(); }
+    void Clear() { GunID = NAME_None; CurrentAmmo = 0; ReserveAmmo = 0; }
+};

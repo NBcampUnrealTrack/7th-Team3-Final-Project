@@ -20,6 +20,24 @@ void UVGMonsterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 	// Health 어트리뷰트가 변경됐을 때만 처리
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
+		FVGHitData HitData;
+		if (const FHitResult* Hit = Data.EffectSpec.GetContext().GetHitResult())
+		{
+			HitData.BodyPart = ClassifyBodyPart(Hit->BoneName);
+			HitData.HitLocation = Hit->ImpactPoint;
+		}
+
+		const float Delta = Data.EvaluatedData.Magnitude;
+		if (Delta < 0.f)
+		{
+			const float Mult = GetBodyPartDamageMultiplier(HitData.BodyPart);
+			if (Mult != 1.f)
+			{
+				const float Extra = Delta * (Mult - 1.f);
+				SetHealth(FMath::Max(0.f, GetHealth() + Extra));
+			}
+		}
+
 		if (GetHealth() <= 0.f)
 		{
 			// 사망
@@ -34,7 +52,7 @@ void UVGMonsterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 			// 피격
 			if (!bIsDead)
 			{
-				OnHitReceived.Broadcast();
+				OnHitReceived.Broadcast(HitData);
 			}
 		}
 	}

@@ -10,6 +10,8 @@
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameplayEffectTypes.h"
+#include "GameFramework/Pawn.h"
 
 void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
     float TotalDuration, const FAnimNotifyEventReference& EventReference)
@@ -18,6 +20,9 @@ void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenc
 
     // 헌호수정 - 공격 시작 시 이전 히트 기록 초기화
     HitActors.Empty();
+
+    // 이번 스윙의 월드(벽) 임팩트 1회 트리거 플래그 리셋
+    bImpactTriggeredThisSwing = false;
 }
 
 void UHitCheckNotify::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -128,6 +133,7 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
         if (!TargetASC) continue;
 
         FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
+        Context.AddHitResult(Hit); //헌호수정 - 부위별 데미지 배율을 위해 HitResult 전달
         FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(
             UGE_Damage::StaticClass(), 1.f, Context);
 
@@ -159,6 +165,77 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
         if (APlayerController* PC = Cast<APlayerController>(OwnerChar->GetController()))
         {
             PC->ClientStartCameraShake(HitShakeClass);
+        }
+    }
+
+    // ── 벽(월드) 임팩트: 칼날이 월드에 닿으면 표면 임팩트 큐 (스윙당 1회) ──
+    if (!bImpactTriggeredThisSwing)
+    {
+        AActor* WeaponActor = Combat->GetSpawnedWeaponActor();
+
+        FVector ImpStart = FVector::ZeroVector;
+        FVector ImpEnd = FVector::ZeroVector;
+        bool bHaveSegment = false;
+
+        // 데미지 판정과 동일한 칼날 세그먼트 사용 (소켓 방식 / 전방 방식)
+        if (WeaponData->TrailStartSocket != NAME_None && WeaponData->TrailEndSocket != NAME_None && WeaponActor)
+        {
+            UMeshComponent* WMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>();
+            if (!WMesh)
+                WMesh = WeaponActor->FindComponentByClass<UStaticMeshComponent>();
+            if (WMesh)
+            {
+                ImpStart = WMesh->GetSocketLocation(WeaponData->TrailStartSocket);
+                ImpEnd   = WMesh->GetSocketLocation(WeaponData->TrailEndSocket);
+                bHaveSegment = true;
+            }
+        }
+        else
+        {
+            ImpStart = OwnerChar->GetActorLocation();
+            ImpEnd   = ImpStart + OwnerChar->GetActorForwardVector() * WeaponData->HitTraceRange;
+            bHaveSegment = true;
+        }
+
+        if (bHaveSegment)
+        {
+            FCollisionQueryParams WorldParams;
+            WorldParams.AddIgnoredActor(OwnerChar);
+            if (WeaponActor) WorldParams.AddIgnoredActor(WeaponActor); // 무기 자체 충돌 무시 (공중 스윙 오발 방지)
+            WorldParams.bReturnPhysicalMaterial = true; // 표면 정보 받기
+            WorldParams.bTraceComplex = true; // 머티리얼의 PhysMaterial(표면) 읽으려면 필요
+
+            TArray<FHitResult> WorldHits;
+            const bool bWorldHit = World->SweepMultiByChannel(
+                WorldHits, ImpStart, ImpEnd, FQuat::Identity,
+                ECC_Visibility,
+                FCollisionShape::MakeSphere(WeaponData->HitSphereRadius),
+                WorldParams);
+
+            if (bWorldHit)
+            {
+                for (const FHitResult& WHit : WorldHits)
+                {
+                    AActor* HitActor = WHit.GetActor();
+                    if (!HitActor) continue;
+
+                    // 폰(좀비/플레이어)은 좀비 파트에서 처리 → 월드(벽/바닥)만 임팩트
+                    if (HitActor->IsA(APawn::StaticClass())) continue;
+
+                    bImpactTriggeredThisSwing = true;
+
+                    static const FGameplayTag ImpactTag =
+                        FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Melee.Surface"));
+
+                    FGameplayCueParameters CueParams;
+                    CueParams.Location = WHit.ImpactPoint;
+                    CueParams.Normal = WHit.ImpactNormal;
+                    CueParams.PhysicalMaterial = WHit.PhysMaterial;
+
+                    SourceASC->ExecuteGameplayCue(ImpactTag, CueParams);
+                    break;
+                }
+            }
         }
     }
 }
