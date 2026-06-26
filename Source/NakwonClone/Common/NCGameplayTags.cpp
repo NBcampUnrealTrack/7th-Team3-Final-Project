@@ -118,3 +118,4 @@ UE_DEFINE_GAMEPLAY_TAG(NCGunEffect::Gun_Impact, "GameplayCue.Gun.Impact");
 
 // 근접무기 이펙트
 UE_DEFINE_GAMEPLAY_TAG(NCMeleeEffect::Melee_Hit, "GameplayCue.Melee.Hit");
+UE_DEFINE_GAMEPLAY_TAG(NCMeleeEffect::Melee_Surface, "GameplayCue.Melee.Surface");

@@ -89,7 +89,7 @@ void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 					}
 
 					ASC->ExecuteGameplayCue(
-						FGameplayTag::RequestGameplayTag("GameplayCue.Melee.Impact"),
+						FGameplayTag::RequestGameplayTag("GameplayCue.Melee.Hit"),
 						CueParams);
 				}
 			}
