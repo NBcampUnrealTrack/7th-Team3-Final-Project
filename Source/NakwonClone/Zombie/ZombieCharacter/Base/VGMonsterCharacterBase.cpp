@@ -102,6 +102,8 @@ void AVGMonsterCharacterBase::HandleDead()
 	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
 	Multicast_PlaySound(DeathSound);
 
+	OnStartDissolve();
+
 	if (AIController)
 	{
 		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
@@ -113,7 +115,7 @@ void AVGMonsterCharacterBase::HandleDead()
 
 void AVGMonsterCharacterBase::OnStartRagdoll()
 {
-	USkeletalMeshComponent* SkelMesh = GetMesh();
+	USkeletalMeshComponent* SkelMesh = GetMesh(); 
 	if (!SkelMesh) return;
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);

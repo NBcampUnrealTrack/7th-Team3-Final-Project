@@ -45,6 +45,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "GAS")
 	TObjectPtr<UVGMonsterAttributeSet> MonsterAttributeSet;
+
 #pragma endregion
 
 #pragma region 애니메이션
@@ -141,6 +142,9 @@ public:
 	void HandleDead();
 
 	void OnStartRagdoll();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Monster|Death")
+	void OnStartDissolve();
 
 #pragma endregion
 
