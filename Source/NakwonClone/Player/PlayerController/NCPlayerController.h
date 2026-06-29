@@ -8,7 +8,7 @@ class UInputMappingContext;
 class UInputAction;
 class AANCLootBoxActor;
 class UNCLootBoxHud;
-class UNCGunComponent;
+class UNCEquipmentComponent;
 struct FInputActionValue;
 
 //하상빈 추가
@@ -82,7 +82,7 @@ private:
 	void ToggleFlashlight();
 
 	// 하상빈 추가 - 총기 입력
-	UNCGunComponent* GetGunComp() const;
+	UNCEquipmentComponent* GetGunComp() const;
 
 	UFUNCTION()
 	void OnGunSwapCompleted(ENCGunSlot NewSlot);

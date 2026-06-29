@@ -1,6 +1,6 @@
 #include "NCGunActor.h"
 #include "Player/PlayerCharacter/NCPlayerCharacter.h"
-#include "Player/PlayerComponent/NCGunComponent.h"
+#include "Player/PlayerComponent/NCEquipmentComponent.h"
 #include "Weapon/Gun/GunType/NCGunType.h"
 
 ANCGunActor::ANCGunActor()
@@ -14,14 +14,14 @@ void ANCGunActor::Interact_Implementation(AActor* Interactor)
 	ANCPlayerCharacter* Player = Cast<ANCPlayerCharacter>(Interactor);
 	if (!Player) return;
 
-	UNCGunComponent* GunComp = Player->FindComponentByClass<UNCGunComponent>();
-	if (!GunComp) return;
+	UNCEquipmentComponent* EquipComp = Player->GetEquipmentComponent();
+	if (!EquipComp) return;
 
 	// 같은 슬롯에 기존 총이 있으면 탄약 상태 보존 후 월드에 드롭
-	const FName OldGunID = GunComp->GetOccupantGunID(GunID);
+	const FName OldGunID = EquipComp->GetOccupantGunID(GunID);
 	if (!OldGunID.IsNone())
 	{
-		const FNCGunData* OldData = GunComp->GetGunData(OldGunID);
+		const FNCGunData* OldData = EquipComp->GetGunData(OldGunID);
 		if (OldData && OldData->GunActorClass)
 		{
 			FActorSpawnParameters Params;
@@ -34,7 +34,7 @@ void ANCGunActor::Interact_Implementation(AActor* Interactor)
 			{
 				// 드롭 시점의 잔탄 저장
 				const FNCGunSlotData& OldSlot = (OldData->SlotType == ENCGunSlot::Primary)
-					? GunComp->PrimarySlot : GunComp->SecondarySlot;
+					? EquipComp->PrimarySlot : EquipComp->SecondarySlot;
 				DroppedGun->SavedCurrentAmmo = OldSlot.CurrentAmmo;
 				DroppedGun->SavedReserveAmmo = OldSlot.ReserveAmmo;
 			}
@@ -43,8 +43,8 @@ void ANCGunActor::Interact_Implementation(AActor* Interactor)
 
 	// 픽업 시 저장된 탄약이 있으면 복원, 없으면 풀 탄약으로 장착
 	const bool bEquipped = (SavedCurrentAmmo >= 0)
-		? GunComp->EquipGunWithAmmo(GunID, SavedCurrentAmmo, SavedReserveAmmo)
-		: GunComp->EquipGun(GunID);
+		? EquipComp->EquipGunWithAmmo(GunID, SavedCurrentAmmo, SavedReserveAmmo)
+		: EquipComp->EquipGun(GunID);
 
 	if (bEquipped)
 		Destroy();

@@ -2,7 +2,7 @@
 #include "Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerData/NCWeaponData.h"
-#include "Player/PlayerComponent/NCGunComponent.h"
+#include "Player/PlayerComponent/NCEquipmentComponent.h"
 
 ANCMeleePickupActor::ANCMeleePickupActor()
 {
@@ -18,7 +18,7 @@ void ANCMeleePickupActor::Interact_Implementation(AActor* Interactor)
 	UNCCombatComponent* NCCombat = NCPlayer->FindComponentByClass<UNCCombatComponent>();
 	if (!NCCombat) return;
 
-	UNCGunComponent* NCGunComp = NCPlayer->GetGunComponent();
+	UNCEquipmentComponent* NCGunComp = NCPlayer->GetEquipmentComponent();
 	const bool bMeleeSlotActive = NCGunComp && !NCGunComp->HasActiveGun();
 	const bool bWeaponInHand    = NCCombat->IsWeaponEquipped();
 
