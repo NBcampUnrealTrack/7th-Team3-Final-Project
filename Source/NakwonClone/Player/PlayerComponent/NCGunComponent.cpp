@@ -278,17 +278,38 @@ void UNCGunComponent::FireOnce()
 	AActor* Owner = GetOwner();
 	if (!Owner) return;
 
-	// 기본 발사 방향: 카메라 전방 (조준 기준)
-	FVector  SpawnLocation = Owner->GetActorLocation();
+	FVector SpawnLocation = Owner->GetActorLocation();
 	FRotator SpawnRotation = Owner->GetActorRotation();
 
+	FVector CamLocation = SpawnLocation;
+	FVector CamForward  = Owner->GetActorForwardVector();
 	if (ACharacter* Char = Cast<ACharacter>(Owner))
 	{
 		if (UCameraComponent* Cam = Char->FindComponentByClass<UCameraComponent>())
 		{
-			SpawnLocation = Cam->GetComponentLocation();
-			SpawnRotation = Cam->GetComponentRotation();
+			CamLocation = Cam->GetComponentLocation();
+			CamForward  = Cam->GetComponentRotation().Vector();
 		}
+	}
+
+	FVector AimPoint = CamLocation + CamForward * Data->MaxRange;
+	FHitResult AimHit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(Owner);
+	if (GetWorld()->LineTraceSingleByChannel(AimHit, CamLocation, AimPoint, ECC_Visibility, Params))
+		AimPoint = AimHit.ImpactPoint;
+
+	if (EquippedGunMeshComp && !Data->MuzzleSocketName.IsNone()
+		&& EquippedGunMeshComp->DoesSocketExist(Data->MuzzleSocketName))
+	{
+		SpawnLocation = EquippedGunMeshComp->GetSocketLocation(Data->MuzzleSocketName);
+		const FVector ToAim = AimPoint - SpawnLocation;
+		SpawnRotation = ToAim.SizeSquared() > (10.f * 10.f) ? ToAim.Rotation() : CamForward.Rotation();
+	}
+	else
+	{
+		SpawnLocation = CamLocation;
+		SpawnRotation = CamForward.Rotation();
 	}
 
 
@@ -357,6 +378,8 @@ void UNCGunComponent::FireOnce()
 			NCProj->ImpactSurfaceEffect   = Data->ImpactSurfaceEffect.Get();
 			NCProj->ImpactFleshParticle   = Data->ImpactFleshParticle.Get();
 			NCProj->ImpactSurfaceParticle = Data->ImpactSurfaceParticle.Get();
+			if (!Data->TracerEffect.IsNull())
+				NCProj->TracerEffect = Data->TracerEffect.LoadSynchronous();
 			NCProj->FinishSpawning(FTransform(PelletRotation, SpawnLocation));
 		}
 	}
