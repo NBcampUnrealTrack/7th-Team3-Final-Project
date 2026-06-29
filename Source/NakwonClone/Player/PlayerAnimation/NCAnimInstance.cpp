@@ -7,7 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "KismetAnimationLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-
+#include "NakwonClone/Player/PlayerComponent/NCGunComponent.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
@@ -176,36 +176,53 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
         CombatComponent = OwnerCharacter->FindComponentByClass<UNCCombatComponent>();
     }
 
+    CurrentWeaponTypeTag = NCWeapon::Type_Unarmed;
+
     UNCCombatComponent* ActiveCombatComponent =
         CachedCombatComponent ? CachedCombatComponent.Get() : CombatComponent.Get();
 
-    if (ActiveCombatComponent)
+    // ------------------------------
+    // 총기 우선
+    // ------------------------------
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(OwnerCharacter))
     {
-        CurrentWeaponTypeTag = ActiveCombatComponent->GetEquippedWeaponTypeTag();
-
-        bIsUnarmed = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Unarmed);
-        bHasWeapon = !bIsUnarmed;
-
-        bIsOneHandedWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_OneHanded);
-        bIsTwoHandedWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_TwoHanded);
-        bIsPistolWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Pistol);
-        bIsShotgunWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Shotgun);
-        bIsRifleWeapon = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Rifle);
+        if (UNCGunComponent* Gun = PC->GetGunComponent())
+        {
+            if (const FNCGunData* GunData = Gun->GetActiveGunData())
+            {
+                CurrentWeaponTypeTag = GunData->GunTypeTag;
+            }
+            else if (ActiveCombatComponent)
+            {
+                CurrentWeaponTypeTag = ActiveCombatComponent->GetEquippedWeaponTypeTag();
+            }
+        }
     }
-    else
-    {
-        CurrentWeaponTypeTag = NCWeapon::Type_Unarmed;
 
-        bIsUnarmed = true;
-        bHasWeapon = false;
-        bIsOneHandedWeapon = false;
-        bIsTwoHandedWeapon = false;
-        bIsPistolWeapon = false;
-        bIsShotgunWeapon = false;
-        bIsRifleWeapon = false;
-    }
+    bIsUnarmed = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Unarmed);
+    bHasWeapon = !bIsUnarmed;
+
+    // 근접
+    bIsOneHandedWeapon =
+        CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_OneHanded);
+
+    bIsTwoHandedWeapon =
+        CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_TwoHanded);
+
+    // 총기
+    bIsPistolWeapon =
+        CurrentWeaponTypeTag.MatchesTagExact(NCGun::Type_Pistol);
+
+    bIsShotgunWeapon =
+        CurrentWeaponTypeTag.MatchesTagExact(NCGun::Type_Shotgun);
+
+    bIsRifleWeapon =
+        CurrentWeaponTypeTag.MatchesTagExact(NCGun::Type_Rifle);
 
     CurrentLocomotionBlendSpace = nullptr;
+
+    UE_LOG(LogTemp, Warning, TEXT("Current Tag : %s"),
+        *CurrentWeaponTypeTag.ToString());
 }
 
 void UNCAnimInstance::UpdateWeaponStateTags()
@@ -214,29 +231,33 @@ void UNCAnimInstance::UpdateWeaponStateTags()
         ? OwnerCharacter->FindComponentByClass<UAbilitySystemComponent>()
         : nullptr;
 
-    if (!ASC)
+    bIsAttacking = false;
+    bIsAiming = false;
+    bIsFiring = false;
+    bIsReloading = false;
+    bIsEmptyReloading = false;
+    bIsSwappingWeapon = false;
+    bIsChambering = false;
+    bIsPumpAction = false;
+
+    if (ASC)
     {
-        bIsAttacking = false;
-        bIsAiming = false;
-        bIsFiring = false;
-        bIsReloading = false;
-        bIsEmptyReloading = false;
-        bIsSwappingWeapon = false;
-        bIsChambering = false;
-        bIsPumpAction = false;
-        return;
+        bIsAttacking = ASC->HasMatchingGameplayTag(NCWeapon::Action_Attacking);
+        bIsChambering = ASC->HasMatchingGameplayTag(NCWeapon::Action_Chambering);
+        bIsPumpAction = ASC->HasMatchingGameplayTag(NCWeapon::Action_PumpAction);
     }
 
-    bIsAttacking = ASC->HasMatchingGameplayTag(NCWeapon::Action_Attacking);
-    bIsAiming = ASC->HasMatchingGameplayTag(NCWeapon::Action_Aiming);
-    bIsFiring = ASC->HasMatchingGameplayTag(NCWeapon::Action_Firing);
-    bIsReloading = ASC->HasMatchingGameplayTag(NCWeapon::Action_Reloading);
-    bIsEmptyReloading = ASC->HasMatchingGameplayTag(NCWeapon::Action_EmptyReloading);
-    bIsSwappingWeapon = ASC->HasMatchingGameplayTag(NCWeapon::Action_Swapping);
-    bIsChambering = ASC->HasMatchingGameplayTag(NCWeapon::Action_Chambering);
-    bIsPumpAction = ASC->HasMatchingGameplayTag(NCWeapon::Action_PumpAction);
+    if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+    {
+        if (UNCGunComponent* GunComponent = PlayerCharacter->GetGunComponent())
+        {
+            bIsAiming = GunComponent->IsADS();
+            bIsFiring = GunComponent->IsFiring();
+            bIsReloading = GunComponent->IsReloading();
+            bIsSwappingWeapon = GunComponent->IsSwapping();
+        }
+    }
 }
-
 void UNCAnimInstance::UpdateLeftHandIK()
 {
     UNCCombatComponent* ActiveCombatComponent =
