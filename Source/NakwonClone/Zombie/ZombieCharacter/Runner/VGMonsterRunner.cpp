@@ -2,31 +2,32 @@
 
 
 #include "VGMonsterRunner.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 
 
-// Sets default values
 AVGMonsterRunner::AVGMonsterRunner()
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
+	}
 }
 
-// Called when the game starts or when spawned
 void AVGMonsterRunner::BeginPlay()
 {
 	Super::BeginPlay();
 	
-}
-
-// Called every frame
-void AVGMonsterRunner::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-// Called to bind functionality to input
-void AVGMonsterRunner::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	if (GetCharacterMovement() && MonsterAttributeSet)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = MonsterAttributeSet->GetMoveSpeed();
+	}
+	
+	if (RandomMesh.Num() > 0)
+	{
+		int32 RandIndex = FMath::RandRange(0, RandomMesh.Num() - 1);
+		GetMesh()->SetSkeletalMesh(RandomMesh[RandIndex]);
+	}
 }
 

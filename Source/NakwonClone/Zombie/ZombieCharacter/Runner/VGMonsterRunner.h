@@ -6,23 +6,25 @@
 #include "Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "VGMonsterRunner.generated.h"
 
+class UGameplayEffect;
+
 UCLASS()
 class NAKWONCLONE_API AVGMonsterRunner : public AVGMonsterCharacterBase
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AVGMonsterRunner();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+#pragma region GAS GE 슬롯
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UPROPERTY(EditAnywhere, Category = "Runner|Attack")
+	TSubclassOf<UGameplayEffect> BiteEffectClass;
+	
+	UPROPERTY(EditAnywhere, Category = "Runner|Speed")
+	TSubclassOf<UGameplayEffect> RunSpeedEffectClass;
+#pragma endregion
 };
