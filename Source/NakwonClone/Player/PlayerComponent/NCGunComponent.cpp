@@ -46,7 +46,6 @@ void UNCGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	}
 
 	Cam->SetFieldOfView(FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ADSInterpSpeed));
-	Cam->SetFieldOfView(FMath::FInterpTo(Current, TargetFOV, DeltaTime, ADSInterpSpeed));
 
 	// 헌호수정 - 반동 복귀
 	if (!FMath::IsNearlyZero(CurrentRecoilPitch) || !FMath::IsNearlyZero(CurrentRecoilYaw))
@@ -304,7 +303,6 @@ void UNCGunComponent::FireOnce()
 	AActor* Owner = GetOwner();
 	if (!Owner) return;
 
-	FVector SpawnLocation = Owner->GetActorLocation();
 	// 헌호수정 - 발사 시 카메라 방향으로 캐릭터 즉시 회전
 	if (ACharacter* RotChar = Cast<ACharacter>(Owner))
 	{
