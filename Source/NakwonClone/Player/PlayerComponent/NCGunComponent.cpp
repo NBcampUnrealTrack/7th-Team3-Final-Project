@@ -36,14 +36,16 @@ void UNCGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	UCameraComponent* Cam = FindCamera();
 	if (!Cam) return;
 
-	const float Current = Cam->FieldOfView;
-	if (FMath::IsNearlyEqual(Current, TargetFOV, 0.1f))
+	// FOV 보간
+	const float CurrentFOV = Cam->FieldOfView;
+	if (FMath::IsNearlyEqual(CurrentFOV, TargetFOV, 0.1f))
 	{
 		Cam->SetFieldOfView(TargetFOV);
-		SetComponentTickEnabled(false); // 목표 도달 시 Tick 종료
+		SetComponentTickEnabled(false);
 		return;
 	}
 
+	Cam->SetFieldOfView(FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ADSInterpSpeed));
 	Cam->SetFieldOfView(FMath::FInterpTo(Current, TargetFOV, DeltaTime, ADSInterpSpeed));
 
 	// 헌호수정 - 반동 복귀
@@ -302,6 +304,7 @@ void UNCGunComponent::FireOnce()
 	AActor* Owner = GetOwner();
 	if (!Owner) return;
 
+	FVector SpawnLocation = Owner->GetActorLocation();
 	// 헌호수정 - 발사 시 카메라 방향으로 캐릭터 즉시 회전
 	if (ACharacter* RotChar = Cast<ACharacter>(Owner))
 	{
@@ -316,13 +319,35 @@ void UNCGunComponent::FireOnce()
 	FVector  SpawnLocation = Owner->GetActorLocation();
 	FRotator SpawnRotation = Owner->GetActorRotation();
 
+	FVector CamLocation = SpawnLocation;
+	FVector CamForward  = Owner->GetActorForwardVector();
 	if (ACharacter* Char = Cast<ACharacter>(Owner))
 	{
 		if (UCameraComponent* Cam = Char->FindComponentByClass<UCameraComponent>())
 		{
-			SpawnLocation = Cam->GetComponentLocation();
-			SpawnRotation = Cam->GetComponentRotation();
+			CamLocation = Cam->GetComponentLocation();
+			CamForward  = Cam->GetComponentRotation().Vector();
 		}
+	}
+
+	FVector AimPoint = CamLocation + CamForward * Data->MaxRange;
+	FHitResult AimHit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(Owner);
+	if (GetWorld()->LineTraceSingleByChannel(AimHit, CamLocation, AimPoint, ECC_Visibility, Params))
+		AimPoint = AimHit.ImpactPoint;
+
+	if (EquippedGunMeshComp && !Data->MuzzleSocketName.IsNone()
+		&& EquippedGunMeshComp->DoesSocketExist(Data->MuzzleSocketName))
+	{
+		SpawnLocation = EquippedGunMeshComp->GetSocketLocation(Data->MuzzleSocketName);
+		const FVector ToAim = AimPoint - SpawnLocation;
+		SpawnRotation = ToAim.SizeSquared() > (10.f * 10.f) ? ToAim.Rotation() : CamForward.Rotation();
+	}
+	else
+	{
+		SpawnLocation = CamLocation;
+		SpawnRotation = CamForward.Rotation();
 	}
 
 
@@ -402,6 +427,8 @@ void UNCGunComponent::FireOnce()
 			NCProj->ImpactSurfaceEffect   = Data->ImpactSurfaceEffect.Get();
 			NCProj->ImpactFleshParticle   = Data->ImpactFleshParticle.Get();
 			NCProj->ImpactSurfaceParticle = Data->ImpactSurfaceParticle.Get();
+			if (!Data->TracerEffect.IsNull())
+				NCProj->TracerEffect = Data->TracerEffect.LoadSynchronous();
 			NCProj->FinishSpawning(FTransform(PelletRotation, SpawnLocation));
 		}
 	}
