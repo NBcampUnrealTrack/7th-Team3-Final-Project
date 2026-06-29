@@ -126,6 +126,9 @@ private:
 	TObjectPtr<UStaticMeshComponent> EquippedGunMeshComp;
 
 	UPROPERTY()
+	TObjectPtr<USkeletalMeshComponent> EquippedGunSkelMeshComp;
+
+	UPROPERTY()
 	TObjectPtr<UNiagaraComponent> MuzzleFlashComp;
 
 	FTimerHandle FullAutoTimerHandle;

@@ -117,6 +117,12 @@ struct FNCGunData : public FTableRowBase
     TSoftObjectPtr<UStaticMesh>   GunMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TSoftObjectPtr<USkeletalMesh> GunSkeletalMesh;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FVector GunMeshScale = FVector(1.f, 1.f, 1.f);
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TSubclassOf<ANCProjectile>    ProjectileClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -141,6 +147,10 @@ struct FNCGunData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
     TSoftObjectPtr<UAnimMontage>  UnequipMontage;  // 총기 집어넣을 때 (H키,슬롯 전환)
+
+    // 총기 메시 자체 애니메이션 (SkeletalMesh 전용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    TSoftObjectPtr<UAnimSequence> GunFireAnimation;
 };
 
 USTRUCT(BlueprintType)

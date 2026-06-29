@@ -44,6 +44,9 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_ItemMeshAsset, BlueprintReadOnly, Category = "Item|Data")
 	class UStaticMesh* ItemMeshAsset;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Mesh")
+	FRotator DefaultMeshRotation = FRotator::ZeroRotator;
+
 	UFUNCTION()
 	void OnRep_ItemMeshAsset();
 	

@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Weapon/Gun/NCProjectile.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimSequence.h"
 #include "DrawDebugHelpers.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
@@ -224,6 +226,13 @@ void UNCGunComponent::FireOnce()
 	if (MuzzleFlashComp)
 		MuzzleFlashComp->Activate(true);
 
+	// 총기 메시 자체 애니메이션 재생
+	if (EquippedGunSkelMeshComp && !Data->GunFireAnimation.IsNull())
+	{
+		if (UAnimSequence* GunAnim = Data->GunFireAnimation.LoadSynchronous())
+			EquippedGunSkelMeshComp->PlayAnimation(GunAnim, false);
+	}
+
 	ApplyRecoil(Data);
 
 	if (Data->FireShakeClass)
@@ -420,32 +429,56 @@ void UNCGunComponent::PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& Montage
 void UNCGunComponent::AttachGunMesh(const FNCGunData* Data)
 {
 	DetachGunMesh();
-	if (!Data || Data->GunMesh.IsNull()) return;
+	if (!Data) return;
 
 	ACharacter* Char = Cast<ACharacter>(GetOwner());
 	if (!Char) return;
 
-	UStaticMesh* Mesh = Data->GunMesh.LoadSynchronous();
-	if (!Mesh) return;
+	USceneComponent* AttachedMeshComp = nullptr;
 
-	EquippedGunMeshComp = NewObject<UStaticMeshComponent>(Char);
-	EquippedGunMeshComp->SetStaticMesh(Mesh);
-	EquippedGunMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	EquippedGunMeshComp->RegisterComponent();
+	if (!Data->GunSkeletalMesh.IsNull())
+	{
+		USkeletalMesh* SkelMesh = Data->GunSkeletalMesh.LoadSynchronous();
+		if (SkelMesh)
+		{
+			EquippedGunSkelMeshComp = NewObject<USkeletalMeshComponent>(Char);
+			EquippedGunSkelMeshComp->SetSkeletalMesh(SkelMesh);
+			EquippedGunSkelMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			EquippedGunSkelMeshComp->RegisterComponent();
+			EquippedGunSkelMeshComp->AttachToComponent(
+				Char->GetMesh(),
+				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+				Data->HandSocketName);
+			EquippedGunSkelMeshComp->SetRelativeScale3D(Data->GunMeshScale);
+			AttachedMeshComp = EquippedGunSkelMeshComp;
+		}
+	}
+	else if (!Data->GunMesh.IsNull())
+	{
+		UStaticMesh* Mesh = Data->GunMesh.LoadSynchronous();
+		if (Mesh)
+		{
+			EquippedGunMeshComp = NewObject<UStaticMeshComponent>(Char);
+			EquippedGunMeshComp->SetStaticMesh(Mesh);
+			EquippedGunMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			EquippedGunMeshComp->RegisterComponent();
+			EquippedGunMeshComp->AttachToComponent(
+				Char->GetMesh(),
+				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+				Data->HandSocketName);
+			EquippedGunMeshComp->SetRelativeScale3D(Data->GunMeshScale);
+			AttachedMeshComp = EquippedGunMeshComp;
+		}
+	}
 
-	EquippedGunMeshComp->AttachToComponent(
-		Char->GetMesh(),
-		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-		Data->HandSocketName);
-
-	if (!Data->MuzzleFlashEffect.IsNull())
+	if (AttachedMeshComp && !Data->MuzzleFlashEffect.IsNull())
 	{
 		MuzzleFlashComp = NewObject<UNiagaraComponent>(Char);
 		MuzzleFlashComp->SetAsset(Data->MuzzleFlashEffect.LoadSynchronous());
 		MuzzleFlashComp->SetAutoActivate(false);
 		MuzzleFlashComp->RegisterComponent();
 		MuzzleFlashComp->AttachToComponent(
-			EquippedGunMeshComp,
+			AttachedMeshComp,
 			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 			Data->MuzzleSocketName);
 		MuzzleFlashComp->OnSystemFinished.AddDynamic(this, &UNCGunComponent::OnMuzzleFlashFinished);
@@ -469,5 +502,10 @@ void UNCGunComponent::DetachGunMesh()
 	{
 		EquippedGunMeshComp->DestroyComponent();
 		EquippedGunMeshComp = nullptr;
+	}
+	if (EquippedGunSkelMeshComp)
+	{
+		EquippedGunSkelMeshComp->DestroyComponent();
+		EquippedGunSkelMeshComp = nullptr;
 	}
 }

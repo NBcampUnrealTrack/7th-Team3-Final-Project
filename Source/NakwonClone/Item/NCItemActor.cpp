@@ -9,9 +9,12 @@ ANCItemActor::ANCItemActor()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	
+	USceneComponent* SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+	RootComponent = SceneRoot;
+
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
-	RootComponent = ItemMesh;
-	
+	ItemMesh->SetupAttachment(SceneRoot);
+
 	ItemMesh->SetSimulatePhysics(false);
 	ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	ItemMesh->SetCollisionObjectType(ECC_WorldStatic);
