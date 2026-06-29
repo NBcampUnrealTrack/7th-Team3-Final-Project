@@ -1,4 +1,4 @@
-#include "NCGunComponent.h"
+﻿#include "NCGunComponent.h"
 #include "Common/NCGameplayTags.h"
 #include "Engine/DataTable.h"
 #include "Engine/World.h"
@@ -12,6 +12,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
+#include "AbilitySystemComponent.h"
 #include "Animation/AnimMontage.h"
 
 UNCGunComponent::UNCGunComponent()
@@ -205,6 +206,12 @@ void UNCGunComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 	}
 
 	OnSwapCompleted.Broadcast(TargetSlot);
+	if (Data)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("GunTypeTag = %s"),
+			*Data->GunTypeTag.ToString());
+	}
 }
 
 // ─────────────────────────────────────────────
@@ -405,7 +412,17 @@ void UNCGunComponent::OnReloadFinished()
 void UNCGunComponent::StartADS()
 {
 	if (!HasActiveGun() || IsSwapping()) return;
+
 	ActiveGunActions.AddTag(NCGun::Action_ADS);
+
+	if (AActor* Owner = GetOwner())
+	{
+		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
+		{
+			ASC->AddLooseGameplayTag(NCWeapon::Action_Aiming);
+		}
+	}
+
 	ApplyADSFOV();
 
 	const FNCGunData* Data = GetActiveGunData();
@@ -415,6 +432,15 @@ void UNCGunComponent::StartADS()
 void UNCGunComponent::StopADS()
 {
 	ActiveGunActions.RemoveTag(NCGun::Action_ADS);
+
+	if (AActor* Owner = GetOwner())
+	{
+		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
+		{
+			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Aiming);
+		}
+	}
+
 	RestoreFOV();
 
 	const FNCGunData* Data = GetActiveGunData();
