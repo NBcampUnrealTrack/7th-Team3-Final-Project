@@ -183,4 +183,10 @@ private:
 
 	float DefaultFOV  = 90.f;
 	float TargetFOV   = 90.f;
+
+	// 헌호수정 - 반동 누적 상태
+	float CurrentRecoilPitch = 0.f;
+	float CurrentRecoilYaw   = 0.f;
+
+	void ApplyRecoil(const FNCGunData* Data);
 };
