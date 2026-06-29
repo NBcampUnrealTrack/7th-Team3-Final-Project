@@ -221,4 +221,20 @@ protected:
 	void HandleHowl();
 	// bool bIsDead = false;
 #pragma endregion
+
+#pragma region 암살 처리
+public:
+	// 플레이어가 암살 시작 시 호출 (서버에서). 재생할 victim 몽타주는 DT에서 받음
+	void BeginAssassinationVictim(AActor* Killer, UAnimMontage* VictimMontage);
+
+	// 좀비 등 → 플레이어 정면이 되도록 맞출 거리
+	UPROPERTY(EditAnywhere, Category = "Monster|Assassination")
+	float AssassinationAlignDistance = 90.f;
+
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayAssassinationMontage(UAnimMontage* Montage);
+
+	bool bIsBeingAssassinated = false;
+#pragma endregion
 };
