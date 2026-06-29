@@ -14,7 +14,7 @@ void UAnimNotify_RunSound::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenc
 		UAISense_Hearing::ReportNoiseEvent(
 	GetWorld(),
 	MyPawn->GetActorLocation(),
-	0.25f, // 소음 크기 : 최대 범위 x 1.0f = 청각 범위 (UI 필요)
+	0.15f, // 소음 크기 : 최대 범위 x 1.0f = 청각 범위 (UI 필요)
 	MyPawn,
 	0.0f);
 	}
