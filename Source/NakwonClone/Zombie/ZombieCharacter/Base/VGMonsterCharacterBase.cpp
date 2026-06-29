@@ -15,6 +15,7 @@
 #include "Animation/AnimInstance.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
+#include "BrainComponent.h"
 #include "TimerManager.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
@@ -102,9 +103,6 @@ void AVGMonsterCharacterBase::HandleDead()
 
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleDead 호출됨: %s"), *GetName());
 	
-	if (bIsDead) return;
-	bIsDead = true;
-	
 	//H
 	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
 	Multicast_PlaySound(DeathSound);
@@ -157,7 +155,7 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 
 void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 {
-	if (bIsDead || MonsterAttributeSet->GetHealth() <= 0.f) return;
+	if (bIsDead || bIsBeingAssassinated || MonsterAttributeSet->GetHealth() <= 0.f) return;
 	
 	const EVGHitBodyPart BodyPart = HitData.BodyPart;
 
@@ -342,4 +340,45 @@ void AVGMonsterCharacterBase::Multicast_SpawnHitVFX_Implementation(
 {
 	if (!VFX) return;
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, VFX, Location);
+}
+
+void AVGMonsterCharacterBase::BeginAssassinationVictim(AActor* Killer, UAnimMontage* VictimMontage)
+{
+	if (bIsDead || bIsBeingAssassinated) return;
+	bIsBeingAssassinated = true;
+
+	// (1) 즉시 정지 — 이동 차단
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+
+	// (2) AI 두뇌 정지 (BT가 새 몽타주 못 끼게)
+	if (AIController)
+	{
+		if (UBrainComponent* Brain = AIController->GetBrainComponent())
+			Brain->StopLogic(TEXT("Assassinated"));
+		AIController->StopMovement();
+	}
+
+	// (3) 구도 정렬 — 좀비 등이 플레이어를 향하도록 스냅
+	if (Killer)
+	{
+		const FVector KillerFwd = Killer->GetActorForwardVector();
+		SetActorLocation(Killer->GetActorLocation() + KillerFwd * AssassinationAlignDistance);
+		SetActorRotation(KillerFwd.Rotation());
+	}
+
+	// (4) 재생중인 일반 몽타주 끊기
+	if (UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+		Anim->StopAllMontages(0.1f);
+
+	// (5) victim 몽타주 동기 재생 (DT에서 받은 것)
+	if (VictimMontage)
+		Multicast_PlayAssassinationMontage(VictimMontage);
+}
+
+void AVGMonsterCharacterBase::Multicast_PlayAssassinationMontage_Implementation(UAnimMontage* Montage)
+{
+	if (!Montage) return;
+	if (UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+		Anim->Montage_Play(Montage);
 }
