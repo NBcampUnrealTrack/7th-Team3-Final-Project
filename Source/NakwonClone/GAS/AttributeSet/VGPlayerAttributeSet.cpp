@@ -79,9 +79,10 @@ void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 				if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
 				{
 					// 맞은 위치: 좀비 공격이 넘겨준 HitResult 사용
-					// (본 이름 있으면 그 본 위치 → 없으면 임팩트 지점 → 둘 다 없으면 액터 위치)
-					FVector BloodLocation = Player->GetActorLocation();
-					if (const FHitResult* Hit = Data.EffectSpec.GetContext().GetHitResult())
+					// (본 이름 있으면 그 본 위치 → 없으면 임팩트 지점 → 둘 다 없으면 가슴 높이)
+					FVector BloodLocation = Player->GetActorLocation() + FVector(0.f, 0.f, 40.f); // 폴백: 허리→가슴
+					const FHitResult* Hit = Data.EffectSpec.GetContext().GetHitResult();
+					if (Hit)
 					{
 						if (Hit->BoneName != NAME_None && Player->GetMesh())
 							BloodLocation = Player->GetMesh()->GetSocketLocation(Hit->BoneName);

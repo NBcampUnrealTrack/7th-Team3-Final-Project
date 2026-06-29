@@ -4,8 +4,6 @@
 #include "GameFramework/Character.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetSystemLibrary.h" // PrintString
-#include "PhysicalMaterials/PhysicalMaterial.h" // 디버그용 SurfaceType
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Common/NCGameplayTags.h"
@@ -68,8 +66,6 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
 {
     if (!OtherActor || OtherActor == GetOwner()) return;
 
-    UE_LOG(LogTemp, Warning, TEXT("[Projectile] OnHit: Other=%s"), *GetNameSafe(OtherActor));
-
     // GAS 데미지 적용
     UAbilitySystemComponent* SourceASC =
         UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetInstigator());
@@ -117,14 +113,6 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
         CueParams.Location         = Hit.ImpactPoint;
         CueParams.Normal           = Hit.ImpactNormal;
         CueParams.PhysicalMaterial = Hit.PhysMaterial;
-
-        // 디버그: 어떤 PhysMaterial / SurfaceType을 읽었는지 확인
-        const UPhysicalMaterial* PM = Hit.PhysMaterial.Get();
-        const FString PMName = GetNameSafe(PM);
-        const int32 SurfaceVal = PM ? (int32)PM->SurfaceType.GetValue() : -1;
-        UE_LOG(LogTemp, Warning, TEXT("[Projectile] Surface hit: PhysMat=%s, SurfaceType=%d"), *PMName, SurfaceVal);
-        UKismetSystemLibrary::PrintString(this,
-            FString::Printf(TEXT("PhysMat=%s  Surface=%d"), *PMName, SurfaceVal));
 
         SourceASC->ExecuteGameplayCue(SurfaceTag, CueParams);
     }
