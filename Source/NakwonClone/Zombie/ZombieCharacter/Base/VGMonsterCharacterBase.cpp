@@ -199,13 +199,12 @@ void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 			HitReactTimerHandle, this,
 			&AVGMonsterCharacterBase::OnHitReactDelayElapsed, HitReactDelay, false);
 	}
-
-	// GC 호출
+	// 피격 GameplayCue (혈흔 VFX + 데칼)
 	if (AbilitySystemComponent)
 	{
 		FGameplayCueParameters CueParams;
 		CueParams.Location = HitData.HitLocation;
-		CueParams.Normal = HitData.HitNormal;  // FVGHitData에 Normal 있으면
+		CueParams.Normal   = HitData.HitNormal;
 		AbilitySystemComponent->ExecuteGameplayCue(
 			FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Hit.Zombie")),
 			CueParams);
