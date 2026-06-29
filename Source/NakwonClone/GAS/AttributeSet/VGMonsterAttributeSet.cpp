@@ -25,6 +25,7 @@ void UVGMonsterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 		{
 			HitData.BodyPart = ClassifyBodyPart(Hit->BoneName);
 			HitData.HitLocation = Hit->ImpactPoint;
+			HitData.HitNormal = Hit->ImpactNormal;
 		}
 
 		const float Delta = Data.EvaluatedData.Magnitude;

@@ -201,6 +201,17 @@ void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 			HitReactTimerHandle, this,
 			&AVGMonsterCharacterBase::OnHitReactDelayElapsed, HitReactDelay, false);
 	}
+	// 피격 GameplayCue (혈흔 VFX + 데칼)
+	if (AbilitySystemComponent)
+	{
+		FGameplayCueParameters CueParams;
+		CueParams.Location = HitData.HitLocation;
+		CueParams.Normal   = HitData.HitNormal;
+		AbilitySystemComponent->ExecuteGameplayCue(
+			FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Hit.Zombie")),
+			CueParams);
+	}
+
 	/*// 뒤로 밀려남
 	FVector PushBack = -GetActorForwardVector();
 	LaunchCharacter(PushBack * 300.f, true, false);*/
