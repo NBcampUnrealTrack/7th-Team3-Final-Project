@@ -13,6 +13,10 @@ class UNCAssassinationComponent;
 class UNCLocomotionComponent;
 class UNCCombatComponent;
 class UNCGunComponent;
+class UNCRifleComponent;
+class UNCShotgunComponent;
+class UNCPistolComponent;
+class UNCEquipmentComponent;
 class USpotLightComponent;
 class UStaticMeshComponent;
 class UUserWidget;
@@ -35,8 +39,12 @@ public:
 	UNCCombatComponent* GetCombatComponent() const { return CombatComponent; }
 
 	// 하상빈 추가
+	UFUNCTION(BlueprintPure, Category = "Components|Equipment")
+	UNCEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
+
+	// 현재 활성 무기 컴포넌트 반환 (NCAnimInstance 등 하위호환)
 	UFUNCTION(BlueprintPure, Category = "Components|Gun")
-	UNCGunComponent* GetGunComponent() const { return GunComponent; }
+	UNCGunComponent* GetGunComponent() const;
 
 	// 근접무기 슬롯 — 줍는 순간 저장, 3번 키로 꺼냄 (임시)
 	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
@@ -142,9 +150,19 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Assassination")
 	TObjectPtr<UNCAssassinationComponent> AssassinationComponent;
 
-	// 하상빈 추가
+	// 하상빈 추가 - 장착 관리
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Equipment")
+	TObjectPtr<UNCEquipmentComponent> EquipmentComponent;
+
+	// 총기 타입별 전용 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")
-	TObjectPtr<UNCGunComponent> GunComponent;
+	TObjectPtr<UNCRifleComponent> RifleComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")
+	TObjectPtr<UNCShotgunComponent> ShotgunComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")
+	TObjectPtr<UNCPistolComponent> PistolComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
 	TObjectPtr<UStaticMeshComponent> FlashlightMesh;

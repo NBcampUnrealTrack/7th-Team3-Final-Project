@@ -8,6 +8,7 @@
 #include "KismetAnimationLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "NakwonClone/Player/PlayerComponent/NCGunComponent.h"
+#include "NakwonClone/Player/PlayerComponent/NCEquipmentComponent.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
@@ -254,7 +255,10 @@ void UNCAnimInstance::UpdateWeaponStateTags()
             bIsAiming = GunComponent->IsADS();
             bIsFiring = GunComponent->IsFiring();
             bIsReloading = GunComponent->IsReloading();
-            bIsSwappingWeapon = GunComponent->IsSwapping();
+        }
+        if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+        {
+            bIsSwappingWeapon = EquipComp->IsSwapping();
         }
     }
 }
