@@ -2,13 +2,12 @@
 
 
 #include "VGMonsterRunnerController.h"
-
+#include "BehaviorTree/BlackboardComponent.h"
 
 
 AVGMonsterRunnerController::AVGMonsterRunnerController()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 
@@ -16,6 +15,10 @@ void AVGMonsterRunnerController::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (Blackboard)
+	{
+		Blackboard->SetValueAsBool(IsAwakeKey, true);
+	}
 }
 
 

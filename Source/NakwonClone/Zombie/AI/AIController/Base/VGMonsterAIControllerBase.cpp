@@ -159,8 +159,7 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 					return;
 				}
 			}
-			UE_LOG(LogAIPc, Warning, TEXT("[Hearing] HeardLocation set: %s (t=%.2f)"),
-	*Stimulus.StimulusLocation.ToString(), GetWorld()->GetTimeSeconds());
+
 			Blackboard->SetValueAsVector(HeardLocationKey, Stimulus.StimulusLocation);
 			if (!Blackboard->GetValueAsBool(IsAwakeKey))
 			{
