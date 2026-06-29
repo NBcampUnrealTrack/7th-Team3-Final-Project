@@ -93,6 +93,13 @@ void UAnimNotify_AttackTrace::DoHitCheck(USkeletalMeshComponent* MeshComp)
 			HitActors.Add(HitActor);
 			
 			FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
+			
+			FHitResult AttackHit;
+			AttackHit.Location     = SocketLocation;
+			AttackHit.ImpactPoint  = SocketLocation;
+			AttackHit.ImpactNormal = (HitActor->GetActorLocation() - SocketLocation).GetSafeNormal();
+			ContextHandle.AddHitResult(AttackHit);
+			
 			FGameplayEffectSpecHandle Spec =
 				ASC->MakeOutgoingSpec(Walker->AttackEffectClass, 1.f, ContextHandle);
 			
