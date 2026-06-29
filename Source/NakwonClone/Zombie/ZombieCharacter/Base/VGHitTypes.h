@@ -38,6 +38,9 @@ struct FVGHitData
 
     UPROPERTY(BlueprintReadWrite, Category = "Hit")
     FVector HitLocation = FVector::ZeroVector;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Hit")
+    FVector HitNormal = FVector::ZeroVector;
 };
 
 inline EVGHitBodyPart ClassifyBodyPart(FName BoneName)
