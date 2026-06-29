@@ -4,7 +4,6 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapon/Gun/NCProjectile.h"
@@ -40,32 +39,13 @@ void UNCGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// FOV 보간
 	const float CurrentFOV = Cam->FieldOfView;
 	if (FMath::IsNearlyEqual(CurrentFOV, TargetFOV, 0.1f))
+	{
 		Cam->SetFieldOfView(TargetFOV);
-	else
-		Cam->SetFieldOfView(FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ADSInterpSpeed));
+		SetComponentTickEnabled(false);
+		return;
+	}
 
-	// ADS 중 캐릭터 Yaw를 컨트롤러 방향으로 부드럽게 보간
-	if (IsADS())
-	{
-		if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
-		{
-			if (AController* Ctrl = Char->GetController())
-			{
-				const FRotator ActorRot = Char->GetActorRotation();
-				const float TargetYaw   = Ctrl->GetControlRotation().Yaw;
-				// 최단 경로로 회전
-				const float DeltaYaw = FMath::UnwindDegrees(TargetYaw - ActorRot.Yaw);
-				const float NewYaw   = ActorRot.Yaw + FMath::FInterpTo(0.f, DeltaYaw, DeltaTime, ADSInterpSpeed);
-				Char->SetActorRotation(FRotator(ActorRot.Pitch, NewYaw, ActorRot.Roll));
-			}
-		}
-	}
-	else
-	{
-		// ADS도 아니고 FOV도 목표 도달이면 Tick 종료
-		if (FMath::IsNearlyEqual(CurrentFOV, TargetFOV, 0.1f))
-			SetComponentTickEnabled(false);
-	}
+	Cam->SetFieldOfView(FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ADSInterpSpeed));
 }
 
 // ─────────────────────────────────────────────
@@ -469,12 +449,6 @@ void UNCGunComponent::StartADS()
 
 	ApplyADSFOV();
 
-	// ADS 중에는 이동 방향 회전 끄기
-	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
-	{
-		Char->GetCharacterMovement()->bOrientRotationToMovement = false;
-	}
-
 	const FNCGunData* Data = GetActiveGunData();
 	if (Data) PlayGunMontage(Data->ADSInMontage);
 }
@@ -489,12 +463,6 @@ void UNCGunComponent::StopADS()
 		{
 			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Aiming);
 		}
-	}
-
-	// ADS 해제 시 이동 방향 회전 복귀
-	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
-	{
-		Char->GetCharacterMovement()->bOrientRotationToMovement = true;
 	}
 
 	RestoreFOV();
