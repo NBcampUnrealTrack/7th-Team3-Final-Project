@@ -5,6 +5,7 @@
 #include "Engine/DataTable.h"
 #include "NiagaraSystem.h"
 #include "Particles/ParticleSystem.h"
+#include "Camera/CameraShakeBase.h"
 #include "NCGunType.generated.h"
 
 class ANCProjectile;
@@ -54,6 +55,12 @@ struct FNCGunData : public FTableRowBase
 
     // 재장전
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float ReloadTime = 2.f;
+
+    // 헌호수정 - 반동
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recoil") float RecoilPitch         = 1.5f; // 발사당 위로 밀리는 양
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recoil") float RecoilYaw           = 0.3f; // 발사당 좌우 랜덤 흔들림
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recoil") float RecoilRecoverySpeed = 5.f;  // 복귀 속도 (초당)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recoil") TSubclassOf<UCameraShakeBase> FireShakeClass; // 발사 시 카메라 쉐이크
 
     // ADS(정조준)
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float ADSFOVMultiplier    = 0.6f;

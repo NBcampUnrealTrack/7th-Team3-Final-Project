@@ -45,6 +45,30 @@ void UNCGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	}
 
 	Cam->SetFieldOfView(FMath::FInterpTo(Current, TargetFOV, DeltaTime, ADSInterpSpeed));
+
+	// 헌호수정 - 반동 복귀
+	if (!FMath::IsNearlyZero(CurrentRecoilPitch) || !FMath::IsNearlyZero(CurrentRecoilYaw))
+	{
+		const FNCGunData* Data = GetActiveGunData();
+		const float RecoverySpeed = Data ? Data->RecoilRecoverySpeed : 5.f;
+
+		ACharacter* Char = Cast<ACharacter>(GetOwner());
+		APlayerController* PC = Char ? Cast<APlayerController>(Char->GetController()) : nullptr;
+		if (PC && Char->IsLocallyControlled())
+		{
+			const float PitchStep = FMath::Min(FMath::Abs(CurrentRecoilPitch), RecoverySpeed * DeltaTime);
+			const float YawStep   = FMath::Min(FMath::Abs(CurrentRecoilYaw),   RecoverySpeed * DeltaTime);
+
+			PC->AddPitchInput(PitchStep);   // 위로 밀었던 만큼 복귀
+			PC->AddYawInput(-FMath::Sign(CurrentRecoilYaw) * YawStep);
+
+			CurrentRecoilPitch = FMath::Sign(CurrentRecoilPitch) * (FMath::Abs(CurrentRecoilPitch) - PitchStep);
+			CurrentRecoilYaw   = FMath::Sign(CurrentRecoilYaw)   * (FMath::Abs(CurrentRecoilYaw)   - YawStep);
+
+			if (FMath::IsNearlyZero(CurrentRecoilPitch, 0.01f)) CurrentRecoilPitch = 0.f;
+			if (FMath::IsNearlyZero(CurrentRecoilYaw,   0.01f)) CurrentRecoilYaw   = 0.f;
+		}
+	}
 }
 
 // ─────────────────────────────────────────────
@@ -278,6 +302,16 @@ void UNCGunComponent::FireOnce()
 	AActor* Owner = GetOwner();
 	if (!Owner) return;
 
+	// 헌호수정 - 발사 시 카메라 방향으로 캐릭터 즉시 회전
+	if (ACharacter* RotChar = Cast<ACharacter>(Owner))
+	{
+		if (APlayerController* RotPC = Cast<APlayerController>(RotChar->GetController()))
+		{
+			FRotator ControlRot = RotPC->GetControlRotation();
+			Owner->SetActorRotation(FRotator(0.f, ControlRot.Yaw, 0.f));
+		}
+	}
+
 	// 기본 발사 방향: 카메라 전방 (조준 기준)
 	FVector  SpawnLocation = Owner->GetActorLocation();
 	FRotator SpawnRotation = Owner->GetActorRotation();
@@ -325,6 +359,17 @@ void UNCGunComponent::FireOnce()
 				FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
 	}
 
+	// 헌호수정 - 반동 적용
+	ApplyRecoil(Data);
+
+	// 헌호수정 - 발사 카메라 쉐이크
+	if (Data->FireShakeClass)
+	{
+		ACharacter* ShakeChar = Cast<ACharacter>(Owner);
+		if (APlayerController* PC = ShakeChar ? Cast<APlayerController>(ShakeChar->GetController()) : nullptr)
+			PC->ClientStartCameraShake(Data->FireShakeClass);
+	}
+
 	const int32 PelletCount = FMath::Max(1, Data->NumPellets);
 	for (int32 i = 0; i < PelletCount; ++i)
 	{
@@ -361,6 +406,27 @@ void UNCGunComponent::FireOnce()
 		}
 	}
 }
+// 헌호수정 - 반동 입력 적용
+void UNCGunComponent::ApplyRecoil(const FNCGunData* Data)
+{
+	if (!Data) return;
+
+	ACharacter* Char = Cast<ACharacter>(GetOwner());
+	APlayerController* PC = Char ? Cast<APlayerController>(Char->GetController()) : nullptr;
+	if (!PC || !Char->IsLocallyControlled()) return;
+
+	const float PitchAmount = Data->RecoilPitch;
+	const float YawAmount   = FMath::RandRange(-Data->RecoilYaw, Data->RecoilYaw);
+
+	PC->AddPitchInput(-PitchAmount); // 위로 밀기 (Pitch 음수 = 위)
+	PC->AddYawInput(YawAmount);
+
+	CurrentRecoilPitch += PitchAmount;
+	CurrentRecoilYaw   += YawAmount;
+
+	SetComponentTickEnabled(true); // 복귀를 위해 Tick 활성화
+}
+
 // ─────────────────────────────────────────────
 // 재장전
 
