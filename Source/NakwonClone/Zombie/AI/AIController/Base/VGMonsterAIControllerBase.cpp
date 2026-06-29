@@ -40,9 +40,9 @@ AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
 	
 	// 시각 설정
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-	SightConfig->SightRadius = 800.f;						 // 시야 반경
-	SightConfig->LoseSightRadius = 1100.f;					 // 시야 해제 반경
-	SightConfig->PeripheralVisionAngleDegrees = 70.f;		 // 시야각 (좌우 합산 120도)
+	SightConfig->SightRadius = 500.f;						 // 시야 반경
+	SightConfig->LoseSightRadius = 800.f;					 // 시야 해제 반경
+	SightConfig->PeripheralVisionAngleDegrees = 60.f;		 // 시야각 (좌우 합산 120도)
 	SightConfig->SetMaxAge(5.f);							 // 감지 정보 유지 시간 (시각)
 	
 	// 적 | 중립 | 아군 모두 감지 설정
@@ -52,7 +52,7 @@ AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
 
 	// 청각 설정
 	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
-	HearingConfig->HearingRange = 5000.f;				// 청각 반경
+	HearingConfig->HearingRange = 6000.f;				// 청각 반경
 	HearingConfig->SetMaxAge(60.f);						// 감지 정보 유지 시간 (청각)
 	HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
 	HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
@@ -112,7 +112,8 @@ void AVGMonsterAIControllerBase::OnPossess(APawn* InPawn)
 void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (!Blackboard || !Actor) return;
-
+	if (Blackboard->GetValueAsBool(IsDeadKey)) return;
+	
 	// ASC에서 플레이어 태그 확인
 	UAbilitySystemComponent* TargetASC = 
 		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
@@ -129,7 +130,6 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 			// 시각 감지 성공 → TargetActor 등록
 			// UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지: %s"), *Actor->GetName());
 			Blackboard->SetValueAsObject(TargetActorKey, Actor);
-			Blackboard->SetValueAsVector(TargetActorLocationKey, Actor->GetActorLocation());
 			Blackboard->ClearValue(HeardLocationKey);
 		}
 		else
@@ -137,6 +137,7 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 			// 시각 감지 해제 → TargetActor 초기화
 			// UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지 해제: %s"), *Actor->GetName());
 			Blackboard->ClearValue(TargetActorKey);
+			Blackboard->SetValueAsVector(TargetActorLocationKey, Actor->GetActorLocation());
 		}
 	}
 #pragma endregion
@@ -148,12 +149,26 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 		{
 			// 청각 감지 성공 → 소리 발생 위치 등록
 			// UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 청각 감지 위치: %s"), *Stimulus.StimulusLocation.ToString());
-			Blackboard->SetValueAsVector(HeardLocationKey, Stimulus.StimulusLocation);
-    
-			AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(GetPawn());
-			if (Walker)
+			if (Blackboard->GetValueAsObject(TargetActorKey)) return;
+			
+			if (Blackboard->IsVectorValueSet(HeardLocationKey))
 			{
-				Walker->WakeUpWithDelay();
+				const FVector CurrentLocation = Blackboard->GetValueAsVector(HeardLocationKey);
+				if (FVector::DistSquared(Stimulus.StimulusLocation, CurrentLocation) < FMath::Square(HeardUpdate))
+				{
+					return;
+				}
+			}
+			UE_LOG(LogAIPc, Warning, TEXT("[Hearing] HeardLocation set: %s (t=%.2f)"),
+	*Stimulus.StimulusLocation.ToString(), GetWorld()->GetTimeSeconds());
+			Blackboard->SetValueAsVector(HeardLocationKey, Stimulus.StimulusLocation);
+			if (!Blackboard->GetValueAsBool(IsAwakeKey))
+			{
+				AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(GetPawn());
+				if (Walker)
+				{
+					Walker->WakeUpWithDelay();
+				}
 			}
 		}
 	}

@@ -59,6 +59,10 @@ private:
 	// 감지 콜백
 	UFUNCTION()
 	void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	
+	UPROPERTY(EditAnywhere, Category = "AI|Perception")
+	float HeardUpdate = 200.f;
+	
 #pragma endregion
 
 protected:
