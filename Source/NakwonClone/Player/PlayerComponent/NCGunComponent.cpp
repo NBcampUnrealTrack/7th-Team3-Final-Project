@@ -11,6 +11,7 @@
 #include "DrawDebugHelpers.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
 #include "Animation/AnimMontage.h"
 
 UNCGunComponent::UNCGunComponent()
@@ -283,12 +284,6 @@ void UNCGunComponent::FireOnce()
 		}
 	}
 
-	// 머즐 소켓이 존재하면 발사 위치만 소켓으로 교체 (방향은 카메라 유지)
-	if (EquippedGunMeshComp && !Data->MuzzleSocketName.IsNone()
-		&& EquippedGunMeshComp->DoesSocketExist(Data->MuzzleSocketName))
-	{
-		SpawnLocation = EquippedGunMeshComp->GetSocketLocation(Data->MuzzleSocketName);
-	}
 
 	PlayGunMontage(Data->FireMontage);
 
@@ -296,25 +291,31 @@ void UNCGunComponent::FireOnce()
 	if (!Data->FireSound.IsNull())
 		UGameplayStatics::PlaySoundAtLocation(this, Data->FireSound.LoadSynchronous(), SpawnLocation);
 
-	// 총구 플래시 / 탄피 이펙트 (메시 소켓 기준)
+	if (MuzzleFlashComp)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MuzzleFlashTimerHandle);
+		MuzzleFlashComp->Activate(true);
+		GetWorld()->GetTimerManager().SetTimer(MuzzleFlashTimerHandle, [this]()
+		{
+			if (MuzzleFlashComp) MuzzleFlashComp->Deactivate();
+		}, 0.08f, false);
+	}
+	else if (EquippedGunMeshComp && !Data->MuzzleFlashParticle.IsNull())
+		UGameplayStatics::SpawnEmitterAttached(
+			Data->MuzzleFlashParticle.LoadSynchronous(), EquippedGunMeshComp, Data->MuzzleSocketName,
+			FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
+
+	// 탄피 이펙트 (메시 소켓 기준)
 	if (EquippedGunMeshComp)
 	{
-		auto SpawnEffect = [&](FName SocketName, TSoftObjectPtr<UNiagaraSystem> NiagaraSoft, TSoftObjectPtr<UParticleSystem> ParticleSoft)
-		{
-			if (!NiagaraSoft.IsNull())
-				UNiagaraFunctionLibrary::SpawnSystemAttached(
-					NiagaraSoft.LoadSynchronous(), EquippedGunMeshComp, SocketName,
-					FVector::ZeroVector, FRotator::ZeroRotator,
-					EAttachLocation::SnapToTarget, true);
-			else if (!ParticleSoft.IsNull())
-				UGameplayStatics::SpawnEmitterAttached(
-					ParticleSoft.LoadSynchronous(), EquippedGunMeshComp, SocketName,
-					FVector::ZeroVector, FRotator::ZeroRotator,
-					EAttachLocation::SnapToTarget);
-		};
-
-		SpawnEffect(Data->MuzzleSocketName, Data->MuzzleFlashEffect, Data->MuzzleFlashParticle);
-		SpawnEffect(Data->EjectSocketName,  Data->ShellCasingEffect,  Data->ShellCasingParticle);
+		if (!Data->ShellCasingEffect.IsNull())
+			UNiagaraFunctionLibrary::SpawnSystemAttached(
+				Data->ShellCasingEffect.LoadSynchronous(), EquippedGunMeshComp, Data->EjectSocketName,
+				FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true);
+		else if (!Data->ShellCasingParticle.IsNull())
+			UGameplayStatics::SpawnEmitterAttached(
+				Data->ShellCasingParticle.LoadSynchronous(), EquippedGunMeshComp, Data->EjectSocketName,
+				FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
 	}
 
 	const int32 PelletCount = FMath::Max(1, Data->NumPellets);
@@ -334,21 +335,22 @@ void UNCGunComponent::FireOnce()
 		// 	IsADS() ? FColor::Blue : FColor::Red,
 		// 	false, 3.f, 0, 1.f);
 
-		FActorSpawnParameters Params;
-		Params.Owner      = Owner;
-		Params.Instigator = Cast<APawn>(Owner);
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		ANCProjectile* NCProj = GetWorld()->SpawnActorDeferred<ANCProjectile>(
+			Data->ProjectileClass,
+			FTransform(PelletRotation, SpawnLocation),
+			Owner, Cast<APawn>(Owner),
+			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
-		if (ANCProjectile* NCProj = GetWorld()->SpawnActor<ANCProjectile>(Data->ProjectileClass, SpawnLocation, PelletRotation, Params))
+		if (NCProj)
 		{
-			NCProj->Damage               = Data->Damage;
-			NCProj->MaxRange             = Data->MaxRange;
-			NCProj->ProjectileSpeed      = Data->ProjectileSpeed;
-			NCProj->ImpactFleshEffect    = Data->ImpactFleshEffect.Get();
-			NCProj->ImpactSurfaceEffect  = Data->ImpactSurfaceEffect.Get();
-			NCProj->TracerEffect         = Data->TracerEffect.LoadSynchronous();
-			NCProj->ImpactFleshParticle  = Data->ImpactFleshParticle.Get();
+			NCProj->Damage                = Data->Damage;
+			NCProj->MaxRange              = Data->MaxRange;
+			NCProj->ProjectileSpeed       = Data->ProjectileSpeed;
+			NCProj->ImpactFleshEffect     = Data->ImpactFleshEffect.Get();
+			NCProj->ImpactSurfaceEffect   = Data->ImpactSurfaceEffect.Get();
+			NCProj->ImpactFleshParticle   = Data->ImpactFleshParticle.Get();
 			NCProj->ImpactSurfaceParticle = Data->ImpactSurfaceParticle.Get();
+			NCProj->FinishSpawning(FTransform(PelletRotation, SpawnLocation));
 		}
 	}
 }
@@ -518,10 +520,34 @@ void UNCGunComponent::AttachGunMesh(const FNCGunData* Data)
 		Char->GetMesh(),
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		Data->HandSocketName);
+
+	if (!Data->MuzzleFlashEffect.IsNull())
+	{
+		MuzzleFlashComp = NewObject<UNiagaraComponent>(Char);
+		MuzzleFlashComp->SetAsset(Data->MuzzleFlashEffect.LoadSynchronous());
+		MuzzleFlashComp->SetAutoActivate(false);
+		MuzzleFlashComp->RegisterComponent();
+		MuzzleFlashComp->AttachToComponent(
+			EquippedGunMeshComp,
+			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+			Data->MuzzleSocketName);
+		MuzzleFlashComp->OnSystemFinished.AddDynamic(this, &UNCGunComponent::OnMuzzleFlashFinished);
+	}
+}
+
+void UNCGunComponent::OnMuzzleFlashFinished(UNiagaraComponent* /*PSystem*/)
+{
+	if (MuzzleFlashComp)
+		MuzzleFlashComp->Deactivate();
 }
 
 void UNCGunComponent::DetachGunMesh()
 {
+	if (MuzzleFlashComp)
+	{
+		MuzzleFlashComp->DestroyComponent();
+		MuzzleFlashComp = nullptr;
+	}
 	if (EquippedGunMeshComp)
 	{
 		EquippedGunMeshComp->DestroyComponent();
