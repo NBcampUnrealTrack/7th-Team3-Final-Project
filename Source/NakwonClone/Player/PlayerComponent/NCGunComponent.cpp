@@ -1,6 +1,5 @@
-﻿#include "NCGunComponent.h"
+#include "NCGunComponent.h"
 #include "Common/NCGameplayTags.h"
-#include "Engine/DataTable.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "GameFramework/Character.h"
@@ -50,8 +49,7 @@ void UNCGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// 헌호수정 - 반동 복귀
 	if (!FMath::IsNearlyZero(CurrentRecoilPitch) || !FMath::IsNearlyZero(CurrentRecoilYaw))
 	{
-		const FNCGunData* Data = GetActiveGunData();
-		const float RecoverySpeed = Data ? Data->RecoilRecoverySpeed : 5.f;
+		const float RecoverySpeed = ActiveGunData ? ActiveGunData->RecoilRecoverySpeed : 5.f;
 
 		ACharacter* Char = Cast<ACharacter>(GetOwner());
 		APlayerController* PC = Char ? Cast<APlayerController>(Char->GetController()) : nullptr;
@@ -78,165 +76,45 @@ void UNCGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 bool UNCGunComponent::IsFiring() const    { return ActiveGunActions.HasTag(NCGun::Action_Firing); }
 bool UNCGunComponent::IsReloading() const { return ActiveGunActions.HasTag(NCGun::Action_Reloading); }
 bool UNCGunComponent::IsADS() const       { return ActiveGunActions.HasTag(NCGun::Action_ADS); }
-bool UNCGunComponent::IsSwapping() const  { return ActiveGunActions.HasTag(NCGun::Action_Swapping); }
 
 bool UNCGunComponent::CanFire() const
 {
-	if (!HasActiveGun()) return false;
-	if (IsReloading())   return false;
-	if (IsSwapping())    return false;
-
-	const FNCGunSlotData& SlotData = (ActiveSlot == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
-	return SlotData.CurrentAmmo > 0;
-}
-// ─────────────────────────────────────────────
-// 탄약 / 총기 정보 getter
-
-int32 UNCGunComponent::GetCurrentAmmo() const
-{
-	if (!HasActiveGun()) return 0;
-	return (ActiveSlot == ENCGunSlot::Primary) ? PrimarySlot.CurrentAmmo : SecondarySlot.CurrentAmmo;
-}
-
-int32 UNCGunComponent::GetReserveAmmo() const
-{
-	if (!HasActiveGun()) return 0;
-	return (ActiveSlot == ENCGunSlot::Primary) ? PrimarySlot.ReserveAmmo : SecondarySlot.ReserveAmmo;
-}
-
-FName UNCGunComponent::GetActiveGunID() const
-{
-	if (ActiveSlot == ENCGunSlot::Primary)   return PrimarySlot.GunID;
-	if (ActiveSlot == ENCGunSlot::Secondary) return SecondarySlot.GunID;
-	return NAME_None;
-}
-
-FName UNCGunComponent::GetOccupantGunID(FName ForGunID) const
-{
-	const FNCGunData* Data = FindGunData(ForGunID);
-	if (!Data) return NAME_None;
-
-	if (Data->SlotType == ENCGunSlot::Primary)   return PrimarySlot.GunID;
-	if (Data->SlotType == ENCGunSlot::Secondary)  return SecondarySlot.GunID;
-	return NAME_None;
+	if (!HasActiveGun())  return false;
+	if (IsReloading())    return false;
+	return CurrentAmmo > 0;
 }
 
 // ─────────────────────────────────────────────
-// 장착 / 해제
+// 활성화 / 비활성화
 
-bool UNCGunComponent::EquipGun(FName GunID)
+void UNCGunComponent::ActivateGun(const FNCGunData* InGunData, int32 InCurrentAmmo, int32 InReserveAmmo)
 {
-	const FNCGunData* Data = FindGunData(GunID);
-	if (!Data) return false;
+	ActiveGunData = InGunData;
+	CurrentAmmo   = InCurrentAmmo;
+	ReserveAmmo   = InReserveAmmo;
 
-	FNCGunSlotData& Slot = (Data->SlotType == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
-	Slot.GunID       = GunID;
-	Slot.CurrentAmmo = Data->MagazineSize;
-	Slot.ReserveAmmo = Data->MaxReserveAmmo;
-
-	if (ActiveSlot == Data->SlotType)
+	if (ActiveGunData)
 	{
-		CurrentFireMode = Data->DefaultFireMode;
+		CurrentFireMode = ActiveGunData->DefaultFireMode;
 		OnFireModeChanged.Broadcast(CurrentFireMode);
-		AttachGunMesh(Data);
-	}
-
-	OnGunEquipped.Broadcast(GunID);
-	return true;
-}
-
-bool UNCGunComponent::EquipGunWithAmmo(FName GunID, int32 CurrentAmmo, int32 ReserveAmmo)
-{
-	const FNCGunData* Data = FindGunData(GunID);
-	if (!Data) return false;
-
-	FNCGunSlotData& Slot = (Data->SlotType == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
-	Slot.GunID       = GunID;
-	Slot.CurrentAmmo = FMath::Clamp(CurrentAmmo, 0, Data->MagazineSize);
-	Slot.ReserveAmmo = FMath::Clamp(ReserveAmmo, 0, Data->MaxReserveAmmo);
-
-	if (ActiveSlot == Data->SlotType)
-	{
-		CurrentFireMode = Data->DefaultFireMode;
-		OnFireModeChanged.Broadcast(CurrentFireMode);
-		AttachGunMesh(Data);
-	}
-
-	OnGunEquipped.Broadcast(GunID);
-	return true;
-}
-
-void UNCGunComponent::UnequipGun(ENCGunSlot Slot)
-{
-	if (Slot == ENCGunSlot::Primary)   PrimarySlot.Clear();
-	if (Slot == ENCGunSlot::Secondary) SecondarySlot.Clear();
-
-	if (ActiveSlot == Slot)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
-		GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
-		GetWorld()->GetTimerManager().ClearTimer(SwapTimerHandle);
-		ActiveSlot = ENCGunSlot::None;
-		ActiveGunActions.Reset();
-		RestoreFOV();
-		DetachGunMesh();
-		OnGunUnequipped.Broadcast();
+		AttachGunMesh(ActiveGunData);
+		PlayGunMontage(ActiveGunData->EquipMontage);
 	}
 }
 
-void UNCGunComponent::SelectSlot(ENCGunSlot Slot)
+void UNCGunComponent::DeactivateGun()
 {
-	if (ActiveSlot == Slot) return;
-	if (IsSwapping()) return;
-
-	StopFire();
+	GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
-	RestoreFOV();
-
-	if (const FNCGunData* CurrentData = GetActiveGunData())
-		PlayGunMontage(CurrentData->UnequipMontage);
-
-	// 태그 정리 후 스왑
 	ActiveGunActions.Reset();
-	ActiveGunActions.AddTag(NCGun::Action_Swapping);
-
-	// SwapDelay 후 실제 슬롯 전환
-	GetWorld()->GetTimerManager().SetTimer(
-		SwapTimerHandle,
-		FTimerDelegate::CreateUObject(this, &UNCGunComponent::OnSwapFinished, Slot),
-		SwapDelay, false);
+	RestoreFOV();
+	DetachGunMesh();
+	ActiveGunData = nullptr;
 }
 
-void UNCGunComponent::OnSwapFinished(ENCGunSlot TargetSlot)
+void UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 {
-	ActiveGunActions.RemoveTag(NCGun::Action_Swapping);
-	ActiveSlot = TargetSlot;
-
-	const FNCGunData* Data = GetActiveGunData();
-	if (Data)
-	{
-		CurrentFireMode = Data->DefaultFireMode;
-		OnFireModeChanged.Broadcast(CurrentFireMode);
-		AttachGunMesh(Data);
-		PlayGunMontage(Data->EquipMontage);
-
-		const FNCGunSlotData& SlotData = GetActiveSlotData();
-		OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
-		OnGunEquipped.Broadcast(SlotData.GunID);
-	}
-	else
-	{
-		DetachGunMesh();
-		OnGunUnequipped.Broadcast();
-	}
-
-	OnSwapCompleted.Broadcast(TargetSlot);
-	if (Data)
-	{
-		UE_LOG(LogTemp, Warning,
-			TEXT("GunTypeTag = %s"),
-			*Data->GunTypeTag.ToString());
-	}
+	if (Data) PlayGunMontage(Data->UnequipMontage);
 }
 
 // ─────────────────────────────────────────────
@@ -245,16 +123,11 @@ void UNCGunComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 void UNCGunComponent::StartFire()
 {
 	// 탄약 없을 때 빈 총 클릭음
-	if (HasActiveGun() && !IsReloading() && !IsSwapping())
+	if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0)
 	{
-		const FNCGunSlotData& SlotData = (ActiveSlot == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
-		if (SlotData.CurrentAmmo <= 0)
-		{
-			const FNCGunData* Data = GetActiveGunData();
-			if (Data && !Data->EmptyClickSound.IsNull())
-				UGameplayStatics::PlaySound2D(this, Data->EmptyClickSound.LoadSynchronous());
-			return;
-		}
+		if (!ActiveGunData->EmptyClickSound.IsNull())
+			UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
+		return;
 	}
 
 	if (!CanFire()) return;
@@ -264,10 +137,7 @@ void UNCGunComponent::StartFire()
 
 	if (CurrentFireMode == ENCFireMode::FullAuto)
 	{
-		const FNCGunData* Data = GetActiveGunData();
-		if (!Data) return;
-
-		const float Interval = (Data->FireRate > 0.f) ? (1.f / Data->FireRate) : 0.1f;
+		const float Interval = (ActiveGunData->FireRate > 0.f) ? (1.f / ActiveGunData->FireRate) : 0.1f;
 		GetWorld()->GetTimerManager().SetTimer(
 			FullAutoTimerHandle,
 			this, &UNCGunComponent::FireOnce,
@@ -293,12 +163,11 @@ void UNCGunComponent::FireOnce()
 		return;
 	}
 
-	const FNCGunData* Data = GetActiveGunData();
+	const FNCGunData* Data = ActiveGunData;
 	if (!Data || !Data->ProjectileClass) return;
 
-	FNCGunSlotData& SlotData = GetActiveSlotData();
-	--SlotData.CurrentAmmo;
-	OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
+	--CurrentAmmo;
+	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 
 	AActor* Owner = GetOwner();
 	if (!Owner) return;
@@ -312,7 +181,6 @@ void UNCGunComponent::FireOnce()
 			Owner->SetActorRotation(FRotator(0.f, ControlRot.Yaw, 0.f));
 		}
 	}
-
 	// 기본 발사 방향: 카메라 전방 (조준 기준)
 	FVector  SpawnLocation = Owner->GetActorLocation();
 	FRotator SpawnRotation = Owner->GetActorRotation();
@@ -348,44 +216,16 @@ void UNCGunComponent::FireOnce()
 		SpawnRotation = CamForward.Rotation();
 	}
 
-
 	PlayGunMontage(Data->FireMontage);
-
 	// 발사음 재생
 	if (!Data->FireSound.IsNull())
 		UGameplayStatics::PlaySoundAtLocation(this, Data->FireSound.LoadSynchronous(), SpawnLocation);
 
 	if (MuzzleFlashComp)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(MuzzleFlashTimerHandle);
 		MuzzleFlashComp->Activate(true);
-		GetWorld()->GetTimerManager().SetTimer(MuzzleFlashTimerHandle, [this]()
-		{
-			if (MuzzleFlashComp) MuzzleFlashComp->Deactivate();
-		}, 0.08f, false);
-	}
-	else if (EquippedGunMeshComp && !Data->MuzzleFlashParticle.IsNull())
-		UGameplayStatics::SpawnEmitterAttached(
-			Data->MuzzleFlashParticle.LoadSynchronous(), EquippedGunMeshComp, Data->MuzzleSocketName,
-			FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
 
-	// 탄피 이펙트 (메시 소켓 기준)
-	if (EquippedGunMeshComp)
-	{
-		if (!Data->ShellCasingEffect.IsNull())
-			UNiagaraFunctionLibrary::SpawnSystemAttached(
-				Data->ShellCasingEffect.LoadSynchronous(), EquippedGunMeshComp, Data->EjectSocketName,
-				FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true);
-		else if (!Data->ShellCasingParticle.IsNull())
-			UGameplayStatics::SpawnEmitterAttached(
-				Data->ShellCasingParticle.LoadSynchronous(), EquippedGunMeshComp, Data->EjectSocketName,
-				FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
-	}
-
-	// 헌호수정 - 반동 적용
 	ApplyRecoil(Data);
 
-	// 헌호수정 - 발사 카메라 쉐이크
 	if (Data->FireShakeClass)
 	{
 		ACharacter* ShakeChar = Cast<ACharacter>(Owner);
@@ -403,12 +243,6 @@ void UNCGunComponent::FireOnce()
 			PelletRotation.Yaw   += FMath::RandRange(-Spread, Spread);
 			PelletRotation.Pitch += FMath::RandRange(-Spread, Spread);
 		}
-
-		// 탄도 디버그 라인 — ADS: 파란색 / 힙파이어: 빨간색 (총구 소켓 발사 전환 후 재테스트)
-		// DrawDebugLine(GetWorld(), SpawnLocation,
-		// 	SpawnLocation + PelletRotation.Vector() * Data->MaxRange,
-		// 	IsADS() ? FColor::Blue : FColor::Red,
-		// 	false, 3.f, 0, 1.f);
 
 		ANCProjectile* NCProj = GetWorld()->SpawnActorDeferred<ANCProjectile>(
 			Data->ProjectileClass,
@@ -431,6 +265,7 @@ void UNCGunComponent::FireOnce()
 		}
 	}
 }
+
 // 헌호수정 - 반동 입력 적용
 void UNCGunComponent::ApplyRecoil(const FNCGunData* Data)
 {
@@ -457,21 +292,19 @@ void UNCGunComponent::ApplyRecoil(const FNCGunData* Data)
 
 void UNCGunComponent::Reload()
 {
-	if (IsReloading() || IsSwapping() || !HasActiveGun()) return;
+	if (IsReloading() || !HasActiveGun()) return;
 
-	FNCGunSlotData& SlotData = GetActiveSlotData();
-	const FNCGunData* Data   = GetActiveGunData();
+	const FNCGunData* Data = ActiveGunData;
 	if (!Data) return;
 
-	if (SlotData.ReserveAmmo <= 0)                  return;
-	if (SlotData.CurrentAmmo >= Data->MagazineSize) return;
+	if (ReserveAmmo <= 0)                  return;
+	if (CurrentAmmo >= Data->MagazineSize) return;
 
 	StopFire();
 	ActiveGunActions.AddTag(NCGun::Action_Reloading);
 
 	PlayGunMontage(Data->ReloadMontage);
 
-	// 재장전음 재생
 	if (!Data->ReloadSound.IsNull())
 		UGameplayStatics::PlaySoundAtLocation(this, Data->ReloadSound.LoadSynchronous(), GetOwner()->GetActorLocation());
 
@@ -485,16 +318,15 @@ void UNCGunComponent::OnReloadFinished()
 {
 	ActiveGunActions.RemoveTag(NCGun::Action_Reloading);
 
-	FNCGunSlotData& SlotData = GetActiveSlotData();
-	const FNCGunData* Data   = GetActiveGunData();
+	const FNCGunData* Data = ActiveGunData;
 	if (!Data) return;
 
-	const int32 Needed = Data->MagazineSize - SlotData.CurrentAmmo;
-	const int32 Take   = FMath::Min(Needed, SlotData.ReserveAmmo);
-	SlotData.CurrentAmmo += Take;
-	SlotData.ReserveAmmo -= Take;
+	const int32 Needed = Data->MagazineSize - CurrentAmmo;
+	const int32 Take   = FMath::Min(Needed, ReserveAmmo);
+	CurrentAmmo += Take;
+	ReserveAmmo -= Take;
 
-	OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
+	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 }
 
 // ─────────────────────────────────────────────
@@ -502,22 +334,19 @@ void UNCGunComponent::OnReloadFinished()
 
 void UNCGunComponent::StartADS()
 {
-	if (!HasActiveGun() || IsSwapping()) return;
+	if (!HasActiveGun()) return;
 
 	ActiveGunActions.AddTag(NCGun::Action_ADS);
 
 	if (AActor* Owner = GetOwner())
 	{
 		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
-		{
 			ASC->AddLooseGameplayTag(NCWeapon::Action_Aiming);
-		}
 	}
 
 	ApplyADSFOV();
 
-	const FNCGunData* Data = GetActiveGunData();
-	if (Data) PlayGunMontage(Data->ADSInMontage);
+	if (ActiveGunData) PlayGunMontage(ActiveGunData->ADSInMontage);
 }
 
 void UNCGunComponent::StopADS()
@@ -527,23 +356,18 @@ void UNCGunComponent::StopADS()
 	if (AActor* Owner = GetOwner())
 	{
 		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
-		{
 			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Aiming);
-		}
 	}
 
 	RestoreFOV();
 
-	const FNCGunData* Data = GetActiveGunData();
-	if (Data) PlayGunMontage(Data->ADSOutMontage);
+	if (ActiveGunData) PlayGunMontage(ActiveGunData->ADSOutMontage);
 }
 
 void UNCGunComponent::ApplyADSFOV()
 {
-	const FNCGunData* Data = GetActiveGunData();
-	if (!Data) return;
-
-	TargetFOV = DefaultFOV * Data->ADSFOVMultiplier;
+	if (!ActiveGunData) return;
+	TargetFOV = DefaultFOV * ActiveGunData->ADSFOVMultiplier;
 	SetComponentTickEnabled(true);
 }
 
@@ -565,8 +389,7 @@ UCameraComponent* UNCGunComponent::FindCamera() const
 
 void UNCGunComponent::ToggleFireMode()
 {
-	const FNCGunData* Data = GetActiveGunData();
-	if (!Data || !Data->bCanToggleFireMode) return;
+	if (!ActiveGunData || !ActiveGunData->bCanToggleFireMode) return;
 
 	ActiveGunActions.AddTag(NCGun::Action_ToggleFireMode);
 
@@ -577,27 +400,6 @@ void UNCGunComponent::ToggleFireMode()
 	OnFireModeChanged.Broadcast(CurrentFireMode);
 
 	ActiveGunActions.RemoveTag(NCGun::Action_ToggleFireMode);
-}
-
-// ─────────────────────────────────────────────
-// 헬퍼
-
-const FNCGunData* UNCGunComponent::GetActiveGunData() const
-{
-	if (ActiveSlot == ENCGunSlot::Primary)   return FindGunData(PrimarySlot.GunID);
-	if (ActiveSlot == ENCGunSlot::Secondary) return FindGunData(SecondarySlot.GunID);
-	return nullptr;
-}
-
-FNCGunSlotData& UNCGunComponent::GetActiveSlotData()
-{
-	return (ActiveSlot == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
-}
-
-const FNCGunData* UNCGunComponent::FindGunData(FName GunID) const
-{
-	if (!GunDataTable || GunID.IsNone()) return nullptr;
-	return GunDataTable->FindRow<FNCGunData>(GunID, TEXT("NCGunComponent"));
 }
 
 // ─────────────────────────────────────────────
@@ -631,8 +433,6 @@ void UNCGunComponent::AttachGunMesh(const FNCGunData* Data)
 	EquippedGunMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	EquippedGunMeshComp->RegisterComponent();
 
-	// TODO: 찬우님이 스켈레톤에 총기 전용 소켓 추가하면 DT_GunData HandSocketName에 입력
-	//       소켓 미존재 시 루트 본에 부착됨 (임시 확인용)
 	EquippedGunMeshComp->AttachToComponent(
 		Char->GetMesh(),
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,

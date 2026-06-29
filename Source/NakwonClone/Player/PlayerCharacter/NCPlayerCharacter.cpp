@@ -17,6 +17,11 @@
 #include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerComponent/NCGunComponent.h"
+#include "Player/PlayerComponent/NCRifleComponent.h"
+#include "Player/PlayerComponent/NCShotgunComponent.h"
+#include "Player/PlayerComponent/NCPistolComponent.h"
+#include "Player/PlayerComponent/NCEquipmentComponent.h"
+#include "Common/NCGameplayTags.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
@@ -27,6 +32,11 @@ ANCPlayerCharacter::ANCPlayerCharacter()
     InitComponents();
 
     // 헌호수정 - DataTable에서 속도 적용하므로 하드코딩 제거
+}
+
+UNCGunComponent* ANCPlayerCharacter::GetGunComponent() const
+{
+	return EquipmentComponent ? EquipmentComponent->GetActiveWeapon() : nullptr;
 }
 
 void ANCPlayerCharacter::InitCamera()
@@ -49,7 +59,10 @@ void ANCPlayerCharacter::InitComponents()
     LocomotionComponent = CreateDefaultSubobject<UNCLocomotionComponent>(TEXT("LocomotionComponent"));
     CombatComponent = CreateDefaultSubobject<UNCCombatComponent>(TEXT("CombatComponent"));
     AssassinationComponent = CreateDefaultSubobject<UNCAssassinationComponent>(TEXT("AssassinationComponent")); //헌호수정
-    GunComponent    = CreateDefaultSubobject<UNCGunComponent>(TEXT("GunComponent"));
+    EquipmentComponent = CreateDefaultSubobject<UNCEquipmentComponent>(TEXT("EquipmentComponent"));
+    RifleComponent     = CreateDefaultSubobject<UNCRifleComponent>(TEXT("RifleComponent"));
+    ShotgunComponent   = CreateDefaultSubobject<UNCShotgunComponent>(TEXT("ShotgunComponent"));
+    PistolComponent    = CreateDefaultSubobject<UNCPistolComponent>(TEXT("PistolComponent"));
 
     // 헌호수정 - 플래시라이트 컴포넌트 생성 및 소켓에 부착
     FlashlightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FlashlightMesh"));
@@ -71,6 +84,14 @@ void ANCPlayerCharacter::InitComponents()
 void ANCPlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    // EquipmentComponent에 총기 타입별 컴포넌트 등록
+    if (EquipmentComponent)
+    {
+        EquipmentComponent->WeaponComponents.Add(NCGun::Type_Rifle,   RifleComponent);
+        EquipmentComponent->WeaponComponents.Add(NCGun::Type_Shotgun, ShotgunComponent);
+        EquipmentComponent->WeaponComponents.Add(NCGun::Type_Pistol,  PistolComponent);
+    }
 
     if (AbilitySystemComponent)
     {

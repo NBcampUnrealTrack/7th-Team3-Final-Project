@@ -6,7 +6,7 @@
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
-#include "Player/PlayerComponent/NCGunComponent.h" // 하상빈 추가
+#include "Player/PlayerComponent/NCEquipmentComponent.h" // 하상빈 추가
 #include "Player/PlayerData/NCWeaponData.h" // 하상빈 추가
 #include "NakwonClone/Item/ANCLootBoxActor.h"
 #include "NakwonClone/UI/Inventroy/LootBox/NCLootBoxHud.h"
@@ -36,9 +36,9 @@ void ANCPlayerController::BeginPlay()
     // 총기 슬롯 전환 완료 시점에 근접무기 장착/해제 연동
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
     {
-        if (UNCGunComponent* GunComp = PC->GetGunComponent())
+        if (UNCEquipmentComponent* EquipComp = PC->GetEquipmentComponent())
         {
-            GunComp->OnSwapCompleted.AddDynamic(this, &ANCPlayerController::OnGunSwapCompleted);
+            EquipComp->OnSwapCompleted.AddDynamic(this, &ANCPlayerController::OnGunSwapCompleted);
         }
     }
 }
@@ -246,8 +246,8 @@ void ANCPlayerController::Attack()
     if (!PC) return;
 
     // 총기 장착 중이면 근접 공격 차단 (총기는 IA_GunFire가 담당)
-    if (UNCGunComponent* GunComp = PC->GetGunComponent())
-        if (GunComp->HasActiveGun()) return;
+    if (UNCEquipmentComponent* EquipComp = PC->GetEquipmentComponent())
+        if (EquipComp->HasActiveGun()) return;
 
     // 헌호수정 - 공격 시 카메라 방향으로 캐릭터 즉시 회전
     FRotator ControlRot = GetControlRotation();
@@ -396,12 +396,12 @@ void ANCPlayerController::UnArm()
     if (!PC) return;
 
     // 총기 장착 중이면 해제 — bUnArmPending으로 콜백에서 근접 자동장착 방지
-    if (UNCGunComponent* GunComp = PC->GetGunComponent())
+    if (UNCEquipmentComponent* EquipComp = PC->GetEquipmentComponent())
     {
-        if (GunComp->HasActiveGun())
+        if (EquipComp->HasActiveGun())
         {
             bUnArmPending = true;
-            GunComp->SelectSlot(ENCGunSlot::None);
+            EquipComp->SelectSlot(ENCGunSlot::None);
         }
     }
 
@@ -431,64 +431,64 @@ void ANCPlayerController::ToggleFlashlight() //헌호수정
 // ─────────────────────────────────────────────
 // 하상빈 추가 - 총기 입력
 
-UNCGunComponent* ANCPlayerController::GetGunComp() const
+UNCEquipmentComponent* ANCPlayerController::GetGunComp() const
 {
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
-        return PC->GetGunComponent();
+        return PC->GetEquipmentComponent();
     return nullptr;
 }
 
 void ANCPlayerController::GunStartFire()
 {
     if (IsMenuBlockingInput()) return;
-    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->StartFire();
+    if (UNCEquipmentComponent* EC = GetGunComp()) EC->StartFire();
 }
 
 void ANCPlayerController::GunStopFire()
 {
-    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->StopFire();
+    if (UNCEquipmentComponent* EC = GetGunComp()) EC->StopFire();
 }
 
 void ANCPlayerController::GunStartADS()
 {
     if (IsMenuBlockingInput()) return;
-    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->StartADS();
+    if (UNCEquipmentComponent* EC = GetGunComp()) EC->StartADS();
 }
 
 void ANCPlayerController::GunStopADS()
 {
-    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->StopADS();
+    if (UNCEquipmentComponent* EC = GetGunComp()) EC->StopADS();
 }
 
 void ANCPlayerController::GunReload()
 {
     if (IsMenuBlockingInput()) return;
-    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->Reload();
+    if (UNCEquipmentComponent* EC = GetGunComp()) EC->Reload();
 }
 
 void ANCPlayerController::GunToggleFireMode()
 {
     if (IsMenuBlockingInput()) return;
-    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->ToggleFireMode();
+    if (UNCEquipmentComponent* EC = GetGunComp()) EC->ToggleFireMode();
 }
 
 void ANCPlayerController::GunSelectPrimary()
 {
     if (IsMenuBlockingInput()) return;
-    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->SelectSlot(ENCGunSlot::Primary);
+    if (UNCEquipmentComponent* EC = GetGunComp()) EC->SelectSlot(ENCGunSlot::Primary);
 }
 
 void ANCPlayerController::GunSelectSecondary()
 {
     if (IsMenuBlockingInput()) return;
-    if (UNCGunComponent* NCGC = GetGunComp()) NCGC->SelectSlot(ENCGunSlot::Secondary);
+    if (UNCEquipmentComponent* EC = GetGunComp()) EC->SelectSlot(ENCGunSlot::Secondary);
 }
 
 void ANCPlayerController::GunSelectMelee()
 {
     if (IsMenuBlockingInput()) return;
 
-    UNCGunComponent* GunComp = GetGunComp();
+    UNCEquipmentComponent* GunComp = GetGunComp();
     if (!GunComp) return;
 
     if (GunComp->HasActiveGun())
