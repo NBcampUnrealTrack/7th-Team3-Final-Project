@@ -24,7 +24,5 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Runner|Attack")
 	TSubclassOf<UGameplayEffect> BiteEffectClass;
 	
-	UPROPERTY(EditAnywhere, Category = "Runner|Speed")
-	TSubclassOf<UGameplayEffect> RunSpeedEffectClass;
 #pragma endregion
 };

@@ -5,7 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "GameplayEffect.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
 UBTTask_Chase::UBTTask_Chase()
 {
@@ -15,16 +15,16 @@ UBTTask_Chase::UBTTask_Chase()
 
 EBTNodeResult::Type UBTTask_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(OwnerComp.GetAIOwner()->GetPawn());
-	if (!Walker) return EBTNodeResult::Failed;
-
-	Walker->PlayAnimMontage(Walker->GetSelectedChaseMontage());
+	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
+	if (!Monster) return EBTNodeResult::Failed;
 	
-	UAbilitySystemComponent* ASC = Walker->GetAbilitySystemComponent();
-	if (ASC && Walker->ChaseSpeedEffectClass)
+	UAbilitySystemComponent* ASC = Monster->GetAbilitySystemComponent();
+	if (ASC && Monster->ChaseSpeedEffectClass)
 	{
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-		ASC->ApplyGameplayEffectToSelf(Walker->ChaseSpeedEffectClass.GetDefaultObject(), Walker->GetSelectedChaseLevel(), Context);
+		ASC->ApplyGameplayEffectToSelf(
+			Monster->ChaseSpeedEffectClass.GetDefaultObject(),
+			Monster->GetSelectedChaseLevel(), Context);
 	}
 	
 	return EBTNodeResult::Succeeded;
