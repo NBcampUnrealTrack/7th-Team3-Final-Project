@@ -166,6 +166,7 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Monster|Death")
 	void OnStartDissolve();
+	bool IsDead() const { return bIsDead; }
 	
 private:
 	bool bIsDead = false;
@@ -240,6 +241,7 @@ public:
 	// 좀비 등 → 플레이어 정면이 되도록 맞출 거리
 	UPROPERTY(EditAnywhere, Category = "Monster|Assassination")
 	float AssassinationAlignDistance = 90.f;
+	bool IsBeingAssassinated() const { return bIsBeingAssassinated; }
 
 private:
 	UFUNCTION(NetMulticast, Reliable)
