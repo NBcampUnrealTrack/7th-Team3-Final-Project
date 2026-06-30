@@ -5,6 +5,8 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
+#include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
+#include "NakwonClone/Player/PlayerData/NCWeaponData.h"
 
 UNCAssassinationComponent::UNCAssassinationComponent()
 {
@@ -45,15 +47,21 @@ AVGMonsterCharacterBase* UNCAssassinationComponent::FindNearestTarget() const
 	return Nearest;
 }
 
-// 헌호수정 - 슬로우모션 + 몽타지 (서버 전용)
+// 헌호수정 - 암살 몽타지 재생 (서버 전용, DT에서 읽음)
 void UNCAssassinationComponent::StartSlowMo()
 {
-	if (AssassinationMontage)
-	{
-		ACharacter* Owner = Cast<ACharacter>(GetOwner());
-		if (Owner)
-			Owner->PlayAnimMontage(AssassinationMontage);
-	}
+	ACharacter* Owner = Cast<ACharacter>(GetOwner());
+	if (!Owner) return;
+
+	UNCCombatComponent* Combat = Owner->FindComponentByClass<UNCCombatComponent>();
+	if (!Combat) return;
+
+	const FNCWeaponData* WeaponData = Combat->GetEquippedWeaponData();
+	if (!WeaponData) return;
+
+	UAnimMontage* Montage = WeaponData->AssassinationMontage.LoadSynchronous();
+	if (Montage)
+		Owner->PlayAnimMontage(Montage);
 }
 
 // 헌호수정 - 액션 카메라 스폰 + 블렌드 (로컬 전용)
@@ -113,18 +121,29 @@ void UNCAssassinationComponent::TryAssassinate()
 	AVGMonsterCharacterBase* Target = FindNearestTarget();
 	if (!Target) return;
 
+	// 헌호수정 - 현재 무기 DT 데이터 읽기
+	UNCCombatComponent* Combat = Owner->FindComponentByClass<UNCCombatComponent>();
+	const FNCWeaponData* WeaponData = Combat ? Combat->GetEquippedWeaponData() : nullptr;
+
 	if (Owner->HasAuthority())
+	{
 		StartSlowMo();
+
+		// 헌호수정 - 좀비 리액션 몽타지 전달
+		UAnimMontage* VictimMontage = WeaponData ? WeaponData->AssassinationVictimMontage.LoadSynchronous() : nullptr;
+		Target->BeginAssassinationVictim(Owner, VictimMontage);
+	}
 
 	if (Owner->IsLocallyControlled())
 		StartCamera(Target);
 
-	// 좀비 즉사 타이머
+	// 헌호수정 - 즉사 타이머: DT 값 사용 (없으면 기본 0.8f)
+	const float KillTime = WeaponData ? WeaponData->AssassinationKillTime : 0.8f;
 	AVGMonsterCharacterBase* TargetRef = Target;
 	GetWorld()->GetTimerManager().SetTimer(
 		KillTimerHandle,
 		[TargetRef]() { if (IsValid(TargetRef)) TargetRef->HandleDead(); },
-		0.8f, false
+		KillTime, false
 	);
 
 	// 카메라 복귀 타이머
