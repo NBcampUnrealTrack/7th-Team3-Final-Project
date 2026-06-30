@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -18,7 +18,7 @@ class NAKWONCLONE_API ANCBaseCharacter : public ACharacter, public IAbilitySyste
 public:
 	ANCBaseCharacter();
 
-	// GAS 인터페이스
+	// GAS ?명꽣?섏씠??
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UVGPlayerAttributeSet* GetPlayerAttributeSet() const;
 
@@ -36,7 +36,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category = "State")
 	FGameplayTag CurrentActionTag;
 
-	// TODO: GAS 완전 전환 후 제거
+	// TODO: GAS ?꾩쟾 ?꾪솚 ???쒓굅
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
 	TObjectPtr<UNCStatComponent> StatComponent;
 

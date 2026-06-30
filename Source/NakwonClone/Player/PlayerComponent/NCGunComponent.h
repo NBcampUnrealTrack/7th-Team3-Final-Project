@@ -112,6 +112,12 @@ private:
 	void FireOnce();
 	void OnReloadFinished();
 
+	FTimerHandle ShowMagazineTimerHandle;
+
+	void HideGunMagazine();
+	void ShowGunMagazine();
+	void DropMagazineMesh();
+
 	void ApplyADSFOV();
 	void RestoreFOV();
 	UCameraComponent* FindCamera() const;
