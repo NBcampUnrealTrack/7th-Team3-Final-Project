@@ -22,10 +22,17 @@ class NAKWONCLONE_API AVGMonsterAIControllerBase : public AAIController
 {
 	GENERATED_BODY()
 
+#pragma region 코어/라이프사이클
 public:
 	AVGMonsterAIControllerBase();
 	
+protected:
+	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
+#pragma endregion
+	
 #pragma region 블랙보드 키 이름
+public:
 	static const FName PatrolLocationKey;
 	static const FName TargetActorKey;
 	static const FName HeardLocationKey;
@@ -62,10 +69,12 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "AI|Perception")
 	float HeardUpdate = 200.f;
-	
-#pragma endregion
 
+	// 수면 (AI)
+public:
+	bool CanSleep() const { return bCanSleep; }
 protected:
-	virtual void BeginPlay() override;
-	virtual void OnPossess(APawn* InPawn) override;
+	UPROPERTY(EditAnywhere, Category = "AI|Perception")
+	bool bCanSleep = false;
+#pragma endregion
 };

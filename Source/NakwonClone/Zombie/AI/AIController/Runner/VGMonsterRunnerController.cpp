@@ -14,11 +14,6 @@ AVGMonsterRunnerController::AVGMonsterRunnerController()
 void AVGMonsterRunnerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (Blackboard)
-	{
-		Blackboard->SetValueAsBool(IsAwakeKey, true);
-	}
 }
 
 

@@ -28,6 +28,7 @@
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
+    PrimaryActorTick.bCanEverTick = true;
     InitCamera();
     InitComponents();
 
@@ -203,19 +204,27 @@ void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceT
 
 void ANCPlayerCharacter::StartSprint()
 {
+    if (UNCGunComponent* GunComp = GetGunComponent())
+    {
+        if (GunComp->IsADS())
+        {
+            return;
+        }
+    }
+
     // 헌호수정 - 스프린트 잠금 중이면 속도 변경도 막음
     if (LocomotionComponent && LocomotionComponent->IsSprintLocked()) return;
 
     if (LocomotionComponent)
         LocomotionComponent->StartStaminaDrain();
 
-    // 헌호수정 - 앉은 상태면 크라우치 스프린트
     CurrentGaitTag = (CurrentStanceTag == NCCharacter::Crouch)
         ? NCCharacter::CrouchSprint
         : NCCharacter::Sprint;
 
     if (LocomotionComponent)
         LocomotionComponent->SetGaitTag(CurrentGaitTag);
+
     Server_SetGait(CurrentGaitTag);
 }
 
@@ -572,4 +581,38 @@ void ANCPlayerCharacter::ApplyFlashlightState()
     // 헌호수정 - Glow Light도 같이 토글
     if (FlashlightGlowLight)
         FlashlightGlowLight->SetVisibility(bFlashlightOn);
+}
+
+void ANCPlayerCharacter::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    if (!bAimRotationMode)
+    {
+        return;
+    }
+
+    AController* OwnerController = GetController();
+    if (!OwnerController)
+    {
+        return;
+    }
+
+    const FRotator ControlRot = OwnerController->GetControlRotation();
+    const FRotator TargetRot = FRotator(0.f, ControlRot.Yaw, 0.f);
+
+    SetActorRotation(TargetRot);
+}
+
+void ANCPlayerCharacter::SetAimRotationMode(bool bEnable)
+{
+    bAimRotationMode = bEnable;
+
+    if (UCharacterMovementComponent* Move = GetCharacterMovement())
+    {
+        Move->bOrientRotationToMovement = !bEnable;
+        Move->bUseControllerDesiredRotation = false;
+    }
+
+    bUseControllerRotationYaw = false;
 }
