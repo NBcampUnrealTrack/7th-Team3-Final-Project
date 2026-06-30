@@ -64,7 +64,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
 	TSubclassOf<UGameplayEffect> ChaseSpeedEffectClass;
 
-private:
+public:
 	// 어트로뷰트 변경 콜백
 	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
 #pragma endregion

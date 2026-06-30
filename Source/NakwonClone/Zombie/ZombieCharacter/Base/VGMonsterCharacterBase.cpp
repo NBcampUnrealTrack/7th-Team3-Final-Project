@@ -301,6 +301,8 @@ void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& D
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
+		UE_LOG(LogMonster, Warning, TEXT("[Speed] %s MaxWalkSpeed=%.1f"),
+			*GetName(), Data.NewValue);
 	}
 }
 
