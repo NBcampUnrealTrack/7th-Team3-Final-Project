@@ -281,6 +281,32 @@ void UNCGunComponent::FireOnce()
 			EquippedGunSkelMeshComp->PlayAnimation(GunAnim, false);
 	}
 
+	// 탄피 배출 이펙트 — EjectSocketName 소켓에서 스폰
+	// (4ca9f351 "총기 타입별 컴포넌트 분리 리팩토링"에서 누락된 것 복구. 스켈레탈/스태틱 메시 모두 대응)
+	{
+		UMeshComponent* GunMeshComp = EquippedGunSkelMeshComp
+			? static_cast<UMeshComponent*>(EquippedGunSkelMeshComp)
+			: static_cast<UMeshComponent*>(EquippedGunMeshComp);
+
+		if (GunMeshComp && GunMeshComp->DoesSocketExist(Data->EjectSocketName))
+		{
+			const FTransform EjectXform = GunMeshComp->GetSocketTransform(Data->EjectSocketName);
+
+			if (!Data->ShellCasingEffect.IsNull())
+			{
+				if (UNiagaraSystem* ShellFX = Data->ShellCasingEffect.LoadSynchronous())
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						this, ShellFX, EjectXform.GetLocation(), EjectXform.Rotator());
+			}
+			else if (!Data->ShellCasingParticle.IsNull())
+			{
+				if (UParticleSystem* ShellP = Data->ShellCasingParticle.LoadSynchronous())
+					UGameplayStatics::SpawnEmitterAtLocation(
+						this, ShellP, EjectXform.GetLocation(), EjectXform.Rotator());
+			}
+		}
+	}
+
 	ApplyRecoil(Data);
 
 	if (Data->FireShakeClass)
