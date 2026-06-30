@@ -68,12 +68,6 @@ public:
 	// 에디터에서 GE_Attack 에셋 할당
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
 	TSubclassOf<class UGameplayEffect> AttackEffectClass;
-	
-	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
-	TSubclassOf<UGameplayEffect> WalkSpeedEffectClass;
-	
-	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
-	TSubclassOf<UGameplayEffect> ChaseSpeedEffectClass;
 #pragma endregion
 	
 #pragma region WakeUp

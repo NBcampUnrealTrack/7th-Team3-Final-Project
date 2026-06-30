@@ -5,7 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "GameplayEffect.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
 UBTTask_Move::UBTTask_Move()
 {
@@ -15,17 +15,18 @@ UBTTask_Move::UBTTask_Move()
 
 EBTNodeResult::Type UBTTask_Move::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(OwnerComp.GetAIOwner()->GetPawn());
-	if (!Walker) return EBTNodeResult::Failed;
+	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
+	if (!Monster) return EBTNodeResult::Failed;
 
-	Walker->PlayAnimMontage(Walker->GetSelectedMoveMontage());
-	
-	UAbilitySystemComponent* ASC = Walker->GetAbilitySystemComponent();
-	if (ASC && Walker->WalkSpeedEffectClass)
+	Monster->PlayAnimMontage(Monster->GetSelectedMoveMontage());
+
+	UAbilitySystemComponent* ASC = Monster->GetAbilitySystemComponent();
+	if (ASC && Monster->MoveSpeedEffectClass)
 	{
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-		ASC->ApplyGameplayEffectToSelf(Walker->WalkSpeedEffectClass.GetDefaultObject(), Walker->GetSelectedMoveLevel(), Context);
+		ASC->ApplyGameplayEffectToSelf(
+			Monster->MoveSpeedEffectClass.GetDefaultObject(),
+			Monster->GetSelectedMoveLevel(), Context);
 	}
-	
 	return EBTNodeResult::Succeeded;
 }

@@ -85,14 +85,19 @@ void AVGMonsterCharacterBase::BeginPlay()
 	{
 		StartHowlTimer();
 	}
+	if (AnimMove.Num() > 0)
+	{
+		int32 MoveIndex = FMath::RandRange(0, AnimMove.Num() - 1);
+		SelectedMoveMontage = AnimMove[MoveIndex];
+		SelectedMoveLevel = MoveIndex + 1;
+	}
 
-	int32 MoveIndex = FMath::RandRange(0, AnimMove.Num() - 1);
-	SelectedMoveMontage = AnimMove[MoveIndex];
-	SelectedMoveLevel = MoveIndex + 1;
-
-	int32 ChaseIndex = FMath::RandRange(0, AnimChase.Num() - 1);
-	SelectedChaseMontage = AnimChase[ChaseIndex];
-	SelectedChaseLevel = ChaseIndex + 1;
+	if (AnimChase.Num() > 0)
+	{
+		int32 ChaseIndex = FMath::RandRange(0, AnimChase.Num() - 1);
+		SelectedChaseMontage = AnimChase[ChaseIndex];
+		SelectedChaseLevel = ChaseIndex + 1;
+	}
 }
 
 // HandleDead()
