@@ -182,9 +182,9 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
     UNCCombatComponent* ActiveCombatComponent =
         CachedCombatComponent ? CachedCombatComponent.Get() : CombatComponent.Get();
 
-    // ------------------------------
+    bool bFoundGun = false;
+
     // 총기 우선
-    // ------------------------------
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(OwnerCharacter))
     {
         if (UNCGunComponent* Gun = PC->GetGunComponent())
@@ -192,25 +192,26 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
             if (const FNCGunData* GunData = Gun->GetActiveGunData())
             {
                 CurrentWeaponTypeTag = GunData->GunTypeTag;
-            }
-            else if (ActiveCombatComponent)
-            {
-                CurrentWeaponTypeTag = ActiveCombatComponent->GetEquippedWeaponTypeTag();
+                bFoundGun = true;
             }
         }
+    }
+
+    // 총기가 없으면 근접무기 확인
+    if (!bFoundGun && ActiveCombatComponent)
+    {
+        CurrentWeaponTypeTag = ActiveCombatComponent->GetEquippedWeaponTypeTag();
     }
 
     bIsUnarmed = CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_Unarmed);
     bHasWeapon = !bIsUnarmed;
 
-    // 근접
     bIsOneHandedWeapon =
         CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_OneHanded);
 
     bIsTwoHandedWeapon =
         CurrentWeaponTypeTag.MatchesTagExact(NCWeapon::Type_TwoHanded);
 
-    // 총기
     bIsPistolWeapon =
         CurrentWeaponTypeTag.MatchesTagExact(NCGun::Type_Pistol);
 
