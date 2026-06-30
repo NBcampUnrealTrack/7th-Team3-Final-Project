@@ -102,6 +102,16 @@ struct FNCWeaponData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation|Gun")
 	TSoftObjectPtr<UAnimMontage> PumpMontage;
+
+	// 헌호수정 - 암살
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Assassination")
+	TSoftObjectPtr<UAnimMontage> AssassinationMontage;     // 플레이어 휘두르기 모션
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Assassination")
+	TSoftObjectPtr<UAnimMontage> AssassinationVictimMontage; // 좀비 당하는 모션
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Assassination")
+	float AssassinationKillTime = 0.8f;                    // 즉사까지 걸리는 시간
 };
 
 USTRUCT(BlueprintType)

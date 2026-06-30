@@ -83,6 +83,11 @@ void AVGMonsterAIControllerBase::BeginPlay()
 
 		// UE_LOG(LogMonster, Warning, TEXT("[AIController] Perception 콜백 바인딩 완료"));
 	}
+	
+	if (Blackboard)
+	{
+		Blackboard->SetValueAsBool(IsAwakeKey, !bCanSleep);
+	}
 }
 
 void AVGMonsterAIControllerBase::OnPossess(APawn* InPawn)

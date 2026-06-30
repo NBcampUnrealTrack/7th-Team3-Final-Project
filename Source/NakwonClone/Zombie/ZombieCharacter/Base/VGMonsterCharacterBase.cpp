@@ -2,14 +2,11 @@
 
 
 #include "VGMonsterCharacterBase.h"
-
-#include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Common/NCGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Animation/AnimInstance.h"
@@ -29,6 +26,12 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+	
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
+	}
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 
@@ -74,17 +77,19 @@ void AVGMonsterCharacterBase::BeginPlay()
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			UVGMonsterAttributeSet::GetMoveSpeedAttribute()).AddUObject(this, &AVGMonsterCharacterBase::OnMoveSpeedChanged);
 	}
-
-	SelectedStopMontage = GetRandomStopMontage();
-	SelectedDeadMontage = GetRandomDeadMontage();
-
-	DetectionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AVGMonsterCharacterBase::OnDetectionOverlap);
-
-	// H
-	if (HasAuthority())
+	
+	// 이동 속도를 BeginPlay에서도 적용 (에디터 값 반영)
+	if (GetCharacterMovement() && MonsterAttributeSet)
 	{
-		StartHowlTimer();
+		GetCharacterMovement()->MaxWalkSpeed = MonsterAttributeSet->GetMoveSpeed();
 	}
+	
+	if (RandomMesh.Num() > 0)
+	{
+		int32 RandIndex = FMath::RandRange(0, RandomMesh.Num() - 1);
+		GetMesh()->SetSkeletalMesh(RandomMesh[RandIndex]);
+	}
+	
 	if (AnimMove.Num() > 0)
 	{
 		int32 MoveIndex = FMath::RandRange(0, AnimMove.Num() - 1);
@@ -97,6 +102,16 @@ void AVGMonsterCharacterBase::BeginPlay()
 		int32 ChaseIndex = FMath::RandRange(0, AnimChase.Num() - 1);
 		SelectedChaseMontage = AnimChase[ChaseIndex];
 		SelectedChaseLevel = ChaseIndex + 1;
+	}
+
+	SelectedStopMontage = GetRandomStopMontage();
+
+	DetectionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AVGMonsterCharacterBase::OnDetectionOverlap);
+
+	// H
+	if (HasAuthority())
+	{
+		StartHowlTimer();
 	}
 }
 
@@ -286,6 +301,8 @@ void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& D
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
+		UE_LOG(LogMonster, Warning, TEXT("[Speed] %s MaxWalkSpeed=%.1f"),
+			*GetName(), Data.NewValue);
 	}
 }
 

@@ -28,9 +28,14 @@ EBTNodeResult::Type UBTTask_FindPatrolLocation::ExecuteTask(UBehaviorTreeCompone
 	int32 CurrentCount = Blackboard->GetValueAsInt(AVGMonsterAIControllerBase::PatrolCountKey);
 	if (CurrentCount >= MaxPatrolCount)
 	{
-		Blackboard->SetValueAsInt(AVGMonsterAIControllerBase::PatrolCountKey, 0);
-		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, false);
-		return EBTNodeResult::Failed;
+		AVGMonsterAIControllerBase* MonsterAI = Cast<AVGMonsterAIControllerBase>(AIController);
+		
+		if (MonsterAI && MonsterAI->CanSleep())
+		{
+			Blackboard->SetValueAsInt(AVGMonsterAIControllerBase::PatrolCountKey, 0);
+			Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, false);
+			return EBTNodeResult::Failed;
+		}
 	}
 	Blackboard->SetValueAsInt(AVGMonsterAIControllerBase::PatrolCountKey, CurrentCount + 1);
 	

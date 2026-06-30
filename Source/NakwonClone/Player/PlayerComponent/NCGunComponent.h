@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -145,4 +145,10 @@ private:
 	float CurrentRecoilYaw   = 0.f;
 
 	void ApplyRecoil(const FNCGunData* Data);
+
+	FVector DefaultCameraLocation = FVector::ZeroVector;
+	FVector TargetCameraLocation = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, Category = "Camera|ADS")
+	FVector ADSCameraLocation = FVector(-10.f, 18.f, 8.f);
 };

@@ -5,6 +5,8 @@
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "GameplayEffect.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
 UBTTask_Chase::UBTTask_Chase()
@@ -17,6 +19,8 @@ EBTNodeResult::Type UBTTask_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp
 {
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!Monster) return EBTNodeResult::Failed;
+	
+	Monster->PlayAnimMontage(Monster->GetSelectedChaseMontage());
 	
 	UAbilitySystemComponent* ASC = Monster->GetAbilitySystemComponent();
 	if (ASC && Monster->ChaseSpeedEffectClass)

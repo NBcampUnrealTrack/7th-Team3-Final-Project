@@ -2,22 +2,17 @@
 
 
 #include "VGMonsterWalkerController.h"
-
 #include "BehaviorTree/BlackboardComponent.h"
 
 
 AVGMonsterWalkerController::AVGMonsterWalkerController()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bCanSleep = true;
 }
 
 void AVGMonsterWalkerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (Blackboard)
-	{
-		Blackboard->SetValueAsBool(IsAwakeKey, false);
-	}
 }
 
