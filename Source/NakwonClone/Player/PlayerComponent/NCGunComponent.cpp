@@ -15,6 +15,7 @@
 #include "NiagaraComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/AnimInstance.h"
 
 UNCGunComponent::UNCGunComponent()
 {
@@ -124,6 +125,8 @@ void UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 
 void UNCGunComponent::StartFire()
 {
+	OnBeforeFire();
+
 	// 탄약 없을 때 빈 총 클릭음
 	if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0)
 	{
@@ -312,16 +315,17 @@ void UNCGunComponent::Reload()
 	StopFire();
 	ActiveGunActions.AddTag(NCGun::Action_Reloading);
 
-	PlayGunMontage(Data->ReloadMontage);
-
 	if (!Data->ReloadSound.IsNull())
 		UGameplayStatics::PlaySoundAtLocation(this, Data->ReloadSound.LoadSynchronous(), GetOwner()->GetActorLocation());
+
+	PlayGunMontage(Data->ReloadMontage);
 
 	GetWorld()->GetTimerManager().SetTimer(
 		ReloadTimerHandle,
 		this, &UNCGunComponent::OnReloadFinished,
 		Data->ReloadTime, false);
 }
+
 
 void UNCGunComponent::OnReloadFinished()
 {
