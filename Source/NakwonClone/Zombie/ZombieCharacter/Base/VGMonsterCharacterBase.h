@@ -17,6 +17,7 @@ class UCapsuleComponent;
 class USoundBase;
 class USoundAttenuation;
 class UNiagaraSystem;
+class UGameplayEffect;
 
 struct FOnAttributeChangeData;
 
@@ -38,6 +39,12 @@ protected:
 #pragma region ASC
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
+	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
+	TSubclassOf<UGameplayEffect> MoveSpeedEffectClass;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
+	TSubclassOf<UGameplayEffect> ChaseSpeedEffectClass;
 
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "GAS")
