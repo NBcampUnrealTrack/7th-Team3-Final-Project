@@ -23,6 +23,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Assassination")
 	float AssassinationRange = 200.f;
 
+	// 헌호수정 - 암살 시 플레이어-좀비 고정 거리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Assassination")
+	float AssassinationSnapDistance = 120.f;
+
 private:
 	AVGMonsterCharacterBase* FindNearestTarget() const;
 	void StartSlowMo();
