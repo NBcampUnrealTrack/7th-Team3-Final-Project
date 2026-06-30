@@ -34,7 +34,8 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	}
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-
+	MonsterAttributeSet = CreateDefaultSubobject<UVGMonsterAttributeSet>(TEXT("MonsterAttributeSet"));
+	
 	DetectionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("DetectionCapsule"));
 	DetectionCapsule->SetupAttachment(RootComponent);
 	DetectionCapsule->SetCapsuleSize(40.f, 90.f);
@@ -64,6 +65,11 @@ void AVGMonsterCharacterBase::BeginPlay()
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		
+		if (MonsterAttributeSet)
+		{
+			AbilitySystemComponent->AddSpawnedAttribute(MonsterAttributeSet);
+		}
 	}
 
 	if (MonsterAttributeSet)
