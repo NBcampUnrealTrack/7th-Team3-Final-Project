@@ -5,6 +5,8 @@
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "GameplayEffect.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
 UBTTask_Move::UBTTask_Move()
