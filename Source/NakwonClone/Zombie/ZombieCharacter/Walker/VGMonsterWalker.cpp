@@ -2,44 +2,23 @@
 
 #include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Common/NCGameplayTags.h"
-#include "NakwonClone\GAS\AttributeSet\VGMonsterAttributeSet.h"
 #include "Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 
 AVGMonsterWalker::AVGMonsterWalker()
 {
-	if (GetCharacterMovement())
-	{
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
-	}
 }
 
 void AVGMonsterWalker::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// 이동 속도를 BeginPlay에서도 적용 (에디터 값 반영)
-	if (GetCharacterMovement() && MonsterAttributeSet)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = MonsterAttributeSet->GetMoveSpeed();
-	}
 	
 	if (AnimWakeUp.Num() > 0)
 	{
 		SelectedWakeUpMontage = AnimWakeUp[FMath::RandRange(0, AnimWakeUp.Num() - 1)];
-	}
-	
-	if (RandomMesh.Num() > 0)
-	{
-		int32 RandIndex = FMath::RandRange(0, RandomMesh.Num() - 1);
-		GetMesh()->SetSkeletalMesh(RandomMesh[RandIndex]);
-		/*UE_LOG(LogMonster, Warning, TEXT("[Mesh] Physics Asset: %s"), 
-		GetMesh()->GetPhysicsAsset() ? *GetMesh()->GetPhysicsAsset()->GetName() : TEXT("None"));*/
 	}
 }
 

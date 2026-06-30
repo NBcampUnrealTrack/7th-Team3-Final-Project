@@ -14,12 +14,20 @@ UCLASS()
 class NAKWONCLONE_API AVGMonsterWalker : public AVGMonsterCharacterBase
 {
 	GENERATED_BODY()
-
+#pragma region 코어/라이프사이클
 public:
 	AVGMonsterWalker();
 
 protected:
 	virtual void BeginPlay() override;
+#pragma endregion
+	
+#pragma region GAS
+public:
+	// 공격 GE 슬롯 (워커 전용)
+	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
+	TSubclassOf<class UGameplayEffect> AttackEffectClass;
+#pragma endregion
 	
 #pragma region 애니메이션
 protected:
@@ -29,6 +37,7 @@ protected:
 public:
 	UAnimMontage* GetSleepMontage() const { return AnimSleep; }
 	UAnimMontage* GetSelectedWakeUpMontage() const { return SelectedWakeUpMontage; }
+	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
 
 protected:
 	// 워커 전용 Idle 애니메이션
@@ -37,10 +46,13 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimWakeUp;
+	
+	// 워커 전용 Attack 애니메이션
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	TArray<TObjectPtr<UAnimMontage>> AnimAttack;
 #pragma endregion
 
 #pragma region 공격 트레이스
-
 public:
 	const TArray<FName>& GetAttackSocketNames() const { return AttackSocketNames; }
 	float GetAttackTraceDistance() const { return AttackTraceDistance; }
@@ -57,17 +69,10 @@ private:
 		TEXT("AttackSocket_R_Elbow"),
 	};
 	
-	// 트레이스 거리
+	// 트레이스 크기
 	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
 	float AttackTraceDistance = 10.f;
 	
-#pragma endregion
-	
-#pragma region GAS GE 슬롯
-public:
-	// 에디터에서 GE_Attack 에셋 할당
-	UPROPERTY(EditAnywhere, Category = "Walker|Attack")
-	TSubclassOf<class UGameplayEffect> AttackEffectClass;
 #pragma endregion
 	
 #pragma region WakeUp
