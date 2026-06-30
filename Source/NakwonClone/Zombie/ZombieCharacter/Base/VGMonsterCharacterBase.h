@@ -25,52 +25,68 @@ UCLASS()
 class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-
+	
+#pragma region 코어/라이프사이클
 public:
+	// 생성자
 	AVGMonsterCharacterBase();
-
 protected:
+	// 오버라이드
 	virtual void BeginPlay() override;
 
 	// AI 컨트롤러 참조 (읽기 전용, 블랙보드 직접 접근 금지)
 	UPROPERTY()
 	AVGMonsterAIControllerBase* AIController;
+#pragma endregion
 
-#pragma region ASC
+#pragma region GAS
 public:
+	// 인터페이스 구현
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
+protected:
+	// ASC 컴포넌트
+	UPROPERTY(VisibleAnywhere, Category = "GAS|ASC")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	// 몬스터 어트로뷰트셋
+	UPROPERTY(VisibleAnywhere, Category = "GAS|AttributeSet")
+	TObjectPtr<UVGMonsterAttributeSet> MonsterAttributeSet;
+	
+public:          
+	// 공격 (물기) GE 슬롯
+	UPROPERTY(EditAnywhere, Category = "Monster|Bite")
+	TSubclassOf<UGameplayEffect> BiteEffectClass;
+	
+	// 속도 GE 슬롯
 	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
 	TSubclassOf<UGameplayEffect> MoveSpeedEffectClass;
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
 	TSubclassOf<UGameplayEffect> ChaseSpeedEffectClass;
 
-protected:
-	UPROPERTY(VisibleAnywhere, Category = "GAS")
-	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-
-	UPROPERTY(VisibleAnywhere, Category = "GAS")
-	TObjectPtr<UVGMonsterAttributeSet> MonsterAttributeSet;
-
+private:
+	// 어트로뷰트 변경 콜백
+	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
 #pragma endregion
 
 #pragma region 애니메이션
 public:
+	// 랜덤 몽타주 가져오기
 	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
+	
+	// 슬롯 배열에서 랜덤 애니메이션 몽타주 추출
 	UAnimMontage* GetRandomMoveMontage() { return GetRandomMontage(AnimMove); }
 	UAnimMontage* GetRandomStopMontage() { return GetRandomMontage(AnimStop); }
 	UAnimMontage* GetRandomChaseMontage() { return GetRandomMontage(AnimChase); }
-	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
 	UAnimMontage* GetRandomHitMontage() { return GetRandomMontage(AnimHit); }
-	UAnimMontage* GetRandomDeadMontage() { return GetRandomMontage(AnimDead); }
 
+	// BeginPlay에서 한 번 골라 캐시한 몽타주
 	UAnimMontage* GetSelectedMoveMontage() { return SelectedMoveMontage; }
 	UAnimMontage* GetSelectedChaseMontage() { return SelectedChaseMontage; }
 	UAnimMontage* GetSelectedStopMontage() { return SelectedStopMontage; }
-	UAnimMontage* GetSelectedDeadMontage() { return SelectedDeadMontage; }
 
 protected:
+	// ── 몽타주 슬롯 (에디터에서 채움) ────────────────────────
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimMove;
 
@@ -79,16 +95,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimChase;
-
-	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
-	TArray<TObjectPtr<UAnimMontage>> AnimAttack;
-
+	
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimHit;
 
-	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
-	TArray<TObjectPtr<UAnimMontage>> AnimDead;
-
+	// ── 선택 캐시 (런타임) ────────────────────────────────
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> SelectedMoveMontage;
 
@@ -98,9 +109,7 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> SelectedStopMontage;
 
-	UPROPERTY()
-	TObjectPtr<UAnimMontage> SelectedDeadMontage;
-
+	// ── 속도 레벨 ────────────────────────────────────────
 public:
 	int32 GetSelectedMoveLevel() const { return SelectedMoveLevel; }
 	int32 GetSelectedChaseLevel() const { return SelectedChaseLevel; }
@@ -113,7 +122,7 @@ protected:
 	int32 SelectedChaseLevel;
 #pragma endregion
 	
-#pragma region 좀비 메시
+#pragma region 좀비 메시 (랜덤)
 	UPROPERTY(EditDefaultsOnly, Category = "Mesh")
 	TArray<USkeletalMesh*> RandomMesh;
 #pragma endregion
@@ -160,11 +169,7 @@ public:
 	
 private:
 	bool bIsDead = false;
-
 #pragma endregion
-
-private:
-	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
 
 #pragma region 충돌 감지
 protected:
@@ -181,8 +186,7 @@ protected:
 		const FHitResult& SweepResult);
 #pragma endregion
 
-#pragma region 사운드 
-	//H
+#pragma region 사운드
 public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_PlaySound(USoundBase* Sound);
@@ -226,7 +230,6 @@ protected:
 
 	void StartHowlTimer();
 	void HandleHowl();
-	// bool bIsDead = false;
 #pragma endregion
 
 #pragma region 암살 처리

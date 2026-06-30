@@ -13,16 +13,11 @@ class NAKWONCLONE_API AVGMonsterRunner : public AVGMonsterCharacterBase
 {
 	GENERATED_BODY()
 
+#pragma region 코어/라이프사이클
 public:
 	AVGMonsterRunner();
 
 protected:
 	virtual void BeginPlay() override;
-
-#pragma region GAS GE 슬롯
-public:
-	UPROPERTY(EditAnywhere, Category = "Runner|Attack")
-	TSubclassOf<UGameplayEffect> BiteEffectClass;
-	
 #pragma endregion
 };
