@@ -1,4 +1,4 @@
-#include "NCGunComponent.h"
+﻿#include "NCGunComponent.h"
 #include "Common/NCGameplayTags.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
@@ -14,6 +14,8 @@
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
 #include "AbilitySystemComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Animation/AnimMontage.h"
 
 UNCGunComponent::UNCGunComponent()
@@ -27,48 +29,91 @@ void UNCGunComponent::BeginPlay()
 	Super::BeginPlay();
 
 	if (UCameraComponent* Cam = FindCamera())
+	{
 		DefaultFOV = TargetFOV = Cam->FieldOfView;
+
+		DefaultCameraLocation = Cam->GetRelativeLocation();
+		TargetCameraLocation = DefaultCameraLocation;
+	}
 }
 
-void UNCGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UNCGunComponent::TickComponent(
+	float DeltaTime,
+	ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	UCameraComponent* Cam = FindCamera();
 	if (!Cam) return;
 
-	// FOV 보간
-	const float CurrentFOV = Cam->FieldOfView;
-	if (FMath::IsNearlyEqual(CurrentFOV, TargetFOV, 0.1f))
-	{
-		Cam->SetFieldOfView(TargetFOV);
-		SetComponentTickEnabled(false);
-		return;
-	}
+	const float NewFOV = FMath::FInterpTo(
+		Cam->FieldOfView,
+		TargetFOV,
+		DeltaTime,
+		ADSInterpSpeed);
 
-	Cam->SetFieldOfView(FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ADSInterpSpeed));
+	Cam->SetFieldOfView(NewFOV);
 
-	// 헌호수정 - 반동 복귀
-	if (!FMath::IsNearlyZero(CurrentRecoilPitch) || !FMath::IsNearlyZero(CurrentRecoilYaw))
+	const FVector NewLocation = FMath::VInterpTo(
+		Cam->GetRelativeLocation(),
+		TargetCameraLocation,
+		DeltaTime,
+		ADSInterpSpeed);
+
+	Cam->SetRelativeLocation(NewLocation);
+
+	if (!FMath::IsNearlyZero(CurrentRecoilPitch) ||
+		!FMath::IsNearlyZero(CurrentRecoilYaw))
 	{
-		const float RecoverySpeed = ActiveGunData ? ActiveGunData->RecoilRecoverySpeed : 5.f;
+		const float RecoverySpeed =
+			ActiveGunData ? ActiveGunData->RecoilRecoverySpeed : 5.f;
 
 		ACharacter* Char = Cast<ACharacter>(GetOwner());
-		APlayerController* PC = Char ? Cast<APlayerController>(Char->GetController()) : nullptr;
+		APlayerController* PC =
+			Char ? Cast<APlayerController>(Char->GetController()) : nullptr;
+
 		if (PC && Char->IsLocallyControlled())
 		{
-			const float PitchStep = FMath::Min(FMath::Abs(CurrentRecoilPitch), RecoverySpeed * DeltaTime);
-			const float YawStep   = FMath::Min(FMath::Abs(CurrentRecoilYaw),   RecoverySpeed * DeltaTime);
+			const float PitchStep =
+				FMath::Min(FMath::Abs(CurrentRecoilPitch),
+					RecoverySpeed * DeltaTime);
 
-			PC->AddPitchInput(PitchStep);   // 위로 밀었던 만큼 복귀
+			const float YawStep =
+				FMath::Min(FMath::Abs(CurrentRecoilYaw),
+					RecoverySpeed * DeltaTime);
+
+			PC->AddPitchInput(PitchStep);
 			PC->AddYawInput(-FMath::Sign(CurrentRecoilYaw) * YawStep);
 
-			CurrentRecoilPitch = FMath::Sign(CurrentRecoilPitch) * (FMath::Abs(CurrentRecoilPitch) - PitchStep);
-			CurrentRecoilYaw   = FMath::Sign(CurrentRecoilYaw)   * (FMath::Abs(CurrentRecoilYaw)   - YawStep);
+			CurrentRecoilPitch =
+				FMath::Sign(CurrentRecoilPitch) *
+				(FMath::Abs(CurrentRecoilPitch) - PitchStep);
 
-			if (FMath::IsNearlyZero(CurrentRecoilPitch, 0.01f)) CurrentRecoilPitch = 0.f;
-			if (FMath::IsNearlyZero(CurrentRecoilYaw,   0.01f)) CurrentRecoilYaw   = 0.f;
+			CurrentRecoilYaw =
+				FMath::Sign(CurrentRecoilYaw) *
+				(FMath::Abs(CurrentRecoilYaw) - YawStep);
+
+			if (FMath::IsNearlyZero(CurrentRecoilPitch, 0.01f))
+				CurrentRecoilPitch = 0.f;
+
+			if (FMath::IsNearlyZero(CurrentRecoilYaw, 0.01f))
+				CurrentRecoilYaw = 0.f;
 		}
+	}
+
+	const bool bFOVFinished =
+		FMath::IsNearlyEqual(Cam->FieldOfView, TargetFOV, 0.1f);
+
+	const bool bLocationFinished =
+		Cam->GetRelativeLocation().Equals(TargetCameraLocation, 0.1f);
+
+	if (bFOVFinished &&
+		bLocationFinished &&
+		FMath::IsNearlyZero(CurrentRecoilPitch) &&
+		FMath::IsNearlyZero(CurrentRecoilYaw))
+	{
+		SetComponentTickEnabled(false);
 	}
 }
 
@@ -347,15 +392,25 @@ void UNCGunComponent::StartADS()
 
 	ActiveGunActions.AddTag(NCGun::Action_ADS);
 
+	if (ANCPlayerCharacter* PlayerChar = Cast<ANCPlayerCharacter>(GetOwner()))
+	{
+		PlayerChar->StopSprint();
+	}
+
 	if (AActor* Owner = GetOwner())
 	{
 		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
+		{
 			ASC->AddLooseGameplayTag(NCWeapon::Action_Aiming);
+		}
 	}
 
 	ApplyADSFOV();
 
-	if (ActiveGunData) PlayGunMontage(ActiveGunData->ADSInMontage);
+	if (ActiveGunData)
+	{
+		PlayGunMontage(ActiveGunData->ADSInMontage);
+	}
 }
 
 void UNCGunComponent::StopADS()
@@ -365,24 +420,37 @@ void UNCGunComponent::StopADS()
 	if (AActor* Owner = GetOwner())
 	{
 		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
+		{
 			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Aiming);
+		}
 	}
 
 	RestoreFOV();
 
-	if (ActiveGunData) PlayGunMontage(ActiveGunData->ADSOutMontage);
+	if (ActiveGunData)
+	{
+		PlayGunMontage(ActiveGunData->ADSOutMontage);
+	}
 }
 
 void UNCGunComponent::ApplyADSFOV()
 {
-	if (!ActiveGunData) return;
+	if (!ActiveGunData)
+		return;
+
 	TargetFOV = DefaultFOV * ActiveGunData->ADSFOVMultiplier;
+
+	TargetCameraLocation = ADSCameraLocation;
+
 	SetComponentTickEnabled(true);
 }
 
 void UNCGunComponent::RestoreFOV()
 {
 	TargetFOV = DefaultFOV;
+
+	TargetCameraLocation = DefaultCameraLocation;
+
 	SetComponentTickEnabled(true);
 }
 

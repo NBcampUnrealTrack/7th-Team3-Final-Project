@@ -101,6 +101,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation|HitReact")
 	void HandleHitReact(AActor* Attacker);
 
+	virtual void Tick(float DeltaTime) override;
+
+	void SetAimRotationMode(bool bEnable);
+
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -209,4 +214,6 @@ private:
 
 
 	float LastHitReactTime = -999.f;
+
+	bool bAimRotationMode = false;
 };
