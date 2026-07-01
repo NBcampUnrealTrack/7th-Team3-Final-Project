@@ -3,7 +3,7 @@
 
 #include "BTTask_Attack.h"
 #include "AIController.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 
 UBTTask_Attack::UBTTask_Attack()
 {
@@ -15,11 +15,8 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 	AAIController* AICon = OwnerComp.GetAIOwner();
 	if (!AICon) return EBTNodeResult::Failed;
 
-	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(AICon->GetPawn());
-	if (!Monster) return EBTNodeResult::Failed;
+	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(AICon->GetPawn());
+	if (!Walker) return EBTNodeResult::Failed;
 
-	// TODO: 몸체 담당자 공격 함수 호출
-	// Monster->PerformAttack();   // ← 공격 함수 (미구현, 담당자 협업 후 연결)
-
-	return EBTNodeResult::Succeeded;
+	return Walker->Attack() ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }

@@ -7,6 +7,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Common/NCGameplayTags.h"
 #include "Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
+#include "Animation/AnimInstance.h"
 
 AVGMonsterWalker::AVGMonsterWalker()
 {
@@ -56,3 +57,14 @@ void AVGMonsterWalker::WakeUp()
 	}
 }
 
+UAnimMontage* AVGMonsterWalker::Attack()
+{
+	if (!GetMesh()) return nullptr;
+
+	UAnimMontage* Montage = GetRandomAttackMontage();
+	UAnimInstance* Anim = GetMesh()->GetAnimInstance();
+	if (!Montage || !Anim) return nullptr;
+
+	if (Anim->Montage_Play(Montage) <= 0.f) return nullptr;
+	return Montage;
+}
