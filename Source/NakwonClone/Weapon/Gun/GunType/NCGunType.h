@@ -71,6 +71,7 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName HandSocketName   = TEXT("hand_rSocket");
 
     // IK
+    // 양손 IK: 켜면 왼손+오른손 모두 각 소켓으로 IK 적용
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")
     bool bUseTwoHandIK = false;
 
@@ -80,6 +81,7 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")
     FName RightHandIKSocketName = NAME_None;
 
+    // 왼손 전용 IK: bUseTwoHandIK가 꺼져 있어도 왼손만 IK 적용 (오른손 미적용)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")
     bool bUseLeftHandIK = false;
 
