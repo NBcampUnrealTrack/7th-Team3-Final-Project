@@ -91,6 +91,9 @@ public:
 
 	UAnimMontage* GetLastPlayedAttackMontage() const { return LastPlayedAttackMontage; }
 
+	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
+	bool IsSwappingWeapon() const { return bIsSwappingWeapon; }
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	FNCWeaponComboData CurrentWeaponCombo;
@@ -115,6 +118,21 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> LastPlayedAttackMontage;
+
+	void FinishEquipWeapon();
+	void FinishUnEquipWeapon();
+	void PlayUnequipMontage();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Combat|Swap")
+	float MeleeEquipAttachDelay = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Combat|Swap")
+	float MeleeUnequipDetachDelay = 0.6f;
+
+	FTimerHandle MeleeEquipTimerHandle;
+	FTimerHandle MeleeUnequipTimerHandle;
+
+	bool bIsSwappingWeapon = false;
 
 private:
 	UPROPERTY()

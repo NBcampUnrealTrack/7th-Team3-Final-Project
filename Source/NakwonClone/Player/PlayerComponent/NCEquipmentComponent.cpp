@@ -1,4 +1,4 @@
-#include "NCEquipmentComponent.h"
+﻿#include "NCEquipmentComponent.h"
 #include "NCGunComponent.h"
 #include "Engine/DataTable.h"
 #include "TimerManager.h"
@@ -19,7 +19,13 @@ void UNCEquipmentComponent::BeginPlay()
 
 bool UNCEquipmentComponent::CanFire() const
 {
-	if (UNCGunComponent* W = GetActiveWeapon()) return W->CanFire();
+	if (bIsSwapping) return false;
+
+	if (UNCGunComponent* W = GetActiveWeapon())
+	{
+		return W->CanFire();
+	}
+
 	return false;
 }
 
@@ -64,8 +70,10 @@ FName UNCEquipmentComponent::GetOccupantGunID(FName ForGunID) const
 {
 	const FNCGunData* Data = FindGunData(ForGunID);
 	if (!Data) return NAME_None;
+
 	if (Data->SlotType == ENCGunSlot::Primary)   return PrimarySlot.GunID;
 	if (Data->SlotType == ENCGunSlot::Secondary) return SecondarySlot.GunID;
+
 	return NAME_None;
 }
 
@@ -78,16 +86,20 @@ bool UNCEquipmentComponent::EquipGun(FName GunID)
 	if (!Data) return false;
 
 	if (ActiveSlot == Data->SlotType)
+	{
 		DeactivateCurrentWeapon();
+	}
 
 	FNCGunSlotData& Slot = GetSlotData(Data->SlotType);
-	Slot.GunID       = GunID;
-	Slot.GunTypeTag  = Data->GunTypeTag;
+	Slot.GunID = GunID;
+	Slot.GunTypeTag = Data->GunTypeTag;
 	Slot.CurrentAmmo = Data->MagazineSize;
 	Slot.ReserveAmmo = Data->MaxReserveAmmo;
 
 	if (ActiveSlot == Data->SlotType)
+	{
 		ActivateWeaponForSlot(Data->SlotType);
+	}
 
 	OnGunEquipped.Broadcast(GunID);
 	return true;
@@ -99,16 +111,20 @@ bool UNCEquipmentComponent::EquipGunWithAmmo(FName GunID, int32 CurrentAmmo, int
 	if (!Data) return false;
 
 	if (ActiveSlot == Data->SlotType)
+	{
 		DeactivateCurrentWeapon();
+	}
 
 	FNCGunSlotData& Slot = GetSlotData(Data->SlotType);
-	Slot.GunID       = GunID;
-	Slot.GunTypeTag  = Data->GunTypeTag;
+	Slot.GunID = GunID;
+	Slot.GunTypeTag = Data->GunTypeTag;
 	Slot.CurrentAmmo = FMath::Clamp(CurrentAmmo, 0, Data->MagazineSize);
 	Slot.ReserveAmmo = FMath::Clamp(ReserveAmmo, 0, Data->MaxReserveAmmo);
 
 	if (ActiveSlot == Data->SlotType)
+	{
 		ActivateWeaponForSlot(Data->SlotType);
+	}
 
 	OnGunEquipped.Broadcast(GunID);
 	return true;
@@ -116,12 +132,17 @@ bool UNCEquipmentComponent::EquipGunWithAmmo(FName GunID, int32 CurrentAmmo, int
 
 void UNCEquipmentComponent::UnequipGun(ENCGunSlot Slot)
 {
+	GetWorld()->GetTimerManager().ClearTimer(SwapTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(EquipDelayTimerHandle);
+
 	if (ActiveSlot == Slot)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(SwapTimerHandle);
 		bIsSwapping = false;
+		PendingEquipSlot = ENCGunSlot::None;
+
 		DeactivateCurrentWeapon();
 		ActiveSlot = ENCGunSlot::None;
+
 		OnGunUnequipped.Broadcast();
 	}
 
@@ -133,35 +154,86 @@ void UNCEquipmentComponent::SelectSlot(ENCGunSlot Slot)
 	if (ActiveSlot == Slot) return;
 	if (bIsSwapping) return;
 
-	// 현재 무기 정지 및 비활성화
+	if (Slot != ENCGunSlot::None)
+	{
+		FNCGunSlotData& TargetSlotData = GetSlotData(Slot);
+		if (TargetSlotData.GunID.IsNone())
+		{
+			return;
+		}
+	}
+
+	bIsSwapping = true;
+	PendingEquipSlot = Slot;
+
+	GetWorld()->GetTimerManager().ClearTimer(SwapTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(EquipDelayTimerHandle);
+
 	if (UNCGunComponent* Current = GetActiveWeapon())
 	{
 		Current->StopFire();
 		Current->StopADS();
-		if (const FNCGunData* Data = Current->GetActiveGunData())
-			Current->PlayUnequipMontage(Data);
-	}
 
-	bIsSwapping = true;
-	DeactivateCurrentWeapon();
+		if (const FNCGunData* Data = Current->GetActiveGunData())
+		{
+			Current->PlayUnequipMontage(Data);
+		}
+	}
 
 	GetWorld()->GetTimerManager().SetTimer(
 		SwapTimerHandle,
 		FTimerDelegate::CreateUObject(this, &UNCEquipmentComponent::OnSwapFinished, Slot),
-		SwapDelay, false);
+		SwapDelay,
+		false
+	);
 }
 
 void UNCEquipmentComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 {
-	bIsSwapping = false;
-	ActiveSlot  = TargetSlot;
+	// 1. 아직 ActiveSlot이 이전 슬롯일 때 기존 무기 비활성화
+	DeactivateCurrentWeapon();
 
-	if (TargetSlot != ENCGunSlot::None)
-		ActivateWeaponForSlot(TargetSlot);
-	else
+	// 2. 그 다음 ActiveSlot 변경
+	ActiveSlot = TargetSlot;
+
+	// 3. None이면 종료
+	if (TargetSlot == ENCGunSlot::None)
+	{
+		bIsSwapping = false;
+		PendingEquipSlot = ENCGunSlot::None;
+
 		OnGunUnequipped.Broadcast();
+		OnSwapCompleted.Broadcast(TargetSlot);
+		return;
+	}
 
-	OnSwapCompleted.Broadcast(TargetSlot);
+	// 4. 새 무기 활성화는 EquipSpawnDelay 후
+	GetWorld()->GetTimerManager().SetTimer(
+		EquipDelayTimerHandle,
+		this,
+		&UNCEquipmentComponent::ActivatePendingWeapon,
+		EquipSpawnDelay,
+		false
+	);
+}
+
+void UNCEquipmentComponent::ActivatePendingWeapon()
+{
+	if (PendingEquipSlot == ENCGunSlot::None)
+	{
+		bIsSwapping = false;
+		OnGunUnequipped.Broadcast();
+		OnSwapCompleted.Broadcast(ENCGunSlot::None);
+		return;
+	}
+
+	ActivateWeaponForSlot(PendingEquipSlot);
+
+	bIsSwapping = false;
+
+	OnSwapCompleted.Broadcast(PendingEquipSlot);
+
+	PendingEquipSlot = ENCGunSlot::None;
 }
 
 // ─────────────────────────────────────────────
@@ -169,33 +241,58 @@ void UNCEquipmentComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 
 void UNCEquipmentComponent::StartFire()
 {
-	if (UNCGunComponent* W = GetActiveWeapon()) W->StartFire();
+	if (bIsSwapping) return;
+
+	if (UNCGunComponent* W = GetActiveWeapon())
+	{
+		W->StartFire();
+	}
 }
 
 void UNCEquipmentComponent::StopFire()
 {
-	if (UNCGunComponent* W = GetActiveWeapon()) W->StopFire();
+	if (UNCGunComponent* W = GetActiveWeapon())
+	{
+		W->StopFire();
+	}
 }
 
 void UNCEquipmentComponent::Reload()
 {
-	if (UNCGunComponent* W = GetActiveWeapon()) W->Reload();
+	if (bIsSwapping) return;
+
+	if (UNCGunComponent* W = GetActiveWeapon())
+	{
+		W->Reload();
+	}
 }
 
 void UNCEquipmentComponent::StartADS()
 {
 	if (!HasActiveGun() || IsSwapping()) return;
-	if (UNCGunComponent* W = GetActiveWeapon()) W->StartADS();
+
+	if (UNCGunComponent* W = GetActiveWeapon())
+	{
+		W->StartADS();
+	}
 }
 
 void UNCEquipmentComponent::StopADS()
 {
-	if (UNCGunComponent* W = GetActiveWeapon()) W->StopADS();
+	if (UNCGunComponent* W = GetActiveWeapon())
+	{
+		W->StopADS();
+	}
 }
 
 void UNCEquipmentComponent::ToggleFireMode()
 {
-	if (UNCGunComponent* W = GetActiveWeapon()) W->ToggleFireMode();
+	if (bIsSwapping) return;
+
+	if (UNCGunComponent* W = GetActiveWeapon())
+	{
+		W->ToggleFireMode();
+	}
 }
 
 // ─────────────────────────────────────────────
@@ -203,17 +300,34 @@ void UNCEquipmentComponent::ToggleFireMode()
 
 const FNCGunData* UNCEquipmentComponent::GetActiveGunData() const
 {
-	if (UNCGunComponent* W = GetActiveWeapon()) return W->GetActiveGunData();
+	if (UNCGunComponent* W = GetActiveWeapon())
+	{
+		return W->GetActiveGunData();
+	}
+
 	return nullptr;
 }
 
 UNCGunComponent* UNCEquipmentComponent::GetActiveWeapon() const
 {
-	const FNCGunSlotData& Slot = (ActiveSlot == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
-	if (ActiveSlot == ENCGunSlot::None || !Slot.GunTypeTag.IsValid()) return nullptr;
+	if (ActiveSlot == ENCGunSlot::None)
+	{
+		return nullptr;
+	}
+
+	const FNCGunSlotData& Slot =
+		(ActiveSlot == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
+
+	if (!Slot.GunTypeTag.IsValid())
+	{
+		return nullptr;
+	}
 
 	if (const TObjectPtr<UNCGunComponent>* Found = WeaponComponents.Find(Slot.GunTypeTag))
+	{
 		return *Found;
+	}
+
 	return nullptr;
 }
 
@@ -223,23 +337,22 @@ UNCGunComponent* UNCEquipmentComponent::GetActiveWeapon() const
 void UNCEquipmentComponent::ActivateWeaponForSlot(ENCGunSlot Slot)
 {
 	FNCGunSlotData& SlotData = GetSlotData(Slot);
-	const FNCGunData* Data   = FindGunData(SlotData.GunID);
+	const FNCGunData* Data = FindGunData(SlotData.GunID);
 	if (!Data) return;
 
 	const TObjectPtr<UNCGunComponent>* Found = WeaponComponents.Find(SlotData.GunTypeTag);
 	if (!Found || !*Found) return;
+
 	UNCGunComponent* Weapon = *Found;
 
-	// 무기 활성화
 	Weapon->ActivateGun(Data, SlotData.CurrentAmmo, SlotData.ReserveAmmo);
 
-	// 이벤트 구독 (중복 방지)
 	Weapon->OnAmmoChanged.RemoveDynamic(this, &UNCEquipmentComponent::OnActiveWeaponAmmoChanged);
 	Weapon->OnAmmoChanged.AddDynamic(this, &UNCEquipmentComponent::OnActiveWeaponAmmoChanged);
+
 	Weapon->OnFireModeChanged.RemoveDynamic(this, &UNCEquipmentComponent::OnActiveWeaponFireModeChanged);
 	Weapon->OnFireModeChanged.AddDynamic(this, &UNCEquipmentComponent::OnActiveWeaponFireModeChanged);
 
-	// UI에 초기 탄약 알림
 	OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
 }
 
@@ -248,12 +361,11 @@ void UNCEquipmentComponent::DeactivateCurrentWeapon()
 	UNCGunComponent* Weapon = GetActiveWeapon();
 	if (!Weapon) return;
 
-	// 탄약 상태 저장
 	FNCGunSlotData& SlotData = GetSlotData(ActiveSlot);
+
 	SlotData.CurrentAmmo = Weapon->CurrentAmmo;
 	SlotData.ReserveAmmo = Weapon->ReserveAmmo;
 
-	// 이벤트 구독 해제
 	Weapon->OnAmmoChanged.RemoveDynamic(this, &UNCEquipmentComponent::OnActiveWeaponAmmoChanged);
 	Weapon->OnFireModeChanged.RemoveDynamic(this, &UNCEquipmentComponent::OnActiveWeaponFireModeChanged);
 
@@ -263,6 +375,7 @@ void UNCEquipmentComponent::DeactivateCurrentWeapon()
 const FNCGunData* UNCEquipmentComponent::FindGunData(FName GunID) const
 {
 	if (!GunDataTable || GunID.IsNone()) return nullptr;
+
 	return GunDataTable->FindRow<FNCGunData>(GunID, TEXT("NCEquipmentComponent"));
 }
 

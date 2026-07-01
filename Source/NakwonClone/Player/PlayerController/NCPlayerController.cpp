@@ -387,27 +387,41 @@ void ANCPlayerController::QuickSlot4()
 
 void ANCPlayerController::UnArm()
 {
-    if (IsAttacking()) return; //헌호수정 - 공격 중 무기 해제 차단
+    if (IsMenuBlockingInput()) return;
+    if (IsAttacking()) return;
 
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
 
-    // 총기 장착 중이면 해제 — bUnArmPending으로 콜백에서 근접 자동장착 방지
-    if (UNCEquipmentComponent* EquipComp = PC->GetEquipmentComponent())
+    UNCEquipmentComponent* EquipComp = PC->GetEquipmentComponent();
+    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
+
+    if (EquipComp && EquipComp->IsSwapping()) return;
+    if (Combat && Combat->IsSwappingWeapon()) return;
+
+    // 총기 들고 있으면 총기 해제만
+    if (EquipComp && EquipComp->HasActiveGun())
     {
-        if (EquipComp->HasActiveGun())
-        {
-            bUnArmPending = true;
-            EquipComp->SelectSlot(ENCGunSlot::None);
-        }
+        bUnArmPending = true;
+        EquipComp->SelectSlot(ENCGunSlot::None);
+        return;
     }
 
-    // 근접무기 해제
-    if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
+    // 근접무기 들고 있으면 UnequipMontage 끝나게 둠
+    if (Combat && Combat->IsWeaponEquipped())
+    {
         Combat->UnEquipWeapon();
+        return;
+    }
 
-    if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
-        NCInventoryComp->ForceUnArm();
+    // 이미 맨손일 때만 ForceUnArm
+    if (APlayerState* PS = GetPlayerState<APlayerState>())
+    {
+        if (UNCPlayerInventoryComponent* Inv = PS->FindComponentByClass<UNCPlayerInventoryComponent>())
+        {
+            Inv->ForceUnArm();
+        }
+    }
 }
 
 bool ANCPlayerController::IsAttacking() const //헌호수정 - 공격 중 체크
@@ -472,50 +486,96 @@ void ANCPlayerController::GunToggleFireMode()
 void ANCPlayerController::GunSelectPrimary()
 {
     if (IsMenuBlockingInput()) return;
-    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
-        if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
-            if (AC->bIsAssassinating) return; // 헌호수정 - 암살 중 무기변경 차단
-    if (UNCEquipmentComponent* EC = GetGunComp()) EC->SelectSlot(ENCGunSlot::Primary);
+    if (IsAttacking()) return;
+
+    ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
+    if (!PC) return;
+
+    if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
+    {
+        if (AC->bIsAssassinating) return;
+    }
+
+    UNCEquipmentComponent* EC = PC->GetEquipmentComponent();
+    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
+
+    if (!EC) return;
+    if (EC->IsSwapping()) return;
+    if (Combat && Combat->IsSwappingWeapon()) return;
+
+    // 근접무기 들고 있으면 먼저 해제
+    if (Combat && Combat->IsWeaponEquipped())
+    {
+        Combat->UnEquipWeapon();
+    }
+
+    EC->SelectSlot(ENCGunSlot::Primary);
 }
 
 void ANCPlayerController::GunSelectSecondary()
 {
     if (IsMenuBlockingInput()) return;
-    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
-        if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
-            if (AC->bIsAssassinating) return; // 헌호수정 - 암살 중 무기변경 차단
-    if (UNCEquipmentComponent* EC = GetGunComp()) EC->SelectSlot(ENCGunSlot::Secondary);
+    if (IsAttacking()) return;
+
+    ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
+    if (!PC) return;
+
+    if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
+    {
+        if (AC->bIsAssassinating) return;
+    }
+
+    UNCEquipmentComponent* EC = PC->GetEquipmentComponent();
+    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
+
+    if (!EC) return;
+    if (EC->IsSwapping()) return;
+    if (Combat && Combat->IsSwappingWeapon()) return;
+
+    if (Combat && Combat->IsWeaponEquipped())
+    {
+        Combat->UnEquipWeapon();
+    }
+
+    EC->SelectSlot(ENCGunSlot::Secondary);
 }
 
 void ANCPlayerController::GunSelectMelee()
 {
     if (IsMenuBlockingInput()) return;
-    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
-        if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
-            if (AC->bIsAssassinating) return; // 헌호수정 - 암살 중 무기변경 차단
+    if (IsAttacking()) return;
+
+    ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
+    if (!PC) return;
+
+    if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
+    {
+        if (AC->bIsAssassinating) return;
+    }
 
     UNCEquipmentComponent* GunComp = GetGunComp();
     if (!GunComp) return;
 
+    if (GunComp->IsSwapping()) return;
+
     if (GunComp->HasActiveGun())
     {
-        // 총기 → 근접: SwapDelay 후 OnGunSwapCompleted(None)에서 장착
         GunComp->SelectSlot(ENCGunSlot::None);
+        return;
     }
-    else
-    {
-        // 이미 None 슬롯 (맨손/근접): SelectSlot은 early return하므로 직접 처리
-        ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
-        if (!PC || PC->StoredMeleeWeaponID.IsNone()) return;
-        UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
-        if (!Combat) return;
-        if (Combat->IsWeaponEquipped()) return;
-        FNCWeaponInstance Instance;
-        Instance.WeaponID          = PC->StoredMeleeWeaponID;
-        Instance.UniqueID          = FGuid::NewGuid();
-        Instance.CurrentDurability = 100.f;
-        Combat->EquipWeapon(Instance);
-    }
+
+    if (PC->StoredMeleeWeaponID.IsNone()) return;
+
+    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
+    if (!Combat) return;
+    if (Combat->IsWeaponEquipped()) return;
+
+    FNCWeaponInstance Instance;
+    Instance.WeaponID = PC->StoredMeleeWeaponID;
+    Instance.UniqueID = FGuid::NewGuid();
+    Instance.CurrentDurability = 100.f;
+
+    Combat->EquipWeapon(Instance);
 }
 
 void ANCPlayerController::Assassinate() //헌호수정 - 암살

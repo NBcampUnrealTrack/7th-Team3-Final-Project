@@ -70,6 +70,19 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName MuzzleSocketName = TEXT("Muzzle");
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName HandSocketName   = TEXT("hand_rSocket");
 
+    // IK
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")
+    bool bUseTwoHandIK = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")
+    FName LeftHandIKSocketName = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")
+    FName RightHandIKSocketName = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")
+    bool bUseLeftHandIK = false;
+
     // 사운드
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
     TSoftObjectPtr<USoundBase> FireSound;

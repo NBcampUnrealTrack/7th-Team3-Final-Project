@@ -91,6 +91,9 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation|Common")
 	TSoftObjectPtr<UAnimMontage> EquipMontage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation|Common")
+	TSoftObjectPtr<UAnimMontage> UnequipMontage;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation|Gun")
 	TSoftObjectPtr<UAnimMontage> FireMontage;
 

@@ -8,7 +8,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "Net/UnrealNetwork.h"
-
+#include "TimerManager.h"
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
 #include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
@@ -157,8 +157,17 @@ void UNCCombatComponent::Server_ReduceDurability_Implementation(float Amount)
 
 void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 {
+	if (!WeaponInstance.IsValid())
+	{
+		return;
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(MeleeEquipTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(MeleeUnequipTimerHandle);
+
 	EquippedWeapon = WeaponInstance;
 	bIsEquipped = true;
+	bIsSwappingWeapon = true;
 
 	if (ASC)
 	{
@@ -169,74 +178,57 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 			ASC->AddLooseGameplayTag(Data->WeaponTypeTag);
 			ASC->AddLooseGameplayTag(Data->WeightTag);
 			ASC->AddLooseGameplayTag(NCWeapon::State_Equipped);
+			ASC->AddLooseGameplayTag(NCWeapon::Action_Swapping);
 
 			FNCWeaponComboData ComboData;
 			ComboData.ComboMontage = Data->AttackMontage.LoadSynchronous();
 			ComboData.ComboSections = Data->AttackSections.Num() > 0
 				? Data->AttackSections
 				: TArray<FName>{ TEXT("Attack1") };
+
 			EquipWeaponCombo(ComboData);
 
-			if (!Data->WeaponActorClass.IsNull())
-			{
-				UClass* ActorClass = Data->WeaponActorClass.LoadSynchronous();
-				if (ActorClass && OwnerCharacter)
-				{
-					FActorSpawnParameters SpawnParams;
-					SpawnParams.Owner = OwnerCharacter;
-					SpawnParams.Instigator = OwnerCharacter;
-
-					SpawnedWeaponActor = GetWorld()->SpawnActor<AActor>(
-						ActorClass, FTransform::Identity, SpawnParams);
-
-					if (SpawnedWeaponActor)
-					{
-						SpawnedWeaponActor->AttachToComponent(
-							OwnerCharacter->GetMesh(),
-							FAttachmentTransformRules::SnapToTargetIncludingScale,
-							Data->AttachSocketName);
-					}
-				}
-			}
-
-			// 장착 몽타주 재생
 			PlayEquipMontage();
 		}
 	}
+
+	GetWorld()->GetTimerManager().SetTimer(
+		MeleeEquipTimerHandle,
+		this,
+		&UNCCombatComponent::FinishEquipWeapon,
+		MeleeEquipAttachDelay,
+		false
+	);
 
 	OnWeaponChanged.Broadcast(EquippedWeapon);
 }
 
 void UNCCombatComponent::Internal_UnEquipWeapon()
 {
+	if (!bIsEquipped)
+	{
+		return;
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(MeleeEquipTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(MeleeUnequipTimerHandle);
+
+	bIsSwappingWeapon = true;
+
 	if (ASC)
 	{
-		FNCWeaponData* Data = GetEquippedWeaponData();
-
-		if (Data)
-		{
-			ASC->RemoveLooseGameplayTag(Data->WeaponTypeTag);
-			ASC->RemoveLooseGameplayTag(Data->WeightTag);
-			ASC->RemoveLooseGameplayTag(NCWeapon::State_Equipped);
-			// 헌호수정 - 파손 상태 태그도 제거 (다음 무기에 영향 방지)
-			if (EquippedWeapon.bIsBroken)
-				ASC->RemoveLooseGameplayTag(NCWeapon::State_Broken);
-			// 장착 모션 중 해제 시 Swapping 태그 잔류 방지
-			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Swapping);
-		}
+		ASC->AddLooseGameplayTag(NCWeapon::Action_Swapping);
 	}
 
-	// 무기 액터 제거
-	if (SpawnedWeaponActor)
-	{
-		SpawnedWeaponActor->Destroy();
-		SpawnedWeaponActor = nullptr;
-	}
+	PlayUnequipMontage();
 
-	EquippedWeapon = FNCWeaponInstance();
-	bIsEquipped = false;
-
-	OnWeaponChanged.Broadcast(FNCWeaponInstance{});
+	GetWorld()->GetTimerManager().SetTimer(
+		MeleeUnequipTimerHandle,
+		this,
+		&UNCCombatComponent::FinishUnEquipWeapon,
+		MeleeUnequipDetachDelay,
+		false
+	);
 }
 
 void UNCCombatComponent::OnRep_EquippedWeapon()
@@ -409,6 +401,117 @@ void UNCCombatComponent::PlayEquipMontage()
 	}
 
 	UAnimMontage* Montage = Data->EquipMontage.LoadSynchronous();
+
+	if (!Montage)
+	{
+		return;
+	}
+
+	Anim->Montage_Play(Montage);
+}
+
+void UNCCombatComponent::FinishEquipWeapon()
+{
+	FNCWeaponData* Data = GetEquippedWeaponData();
+
+	if (!Data || !OwnerCharacter)
+	{
+		bIsSwappingWeapon = false;
+
+		if (ASC)
+		{
+			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Swapping);
+		}
+
+		return;
+	}
+
+	if (!Data->WeaponActorClass.IsNull())
+	{
+		UClass* ActorClass = Data->WeaponActorClass.LoadSynchronous();
+
+		if (ActorClass)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = OwnerCharacter;
+			SpawnParams.Instigator = OwnerCharacter;
+
+			SpawnedWeaponActor = GetWorld()->SpawnActor<AActor>(
+				ActorClass,
+				FTransform::Identity,
+				SpawnParams
+			);
+
+			if (SpawnedWeaponActor)
+			{
+				SpawnedWeaponActor->AttachToComponent(
+					OwnerCharacter->GetMesh(),
+					FAttachmentTransformRules::SnapToTargetIncludingScale,
+					Data->AttachSocketName
+				);
+			}
+		}
+	}
+
+	bIsSwappingWeapon = false;
+
+	if (ASC)
+	{
+		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Swapping);
+	}
+}
+
+void UNCCombatComponent::FinishUnEquipWeapon()
+{
+	if (ASC)
+	{
+		FNCWeaponData* Data = GetEquippedWeaponData();
+
+		if (Data)
+		{
+			ASC->RemoveLooseGameplayTag(Data->WeaponTypeTag);
+			ASC->RemoveLooseGameplayTag(Data->WeightTag);
+			ASC->RemoveLooseGameplayTag(NCWeapon::State_Equipped);
+
+			if (EquippedWeapon.bIsBroken)
+			{
+				ASC->RemoveLooseGameplayTag(NCWeapon::State_Broken);
+			}
+		}
+
+		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Swapping);
+	}
+
+	if (SpawnedWeaponActor)
+	{
+		SpawnedWeaponActor->Destroy();
+		SpawnedWeaponActor = nullptr;
+	}
+
+	EquippedWeapon = FNCWeaponInstance();
+	bIsEquipped = false;
+	bIsSwappingWeapon = false;
+
+	OnWeaponChanged.Broadcast(FNCWeaponInstance{});
+}
+
+void UNCCombatComponent::PlayUnequipMontage()
+{
+	FNCWeaponData* Data = GetEquippedWeaponData();
+
+	if (!Data || Data->UnequipMontage.IsNull())
+	{
+		return;
+	}
+
+	UAnimInstance* Anim = GetAnimInstance();
+
+	if (!Anim)
+	{
+		return;
+	}
+
+	UAnimMontage* Montage = Data->UnequipMontage.LoadSynchronous();
 
 	if (!Montage)
 	{
