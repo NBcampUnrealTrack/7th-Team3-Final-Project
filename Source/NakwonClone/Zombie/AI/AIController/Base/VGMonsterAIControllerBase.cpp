@@ -3,6 +3,7 @@
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "NavigationSystem.h"
 #include "Common/NCGameplayTags.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -22,6 +23,7 @@ const FName AVGMonsterAIControllerBase::BIsCombatKey	     = "bIsCombat";
 const FName AVGMonsterAIControllerBase::BIsAttackKey         = "bIsAttack";
 const FName AVGMonsterAIControllerBase::DistanceKey          = "Distance";
 const FName AVGMonsterAIControllerBase::HeardLocationKey     = "HeardLocation";
+const FName AVGMonsterAIControllerBase::PatrolLocationKey    = "PatrolLocation";
 #pragma endregion
 
 AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
@@ -110,6 +112,27 @@ void AVGMonsterAIControllerBase::OnPossess(APawn* InPawn)
 	{
 		// UE_LOG(LogMonster, Error, TEXT("[AIController] BehaviorTree가 null"));
 	}
+}
+
+bool AVGMonsterAIControllerBase::FindPatrolLocation()
+{
+	APawn* Monster = GetPawn();
+	if (!Monster) return false;
+
+	UBlackboardComponent* BB = GetBlackboardComponent();
+	if (!BB) return false;
+
+	UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	if (!NavSystem) return false;
+
+	FNavLocation RandomLocation;
+	if (NavSystem->GetRandomReachablePointInRadius(Monster->GetActorLocation(), SearchRadius, RandomLocation))
+	{
+		BB->SetValueAsVector(PatrolLocationKey, RandomLocation.Location);
+		return true;
+	}
+
+	return false;
 }
 
 // [BT 리팩터] 이벤트 기반 퍼셉션(옛 키 IsDeadKey/IsAwakeKey/TargetActorLocationKey 사용)은 새 Service로 대체 — 함수 전체 주석 처리

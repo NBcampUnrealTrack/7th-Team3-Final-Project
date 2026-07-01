@@ -38,6 +38,16 @@ public:
 	static const FName BIsAttackKey;         // 공격 여부 판별 결과 (Bool)
 	static const FName DistanceKey;          // 좀비-타겟 거리 (Float)
 	static const FName HeardLocationKey;     // 들린 소리 위치 (Vector)
+	static const FName PatrolLocationKey;    // 순찰 목적지 좌표 (Vector)
+#pragma endregion
+	
+#pragma region Patrol
+public:
+	bool FindPatrolLocation();
+	
+protected:
+	UPROPERTY(EditAnywhere, Category = "AI|Patrol")
+	float SearchRadius = 500.f;
 #pragma endregion
 	
 #pragma region Behavior Tree & Blackboard
