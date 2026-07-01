@@ -17,4 +17,8 @@ public:
 	
 protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+	
+private:
+	UPROPERTY(EditAnywhere, Category = "Detection")
+	float DetectRadius = 500.f;
 };
