@@ -576,7 +576,6 @@ void UNCGunComponent::AttachGunMesh(const FNCGunData* Data)
 				Char->GetMesh(),
 				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 				Data->HandSocketName);
-			EquippedGunSkelMeshComp->SetWorldScale3D(Data->GunMeshScale);
 			AttachedMeshComp = EquippedGunSkelMeshComp;
 		}
 	}
@@ -593,7 +592,6 @@ void UNCGunComponent::AttachGunMesh(const FNCGunData* Data)
 				Char->GetMesh(),
 				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 				Data->HandSocketName);
-			EquippedGunMeshComp->SetRelativeScale3D(Data->GunMeshScale);
 			AttachedMeshComp = EquippedGunMeshComp;
 		}
 	}
