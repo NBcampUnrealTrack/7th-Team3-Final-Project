@@ -43,7 +43,6 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Socket")
 	FName AttachSocketName = NAME_None;
 
-	// 양손 IK: 켜면 왼손+오른손 모두 각 소켓으로 IK 적용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
 	bool bUseTwoHandIK = false;
 
@@ -53,7 +52,6 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
 	FName RightHandIKSocketName = NAME_None;
 
-	// 왼손 전용 IK: bUseTwoHandIK가 꺼져 있어도 왼손만 IK 적용 (오른손 미적용)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
 	bool bUseLeftHandIK = false;
 
