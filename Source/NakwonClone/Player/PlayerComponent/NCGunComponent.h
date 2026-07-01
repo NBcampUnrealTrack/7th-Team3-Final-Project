@@ -93,7 +93,7 @@ public:
 	const FNCGunData* GetActiveGunData() const { return ActiveGunData; }
 
 	// 언이퀍 몽타주 재생 (EquipmentComponent의 SelectSlot에서 호출)
-	void PlayUnequipMontage(const FNCGunData* Data);
+	float PlayUnequipMontage(const FNCGunData* Data);
 
 protected:
 	virtual void OnBeforeFire() {}
@@ -122,7 +122,7 @@ private:
 	void RestoreFOV();
 	UCameraComponent* FindCamera() const;
 
-	void PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& MontageSoft);
+	float PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& MontageSoft);
 
 	UFUNCTION()
 	void OnMuzzleFlashFinished(UNiagaraComponent* PSystem);

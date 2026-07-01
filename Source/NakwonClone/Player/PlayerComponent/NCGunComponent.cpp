@@ -160,9 +160,23 @@ void UNCGunComponent::DeactivateGun()
 	ActiveGunData = nullptr;
 }
 
-void UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
+float UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 {
-	if (Data) PlayGunMontage(Data->UnequipMontage);
+	if (!Data)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GunUnequip] Data NULL"));
+		return 0.f;
+	}
+
+	if (Data->UnequipMontage.IsNull())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GunUnequip] UnequipMontage NULL"));
+		return 0.f;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[GunUnequip] Play Unequip Montage"));
+
+	return PlayGunMontage(Data->UnequipMontage);
 }
 
 // ─────────────────────────────────────────────
@@ -474,6 +488,11 @@ void UNCGunComponent::StartADS()
 
 void UNCGunComponent::StopADS()
 {
+	if (!IsADS())
+	{
+		return;
+	}
+
 	ActiveGunActions.RemoveTag(NCGun::Action_ADS);
 
 	if (AActor* Owner = GetOwner())
@@ -541,13 +560,36 @@ void UNCGunComponent::ToggleFireMode()
 // ─────────────────────────────────────────────
 // 몽타주 재생
 
-void UNCGunComponent::PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& MontageSoft)
+float UNCGunComponent::PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& MontageSoft)
 {
-	if (MontageSoft.IsNull()) return;
+	if (MontageSoft.IsNull())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GunMontage] MontageSoft NULL"));
+		return 0.f;
+	}
+
 	ACharacter* Char = Cast<ACharacter>(GetOwner());
-	if (!Char) return;
-	if (UAnimMontage* Montage = MontageSoft.LoadSynchronous())
-		Char->PlayAnimMontage(Montage);
+	if (!Char)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GunMontage] Owner Character NULL"));
+		return 0.f;
+	}
+
+	UAnimMontage* Montage = MontageSoft.LoadSynchronous();
+	if (!Montage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GunMontage] Load Failed"));
+		return 0.f;
+	}
+
+	const float Length = Char->PlayAnimMontage(Montage);
+
+	UE_LOG(LogTemp, Warning, TEXT("[GunMontage] Played: %s / Length: %.2f"),
+		*Montage->GetName(),
+		Length
+	);
+
+	return Length;
 }
 
 // ─────────────────────────────────────────────
