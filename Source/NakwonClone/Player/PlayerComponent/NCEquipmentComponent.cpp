@@ -273,6 +273,14 @@ FNCGunSlotData& UNCEquipmentComponent::GetSlotData(ENCGunSlot Slot)
 
 void UNCEquipmentComponent::OnActiveWeaponAmmoChanged(int32 CurrentAmmo, int32 ReserveAmmo)
 {
+	// 실시간으로 줄어드는 탄약을 SlotData에도 반영
+	if (ActiveSlot != ENCGunSlot::None)
+	{
+		FNCGunSlotData& SlotData = GetSlotData(ActiveSlot);
+		SlotData.CurrentAmmo = CurrentAmmo;
+		SlotData.ReserveAmmo = ReserveAmmo;
+	}
+
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 }
 
