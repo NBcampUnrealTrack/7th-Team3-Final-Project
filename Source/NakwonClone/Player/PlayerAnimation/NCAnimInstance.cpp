@@ -222,9 +222,6 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
         CurrentWeaponTypeTag.MatchesTagExact(NCGun::Type_Rifle);
 
     CurrentLocomotionBlendSpace = nullptr;
-
-    UE_LOG(LogTemp, Warning, TEXT("Current Tag : %s"),
-        *CurrentWeaponTypeTag.ToString());
 }
 
 void UNCAnimInstance::UpdateWeaponStateTags()

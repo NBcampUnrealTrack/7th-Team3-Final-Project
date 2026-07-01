@@ -1,4 +1,4 @@
-#include "HitCheckNotify.h"
+﻿#include "HitCheckNotify.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemComponent.h"
@@ -12,6 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameplayEffectTypes.h"
 #include "GameFramework/Pawn.h"
+#include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
 #include "Components/CapsuleComponent.h"
 
 void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -60,6 +61,18 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
     if (!Combat) return;
 
     FNCWeaponData* WeaponData = Combat->GetEquippedWeaponData();
+
+    if (!WeaponData)
+    {
+        if (UGameInstance* GIBase = OwnerChar->GetGameInstance())
+        {
+            if (UNCGameInstance* GI = Cast<UNCGameInstance>(GIBase))
+            {
+                WeaponData = GI->GetWeaponData(TEXT("Unarmed"));
+            }
+        }
+    }
+
     if (!WeaponData) return;
 
     FCollisionQueryParams Params;
