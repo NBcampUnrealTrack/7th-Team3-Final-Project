@@ -120,9 +120,6 @@ struct FNCGunData : public FTableRowBase
     TSoftObjectPtr<USkeletalMesh> GunSkeletalMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FVector GunMeshScale = FVector(1.f, 1.f, 1.f);
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TSubclassOf<ANCProjectile>    ProjectileClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
