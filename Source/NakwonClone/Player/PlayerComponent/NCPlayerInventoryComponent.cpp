@@ -656,11 +656,10 @@ void UNCPlayerInventoryComponent::Server_UseConsumableSlot_Implementation(int32 
 bool UNCPlayerInventoryComponent::UseConsumableSlot_Internal(int32 SlotIndex)
 {
     if (!GetOwner()->HasAuthority()) return false;
-    const int32 PresetIdx = (CurrentEquippedPresetIndex != -1) ? CurrentEquippedPresetIndex : 0;
-    if (!EquipmentPresets.IsValidIndex(PresetIdx)) return false;
+    if (!EquipmentPresets.IsValidIndex(0)) return false;
     FInventorySlot& ConsumableSlot = (SlotIndex == 0)
-        ? EquipmentPresets[PresetIdx].ConsumableHeal
-        : EquipmentPresets[PresetIdx].ConsumableFood;
+        ? EquipmentPresets[0].ConsumableHeal
+        : EquipmentPresets[0].ConsumableFood;
 
     if (ConsumableSlot.IsEmpty()) return false;
 
@@ -748,23 +747,11 @@ bool UNCPlayerInventoryComponent::AutoEquipItem_Internal(int32 MainSlotIndex)
     
     else if (ItemTag.MatchesTag(NCItemTag::Heal))
     {
-        const int32 ActivePreset = (CurrentEquippedPresetIndex != -1) ? CurrentEquippedPresetIndex : 0;
-        const int32 OtherPreset  = 1 - ActivePreset;
-        if (EquipmentPresets[ActivePreset].ConsumableHeal.IsEmpty())
-            return EquipToConsumable_Internal(MainSlotIndex, ActivePreset, 0);
-        if (EquipmentPresets[OtherPreset].ConsumableHeal.IsEmpty())
-            return EquipToConsumable_Internal(MainSlotIndex, OtherPreset, 0);
-        return EquipToConsumable_Internal(MainSlotIndex, ActivePreset, 0);
+        return EquipToConsumable_Internal(MainSlotIndex, 0, 0);
     }
     else if (ItemTag.MatchesTag(NCItemTag::Food))
     {
-        const int32 ActivePreset = (CurrentEquippedPresetIndex != -1) ? CurrentEquippedPresetIndex : 0;
-        const int32 OtherPreset  = 1 - ActivePreset;
-        if (EquipmentPresets[ActivePreset].ConsumableFood.IsEmpty())
-            return EquipToConsumable_Internal(MainSlotIndex, ActivePreset, 1);
-        if (EquipmentPresets[OtherPreset].ConsumableFood.IsEmpty())
-            return EquipToConsumable_Internal(MainSlotIndex, OtherPreset, 1);
-        return EquipToConsumable_Internal(MainSlotIndex, ActivePreset, 1);
+        return EquipToConsumable_Internal(MainSlotIndex, 0, 1);
     }
 
     return false;
@@ -883,6 +870,25 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
     bool bAdded = AddItem(LootID, LootTag, LootQuantity);
     if (bAdded)
     {
+        // 무기/소비류는 장비 슬롯으로 자동 이동, 칸이 차 있으면 가방에 그대로
+        if (LootTag.MatchesTag(NCItemTag::Weapon) ||
+            LootTag.MatchesTag(NCItemTag::Heal)   ||
+            LootTag.MatchesTag(NCItemTag::Food))
+        {
+            int32 SlotIdx = INDEX_NONE;
+            for (int32 i = 0; i < Items.Num(); ++i)
+            {
+                if (!Items[i].IsEmpty() && Items[i].ItemID == LootID && Items[i].ItemTypeTag == LootTag)
+                {
+                    SlotIdx = i;
+                    break;
+                }
+            }
+            if (SlotIdx != INDEX_NONE)
+            {
+                AutoEquipItem_Internal(SlotIdx);
+            }
+        }
         ItemToLoot->Destroy();
     }
 }

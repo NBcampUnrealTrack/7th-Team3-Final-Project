@@ -1,6 +1,7 @@
 ﻿#include "NCEquipmentComponent.h"
 #include "NCGunComponent.h"
 #include "Engine/DataTable.h"
+#include "Engine/Texture2D.h"
 #include "TimerManager.h"
 #include "AbilitySystemComponent.h"
 
@@ -66,6 +67,15 @@ FName UNCEquipmentComponent::GetActiveGunID() const
 	return NAME_None;
 }
 
+UTexture2D* UNCEquipmentComponent::GetGunIcon(ENCGunSlot Slot) const
+{
+	const FNCGunSlotData& SlotData = (Slot == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
+	if (SlotData.GunID.IsNone()) return nullptr;
+
+	const FNCGunData* Data = FindGunData(SlotData.GunID);
+	return Data ? Data->Icon : nullptr;
+}
+
 FName UNCEquipmentComponent::GetOccupantGunID(FName ForGunID) const
 {
 	const FNCGunData* Data = FindGunData(ForGunID);
@@ -102,6 +112,7 @@ bool UNCEquipmentComponent::EquipGun(FName GunID)
 	}
 
 	OnGunEquipped.Broadcast(GunID);
+	OnGunSlotChanged.Broadcast(Data->SlotType, GunID);
 	return true;
 }
 
@@ -127,6 +138,7 @@ bool UNCEquipmentComponent::EquipGunWithAmmo(FName GunID, int32 CurrentAmmo, int
 	}
 
 	OnGunEquipped.Broadcast(GunID);
+	OnGunSlotChanged.Broadcast(Data->SlotType, GunID);
 	return true;
 }
 
@@ -147,6 +159,7 @@ void UNCEquipmentComponent::UnequipGun(ENCGunSlot Slot)
 	}
 
 	GetSlotData(Slot).Clear();
+	OnGunSlotChanged.Broadcast(Slot, NAME_None);
 }
 
 void UNCEquipmentComponent::SelectSlot(ENCGunSlot Slot)

@@ -25,6 +25,9 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
+#include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
+#include "Player/PlayerData/NCWeaponData.h"
+#include "Engine/Texture2D.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
@@ -38,6 +41,17 @@ ANCPlayerCharacter::ANCPlayerCharacter()
 UNCGunComponent* ANCPlayerCharacter::GetGunComponent() const
 {
 	return EquipmentComponent ? EquipmentComponent->GetActiveWeapon() : nullptr;
+}
+
+UTexture2D* ANCPlayerCharacter::GetMeleeIcon() const
+{
+	if (StoredMeleeWeaponID.IsNone()) return nullptr;
+
+	UNCGameInstance* GI = Cast<UNCGameInstance>(GetGameInstance());
+	if (!GI) return nullptr;
+
+	FNCWeaponData* Data = GI->GetWeaponData(StoredMeleeWeaponID);
+	return Data ? Data->Icon : nullptr;
 }
 
 void ANCPlayerCharacter::InitCamera()
