@@ -265,9 +265,6 @@ void UNCAnimInstance::UpdateWeaponStateTags()
 }
 void UNCAnimInstance::UpdateLeftHandIK()
 {
-    UNCCombatComponent* ActiveCombatComponent =
-        CachedCombatComponent ? CachedCombatComponent.Get() : CombatComponent.Get();
-
     const bool bDisableIKDuringStandingRun =
         bIsTwoHandedWeapon &&
         !bIsCrouching &&
@@ -285,14 +282,100 @@ void UNCAnimInstance::UpdateLeftHandIK()
 
     const bool bShouldDisableIK =
         bIsAttacking ||
+        bIsReloading ||
+        bIsSwappingWeapon ||
         bDisableIKDuringStop ||
         bDisableIKDuringStandingRun ||
         bDisableIKDuringCrouchRun ||
         bDisableIKDuringCrouchIdle;
 
-    if (!ActiveCombatComponent ||
-        !ActiveCombatComponent->IsWeaponEquipped() ||
-        bShouldDisableIK)
+    if (bShouldDisableIK || !OwnerCharacter || !OwnerCharacter->GetMesh())
+    {
+        bUseLeftHandIK = false;
+        bUseRightHandIK = false;
+        return;
+    }
+
+    // ─────────────────────────────
+    // 1. 총기 IK 우선 처리
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(OwnerCharacter))
+    {
+        if (UNCGunComponent* GunComponent = PC->GetGunComponent())
+        {
+            if (const FNCGunData* GunData = GunComponent->GetActiveGunData())
+            {
+                if (!GunData->bUseTwoHandIK)
+                {
+                    bUseLeftHandIK = false;
+                    bUseRightHandIK = false;
+                    return;
+                }
+
+                AActor* GunActor = GunComponent->GetOwner();
+                UMeshComponent* GunMesh = nullptr;
+
+                if (GunActor)
+                {
+                    GunMesh = GunActor->FindComponentByClass<USkeletalMeshComponent>();
+
+                    if (!GunMesh)
+                    {
+                        GunMesh = GunActor->FindComponentByClass<UStaticMeshComponent>();
+                    }
+                }
+
+                if (!GunMesh)
+                {
+                    bUseLeftHandIK = false;
+                    bUseRightHandIK = false;
+                    return;
+                }
+
+                if (!GunData->LeftHandIKSocketName.IsNone())
+                {
+                    const FVector SocketWorldLocation =
+                        GunMesh->GetSocketLocation(GunData->LeftHandIKSocketName);
+
+                    LeftHandIKLocation =
+                        OwnerCharacter->GetMesh()
+                        ->GetComponentTransform()
+                        .InverseTransformPosition(SocketWorldLocation);
+
+                    bUseLeftHandIK = true;
+                }
+                else
+                {
+                    bUseLeftHandIK = false;
+                }
+
+                if (!GunData->RightHandIKSocketName.IsNone())
+                {
+                    const FVector SocketWorldLocation =
+                        GunMesh->GetSocketLocation(GunData->RightHandIKSocketName);
+
+                    RightHandIKLocation =
+                        OwnerCharacter->GetMesh()
+                        ->GetComponentTransform()
+                        .InverseTransformPosition(SocketWorldLocation);
+
+                    bUseRightHandIK = true;
+                }
+                else
+                {
+                    bUseRightHandIK = false;
+                }
+
+                return;
+            }
+        }
+    }
+
+    // ─────────────────────────────
+    // 2. 총기가 없으면 근접무기 IK 처리
+    UNCCombatComponent* ActiveCombatComponent =
+        CachedCombatComponent ? CachedCombatComponent.Get() : CombatComponent.Get();
+
+    if (!ActiveCombatComponent || !ActiveCombatComponent->IsWeaponEquipped())
     {
         bUseLeftHandIK = false;
         bUseRightHandIK = false;
@@ -324,7 +407,7 @@ void UNCAnimInstance::UpdateLeftHandIK()
         WeaponMesh = WeaponActor->FindComponentByClass<UStaticMeshComponent>();
     }
 
-    if (!WeaponMesh || !OwnerCharacter || !OwnerCharacter->GetMesh())
+    if (!WeaponMesh)
     {
         bUseLeftHandIK = false;
         bUseRightHandIK = false;

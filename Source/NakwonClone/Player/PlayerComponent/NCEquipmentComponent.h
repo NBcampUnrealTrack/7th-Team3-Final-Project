@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -9,7 +9,7 @@
 
 class UDataTable;
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class NAKWONCLONE_API UNCEquipmentComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -17,7 +17,6 @@ class NAKWONCLONE_API UNCEquipmentComponent : public UActorComponent
 public:
 	UNCEquipmentComponent();
 
-	// ----- UI 바인딩용 이벤트 -----
 	UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
 	FOnAmmoChanged OnAmmoChanged;
 
@@ -33,18 +32,19 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
 	FOnSwapCompleted OnSwapCompleted;
 
-	// ----- 데이터 -----
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Data")
 	TObjectPtr<UDataTable> GunDataTable;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Data")
 	float SwapDelay = 0.3f;
 
-	// ----- 무기 컴포넌트 맵 (GunTypeTag → 컴포넌트, 캐릭터 BeginPlay에서 등록) -----
+	// Equip 몽타주가 먼저 보이고, 실제 무기 활성화는 이 시간 뒤에 처리
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Data")
+	float EquipSpawnDelay = 1.0f;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Equipment|Weapons")
 	TMap<FGameplayTag, TObjectPtr<UNCGunComponent>> WeaponComponents;
 
-	// ----- 슬롯 상태 (탈착 시 탄약 보존용) -----
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment|State")
 	FNCGunSlotData PrimarySlot;
 
@@ -54,7 +54,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment|State")
 	ENCGunSlot ActiveSlot = ENCGunSlot::None;
 
-	// ----- 상태 조회 -----
 	UFUNCTION(BlueprintCallable, Category = "Equipment|Getter")
 	bool HasActiveGun() const { return ActiveSlot != ENCGunSlot::None; }
 
@@ -84,7 +83,6 @@ public:
 
 	FName GetOccupantGunID(FName ForGunID) const;
 
-	// ----- 무기 장착 / 해제 -----
 	UFUNCTION(BlueprintCallable, Category = "Equipment|Manage")
 	bool EquipGun(FName GunID);
 
@@ -97,7 +95,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment|Manage")
 	void SelectSlot(ENCGunSlot Slot);
 
-	// ----- 액션 프록시 (내부적으로 활성 무기에 전달) -----
 	UFUNCTION(BlueprintCallable, Category = "Equipment|Action")
 	void StartFire();
 
@@ -116,7 +113,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment|Action")
 	void ToggleFireMode();
 
-	// ----- 데이터 접근 -----
 	const FNCGunData* GetActiveGunData() const;
 	const FNCGunData* GetGunData(FName InGunID) const { return FindGunData(InGunID); }
 
@@ -127,11 +123,17 @@ protected:
 
 private:
 	bool bIsSwapping = false;
+
 	FTimerHandle SwapTimerHandle;
+	FTimerHandle EquipDelayTimerHandle;
+
+	ENCGunSlot PendingEquipSlot = ENCGunSlot::None;
 
 	void ActivateWeaponForSlot(ENCGunSlot Slot);
+	void ActivatePendingWeapon();
 	void DeactivateCurrentWeapon();
 	void OnSwapFinished(ENCGunSlot TargetSlot);
+
 	const FNCGunData* FindGunData(FName GunID) const;
 	FNCGunSlotData& GetSlotData(ENCGunSlot Slot);
 
