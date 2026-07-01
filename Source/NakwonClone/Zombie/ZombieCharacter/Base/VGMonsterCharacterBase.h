@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGHitTypes.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterTypeData.h" 
 #include "VGMonsterCharacterBase.generated.h"
 
 // 전방 선언
@@ -18,6 +19,8 @@ class USoundBase;
 class USoundAttenuation;
 class UNiagaraSystem;
 class UGameplayEffect;
+
+DECLARE_DELEGATE(FOnMonsterAttackFinished);
 
 struct FOnAttributeChangeData;
 
@@ -248,5 +251,52 @@ private:
 	void Multicast_PlayAssassinationMontage(UAnimMontage* Montage);
 
 	bool bIsBeingAssassinated = false;
+#pragma endregion
+
+#pragma region 타입/공격 (AI)
+public:
+	// 스폰 시 이 타입으로 세팅
+	UPROPERTY(EditAnywhere, Category = "Monster|Type")
+	EVGMonsterType MonsterType = EVGMonsterType::Walker;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Type")
+	TObjectPtr<UDataTable> MonsterTypeTable = nullptr;
+
+	// BT가 부르는 진입점 — "공격 시작" (재생은 캐릭터가)
+	void StartAttack();
+
+	// 공격 몽타주 끝나면 BT에 알림
+	FOnMonsterAttackFinished OnAttackFinished;
+
+protected:
+	// 타입 데이터 적용 (메시/ABP/스탯/공격몽타주 캐시)
+	void ApplyMonsterType();
+
+	// 현재 타입 공격 몽타주 중 하나
+	UAnimMontage* GetAttackMontageForAI();
+
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayAttackMontage(UAnimMontage* Montage);
+
+	UFUNCTION()
+	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	// 실제 공격 몽타주 재생 (내부용)
+	void PlayAttackNow();
+
+	// 타입 데이터 런타임 캐시
+	UPROPERTY()
+	TArray<TObjectPtr<UAnimMontage>> CachedAttackMontages;
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CachedSpecialMontage = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentPlayingMontage = nullptr;
+
+	// Witch: 첫 공격 때 큰소리 1회
+	bool bScreamPhase = false;
+	bool bHasScreamed = false;
 #pragma endregion
 };
