@@ -100,9 +100,12 @@ void UNCAssassinationComponent::Finish()
 	ACharacter* Owner = Cast<ACharacter>(GetOwner());
 	if (!Owner) return;
 
-	// 헌호수정 - 움직임 잠금 해제
+	// 헌호수정 - 움직임 + 마우스 + 무기변경 잠금 해제
+	bIsAssassinating = false;
 	if (UCharacterMovementComponent* Movement = Owner->GetCharacterMovement())
 		Movement->SetMovementMode(MOVE_Walking);
+	if (APlayerController* PC0 = Cast<APlayerController>(Owner->GetController()))
+		PC0->SetIgnoreLookInput(false);
 
 	if (Owner->IsLocallyControlled())
 	{
@@ -143,9 +146,12 @@ void UNCAssassinationComponent::TryAssassinate()
 	const FVector SnapLocation = Target->GetActorLocation() + ZombieBack * AssassinationSnapDistance;
 	Owner->SetActorLocation(FVector(SnapLocation.X, SnapLocation.Y, Owner->GetActorLocation().Z));
 
-	// 헌호수정 - 암살 중 움직임 잠금
+	// 헌호수정 - 암살 중 움직임 + 마우스 + 무기변경 잠금
+	bIsAssassinating = true;
 	if (UCharacterMovementComponent* Movement = Owner->GetCharacterMovement())
 		Movement->DisableMovement();
+	if (APlayerController* PC = Cast<APlayerController>(Owner->GetController()))
+		PC->SetIgnoreLookInput(true);
 
 	if (Owner->HasAuthority())
 	{

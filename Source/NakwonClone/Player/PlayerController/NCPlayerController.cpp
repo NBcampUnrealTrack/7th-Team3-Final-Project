@@ -4,6 +4,7 @@
 #include "InputActionValue.h"
 #include "Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
+#include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerComponent/NCEquipmentComponent.h" // 하상빈 추가
@@ -471,18 +472,27 @@ void ANCPlayerController::GunToggleFireMode()
 void ANCPlayerController::GunSelectPrimary()
 {
     if (IsMenuBlockingInput()) return;
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
+            if (AC->bIsAssassinating) return; // 헌호수정 - 암살 중 무기변경 차단
     if (UNCEquipmentComponent* EC = GetGunComp()) EC->SelectSlot(ENCGunSlot::Primary);
 }
 
 void ANCPlayerController::GunSelectSecondary()
 {
     if (IsMenuBlockingInput()) return;
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
+            if (AC->bIsAssassinating) return; // 헌호수정 - 암살 중 무기변경 차단
     if (UNCEquipmentComponent* EC = GetGunComp()) EC->SelectSlot(ENCGunSlot::Secondary);
 }
 
 void ANCPlayerController::GunSelectMelee()
 {
     if (IsMenuBlockingInput()) return;
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
+            if (AC->bIsAssassinating) return; // 헌호수정 - 암살 중 무기변경 차단
 
     UNCEquipmentComponent* GunComp = GetGunComp();
     if (!GunComp) return;
@@ -512,9 +522,14 @@ void ANCPlayerController::Assassinate() //헌호수정 - 암살
 {
     if (IsMenuBlockingInput()) return;
     if (IsAttacking()) return;
-
+    if (UNCEquipmentComponent* EC = GetGunComp()) // 헌호수정 - 총 장착 중 암살 차단
+        if (EC->HasActiveGun()) return;
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+    {
+        if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
+            if (AC->bIsAssassinating) return; // 헌호수정 - 암살 중 재입력 차단
         PC->TryAssassinate();
+    }
 }
 
 void ANCPlayerController::OnGunSwapCompleted(ENCGunSlot NewSlot)
