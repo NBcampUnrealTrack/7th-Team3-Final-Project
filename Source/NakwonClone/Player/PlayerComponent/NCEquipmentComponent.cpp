@@ -169,34 +169,46 @@ void UNCEquipmentComponent::SelectSlot(ENCGunSlot Slot)
 	GetWorld()->GetTimerManager().ClearTimer(SwapTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(EquipDelayTimerHandle);
 
+	float UnequipLength = 0.f;
+
 	if (UNCGunComponent* Current = GetActiveWeapon())
 	{
 		Current->StopFire();
-		Current->StopADS();
+
+		if (Current->IsADS())
+		{
+			Current->StopADS();
+		}
 
 		if (const FNCGunData* Data = Current->GetActiveGunData())
 		{
-			Current->PlayUnequipMontage(Data);
+			UnequipLength = Current->PlayUnequipMontage(Data);
 		}
 	}
 
-	GetWorld()->GetTimerManager().SetTimer(
-		SwapTimerHandle,
-		FTimerDelegate::CreateUObject(this, &UNCEquipmentComponent::OnSwapFinished, Slot),
-		SwapDelay,
-		false
-	);
+	if (UnequipLength > 0.f)
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			SwapTimerHandle,
+			FTimerDelegate::CreateUObject(this, &UNCEquipmentComponent::OnSwapFinished, Slot),
+			UnequipLength,
+			false
+		);
+	}
+	else
+	{
+		OnSwapFinished(Slot);
+	}
 }
 
 void UNCEquipmentComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 {
-	// 1. 아직 ActiveSlot이 이전 슬롯일 때 기존 무기 비활성화
+	// Unequip 몽타주가 끝난 뒤 기존 무기 비활성화
 	DeactivateCurrentWeapon();
 
-	// 2. 그 다음 ActiveSlot 변경
+	// 그 다음 슬롯 변경
 	ActiveSlot = TargetSlot;
 
-	// 3. None이면 종료
 	if (TargetSlot == ENCGunSlot::None)
 	{
 		bIsSwapping = false;
@@ -207,14 +219,8 @@ void UNCEquipmentComponent::OnSwapFinished(ENCGunSlot TargetSlot)
 		return;
 	}
 
-	// 4. 새 무기 활성화는 EquipSpawnDelay 후
-	GetWorld()->GetTimerManager().SetTimer(
-		EquipDelayTimerHandle,
-		this,
-		&UNCEquipmentComponent::ActivatePendingWeapon,
-		EquipSpawnDelay,
-		false
-	);
+	// Unequip 끝난 직후 바로 다음 무기 Equip
+	ActivatePendingWeapon();
 }
 
 void UNCEquipmentComponent::ActivatePendingWeapon()

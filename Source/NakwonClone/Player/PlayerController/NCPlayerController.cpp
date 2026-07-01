@@ -558,13 +558,17 @@ void ANCPlayerController::GunSelectMelee()
 
     if (GunComp->IsSwapping()) return;
 
+    // 3번 근접무기가 없으면 총기에서 3번으로 전환 금지
+    if (PC->StoredMeleeWeaponID.IsNone())
+    {
+        return;
+    }
+
     if (GunComp->HasActiveGun())
     {
         GunComp->SelectSlot(ENCGunSlot::None);
         return;
     }
-
-    if (PC->StoredMeleeWeaponID.IsNone()) return;
 
     UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
     if (!Combat) return;
