@@ -1,0 +1,41 @@
+﻿#pragma once
+
+#include "CoreMinimal.h"
+#include "Engine/DataTable.h"
+#include "VGMonsterTypeData.generated.h"
+
+class USkeletalMesh;
+class UAnimInstance;
+class UAnimMontage;
+
+UENUM(BlueprintType)
+enum class EVGMonsterType : uint8
+{
+    Walker    UMETA(DisplayName = "Walker"),   // 기본 워커 (완성)
+    Witch     UMETA(DisplayName = "Witch"),    // 자극→큰소리→강공격
+    Tank      UMETA(DisplayName = "Tank"),     // 맷집(HP 큼)
+};
+
+USTRUCT(BlueprintType)
+struct FVGMonsterTypeRow : public FTableRowBase
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, Category = "Appearance")
+    TObjectPtr<USkeletalMesh> Mesh = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = "Appearance")
+    TSubclassOf<UAnimInstance> AnimClass = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = "Animation")
+    TArray<TObjectPtr<UAnimMontage>> AttackMontages;
+
+    UPROPERTY(EditAnywhere, Category = "Animation")
+    TObjectPtr<UAnimMontage> SpecialMontage = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = "Stat")
+    float MaxHealth = 100.f;
+
+    UPROPERTY(EditAnywhere, Category = "Stat")
+    float MoveSpeed = 150.f;
+};
