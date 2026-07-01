@@ -304,8 +304,7 @@ void UNCAnimInstance::UpdateLeftHandIK()
         {
             if (const FNCGunData* GunData = GunComponent->GetActiveGunData())
             {
-                // 양손 IK 또는 왼손 전용 IK 중 하나라도 켜져 있어야 처리
-                if (!GunData->bUseTwoHandIK && !GunData->bUseLeftHandIK)
+                if (!GunData->bUseTwoHandIK)
                 {
                     bUseLeftHandIK = false;
                     bUseRightHandIK = false;
@@ -349,8 +348,7 @@ void UNCAnimInstance::UpdateLeftHandIK()
                     bUseLeftHandIK = false;
                 }
 
-                // 오른손 IK는 양손 IK 모드일 때만 적용 (왼손 전용 모드에서 오른손이 끌려가지 않도록)
-                if (GunData->bUseTwoHandIK && !GunData->RightHandIKSocketName.IsNone())
+                if (!GunData->RightHandIKSocketName.IsNone())
                 {
                     const FVector SocketWorldLocation =
                         GunMesh->GetSocketLocation(GunData->RightHandIKSocketName);
@@ -386,8 +384,7 @@ void UNCAnimInstance::UpdateLeftHandIK()
 
     const FNCWeaponData* WeaponData = ActiveCombatComponent->GetEquippedWeaponData();
 
-    // 양손 IK 또는 왼손 전용 IK 중 하나라도 켜져 있어야 처리
-    if (!WeaponData || (!WeaponData->bUseTwoHandIK && !WeaponData->bUseLeftHandIK))
+    if (!WeaponData || !WeaponData->bUseTwoHandIK)
     {
         bUseLeftHandIK = false;
         bUseRightHandIK = false;
@@ -434,8 +431,7 @@ void UNCAnimInstance::UpdateLeftHandIK()
         bUseLeftHandIK = false;
     }
 
-    // 오른손 IK는 양손 IK 모드일 때만 적용 (왼손 전용 모드에서 오른손이 끌려가지 않도록)
-    if (WeaponData->bUseTwoHandIK && !WeaponData->RightHandIKSocketName.IsNone())
+    if (!WeaponData->RightHandIKSocketName.IsNone())
     {
         const FVector SocketWorldLocation =
             WeaponMesh->GetSocketLocation(WeaponData->RightHandIKSocketName);
