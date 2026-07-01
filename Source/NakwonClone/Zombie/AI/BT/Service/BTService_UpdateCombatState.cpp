@@ -55,7 +55,27 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		return;
 	}
 	
-	// ── 2) 시야 판별 (거리 무관) ──
+	if (!NearestPlayer)
+	{
+		BB->SetValueAsBool(AVGMonsterAIControllerBase::BIsCombatKey, false);
+		BB->ClearValue(AVGMonsterAIControllerBase::TargetActorKey);
+		return;
+	}
+
+	// ── 2) 거리 기반 전투 판별 ──
+	const bool bIsCombat = (NearestDist <= 500.f);
+	BB->SetValueAsBool(AVGMonsterAIControllerBase::BIsCombatKey, bIsCombat);
+	if (bIsCombat)
+	{
+		BB->SetValueAsObject(AVGMonsterAIControllerBase::TargetActorKey, NearestPlayer);
+		BB->SetValueAsFloat(AVGMonsterAIControllerBase::DistanceKey, NearestDist);
+	}
+	else
+	{
+		BB->ClearValue(AVGMonsterAIControllerBase::TargetActorKey);
+	}
+	
+	/*// ── 2) 시야 판별 (거리 무관) ──
 	TArray<AActor*> SeenActors;
 	Perception->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), SeenActors);
 	const bool bCanSee = SeenActors.Contains(NearestPlayer);
@@ -96,5 +116,5 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	{
 		// 소리로만 잡힘 → 액터 추적 해제 (HeardLocation으로 이동)
 		BB->ClearValue(AVGMonsterAIControllerBase::TargetActorKey);
-	}
+	}*/
 }
