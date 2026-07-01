@@ -33,7 +33,7 @@ void UAnimNotify_AttackTrace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimS
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 }
 
-/*void UAnimNotify_AttackTrace::DoHitCheck(USkeletalMeshComponent* MeshComp)
+void UAnimNotify_AttackTrace::DoHitCheck(USkeletalMeshComponent* MeshComp)
 {
 	if (!MeshComp) return;
 	
@@ -104,105 +104,6 @@ void UAnimNotify_AttackTrace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimS
 			FGameplayEffectSpecHandle Spec =
 				ASC->MakeOutgoingSpec(Walker->AttackEffectClass, 1.f, ContextHandle);
 			
-			if (Spec.IsValid())
-			{
-				ASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
-			}
-		}
-	}
-}*/
-
-void UAnimNotify_AttackTrace::DoHitCheck(USkeletalMeshComponent* MeshComp)
-{
-	if (!MeshComp) return;
-
-	AActor* Owner = MeshComp->GetOwner();
-	if (!Owner) return;
-
-	// 공격 데이터 추출 (워커/러너 임시 공용 — 나중에 러너 분기 제거)
-	TSubclassOf<UGameplayEffect> EffectClass = nullptr;
-	const TArray<FName>* SocketNames = nullptr;
-	float Radius = 0.f;
-	UAbilitySystemComponent* ASC = nullptr;
-
-	if (AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(Owner))
-	{
-		EffectClass = Walker->AttackEffectClass;
-		SocketNames = &Walker->GetAttackSocketNames();
-		Radius      = Walker->GetAttackTraceDistance();
-		ASC         = Walker->GetAbilitySystemComponent();
-	}
-	else if (AVGMonsterRunner* Runner = Cast<AVGMonsterRunner>(Owner))
-	{
-		EffectClass = Runner->AttackEffectClass;
-		SocketNames = &Runner->GetAttackSocketNames();
-		Radius      = Runner->GetAttackTraceDistance();
-		ASC         = Runner->GetAbilitySystemComponent();
-	}
-	else
-	{
-		return;
-	}
-
-	UWorld* World = Owner->GetWorld();
-	if (!World) return;
-	if (!EffectClass) return;
-	if (!ASC) return;
-
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(Owner);
-
-	for (const FName& SocketName : *SocketNames)
-	{
-		if (!MeshComp->DoesSocketExist(SocketName)) continue;
-
-		const FVector SocketLocation = MeshComp->GetSocketLocation(SocketName);
-
-		TArray<FOverlapResult> Overlaps;
-		bool bHit = World->OverlapMultiByChannel(
-			Overlaps,
-			SocketLocation,
-			FQuat::Identity,
-			ECC_Pawn,
-			FCollisionShape::MakeSphere(Radius),
-			Params);
-
-#if WITH_EDITOR
-		DrawDebugSphere(World,
-			SocketLocation,
-			Radius,
-			8,
-			bHit ? FColor::Red : FColor::Green,
-			false,
-			0.2f);
-	#endif
-
-		if (!bHit) continue;
-
-		for (const FOverlapResult& Overlap : Overlaps)
-		{
-			AActor* HitActor = Overlap.GetActor();
-			if (!HitActor) return;
-			if (HitActors.Contains(HitActor)) continue;
-
-			UAbilitySystemComponent* TargetASC =
-				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(HitActor);
-			if (!TargetASC) return;
-			if (!TargetASC->HasMatchingGameplayTag(NCCharacter::Player)) continue;
-
-			HitActors.Add(HitActor);
-
-			FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
-
-			FHitResult AttackHit;
-			AttackHit.Location     = SocketLocation;
-			AttackHit.ImpactPoint  = SocketLocation;
-			AttackHit.ImpactNormal = (HitActor->GetActorLocation() - SocketLocation).GetSafeNormal();
-			ContextHandle.AddHitResult(AttackHit);
-
-			FGameplayEffectSpecHandle Spec =
-				ASC->MakeOutgoingSpec(EffectClass, 1.f, ContextHandle);
-
 			if (Spec.IsValid())
 			{
 				ASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);

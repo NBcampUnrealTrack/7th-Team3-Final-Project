@@ -2,18 +2,18 @@
 
 
 #include "BTTask_ClearValue.h"
-#include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 UBTTask_ClearValue::UBTTask_ClearValue()
 {
-	NodeName = TEXT("Clear Value");
+	NodeName = "Clear Value";
 }
 
 void UBTTask_ClearValue::InitializeFromAsset(UBehaviorTree& Asset)
 {
 	Super::InitializeFromAsset(Asset);
 
+	// 이거 안 하면 SelectedKeyName이 무효 → ClearValue가 조용히 아무것도 안 지움
 	if (UBlackboardData* BBAsset = GetBlackboardAsset())
 	{
 		BlackboardKey.ResolveSelectedKey(*BBAsset);
@@ -22,13 +22,9 @@ void UBTTask_ClearValue::InitializeFromAsset(UBehaviorTree& Asset)
 
 EBTNodeResult::Type UBTTask_ClearValue::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	UBlackboardComponent* Blacboard = OwnerComp.GetBlackboardComponent();
-	if (!Blacboard)
-	{
-		return EBTNodeResult::Failed;
-	}
-	
-	Blacboard->ClearValue(BlackboardKey.GetSelectedKeyID());
-	
+	UBlackboardComponent* BB = OwnerComp.GetBlackboardComponent();
+	if (!BB) return EBTNodeResult::Failed;
+
+	BB->ClearValue(BlackboardKey.SelectedKeyName);
 	return EBTNodeResult::Succeeded;
 }

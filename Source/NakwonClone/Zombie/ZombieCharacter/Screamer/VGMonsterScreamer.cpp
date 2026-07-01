@@ -37,13 +37,14 @@ void AVGMonsterScreamer::BeginPlay()
 	if (HasAuthority())
 	{
 
-		if (AIController)
-		{
-			if (UBlackboardComponent* BB = AIController->GetBlackboardComponent())
-			{
-				BB->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
-			}
-		}
+		// [BT 리팩터] IsAwakeKey 폐기 — 블록 주석 처리
+		//if (AIController)
+		//{
+		//	if (UBlackboardComponent* BB = AIController->GetBlackboardComponent())
+		//	{
+		//		BB->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
+		//	}
+		//}
 
 		// BT가 비명을 안 몰면(아직 BTTask_Scream 미연결) 자동 루프로라도 동작
 		if (bAutoScream)

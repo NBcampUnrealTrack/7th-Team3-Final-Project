@@ -4,23 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "BTTask_ClearValue.generated.h"
+#include "BTTask_ChaseMode.generated.h"
 
-/**
- * 
- */
+
 UCLASS()
-class NAKWONCLONE_API UBTTask_ClearValue : public UBTTaskNode
+class NAKWONCLONE_API UBTTask_ChaseMode : public UBTTaskNode
 {
 	GENERATED_BODY()
 	
 public:
-	UBTTask_ClearValue();
+	UBTTask_ChaseMode();
 	
 protected:
-	virtual void InitializeFromAsset(UBehaviorTree& Asset) override; 
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-
-	UPROPERTY(EditAnywhere, Category = "Blackboard")
-	FBlackboardKeySelector BlackboardKey;
+	
+	// 이동 모드에서 적용할 이동 속도
+	UPROPERTY(EditAnywhere, Category = "Move")
+	float MoveSpeed = 50.f;
 };

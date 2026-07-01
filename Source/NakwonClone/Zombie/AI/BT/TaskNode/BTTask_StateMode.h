@@ -4,15 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "BTTask_Move.generated.h"
+#include "BTTask_StateMode.generated.h"
+
 
 UCLASS()
-class NAKWONCLONE_API UBTTask_Move : public UBTTaskNode
+class NAKWONCLONE_API UBTTask_StateMode : public UBTTaskNode
 {
 	GENERATED_BODY()
 	
 public:
-	UBTTask_Move();
+	UBTTask_StateMode();
 	
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

@@ -38,6 +38,10 @@ public:
 	UAnimMontage* GetSleepMontage() const { return AnimSleep; }
 	UAnimMontage* GetSelectedWakeUpMontage() const { return SelectedWakeUpMontage; }
 	UAnimMontage* GetRandomAttackMontage() { return GetRandomMontage(AnimAttack); }
+	
+public:
+	// 랜덤 공격 몽타주 재생. 재생한 몽타주 반환(실패 시 nullptr)
+	UAnimMontage* Attack();
 
 protected:
 	// 워커 전용 Idle 애니메이션

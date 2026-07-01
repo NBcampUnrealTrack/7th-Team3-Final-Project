@@ -30,21 +30,26 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 #pragma endregion
-	
+
 #pragma region 블랙보드 키 이름
 public:
-	static const FName PatrolLocationKey;
-	static const FName TargetActorKey;
-	static const FName HeardLocationKey;
-	static const FName IsDeadKey;
-	static const FName IsAttackKey;
-	static const FName IsHitKey;
-	static const FName IsAwakeKey;
-	static const FName IsWanderingKey;
-	static const FName PatrolCountKey;
-	static const FName TargetActorLocationKey;
+	static const FName TargetActorKey;       // 시야에 잡힌 플레이어 (Object)
+	static const FName BIsCombatKey;         // 전투 판별 결과 (Bool)
+	static const FName BIsAttackKey;         // 공격 여부 판별 결과 (Bool)
+	static const FName DistanceKey;          // 좀비-타겟 거리 (Float)
+	static const FName HeardLocationKey;     // 들린 소리 위치 (Vector)
+	static const FName PatrolLocationKey;    // 순찰 목적지 좌표 (Vector)
 #pragma endregion
-
+	
+#pragma region Patrol
+public:
+	bool FindPatrolLocation();
+	
+protected:
+	UPROPERTY(EditAnywhere, Category = "AI|Patrol")
+	float SearchRadius = 500.f;
+#pragma endregion
+	
 #pragma region Behavior Tree & Blackboard
 protected:
 	UPROPERTY(EditAnywhere, Category = "AI|BehaviorTree")
@@ -63,12 +68,9 @@ protected:
 	UAISenseConfig_Hearing* HearingConfig;
 	
 private:
-	// 감지 콜백
-	UFUNCTION()
-	void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
-	
-	UPROPERTY(EditAnywhere, Category = "AI|Perception")
-	float HeardUpdate = 200.f;
+	// 감지 콜백 — [BT 리팩터] 새 Service로 대체, 정의부 주석 처리에 맞춰 선언도 주석
+	//UFUNCTION()
+	//void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	// 수면 (AI)
 public:

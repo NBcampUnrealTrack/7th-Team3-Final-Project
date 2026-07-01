@@ -11,6 +11,7 @@ UCLASS()
 class NAKWONCLONE_API UAnimNotify_AttackTrace : public UAnimNotifyState
 {
 	GENERATED_BODY()
+
 public:
 	// 적 히트 시 카메라 쉐이크 (무기별로 다르게 할당)
 	UPROPERTY(EditAnywhere, Category = "CameraShake")
