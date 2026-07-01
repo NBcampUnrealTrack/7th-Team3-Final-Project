@@ -20,6 +20,7 @@ class UNCEquipmentComponent;
 class USpotLightComponent;
 class UStaticMeshComponent;
 class UUserWidget;
+class UTexture2D;
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
@@ -49,6 +50,10 @@ public:
 	// 근접무기 슬롯 — 줍는 순간 저장, 3번 키로 꺼냄 (임시)
 	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
 	FName StoredMeleeWeaponID;
+
+	// 핫바 아이콘 표시용: 보관 중인 근접무기 아이콘 (없으면 nullptr)
+	UFUNCTION(BlueprintCallable, Category = "Components|Combat")
+	UTexture2D* GetMeleeIcon() const;
 
 	// 드랍 시 스폰할 픽업 액터 클래스
 	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")

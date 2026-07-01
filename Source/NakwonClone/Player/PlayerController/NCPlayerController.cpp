@@ -91,13 +91,13 @@ void ANCPlayerController::SetupInputComponent()
         {
             EIC->BindAction(QuickSlot2Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot2);
         }
-        if (QuickSlot3Action)
-        {
-            EIC->BindAction(QuickSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot3);
-        }
         if (QuickSlot4Action)
         {
             EIC->BindAction(QuickSlot4Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot4);
+        }
+        if (QuickSlot5Action)
+        {
+            EIC->BindAction(QuickSlot5Action, ETriggerEvent::Started, this, &ANCPlayerController::QuickSlot5);
         }
         if (UnArmAction)
         {
@@ -369,7 +369,7 @@ void ANCPlayerController::QuickSlot2()
     }
 }
 
-void ANCPlayerController::QuickSlot3()
+void ANCPlayerController::QuickSlot4()
 {
     if (IsAttacking()) return; //헌호수정 - 공격 중 아이템 사용 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())
@@ -378,7 +378,7 @@ void ANCPlayerController::QuickSlot3()
     }
 }
 
-void ANCPlayerController::QuickSlot4()
+void ANCPlayerController::QuickSlot5()
 {
     if (IsAttacking()) return; //헌호수정 - 공격 중 아이템 선택 차단
     if (UNCPlayerInventoryComponent* NCInventoryComp = GetPlayerState<APlayerState>()->FindComponentByClass<UNCPlayerInventoryComponent>())

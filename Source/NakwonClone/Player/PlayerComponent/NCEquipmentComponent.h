@@ -8,6 +8,7 @@
 #include "NCEquipmentComponent.generated.h"
 
 class UDataTable;
+class UTexture2D;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class NAKWONCLONE_API UNCEquipmentComponent : public UActorComponent
@@ -31,6 +32,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
 	FOnSwapCompleted OnSwapCompleted;
+
+	// 주무기/보조무기 슬롯 UI 아이콘 동기화용
+	UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
+	FOnGunSlotChanged OnGunSlotChanged;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Data")
 	TObjectPtr<UDataTable> GunDataTable;
@@ -80,6 +85,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment|Getter")
 	FName GetActiveGunID() const;
+
+	// 핫바 아이콘 표시용
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Getter")
+	UTexture2D* GetGunIcon(ENCGunSlot Slot) const;
 
 	FName GetOccupantGunID(FName ForGunID) const;
 

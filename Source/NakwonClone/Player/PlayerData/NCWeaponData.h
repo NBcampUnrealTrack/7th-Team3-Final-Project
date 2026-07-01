@@ -7,6 +7,7 @@
 
 class USoundBase;
 class UAnimMontage;
+class UTexture2D;
 
 USTRUCT(BlueprintType)
 struct FNCWeaponData : public FTableRowBase
@@ -15,6 +16,9 @@ struct FNCWeaponData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info")
 	FName WeaponName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info")
+	TObjectPtr<UTexture2D> Icon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag")
 	FGameplayTag WeaponTypeTag;
