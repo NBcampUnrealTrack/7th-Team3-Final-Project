@@ -98,6 +98,7 @@ void UNCCombatComponent::MeleeAttack()
 
 void UNCCombatComponent::EquipWeapon(FNCWeaponInstance WeaponInstance)
 {
+
 	if (!WeaponInstance.IsValid())
 	{
 		return;
@@ -255,8 +256,14 @@ FGameplayTag UNCCombatComponent::GetEquippedWeaponTypeTag() const
 	const FNCWeaponData* WeaponData = GetEquippedWeaponData();
 	if (!WeaponData)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[WeaponType] No Data -> Unarmed"));
 		return NCWeapon::Type_Unarmed;
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[WeaponType] %s -> %s"),
+		*EquippedWeapon.WeaponID.ToString(),
+		*WeaponData->WeaponTypeTag.ToString());
+
 	return WeaponData->WeaponTypeTag;
 }
 

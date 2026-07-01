@@ -77,7 +77,7 @@ public:
 
 	// ----- 재장전 -----
 	UFUNCTION(BlueprintCallable, Category = "Gun|Action")
-	void Reload();
+	virtual void Reload();
 
 	// ----- ADS -----
 	UFUNCTION(BlueprintCallable, Category = "Gun|Action")
@@ -96,6 +96,8 @@ public:
 	void PlayUnequipMontage(const FNCGunData* Data);
 
 protected:
+	virtual void OnBeforeFire() {}
+
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -109,6 +111,12 @@ private:
 
 	void FireOnce();
 	void OnReloadFinished();
+
+	FTimerHandle ShowMagazineTimerHandle;
+
+	void HideGunMagazine();
+	void ShowGunMagazine();
+	void DropMagazineMesh();
 
 	void ApplyADSFOV();
 	void RestoreFOV();

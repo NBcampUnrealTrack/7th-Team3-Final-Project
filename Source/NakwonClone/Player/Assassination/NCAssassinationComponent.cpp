@@ -1,5 +1,6 @@
 #include "NCAssassinationComponent.h"
 #include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/Character.h"
@@ -7,6 +8,7 @@
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "NakwonClone/Player/PlayerData/NCWeaponData.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UNCAssassinationComponent::UNCAssassinationComponent()
 {
@@ -81,6 +83,13 @@ void UNCAssassinationComponent::StartCamera(AVGMonsterCharacterBase* Target)
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	AssassinationCamera = Owner->GetWorld()->SpawnActor<ACameraActor>(ACameraActor::StaticClass(), CamPos, CamRot, SpawnParams);
 
+	// 헌호수정 - 레터박스 제거
+	if (AssassinationCamera)
+	{
+		if (UCameraComponent* CamComp = AssassinationCamera->GetCameraComponent())
+			CamComp->bConstrainAspectRatio = false;
+	}
+
 	if (APlayerController* PC = Cast<APlayerController>(Owner->GetController()))
 		PC->SetViewTargetWithBlend(AssassinationCamera, 0.3f, EViewTargetBlendFunction::VTBlend_EaseInOut); //헌호수정
 }
@@ -90,6 +99,13 @@ void UNCAssassinationComponent::Finish()
 {
 	ACharacter* Owner = Cast<ACharacter>(GetOwner());
 	if (!Owner) return;
+
+	// 헌호수정 - 움직임 + 마우스 + 무기변경 잠금 해제
+	bIsAssassinating = false;
+	if (UCharacterMovementComponent* Movement = Owner->GetCharacterMovement())
+		Movement->SetMovementMode(MOVE_Walking);
+	if (APlayerController* PC0 = Cast<APlayerController>(Owner->GetController()))
+		PC0->SetIgnoreLookInput(false);
 
 	if (Owner->IsLocallyControlled())
 	{
@@ -125,6 +141,18 @@ void UNCAssassinationComponent::TryAssassinate()
 	UNCCombatComponent* Combat = Owner->FindComponentByClass<UNCCombatComponent>();
 	const FNCWeaponData* WeaponData = Combat ? Combat->GetEquippedWeaponData() : nullptr;
 
+	// 헌호수정 - 플레이어를 좀비 등 뒤 고정 거리로 스냅
+	const FVector ZombieBack = -Target->GetActorForwardVector();
+	const FVector SnapLocation = Target->GetActorLocation() + ZombieBack * AssassinationSnapDistance;
+	Owner->SetActorLocation(FVector(SnapLocation.X, SnapLocation.Y, Owner->GetActorLocation().Z));
+
+	// 헌호수정 - 암살 중 움직임 + 마우스 + 무기변경 잠금
+	bIsAssassinating = true;
+	if (UCharacterMovementComponent* Movement = Owner->GetCharacterMovement())
+		Movement->DisableMovement();
+	if (APlayerController* PC = Cast<APlayerController>(Owner->GetController()))
+		PC->SetIgnoreLookInput(true);
+
 	if (Owner->HasAuthority())
 	{
 		StartSlowMo();
@@ -146,10 +174,10 @@ void UNCAssassinationComponent::TryAssassinate()
 		KillTime, false
 	);
 
-	// 카메라 복귀 타이머
+	// 헌호수정 - 카메라 복귀 타이머: 몽타지 길이에 맞춰 3.8초
 	GetWorld()->GetTimerManager().SetTimer(
 		CameraTimerHandle,
 		[this]() { Finish(); },
-		1.5f, false
+		3.8f, false
 	);
 }

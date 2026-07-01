@@ -17,6 +17,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/AnimInstance.h"
 
 UNCGunComponent::UNCGunComponent()
 {
@@ -169,6 +170,8 @@ void UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 
 void UNCGunComponent::StartFire()
 {
+	OnBeforeFire();
+
 	// 탄약 없을 때 빈 총 클릭음
 	if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0)
 	{
@@ -278,6 +281,32 @@ void UNCGunComponent::FireOnce()
 			EquippedGunSkelMeshComp->PlayAnimation(GunAnim, false);
 	}
 
+	// 탄피 배출 이펙트 — EjectSocketName 소켓에서 스폰
+	// (4ca9f351 "총기 타입별 컴포넌트 분리 리팩토링"에서 누락된 것 복구. 스켈레탈/스태틱 메시 모두 대응)
+	{
+		UMeshComponent* GunMeshComp = EquippedGunSkelMeshComp
+			? static_cast<UMeshComponent*>(EquippedGunSkelMeshComp)
+			: static_cast<UMeshComponent*>(EquippedGunMeshComp);
+
+		if (GunMeshComp && GunMeshComp->DoesSocketExist(Data->EjectSocketName))
+		{
+			const FTransform EjectXform = GunMeshComp->GetSocketTransform(Data->EjectSocketName);
+
+			if (!Data->ShellCasingEffect.IsNull())
+			{
+				if (UNiagaraSystem* ShellFX = Data->ShellCasingEffect.LoadSynchronous())
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						this, ShellFX, EjectXform.GetLocation(), EjectXform.Rotator());
+			}
+			else if (!Data->ShellCasingParticle.IsNull())
+			{
+				if (UParticleSystem* ShellP = Data->ShellCasingParticle.LoadSynchronous())
+					UGameplayStatics::SpawnEmitterAtLocation(
+						this, ShellP, EjectXform.GetLocation(), EjectXform.Rotator());
+			}
+		}
+	}
+
 	ApplyRecoil(Data);
 
 	if (Data->FireShakeClass)
@@ -351,21 +380,51 @@ void UNCGunComponent::Reload()
 	const FNCGunData* Data = ActiveGunData;
 	if (!Data) return;
 
-	if (ReserveAmmo <= 0)                  return;
+	if (ReserveAmmo <= 0) return;
 	if (CurrentAmmo >= Data->MagazineSize) return;
 
 	StopFire();
 	ActiveGunActions.AddTag(NCGun::Action_Reloading);
 
+	if (!Data->ReloadSound.IsNull())
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			Data->ReloadSound.LoadSynchronous(),
+			GetOwner()->GetActorLocation());
+	}
+
+	// 캐릭터 장전 몽타주
 	PlayGunMontage(Data->ReloadMontage);
 
-	if (!Data->ReloadSound.IsNull())
-		UGameplayStatics::PlaySoundAtLocation(this, Data->ReloadSound.LoadSynchronous(), GetOwner()->GetActorLocation());
+	// 총기 탄창 숨김 + 떨어지는 탄창 생성
+	HideGunMagazine();
+	DropMagazineMesh();
 
+	// 총기 스켈레탈 메시 자체 장전 애니메이션이 있으면 재생
+	if (EquippedGunSkelMeshComp && !Data->GunReloadAnimation.IsNull())
+	{
+		if (UAnimSequence* ReloadAnim = Data->GunReloadAnimation.LoadSynchronous())
+		{
+			EquippedGunSkelMeshComp->PlayAnimation(ReloadAnim, false);
+		}
+	}
+
+	// 장전 끝나면 탄창 다시 보이게
+	GetWorld()->GetTimerManager().SetTimer(
+		ShowMagazineTimerHandle,
+		this,
+		&UNCGunComponent::ShowGunMagazine,
+		Data->ReloadTime,
+		false);
+
+	// 장전 완료 처리
 	GetWorld()->GetTimerManager().SetTimer(
 		ReloadTimerHandle,
-		this, &UNCGunComponent::OnReloadFinished,
-		Data->ReloadTime, false);
+		this,
+		&UNCGunComponent::OnReloadFinished,
+		Data->ReloadTime,
+		false);
 }
 
 void UNCGunComponent::OnReloadFinished()
@@ -517,7 +576,6 @@ void UNCGunComponent::AttachGunMesh(const FNCGunData* Data)
 				Char->GetMesh(),
 				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 				Data->HandSocketName);
-			EquippedGunSkelMeshComp->SetWorldScale3D(Data->GunMeshScale);
 			AttachedMeshComp = EquippedGunSkelMeshComp;
 		}
 	}
@@ -534,7 +592,6 @@ void UNCGunComponent::AttachGunMesh(const FNCGunData* Data)
 				Char->GetMesh(),
 				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 				Data->HandSocketName);
-			EquippedGunMeshComp->SetRelativeScale3D(Data->GunMeshScale);
 			AttachedMeshComp = EquippedGunMeshComp;
 		}
 	}
@@ -576,4 +633,72 @@ void UNCGunComponent::DetachGunMesh()
 		EquippedGunSkelMeshComp->DestroyComponent();
 		EquippedGunSkelMeshComp = nullptr;
 	}
+}
+
+void UNCGunComponent::DropMagazineMesh()
+{
+	if (!ActiveGunData || ActiveGunData->MagazineDropMesh.IsNull())
+		return;
+
+	if (!EquippedGunSkelMeshComp)
+		return;
+
+	UStaticMesh* MagMesh = ActiveGunData->MagazineDropMesh.LoadSynchronous();
+	if (!MagMesh)
+		return;
+
+	FVector SpawnLocation = EquippedGunSkelMeshComp->GetComponentLocation();
+	FRotator SpawnRotation = EquippedGunSkelMeshComp->GetComponentRotation();
+
+	const FName MagazineBoneName = TEXT("Magazine_joint");
+
+	if (EquippedGunSkelMeshComp->GetBoneIndex(MagazineBoneName) != INDEX_NONE)
+	{
+		SpawnLocation = EquippedGunSkelMeshComp->GetBoneLocation(MagazineBoneName);
+		SpawnRotation = EquippedGunSkelMeshComp->GetBoneQuaternion(MagazineBoneName).Rotator();
+	}
+
+	UStaticMeshComponent* MagComp = NewObject<UStaticMeshComponent>(GetOwner());
+	if (!MagComp)
+		return;
+
+	MagComp->SetStaticMesh(MagMesh);
+	MagComp->RegisterComponent();
+	MagComp->SetWorldLocationAndRotation(SpawnLocation, SpawnRotation);
+	MagComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	MagComp->SetSimulatePhysics(true);
+
+	MagComp->AddImpulse(
+		FVector(0.f, 0.f, -80.f),
+		NAME_None,
+		true);
+
+	FTimerHandle DestroyTimer;
+	GetWorld()->GetTimerManager().SetTimer(
+		DestroyTimer,
+		[MagComp]()
+		{
+			if (MagComp)
+			{
+				MagComp->DestroyComponent();
+			}
+		},
+		5.f,
+		false);
+}
+
+void UNCGunComponent::HideGunMagazine()
+{
+	if (!EquippedGunSkelMeshComp)
+		return;
+
+	EquippedGunSkelMeshComp->HideBoneByName(TEXT("Magazine_joint"), EPhysBodyOp::PBO_None);
+}
+
+void UNCGunComponent::ShowGunMagazine()
+{
+	if (!EquippedGunSkelMeshComp)
+		return;
+
+	EquippedGunSkelMeshComp->UnHideBoneByName(TEXT("Magazine_joint"));
 }
