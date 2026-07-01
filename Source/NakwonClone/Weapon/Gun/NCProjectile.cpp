@@ -34,6 +34,7 @@ ANCProjectile::ANCProjectile()
     MovementComp->bRotationFollowsVelocity = true;
     MovementComp->bShouldBounce      = false;
     MovementComp->bSweepCollision    = true;
+    MovementComp->ProjectileGravityScale = 0.f; // 낙차 없는 직선탄
 
     InitialLifeSpan = 3.f;
 }

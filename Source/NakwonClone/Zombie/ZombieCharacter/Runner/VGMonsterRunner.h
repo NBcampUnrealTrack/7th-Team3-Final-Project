@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "VGMonsterRunner.generated.h"
 
+class UVGMonsterAttributeSet;
 class UGameplayEffect;
 
 UCLASS()

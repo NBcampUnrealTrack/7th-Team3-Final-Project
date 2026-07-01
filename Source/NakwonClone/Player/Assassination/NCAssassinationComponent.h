@@ -19,6 +19,9 @@ public:
 	// 헌호수정 - 암살 시도 (외부 진입점)
 	void TryAssassinate();
 
+	// 헌호수정 - 암살 진행 중 여부 (무기 변경 차단용)
+	bool bIsAssassinating = false;
+
 	// 헌호수정 - 암살 범위 (무기 데이터와 무관하게 고정)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Assassination")
 	float AssassinationRange = 200.f;
