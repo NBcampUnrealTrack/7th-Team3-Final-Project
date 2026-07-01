@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGHitTypes.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterTypes.h"
 #include "VGMonsterCharacterBase.generated.h"
 
 // 전방 선언
@@ -248,5 +249,20 @@ private:
 	void Multicast_PlayAssassinationMontage(UAnimMontage* Montage);
 
 	bool bIsBeingAssassinated = false;
+#pragma endregion
+
+#pragma region 몬스터 타입
+public:
+	UPROPERTY(EditAnywhere, Category = "Monster|Type")
+	EMonsterType MonsterType = EMonsterType::Walker;
+	
+	EMonsterType GetMonsterType() const { return MonsterType; }
+	
+protected:
+	// 타입 -> 외형/스텟/AnimBP 매핑 테이블
+	UPROPERTY(EditDefaultsOnly, Category = "Monster|Type")
+	TObjectPtr<UDataTable> MonsterTypeTable;
+	
+	void ApplyMonsterType();
 #pragma endregion
 };

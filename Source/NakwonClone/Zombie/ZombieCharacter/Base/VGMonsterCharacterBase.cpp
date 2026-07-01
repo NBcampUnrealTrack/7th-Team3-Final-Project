@@ -14,6 +14,10 @@
 #include "NiagaraSystem.h"
 #include "BrainComponent.h"
 #include "TimerManager.h"
+#include "Engine/DataTable.h"
+#include "Engine/SkeletalMesh.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/FMonsterTypeRow.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 {
@@ -71,6 +75,8 @@ void AVGMonsterCharacterBase::BeginPlay()
 			AbilitySystemComponent->AddSpawnedAttribute(MonsterAttributeSet);
 		}
 	}
+	
+	ApplyMonsterType();
 
 	if (MonsterAttributeSet)
 	{
@@ -88,12 +94,6 @@ void AVGMonsterCharacterBase::BeginPlay()
 	if (GetCharacterMovement() && MonsterAttributeSet)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MonsterAttributeSet->GetMoveSpeed();
-	}
-	
-	if (RandomMesh.Num() > 0)
-	{
-		int32 RandIndex = FMath::RandRange(0, RandomMesh.Num() - 1);
-		GetMesh()->SetSkeletalMesh(RandomMesh[RandIndex]);
 	}
 	
 	if (AnimMove.Num() > 0)
@@ -415,6 +415,41 @@ void AVGMonsterCharacterBase::BeginAssassinationVictim(AActor* Killer, UAnimMont
 		Multicast_PlayAssassinationMontage(VictimMontage);
 }
 
+void AVGMonsterCharacterBase::ApplyMonsterType()
+{
+	if (!MonsterTypeTable) return;
+
+	// "EMonsterType::Walker"가 아니라 순수 "Walker" 를 바로 반환 (접두어 자르기 불필요)
+	const FName RowName = *StaticEnum<EMonsterType>()->GetNameStringByValue((int64)MonsterType);
+
+	const FMonsterTypeRow* Row = MonsterTypeTable->FindRow<FMonsterTypeRow>(RowName, TEXT("ApplyMonsterType"));
+	if (!Row) return;
+
+	// 외형
+	if (USkeletalMesh* M = Row->Mesh.LoadSynchronous())
+	{
+		GetMesh()->SetSkeletalMesh(M);
+	}
+
+	// 타입별 AnimBP
+	if (Row->AnimClass)
+	{
+		GetMesh()->SetAnimInstanceClass(Row->AnimClass);
+	}
+
+	// 스탯 (반드시 ASC 초기화 이후여야 함)
+	if (AbilitySystemComponent && MonsterAttributeSet)
+	{
+		AbilitySystemComponent->SetNumericAttributeBase(UVGMonsterAttributeSet::GetHealthAttribute(),    Row->MaxHealth);
+		AbilitySystemComponent->SetNumericAttributeBase(UVGMonsterAttributeSet::GetDamageAttribute(),    Row->Damage);
+		AbilitySystemComponent->SetNumericAttributeBase(UVGMonsterAttributeSet::GetMoveSpeedAttribute(), Row->MoveSpeed);
+
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->MaxWalkSpeed = Row->MoveSpeed;
+		}
+	}
+}
 void AVGMonsterCharacterBase::Multicast_PlayAssassinationMontage_Implementation(UAnimMontage* Montage)
 {
 	if (!Montage) return;
