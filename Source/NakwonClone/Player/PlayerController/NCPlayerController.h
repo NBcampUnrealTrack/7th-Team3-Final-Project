@@ -51,7 +51,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsInventoryOpen = false;
-	
+
+	void SetUnArmPending(bool bPending) { bUnArmPending = bPending; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -103,6 +105,8 @@ private:
 
 	// 헌호수정 - 공격 중 여부 체크
 	bool IsAttacking() const;
+
+	bool IsUsingItem() const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")

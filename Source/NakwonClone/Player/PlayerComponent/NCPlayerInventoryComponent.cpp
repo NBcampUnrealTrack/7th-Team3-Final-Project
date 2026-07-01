@@ -7,6 +7,8 @@
 #include "Item/NCItemActor.h"
 #include "Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
+#include "Player/PlayerComponent/NCEquipmentComponent.h"
+#include "Player/PlayerController/NCPlayerController.h"
 #include "Item/ANCLootBoxActor.h"	
 #include "Item/NCItemActor.h"
 
@@ -687,15 +689,104 @@ bool UNCPlayerInventoryComponent::UseConsumableSlot_Internal(int32 SlotIndex)
         }
     }
     
-    const int32 PresetToRestore = CurrentEquippedPresetIndex;
-    if (PresetToRestore != -1)
+    // 사용 중인 무기(총기/근접무기)를 임시 해제하고, 몽타주 종료 후 복원할 정보 저장
+    PendingReEquipGunSlot = ENCGunSlot::None;
+    bPendingReEquipMelee = false;
+    bool bWaitingForUnequip = false;
+
+    if (ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner()))
     {
-        ForceUnArm();
-        PendingReEquipPresetIndex = PresetToRestore;
+        if (APawn* Pawn = PS->GetPawn())
+        {
+            if (UNCEquipmentComponent* EquipComp = Pawn->FindComponentByClass<UNCEquipmentComponent>())
+            {
+                if (EquipComp->HasActiveGun())
+                {
+                    PendingReEquipGunSlot = EquipComp->ActiveSlot;
+
+                    // SelectSlot(None)의 OnSwapCompleted 콜백이 저장된 근접무기를 자동장착하는 걸 막음
+                    if (ANCPlayerController* PC = Cast<ANCPlayerController>(Pawn->GetController()))
+                    {
+                        PC->SetUnArmPending(true);
+                    }
+
+                    EquipComp->OnSwapCompleted.RemoveDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseGunUnequipped);
+                    EquipComp->OnSwapCompleted.AddDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseGunUnequipped);
+                    EquipComp->SelectSlot(ENCGunSlot::None);
+                    bWaitingForUnequip = true;
+                }
+            }
+
+            if (UNCCombatComponent* Combat = Pawn->FindComponentByClass<UNCCombatComponent>())
+            {
+                if (Combat->IsWeaponEquipped())
+                {
+                    bPendingReEquipMelee = true;
+                    PendingReEquipMeleeInstance = Combat->GetEquippedWeapon();
+
+                    Combat->OnWeaponChanged.RemoveDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseMeleeUnequipped);
+                    Combat->OnWeaponChanged.AddDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseMeleeUnequipped);
+                    Combat->UnEquipWeapon();
+                    bWaitingForUnequip = true;
+                }
+            }
+        }
     }
 
-    OnItemUsed.Broadcast(ItemTag);
+    if (bWaitingForUnequip)
+    {
+        PendingUseItemTag = ItemTag;
+    }
+    else
+    {
+        OnItemUsed.Broadcast(ItemTag);
+    }
+
     return true;
+}
+
+void UNCPlayerInventoryComponent::OnPreItemUseGunUnequipped(ENCGunSlot NewSlot)
+{
+    if (NewSlot != ENCGunSlot::None) return; // 해제 완료 시점만 처리 (재장착 콜백 무시)
+
+    if (ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner()))
+    {
+        if (APawn* Pawn = PS->GetPawn())
+        {
+            if (UNCEquipmentComponent* EquipComp = Pawn->FindComponentByClass<UNCEquipmentComponent>())
+            {
+                EquipComp->OnSwapCompleted.RemoveDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseGunUnequipped);
+            }
+        }
+    }
+
+    if (PendingUseItemTag.IsValid())
+    {
+        OnItemUsed.Broadcast(PendingUseItemTag);
+        PendingUseItemTag = FGameplayTag::EmptyTag;
+    }
+}
+
+void UNCPlayerInventoryComponent::OnPreItemUseMeleeUnequipped(const FNCWeaponInstance& NewWeapon)
+{
+    if (NewWeapon.IsValid()) return; // 해제 완료(빈 인스턴스) 시점만 처리
+
+    if (ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner()))
+    {
+        if (APawn* Pawn = PS->GetPawn())
+        {
+            if (UNCCombatComponent* Combat = Pawn->FindComponentByClass<UNCCombatComponent>())
+            {
+                Combat->OnWeaponChanged.RemoveDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseMeleeUnequipped);
+            }
+        }
+    }
+
+    if (PendingUseItemTag.IsValid())
+    {
+        OnItemUsed.Broadcast(PendingUseItemTag);
+        PendingUseItemTag = FGameplayTag::EmptyTag;
+    }
 }
 
 bool UNCPlayerInventoryComponent::AutoEquipItem(int32 MainSlotIndex)
@@ -867,30 +958,80 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
         return;
     }
 
-    bool bAdded = AddItem(LootID, LootTag, LootQuantity);
-    if (bAdded)
+    // 힐/음식 아이템 가방 거치지 않고 고정 슬롯에 직접 채움
+    // 최대 스택까지만 가져오고, 초과분은 바닥에 그대로 남김
+    if (LootTag.MatchesTag(NCItemTag::Heal) || LootTag.MatchesTag(NCItemTag::Food))
     {
-        // 무기/소비류는 장비 슬롯으로 자동 이동, 칸이 차 있으면 가방에 그대로
-        if (LootTag.MatchesTag(NCItemTag::Weapon) ||
-            LootTag.MatchesTag(NCItemTag::Heal)   ||
-            LootTag.MatchesTag(NCItemTag::Food))
+        if (!EquipmentPresets.IsValidIndex(0)) return;
+
+        const bool bIsHeal = LootTag.MatchesTag(NCItemTag::Heal);
+        FInventorySlot& Slot = bIsHeal ? EquipmentPresets[0].ConsumableHeal : EquipmentPresets[0].ConsumableFood;
+
+        FItemData ItemData;
+        if (!GetItemDataByTag(LootID, LootTag, ItemData)) return;
+
+        // 슬롯에 다른 아이템이 이미 있으면 못 주움 
+        if (!Slot.IsEmpty() && (Slot.ItemID != LootID || Slot.ItemTypeTag != LootTag)) return;
+
+        if (Slot.IsEmpty())
         {
-            int32 SlotIdx = INDEX_NONE;
-            for (int32 i = 0; i < Items.Num(); ++i)
+            Slot.ItemID = LootID;
+            Slot.ItemTypeTag = LootTag;
+            Slot.Quantity = 0;
+        }
+
+        const int32 Room  = ItemData.MaxStackSize - Slot.Quantity;
+        const int32 Taken = FMath::Min(LootQuantity, Room);
+        if (Taken <= 0) return; // 이미 꽉 차서 하나도 못 주움
+
+        Slot.Quantity += Taken;
+        OnPresetUpdated.Broadcast();
+
+        const int32 Remaining = LootQuantity - Taken;
+        if (Remaining <= 0)
+        {
+            ItemToLoot->Destroy();
+        }
+        else
+        {
+            ItemToLoot->Quantity = Remaining; // 초과분은 바닥에 남김
+        }
+        return;
+    }
+
+    if (LootTag.MatchesTag(NCItemTag::Weapon))
+    {
+        const FGameplayTag WeaponType = GetWeaponTypeTag(LootID);
+        const bool bTwoHanded = WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded);
+
+        FInventorySlot NewSlot;
+        NewSlot.ItemID = LootID;
+        NewSlot.ItemTypeTag = LootTag;
+        NewSlot.Quantity = LootQuantity;
+
+        for (FEquipmentPreset& Preset : EquipmentPresets)
+        {
+            if (bTwoHanded)
             {
-                if (!Items[i].IsEmpty() && Items[i].ItemID == LootID && Items[i].ItemTypeTag == LootTag)
+                if (Preset.TwoHand.IsEmpty() && Preset.RightHand.IsEmpty() && Preset.LeftHand.IsEmpty())
                 {
-                    SlotIdx = i;
-                    break;
+                    Preset.TwoHand = NewSlot;
+                    OnPresetUpdated.Broadcast();
+                    ItemToLoot->Destroy();
+                    return;
                 }
             }
-            if (SlotIdx != INDEX_NONE)
+            else if (Preset.RightHand.IsEmpty() && Preset.TwoHand.IsEmpty())
             {
-                AutoEquipItem_Internal(SlotIdx);
+                Preset.RightHand = NewSlot;
+                OnPresetUpdated.Broadcast();
+                ItemToLoot->Destroy();
+                return;
             }
         }
-        ItemToLoot->Destroy();
+        return; 
     }
+
 }
 
 void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)

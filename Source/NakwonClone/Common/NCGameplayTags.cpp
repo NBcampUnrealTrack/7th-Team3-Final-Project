@@ -63,6 +63,7 @@ UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Weight_Heavy, "Weapon.Weight.Heavy");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Action_Attacking, "Weapon.Action.Attacking");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Action_SwingDelay, "Weapon.Action.SwingDelay");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Action_Swapping, "Weapon.Action.Swapping");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Action_UsingItem, "Weapon.Action.UsingItem");
 
 // 총기 / 조준 액션
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Action_Aiming, "Weapon.Action.Aiming");

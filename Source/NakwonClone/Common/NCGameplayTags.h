@@ -81,6 +81,7 @@ namespace NCWeapon
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Attacking);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_SwingDelay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Swapping);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_UsingItem);
 
 	// 총기 / 조준 액션
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Aiming);
