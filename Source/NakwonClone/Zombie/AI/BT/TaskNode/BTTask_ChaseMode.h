@@ -20,5 +20,5 @@ protected:
 	
 	// 이동 모드에서 적용할 이동 속도
 	UPROPERTY(EditAnywhere, Category = "Move")
-	float MoveSpeed = 400.f;
+	float MoveSpeed = 50.f;
 };
