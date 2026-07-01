@@ -154,9 +154,27 @@ void UNCGunComponent::DeactivateGun()
 {
 	GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(ShowMagazineTimerHandle);
+
+	StopFire();
+
+	if (IsADS())
+	{
+		StopADS();
+	}
+	else if (AActor* Owner = GetOwner())
+	{
+		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
+		{
+			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Aiming);
+		}
+	}
+
 	ActiveGunActions.Reset();
+
 	RestoreFOV();
 	DetachGunMesh();
+
 	ActiveGunData = nullptr;
 }
 

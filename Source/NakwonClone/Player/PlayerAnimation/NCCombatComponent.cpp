@@ -61,17 +61,56 @@ void UNCCombatComponent::MeleeAttack()
 {
 	if (!CanAttack())
 	{
+		UE_LOG(LogTemp, Error, TEXT("[MeleeAttack] FAIL - CanAttack false"));
 		return;
+	}
+
+	if (!CurrentWeaponCombo.ComboMontage)
+	{
+		if (OwnerCharacter)
+		{
+			if (UNCGameInstance* GI = Cast<UNCGameInstance>(OwnerCharacter->GetGameInstance()))
+			{
+				if (FNCWeaponData* UnarmedData = GI->GetWeaponData(TEXT("Unarmed")))
+				{
+					FNCWeaponComboData ComboData;
+					ComboData.ComboMontage = UnarmedData->AttackMontage.LoadSynchronous();
+					ComboData.ComboSections = UnarmedData->AttackSections.Num() > 0
+						? UnarmedData->AttackSections
+						: TArray<FName>{ TEXT("Attack1") };
+
+					EquipWeaponCombo(ComboData);
+				}
+			}
+		}
 	}
 
 	UAnimInstance* Anim = GetAnimInstance();
 	UAnimMontage* Montage = CurrentWeaponCombo.ComboMontage;
 	const TArray<FName>& Sections = CurrentWeaponCombo.ComboSections;
 
-	if (!Anim || !Montage || Sections.Num() == 0)
+	if (!Anim)
 	{
+		UE_LOG(LogTemp, Error, TEXT("[MeleeAttack] FAIL - Anim null"));
 		return;
 	}
+
+	if (!Montage)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[MeleeAttack] FAIL - Montage null"));
+		return;
+	}
+
+	if (Sections.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[MeleeAttack] FAIL - Sections empty"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[MeleeAttack] SUCCESS - Montage: %s / Section: %s"),
+		*Montage->GetName(),
+		*Sections[0].ToString()
+	);
 
 	LastPlayedAttackMontage = Montage;
 
@@ -165,6 +204,32 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 	GetWorld()->GetTimerManager().ClearTimer(MeleeEquipTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(MeleeUnequipTimerHandle);
 
+	// 기존 근접무기 액터가 남아있으면 먼저 제거
+	if (SpawnedWeaponActor)
+	{
+		SpawnedWeaponActor->Destroy();
+		SpawnedWeaponActor = nullptr;
+	}
+
+	// 기존 무기 태그 정리
+	if (ASC)
+	{
+		if (FNCWeaponData* OldData = GetEquippedWeaponData())
+		{
+			ASC->RemoveLooseGameplayTag(OldData->WeaponTypeTag);
+			ASC->RemoveLooseGameplayTag(OldData->WeightTag);
+		}
+
+		ASC->RemoveLooseGameplayTag(NCWeapon::State_Equipped);
+		ASC->RemoveLooseGameplayTag(NCWeapon::State_Broken);
+
+		// 총기/ADS 쪽 잔여 태그 정리
+		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Aiming);
+		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Firing);
+		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Reloading);
+		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Swapping);
+	}
+
 	EquippedWeapon = WeaponInstance;
 	bIsEquipped = true;
 	bIsSwappingWeapon = true;
@@ -248,13 +313,8 @@ FGameplayTag UNCCombatComponent::GetEquippedWeaponTypeTag() const
 	const FNCWeaponData* WeaponData = GetEquippedWeaponData();
 	if (!WeaponData)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[WeaponType] No Data -> Unarmed"));
 		return NCWeapon::Type_Unarmed;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[WeaponType] %s -> %s"),
-		*EquippedWeapon.WeaponID.ToString(),
-		*WeaponData->WeaponTypeTag.ToString());
 
 	return WeaponData->WeaponTypeTag;
 }
@@ -280,26 +340,26 @@ FNCWeaponData* UNCCombatComponent::GetEquippedWeaponData() const
 
 bool UNCCombatComponent::CanAttack() const
 {
-	if (!bIsEquipped)
-	{
-		return false;
-	}
-
-	if (EquippedWeapon.bIsBroken)
-	{
-		return false;
-	}
-
 	if (!ASC)
 	{
+		UE_LOG(LogTemp, Error, TEXT("[CanAttack] FAIL - ASC NULL"));
 		return false;
 	}
 
 	if (ASC->HasMatchingGameplayTag(NCWeapon::Action_Swapping))
 	{
+		UE_LOG(LogTemp, Error, TEXT("[CanAttack] FAIL - Swapping"));
 		return false;
 	}
 
+	// 무기를 들고 있을 때만 내구도/파손 체크
+	if (bIsEquipped && EquippedWeapon.bIsBroken)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[CanAttack] FAIL - Broken"));
+		return false;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[CanAttack] SUCCESS"));
 	return true;
 }
 

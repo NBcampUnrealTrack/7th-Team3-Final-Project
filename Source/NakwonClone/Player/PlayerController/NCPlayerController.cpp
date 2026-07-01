@@ -243,24 +243,26 @@ void ANCPlayerController::Attack()
     {
         return;
     }
+
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
 
-    // 총기 장착 중이면 근접 공격 차단 (총기는 IA_GunFire가 담당)
     if (UNCEquipmentComponent* EquipComp = PC->GetEquipmentComponent())
+    {
         if (EquipComp->HasActiveGun()) return;
+    }
 
-UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent();
+    UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent();
     if (!ASC) return;
 
-    // 첫 번째 공격: GA_Attack 활성화 시도
-    // 실패(이미 공격 중) → 콤보 다음 섹션으로 전환
-    if (!ASC->TryActivateAbilityByClass(PC->AttackAbilityClass))
+    const bool bActivated = ASC->TryActivateAbilityByClass(PC->AttackAbilityClass);
+
+    UE_LOG(LogTemp, Warning, TEXT("[Attack] TryActivateAbilityByClass: %s"),
+        bActivated ? TEXT("TRUE") : TEXT("FALSE"));
+
+    if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
     {
-        if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
-        {
-            Combat->MeleeAttack();
-        }
+        Combat->MeleeAttack();
     }
 }
 
