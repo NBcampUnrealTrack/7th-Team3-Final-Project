@@ -17,16 +17,11 @@ DEFINE_LOG_CATEGORY(LogMonster);
 DEFINE_LOG_CATEGORY(LogAIPc);
 
 #pragma region 블랙보드 키 이름 정의
-const FName AVGMonsterAIControllerBase::PatrolLocationKey	   = "PatrolLocation";
-const FName AVGMonsterAIControllerBase::TargetActorKey		   = "TargetActor";
-const FName AVGMonsterAIControllerBase::HeardLocationKey	   = "HeardLocation";
-const FName AVGMonsterAIControllerBase::IsDeadKey			   = "bIsDead";
-const FName AVGMonsterAIControllerBase::IsAttackKey			   = "bIsAttack";
-const FName AVGMonsterAIControllerBase::IsHitKey			   = "bIsHit";
-const FName AVGMonsterAIControllerBase::IsAwakeKey			   = "bIsAwake";
-const FName AVGMonsterAIControllerBase::IsWanderingKey		   = "bIsWandering";
-const FName AVGMonsterAIControllerBase::PatrolCountKey		   = "PatrolCount";
-const FName AVGMonsterAIControllerBase::TargetActorLocationKey = "TargetActorLocation";
+const FName AVGMonsterAIControllerBase::TargetActorKey	     = "TargetActor";
+const FName AVGMonsterAIControllerBase::BIsCombatKey	     = "bIsCombat";
+const FName AVGMonsterAIControllerBase::BIsAttackKey         = "bIsAttack";
+const FName AVGMonsterAIControllerBase::DistanceKey          = "Distance";
+const FName AVGMonsterAIControllerBase::HeardLocationKey     = "HeardLocation";
 #pragma endregion
 
 AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
@@ -69,6 +64,8 @@ void AVGMonsterAIControllerBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// [BT 리팩터] 이벤트 기반 퍼셉션 바인딩 + IsAwakeKey 세팅은 새 Service로 대체 예정 — 주석 처리
+	/*
 	if (MonsterPerceptionComponent)
 	{
 		// 혹시 이미 등록돼 있으면 먼저 지우기
@@ -83,11 +80,12 @@ void AVGMonsterAIControllerBase::BeginPlay()
 
 		// UE_LOG(LogMonster, Warning, TEXT("[AIController] Perception 콜백 바인딩 완료"));
 	}
-	
+
 	if (Blackboard)
 	{
 		Blackboard->SetValueAsBool(IsAwakeKey, !bCanSleep);
 	}
+	*/
 }
 
 void AVGMonsterAIControllerBase::OnPossess(APawn* InPawn)
@@ -114,6 +112,8 @@ void AVGMonsterAIControllerBase::OnPossess(APawn* InPawn)
 	}
 }
 
+// [BT 리팩터] 이벤트 기반 퍼셉션(옛 키 IsDeadKey/IsAwakeKey/TargetActorLocationKey 사용)은 새 Service로 대체 — 함수 전체 주석 처리
+/*
 void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (!Blackboard || !Actor) return;
@@ -135,6 +135,7 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 			// 시각 감지 성공 → TargetActor 등록
 			// UE_LOG(LogAIPc, Warning, TEXT("[AIPerception] 시각 감지: %s"), *Actor->GetName());
 			Blackboard->SetValueAsObject(TargetActorKey, Actor);
+			Blackboard->SetValueAsVector(TargetActorLocationKey, Actor->GetActorLocation());
 			Blackboard->ClearValue(HeardLocationKey);
 		}
 		else
@@ -159,10 +160,6 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 			if (Blackboard->IsVectorValueSet(HeardLocationKey))
 			{
 				const FVector CurrentLocation = Blackboard->GetValueAsVector(HeardLocationKey);
-				if (FVector::DistSquared(Stimulus.StimulusLocation, CurrentLocation) < FMath::Square(HeardUpdate))
-				{
-					return;
-				}
 			}
 
 			Blackboard->SetValueAsVector(HeardLocationKey, Stimulus.StimulusLocation);
@@ -178,4 +175,5 @@ void AVGMonsterAIControllerBase::OnPerceptionUpdated(AActor* Actor, FAIStimulus 
 	}
 #pragma endregion
 }
+*/
 
