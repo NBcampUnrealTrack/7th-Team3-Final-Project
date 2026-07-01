@@ -140,10 +140,11 @@ void AVGMonsterCharacterBase::HandleDead()
 
 	if (AIController)
 	{
-		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
-		{
-			Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsDeadKey, true);
-		}
+		// [BT 리팩터] IsDeadKey 폐기 — UnPossess로 BT 정지 처리, 아래 키 세팅만 주석
+		//if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
+		//{
+		//	Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsDeadKey, true);
+		//}
 		AIController->StopMovement();
 		AIController->UnPossess();
 	}
@@ -203,14 +204,14 @@ void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 		Multicast_SpawnHitVFX(VFX, Loc);
 	}
 
-	// AI '맞는 중' 신호
-	if (AIController)
-	{
-		if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
-		{
-			Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsHitKey, true);
-		}
-	}
+	// AI '맞는 중' 신호 — [BT 리팩터] IsHitKey 폐기, 블록 주석 처리
+	//if (AIController)
+	//{
+	//	if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
+	//	{
+	//		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsHitKey, true);
+	//	}
+	//}
 
 	// 부위별 피격 몽타주 (무조건 끊고 새로)
 	PendingHitBodyPart = BodyPart;
@@ -307,8 +308,6 @@ void AVGMonsterCharacterBase::OnMoveSpeedChanged(const FOnAttributeChangeData& D
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
-		UE_LOG(LogMonster, Warning, TEXT("[Speed] %s MaxWalkSpeed=%.1f"),
-			*GetName(), Data.NewValue);
 	}
 }
 
@@ -340,13 +339,14 @@ void AVGMonsterCharacterBase::HandleHowl()
 	if (MonsterAttributeSet && MonsterAttributeSet->GetHealth() <= 0.f) return;
 
 	bool bAwake = false;
-	if (AIController)
-	{
-		if (UBlackboardComponent* BB = AIController->GetBlackboardComponent())
-		{
-			bAwake = BB->GetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey);
-		}
-	}
+	// [BT 리팩터] IsAwakeKey 폐기 — 사운드(HowlSound) 자체는 유지, 키 참조만 주석
+	//if (AIController)
+	//{
+	//	if (UBlackboardComponent* BB = AIController->GetBlackboardComponent())
+	//	{
+	//		bAwake = BB->GetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey);
+	//	}
+	//}
 
 	if (!bAwake)
 	{
