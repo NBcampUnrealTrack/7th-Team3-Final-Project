@@ -89,6 +89,8 @@ public:
 	UAnimMontage* GetSelectedChaseMontage() { return SelectedChaseMontage; }
 	UAnimMontage* GetSelectedStopMontage() { return SelectedStopMontage; }
 
+	UFUNCTION(BlueprintCallable, Category = "Monster")
+	UBlendSpace* GetLocomotionBS() const { return CachedLocomotionBS; }
 protected:
 	// ── 몽타주 슬롯 (에디터에서 채움) ────────────────────────
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
@@ -124,9 +126,14 @@ protected:
 
 	UPROPERTY()
 	int32 SelectedChaseLevel;
+
+private:
+	UPROPERTY()
+	TObjectPtr<UBlendSpace> CachedLocomotionBS = nullptr;
 #pragma endregion
 
 #pragma region 좀비 메시 (랜덤)
+protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Mesh")
 	TArray<USkeletalMesh*> RandomMesh;
 #pragma endregion
