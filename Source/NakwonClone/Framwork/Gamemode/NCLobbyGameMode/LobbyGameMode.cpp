@@ -12,7 +12,7 @@ void ALobbyGameMode::BeginPlay()
 	Super::BeginPlay();
 	
 	TArray<FName> LevelToPreload;
-	LevelToPreload.Add(FName("/Game/Maps/지하주차장레벨경로")); // todo : 경로 추가
+	LevelToPreload.Add(FName("/Game/Maps/L_Parking"));
 	GEngine->PrepareMapChange(GetWorld(), LevelToPreload);
 	
 	UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] 지하주차장 프리로딩 중..."));
@@ -27,15 +27,6 @@ void ALobbyGameMode::BeginPlay()
 	);
 }
 
-void ALobbyGameMode::TryCommitMapChange()
-{
-	if (GetWorld()->IsMapChangeReady())
-	{
-		GetWorldTimerManager().ClearTimer(NextMapReadyTimerHandle);
-		GEngine->CommitMapChange(GetWorld());
-	}
-}
-
 void ALobbyGameMode::CheckMapReady()
 {
 	if (GetWorld()->IsMapChangeReady())
@@ -45,7 +36,7 @@ void ALobbyGameMode::CheckMapReady()
 	}
 }
 
-void ALobbyGameMode::MoveToShopLevel()
+void ALobbyGameMode::MoveToParkingLevel()
 {
 	if (GetWorld()->IsMapChangeReady())
 	{
@@ -53,6 +44,7 @@ void ALobbyGameMode::MoveToShopLevel()
 	}
 	else
 	{
-		GetWorld()->ServerTravel("/Game/Maps/지하주차장레벨이름"); // 프리 로딩 미완료 시 실행
+		GetWorld()->ServerTravel("/Game/Maps/L_Parking");
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] 지하주차장 프리로딩 실패로 서버트레블 실행"));
 	}
 }
