@@ -514,11 +514,6 @@ void ANCPlayerController::GunSelectPrimary()
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
 
-    if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
-    {
-        if (AC->bIsAssassinating) return;
-    }
-
     UNCEquipmentComponent* EC = PC->GetEquipmentComponent();
     UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
 
@@ -526,10 +521,29 @@ void ANCPlayerController::GunSelectPrimary()
     if (EC->IsSwapping()) return;
     if (Combat && Combat->IsSwappingWeapon()) return;
 
-    // 근접무기 들고 있으면 먼저 해제
+    if (EC->PrimarySlot.GunID.IsNone())
+    {
+        return;
+    }
+
     if (Combat && Combat->IsWeaponEquipped())
     {
         Combat->UnEquipWeapon();
+
+        GetWorld()->GetTimerManager().SetTimer(
+            SwapTimerHandle,
+            FTimerDelegate::CreateLambda([this]()
+                {
+                    if (UNCEquipmentComponent* EC2 = GetGunComp())
+                    {
+                        EC2->SelectSlot(ENCGunSlot::Primary);
+                    }
+                }),
+            0.6f,
+            false
+        );
+
+        return;
     }
 
     EC->SelectSlot(ENCGunSlot::Primary);
@@ -556,9 +570,29 @@ void ANCPlayerController::GunSelectSecondary()
     if (EC->IsSwapping()) return;
     if (Combat && Combat->IsSwappingWeapon()) return;
 
+    if (EC->SecondarySlot.GunID.IsNone())
+    {
+        return;
+    }
+
     if (Combat && Combat->IsWeaponEquipped())
     {
         Combat->UnEquipWeapon();
+
+        GetWorld()->GetTimerManager().SetTimer(
+            SwapTimerHandle,
+            FTimerDelegate::CreateLambda([this]()
+                {
+                    if (UNCEquipmentComponent* EC2 = GetGunComp())
+                    {
+                        EC2->SelectSlot(ENCGunSlot::Secondary);
+                    }
+                }),
+            0.6f,
+            false
+        );
+
+        return;
     }
 
     EC->SelectSlot(ENCGunSlot::Secondary);
@@ -624,7 +658,6 @@ void ANCPlayerController::Assassinate() //헌호수정 - 암살
 
 void ANCPlayerController::OnGunSwapCompleted(ENCGunSlot NewSlot)
 {
-    // H키 맨손 전환 중이면 근접 자동장착 스킵
     if (bUnArmPending)
     {
         bUnArmPending = false;
@@ -639,21 +672,19 @@ void ANCPlayerController::OnGunSwapCompleted(ENCGunSlot NewSlot)
 
     if (NewSlot == ENCGunSlot::None)
     {
-        // 근접 슬롯 활성 — 저장된 근접무기 장착
         if (!NCPC->StoredMeleeWeaponID.IsNone())
         {
             FNCWeaponInstance Instance;
             Instance.WeaponID = NCPC->StoredMeleeWeaponID;
             Instance.UniqueID = FGuid::NewGuid();
             Instance.CurrentDurability = 100.f;
+
             NCCombat->EquipWeapon(Instance);
         }
     }
-    else
-    {
-        // 총기 슬롯 활성 — 근접무기 해제
-        NCCombat->UnEquipWeapon();
-    }
+
+    // NewSlot이 Primary/Secondary일 때는 아무것도 하지 않는다.
+    // 총기 Equip 직후 근접 UnEquip을 다시 호출하면 Equip 몽타주가 끊김.
 }
 
 void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)

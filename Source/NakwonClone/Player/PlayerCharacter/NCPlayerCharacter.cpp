@@ -480,6 +480,12 @@ void ANCPlayerCharacter::OnUseItemMontageEnded()
 //H
 void ANCPlayerCharacter::HandleHitReact(AActor* Attacker)
 {
+
+    if (!Attacker)
+    {
+        return;
+    }
+
     const float Now = GetWorld()->GetTimeSeconds();
 
     if (Now - LastHitReactTime < HitReactCooldown)
@@ -488,11 +494,6 @@ void ANCPlayerCharacter::HandleHitReact(AActor* Attacker)
     }
 
     LastHitReactTime = Now;
-
-    if (!Attacker)
-    {
-        return;
-    }
 
     const FVector ToAttacker =
         (Attacker->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
@@ -524,7 +525,10 @@ void ANCPlayerCharacter::HandleHitReact(AActor* Attacker)
 
     if (SelectedMontage)
     {
-        PlayAnimMontage(SelectedMontage);
+        Multicast_PlayHitReactMontage(SelectedMontage);
+    }
+    else
+    {
     }
 
     if (TakeDamageShakeClass && !bCameraShaking)
@@ -654,4 +658,17 @@ void ANCPlayerCharacter::SetAimRotationMode(bool bEnable)
     }
 
     bUseControllerRotationYaw = false;
+}
+
+void ANCPlayerCharacter::Multicast_PlayHitReactMontage_Implementation(UAnimMontage* MontageToPlay)
+{
+    UE_LOG(LogTemp, Warning, TEXT("[HitReact] Multicast_PlayHitReactMontage 호출됨 Montage=%s"),
+        MontageToPlay ? *MontageToPlay->GetName() : TEXT("None"));
+
+    if (MontageToPlay)
+    {
+        const float Result = PlayAnimMontage(MontageToPlay);
+
+        UE_LOG(LogTemp, Warning, TEXT("[HitReact] PlayAnimMontage Result=%.2f"), Result);
+    }
 }

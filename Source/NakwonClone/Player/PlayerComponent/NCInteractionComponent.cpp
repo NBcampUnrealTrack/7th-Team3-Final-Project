@@ -1,4 +1,4 @@
-#include "NCInteractionComponent.h"
+﻿#include "NCInteractionComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
@@ -31,42 +31,29 @@ void UNCInteractionComponent::BeginPlay()
 
 void UNCInteractionComponent::Interact()
 {
-	if (!CurrentInteractableTarget || bIsLooting)
+	if (!CurrentInteractableTarget)
 	{
 		return;
 	}
-	
+
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 
-	if (CurrentInteractableTarget->IsA<ANCItemActor>() && LootMontage && OwnerCharacter)
+	if (CurrentInteractableTarget->IsA<ANCItemActor>())
 	{
-		bIsLooting = true;
-		float MontageLength = OwnerCharacter->PlayAnimMontage(LootMontage);
-		INCInteractableInterface::Execute_Interact(CurrentInteractableTarget, GetOwner());
+		AActor* TargetToInteract = CurrentInteractableTarget;
 
-		// 헌호수정 - 몽타주 종료 시 bIsLooting 자동 해제 (타이머 방식)
-		if (MontageLength > 0.f)
+		INCInteractableInterface::Execute_Interact(TargetToInteract, GetOwner());
+
+		if (LootMontage && OwnerCharacter)
 		{
-			FTimerHandle LootTimerHandle;
-			GetWorld()->GetTimerManager().SetTimer(
-				LootTimerHandle,
-				this,
-				&UNCInteractionComponent::OnLootMontageEnded,
-				MontageLength,
-				false
-			);
+			OwnerCharacter->PlayAnimMontage(LootMontage);
 		}
-		else
-		{
-			// 헌호수정 - 몽타주 길이가 0이면 즉시 해제
-			bIsLooting = false;
-		}
+
+		UpdateInteractableTarget();
+		return;
 	}
-	
-	else
-	{
-		INCInteractableInterface::Execute_Interact(CurrentInteractableTarget, GetOwner());
-	}
+
+	INCInteractableInterface::Execute_Interact(CurrentInteractableTarget, GetOwner());
 }
 
 void UNCInteractionComponent::StopInteraction() //헌호수정 - 사망 시 호출

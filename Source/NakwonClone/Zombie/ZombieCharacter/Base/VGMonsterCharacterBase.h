@@ -262,6 +262,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Monster|Type")
 	TObjectPtr<UDataTable> MonsterTypeTable = nullptr;
 
+	UPROPERTY(EditAnywhere, Category = "Monster|Type")
+	bool bRandomType = false;
+
 	// BT가 부르는 진입점 — "공격 시작" (재생은 캐릭터가)
 	void StartAttack();
 
