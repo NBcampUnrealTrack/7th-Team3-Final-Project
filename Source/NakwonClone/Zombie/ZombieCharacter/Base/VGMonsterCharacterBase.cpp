@@ -443,6 +443,8 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	CachedAttackMontages = Row->AttackMontages;
 	CachedSpecialMontage = Row->SpecialMontage;
 
+	CachedLocomotionBS = Row->LocomotionBS;
+
 	// 외형
 	if (Row->Mesh)      GetMesh()->SetSkeletalMesh(Row->Mesh);
 	if (Row->AnimClass) GetMesh()->SetAnimInstanceClass(Row->AnimClass);

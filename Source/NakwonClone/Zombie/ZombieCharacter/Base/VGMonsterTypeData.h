@@ -33,6 +33,9 @@ struct FVGMonsterTypeRow : public FTableRowBase
     UPROPERTY(EditAnywhere, Category = "Appearance")
     float MeshScale = 1.f;
 
+    UPROPERTY(EditAnywhere, Category = "Appearance")
+    TObjectPtr<UBlendSpace> LocomotionBS = nullptr;
+
     UPROPERTY(EditAnywhere, Category = "Animation")
     TArray<TObjectPtr<UAnimMontage>> AttackMontages;
 
