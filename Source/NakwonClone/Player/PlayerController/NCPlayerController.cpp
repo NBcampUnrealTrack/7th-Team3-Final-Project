@@ -171,6 +171,15 @@ void ANCPlayerController::Look(const FInputActionValue& Value)
         return;
     }
     FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+    if (UNCEquipmentComponent* EC = GetGunComp())
+    {
+        if (EC->IsADS())
+        {
+            LookAxisVector *= ADSLookSensitivityMultiplier;
+        }
+    }
+
     AddYawInput(LookAxisVector.X);
     AddPitchInput(LookAxisVector.Y);
 }
