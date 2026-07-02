@@ -50,6 +50,9 @@ void ANCMeleePickupActor::Interact_Implementation(AActor* Interactor)
 	NCPlayer->StoredMeleePickupClass   = GetClass();
 	NCPlayer->StoredMeleePickupRotation = GetActorRotation();
 
+	// 핫바 UI 갱신용: 보관 무기가 바뀌었음을 알림 (줍는 즉시 3번 칸 아이콘 갱신)
+	NCPlayer->OnMeleeStoredChanged.Broadcast();
+
 	// 근접 슬롯이 활성 상태(3번)이고 손에 들려 있었다면 새 무기 바로 장착
 	if (bMeleeSlotActive && bWeaponInHand)
 	{

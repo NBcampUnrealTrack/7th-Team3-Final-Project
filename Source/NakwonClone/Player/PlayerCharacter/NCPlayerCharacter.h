@@ -22,6 +22,9 @@ class UStaticMeshComponent;
 class UUserWidget;
 class UTexture2D;
 
+// 핫바 UI용: 보관 중인 근접무기(StoredMeleeWeaponID)가 바뀔 때 브로드캐스트 (줍기/교체 시)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMeleeStoredChanged);
+
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
 {
@@ -54,6 +57,10 @@ public:
 	// 핫바 아이콘 표시용: 보관 중인 근접무기 아이콘 (없으면 nullptr)
 	UFUNCTION(BlueprintCallable, Category = "Components|Combat")
 	UTexture2D* GetMeleeIcon() const;
+
+	// 핫바 UI용: 근접무기를 줍거나 교체해서 StoredMeleeWeaponID가 바뀔 때 발생
+	UPROPERTY(BlueprintAssignable, Category = "Components|Combat")
+	FOnMeleeStoredChanged OnMeleeStoredChanged;
 
 	// 드랍 시 스폰할 픽업 액터 클래스
 	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
