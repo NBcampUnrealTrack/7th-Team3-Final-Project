@@ -16,6 +16,7 @@ enum class EVGMonsterType : uint8
     Witch     UMETA(DisplayName = "Witch"),    // 자극→큰소리→강공격
     Tank      UMETA(DisplayName = "Tank"),     // 맷집(HP 큼)
     Runner    UMETA(DisplayName = "Runner"),   // 이동 속도 빠름
+    MAX       UMETA(Hidden)
 };
 
 USTRUCT(BlueprintType)
@@ -28,6 +29,9 @@ struct FVGMonsterTypeRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, Category = "Appearance")
     TSubclassOf<UAnimInstance> AnimClass = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = "Appearance")
+    float MeshScale = 1.f;
 
     UPROPERTY(EditAnywhere, Category = "Animation")
     TArray<TObjectPtr<UAnimMontage>> AttackMontages;
