@@ -454,9 +454,10 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 		MonsterAttributeSet->InitHealth(Row->MaxHealth);
 		MonsterAttributeSet->InitMoveSpeed(Row->MoveSpeed);
 	}
+	
 	if (GetCharacterMovement())
 	{
-		GetCharacterMovement()->MaxWalkSpeed = Row->MoveSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = Row->PatrolSpeed;
 	}
 	
 	CachedAttackEffectClass = Row->AttackEffectClass;
