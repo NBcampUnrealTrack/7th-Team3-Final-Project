@@ -1,13 +1,14 @@
+// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "LobbyGameMode.h"
-#include "Engine/Engine.h"
 
-ALobbyGameMode::ALobbyGameMode()
+#include "NCParkinglotGameMode.h"
+
+ANCParkinglotGameMode::ANCParkinglotGameMode()
 {
 	DefaultPawnClass = nullptr;
 }
 
-void ALobbyGameMode::BeginPlay()
+void ANCParkinglotGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	
@@ -21,22 +22,22 @@ void ALobbyGameMode::BeginPlay()
 	GetWorldTimerManager().SetTimer(
 		NextMapReadyTimerHandle,
 		this,
-		&ALobbyGameMode::CheckMapReady,
+		&ANCParkinglotGameMode::CheckMapReady,
 		1.f,
 		true
 	);
 }
 
-void ALobbyGameMode::CheckMapReady()
+void ANCParkinglotGameMode::CheckMapReady()
 {
 	if (GetWorld()->IsMapChangeReady())
 	{
 		GetWorldTimerManager().ClearTimer(NextMapReadyTimerHandle);
-		UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] 지하주차장 프리로딩 완료!"));
+		UE_LOG(LogTemp, Warning, TEXT("[NCParkinglotGameMode] 쇼핑몰 프리로딩 완료!"));
 	}
 }
 
-void ALobbyGameMode::MoveToParkingLevel()
+void ANCParkinglotGameMode::MoveToShopLevel()
 {
 	if (GetWorld()->IsMapChangeReady())
 	{
@@ -44,7 +45,7 @@ void ALobbyGameMode::MoveToParkingLevel()
 	}
 	else
 	{
-		GetWorld()->ServerTravel("/Game/Maps/L_Parking");
-		UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] 지하주차장 프리로딩 실패로 서버트레블 실행"));
+		GetWorld()->ServerTravel("/Game/Maps/L_ShoppingMall");
+		UE_LOG(LogTemp, Warning, TEXT("[NCParkinglotGameMode] 쇼핑몰 프리로딩 실패로 서버트레블 실행"));
 	}
 }

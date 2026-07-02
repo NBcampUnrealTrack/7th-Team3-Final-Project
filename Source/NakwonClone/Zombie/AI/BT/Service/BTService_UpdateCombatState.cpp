@@ -56,12 +56,12 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	}
 
 	// ── 2) 거리 기반 전투 판별 ──
-	const bool bIsCombat = (NearestDist <= 500.f);
+	const bool bIsCombat = (NearestDist <= DetectRadius);
 	BB->SetValueAsBool(AVGMonsterAIControllerBase::BIsCombatKey, bIsCombat);
 	BB->SetValueAsFloat(AVGMonsterAIControllerBase::DistanceKey, NearestDist);  // ← 항상 갱신
-	// ── 2-1) 공격 거리 판별 (가까우면 공격) ──
+	/*// ── 2-1) 공격 거리 판별 (가까우면 공격) ──
 	const bool bIsAttack = (NearestDist <= 150.f);
-	BB->SetValueAsBool(AVGMonsterAIControllerBase::BIsAttackKey, bIsAttack);
+	BB->SetValueAsBool(AVGMonsterAIControllerBase::BIsAttackKey, bIsAttack);*/
 
 	if (bIsCombat)
 	{

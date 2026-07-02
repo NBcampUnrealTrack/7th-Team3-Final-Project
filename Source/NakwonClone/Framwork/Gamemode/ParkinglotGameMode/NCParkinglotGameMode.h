@@ -3,15 +3,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
-#include "LobbyGameMode.generated.h"
+#include "NCParkinglotGameMode.generated.h"
 
 UCLASS()
-class NAKWONCLONE_API ALobbyGameMode : public AGameMode
+class NAKWONCLONE_API ANCParkinglotGameMode : public AGameMode
 {
 	GENERATED_BODY()
 	
 protected:
-	ALobbyGameMode();
+	ANCParkinglotGameMode();
 	
 	virtual void BeginPlay() override;
 	
@@ -22,5 +22,5 @@ public:
 	void CheckMapReady();
 	
 	UFUNCTION(BlueprintCallable)
-	void MoveToParkingLevel();
+	void MoveToShopLevel();
 };

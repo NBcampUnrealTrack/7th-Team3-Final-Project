@@ -25,6 +25,19 @@ void UHitCheckNotify::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenc
 
     // 이번 스윙의 월드(벽) 임팩트 1회 트리거 플래그 리셋
     bImpactTriggeredThisSwing = false;
+
+    // 헌호수정 - 근접 무기 휘두를 때마다 카메라 쉐이크 (맞든 안 맞든, 로컬 플레이어에게만)
+    if (HitShakeClass && MeshComp)
+    {
+        if (ACharacter* OwnerChar = Cast<ACharacter>(MeshComp->GetOwner()))
+        {
+            if (APlayerController* PC = Cast<APlayerController>(OwnerChar->GetController()))
+            {
+                if (OwnerChar->IsLocallyControlled())
+                    PC->ClientStartCameraShake(HitShakeClass);
+            }
+        }
+    }
 }
 
 void UHitCheckNotify::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
