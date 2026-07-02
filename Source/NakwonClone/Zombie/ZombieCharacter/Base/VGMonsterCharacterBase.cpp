@@ -92,7 +92,7 @@ void AVGMonsterCharacterBase::BeginPlay()
 
 	if (bRandomType)   // BP에서 켤 수 있는 플래그
 	{
-		const int32 Count = (int32)EVGMonsterType::Tank + 1;  // enum 개수
+		const int32 Count = (int32)EVGMonsterType::MAX;  // 새 타입 추가해도 자동 반영
 		MonsterType = (EVGMonsterType)FMath::RandRange(0, Count - 1);
 	}
 	// 타입 데이터로 외형/스탯/공격 세팅 (랜덤메시 대체)
@@ -446,6 +446,7 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	// 외형
 	if (Row->Mesh)      GetMesh()->SetSkeletalMesh(Row->Mesh);
 	if (Row->AnimClass) GetMesh()->SetAnimInstanceClass(Row->AnimClass);
+	SetActorScale3D(FVector(Row->MeshScale));
 
 	// 스탯 (Tank는 Health 크게)
 	if (MonsterAttributeSet)
