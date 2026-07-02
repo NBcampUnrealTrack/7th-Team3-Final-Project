@@ -9,6 +9,7 @@
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
 #include "Player/PlayerComponent/NCEquipmentComponent.h"
 #include "Player/PlayerController/NCPlayerController.h"
+#include "AbilitySystemComponent.h"
 #include "Item/ANCLootBoxActor.h"	
 #include "Item/NCItemActor.h"
 
@@ -670,6 +671,14 @@ bool UNCPlayerInventoryComponent::UseConsumableSlot_Internal(int32 SlotIndex)
 
     if (!ItemTag.MatchesTag(NCItemType::Consumable)) return false;
 
+    // 재진입 방지
+    ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner());
+    APawn* Pawn = PS ? PS->GetPawn() : nullptr;
+    ANCBaseCharacter* BaseChar = Cast<ANCBaseCharacter>(Pawn);
+    UAbilitySystemComponent* ASC = BaseChar ? BaseChar->GetAbilitySystemComponent() : nullptr;
+    if (ASC && ASC->HasMatchingGameplayTag(NCWeapon::Action_UsingItem)) return false;
+    if (ASC) ASC->AddLooseGameplayTag(NCWeapon::Action_UsingItem);
+
     ConsumableSlot.Quantity -= 1;
     if (ConsumableSlot.Quantity <= 0)
     {
@@ -694,41 +703,38 @@ bool UNCPlayerInventoryComponent::UseConsumableSlot_Internal(int32 SlotIndex)
     bPendingReEquipMelee = false;
     bool bWaitingForUnequip = false;
 
-    if (ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner()))
+    if (Pawn)
     {
-        if (APawn* Pawn = PS->GetPawn())
+        if (UNCEquipmentComponent* EquipComp = Pawn->FindComponentByClass<UNCEquipmentComponent>())
         {
-            if (UNCEquipmentComponent* EquipComp = Pawn->FindComponentByClass<UNCEquipmentComponent>())
+            if (EquipComp->HasActiveGun())
             {
-                if (EquipComp->HasActiveGun())
+                PendingReEquipGunSlot = EquipComp->ActiveSlot;
+
+                // SelectSlot(None)의 OnSwapCompleted 콜백이 저장된 근접무기를 자동장착하는 걸 막음
+                if (ANCPlayerController* PC = Cast<ANCPlayerController>(Pawn->GetController()))
                 {
-                    PendingReEquipGunSlot = EquipComp->ActiveSlot;
-
-                    // SelectSlot(None)의 OnSwapCompleted 콜백이 저장된 근접무기를 자동장착하는 걸 막음
-                    if (ANCPlayerController* PC = Cast<ANCPlayerController>(Pawn->GetController()))
-                    {
-                        PC->SetUnArmPending(true);
-                    }
-
-                    EquipComp->OnSwapCompleted.RemoveDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseGunUnequipped);
-                    EquipComp->OnSwapCompleted.AddDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseGunUnequipped);
-                    EquipComp->SelectSlot(ENCGunSlot::None);
-                    bWaitingForUnequip = true;
+                    PC->SetUnArmPending(true);
                 }
+
+                EquipComp->OnSwapCompleted.RemoveDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseGunUnequipped);
+                EquipComp->OnSwapCompleted.AddDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseGunUnequipped);
+                EquipComp->SelectSlot(ENCGunSlot::None);
+                bWaitingForUnequip = true;
             }
+        }
 
-            if (UNCCombatComponent* Combat = Pawn->FindComponentByClass<UNCCombatComponent>())
+        if (UNCCombatComponent* Combat = Pawn->FindComponentByClass<UNCCombatComponent>())
+        {
+            if (Combat->IsWeaponEquipped())
             {
-                if (Combat->IsWeaponEquipped())
-                {
-                    bPendingReEquipMelee = true;
-                    PendingReEquipMeleeInstance = Combat->GetEquippedWeapon();
+                bPendingReEquipMelee = true;
+                PendingReEquipMeleeInstance = Combat->GetEquippedWeapon();
 
-                    Combat->OnWeaponChanged.RemoveDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseMeleeUnequipped);
-                    Combat->OnWeaponChanged.AddDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseMeleeUnequipped);
-                    Combat->UnEquipWeapon();
-                    bWaitingForUnequip = true;
-                }
+                Combat->OnWeaponChanged.RemoveDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseMeleeUnequipped);
+                Combat->OnWeaponChanged.AddDynamic(this, &UNCPlayerInventoryComponent::OnPreItemUseMeleeUnequipped);
+                Combat->UnEquipWeapon();
+                bWaitingForUnequip = true;
             }
         }
     }
