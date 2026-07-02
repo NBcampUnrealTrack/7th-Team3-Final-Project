@@ -387,17 +387,16 @@ void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
         float Duration = PlayAnimMontage(MontageToPlay);
         UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] 몽타지 duration: %.2f"), Duration);
 
-        // 사용 중 다른 행동(줍기/무기스왑 등) 차단용 태그
-        if (UAbilitySystemComponent* NCASC = GetAbilitySystemComponent())
-        {
-            NCASC->AddLooseGameplayTag(NCWeapon::Action_UsingItem);
-        }
 
         if (UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
         {
             AnimInst->OnMontageEnded.RemoveDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
             AnimInst->OnMontageEnded.AddDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
         }
+    }
+    else
+    {
+        OnUseItemMontageEnded();
     }
 }
 
