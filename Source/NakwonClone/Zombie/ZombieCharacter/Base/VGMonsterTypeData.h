@@ -50,4 +50,7 @@ struct FVGMonsterTypeRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, Category = "Stat")
     float MoveSpeed = 150.f;
+    
+    UPROPERTY(EditAnywhere, Category = "Stat")
+    float PatrolSpeed = 100.f;
 };

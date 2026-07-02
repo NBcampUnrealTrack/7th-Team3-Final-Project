@@ -284,6 +284,8 @@ public:
 	const TArray<FName>& GetAttackSocketNames() const { return AttackSocketNames; }
 	float GetAttackTraceDistance() const { return AttackTraceDistance; }
 
+	float GetPatrolSpeed() const { return CachedPatrolSpeed; }
+
 protected:
 	// 타입 데이터 적용 (메시/ABP/스탯/공격몽타주 캐시)
 	void ApplyMonsterType();
@@ -326,6 +328,9 @@ private:
 	// 타입별 공격 GE 캐시
 	UPROPERTY()
 	TSubclassOf<UGameplayEffect> CachedAttackEffectClass;
+	
+	UPROPERTY()
+	float CachedPatrolSpeed = 100.f;
 
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentPlayingMontage = nullptr;
