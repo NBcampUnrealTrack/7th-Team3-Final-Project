@@ -171,8 +171,19 @@ void ANCPlayerController::Look(const FInputActionValue& Value)
         return;
     }
     FVector2D LookAxisVector = Value.Get<FVector2D>();
-    AddYawInput(LookAxisVector.X);
-    AddPitchInput(LookAxisVector.Y);
+
+    //헌호수정 - 정조준(ADS) 중이면 마우스 감도 절반으로 (정밀 조준)
+    float SensMultiplier = 1.f;
+    if (UNCEquipmentComponent* EC = GetGunComp())
+    {
+        if (EC->IsADS())
+        {
+            SensMultiplier = ADSLookSensitivity;
+        }
+    }
+
+    AddYawInput(LookAxisVector.X * SensMultiplier);
+    AddPitchInput(LookAxisVector.Y * SensMultiplier);
 }
 
 void ANCPlayerController::StartSprint()
@@ -658,6 +669,10 @@ void ANCPlayerController::Assassinate() //헌호수정 - 암살
         if (EC->HasActiveGun()) return;
     if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
     {
+        //헌호수정 - 근접무기 장착 중일 때만 암살 가능 (맨손 암살 차단)
+        UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
+        if (!Combat || !Combat->IsWeaponEquipped()) return;
+
         if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
             if (AC->bIsAssassinating) return; // 헌호수정 - 암살 중 재입력 차단
         PC->TryAssassinate();

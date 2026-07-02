@@ -209,6 +209,24 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation|HitReact")
 	float HitReactCooldown = 0.5f;
 
+	//헌호수정 - 피격 스턴 (좀비 위협도 강화: 맞으면 하던 행동 취소 + 입력 잠금)
+	UPROPERTY(EditDefaultsOnly, Category = "Animation|HitReact")
+	float StunDuration = 0.3f;
+
+public:
+	//헌호수정 - 스턴 중 여부 (공격/발사 게이트용)
+	bool IsStunned() const { return bIsStunned; }
+
+private:
+	//헌호수정 - 피격 시 스턴 적용 / 해제
+	void ApplyStun();
+	void EndStun();
+
+	bool bIsStunned = false;
+	FTimerHandle StunTimerHandle;
+
+protected:
+
 	void HandleHealthChanged(const struct FOnAttributeChangeData& Data);
 
 	UFUNCTION(NetMulticast, Reliable)

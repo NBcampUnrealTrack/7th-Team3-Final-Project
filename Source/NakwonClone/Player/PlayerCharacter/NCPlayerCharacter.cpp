@@ -86,6 +86,7 @@ void ANCPlayerCharacter::InitComponents()
     FlashlightLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashlightLight"));
     FlashlightLight->SetupAttachment(FlashlightMesh);
     FlashlightLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
+    FlashlightLight->SetCastShadows(false); //헌호수정 - 캐릭터 얼굴 통과 그림자 방지
 
     // 헌호수정 - 렌즈 발광 느낌용 Point Light
     FlashlightGlowLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("FlashlightGlowLight"));
@@ -408,6 +409,12 @@ void ANCPlayerCharacter::OnConsumableMontageEnded(UAnimMontage* Montage, bool bI
     if (UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
         AnimInst->OnMontageEnded.RemoveDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
 
+    //헌호수정 - 피격 등으로 중단되면 소모품 효과 적용 취소 (무기 복원은 그대로 진행)
+    if (bInterrupted && PlayerInventoryRef)
+    {
+        PlayerInventoryRef->bHasPendingConsumable = false;
+    }
+
     OnUseItemMontageEnded();
 }
 
@@ -545,6 +552,60 @@ void ANCPlayerCharacter::HandleHitReact(AActor* Attacker)
                 false);
         }
     }
+
+    //헌호수정 - 피격 시 스턴 + 행동 취소
+    ApplyStun();
+}
+
+//헌호수정 - 스턴 적용: 하던 행동 취소 + 이동/시점 입력 잠금
+void ANCPlayerCharacter::ApplyStun()
+{
+    // 이미 스턴 중이면 타이머만 갱신 (입력 잠금 중복 방지)
+    if (bIsStunned)
+    {
+        GetWorld()->GetTimerManager().SetTimer(
+            StunTimerHandle, this, &ANCPlayerCharacter::EndStun, StunDuration, false);
+        return;
+    }
+
+    bIsStunned = true;
+
+    // 진행 중인 근접 공격 몽타주 취소
+    if (UNCCombatComponent* Combat = GetCombatComponent())
+    {
+        if (UAnimMontage* AtkMontage = Combat->GetLastPlayedAttackMontage())
+        {
+            StopAnimMontage(AtkMontage);
+        }
+    }
+
+    // 진행 중인 힐/아이템 몽타주 취소 (효과 적용은 OnConsumableMontageEnded의 중단 처리에서 스킵)
+    if (HealItemMontage) StopAnimMontage(HealItemMontage);
+    if (FoodItemMontage) StopAnimMontage(FoodItemMontage);
+    if (UseItemMontage)  StopAnimMontage(UseItemMontage);
+
+    // 이동 + 시점 입력 잠금
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        PC->SetIgnoreMoveInput(true);
+        PC->SetIgnoreLookInput(true);
+    }
+
+    // 스턴 해제 타이머
+    GetWorld()->GetTimerManager().SetTimer(
+        StunTimerHandle, this, &ANCPlayerCharacter::EndStun, StunDuration, false);
+}
+
+//헌호수정 - 스턴 해제: 입력 잠금 복구
+void ANCPlayerCharacter::EndStun()
+{
+    bIsStunned = false;
+
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        PC->SetIgnoreMoveInput(false);
+        PC->SetIgnoreLookInput(false);
+    }
 }
 
 float ANCPlayerCharacter::GetFootstepVolumeMultiplier() const
@@ -628,6 +689,16 @@ void ANCPlayerCharacter::ApplyFlashlightState()
 void ANCPlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    //헌호수정 - 플래시라이트 빛 방향만 컨트롤러(카메라) 조준 방향으로 고정
+    // (손전등 메시 모델은 어깨에 자연스럽게 유지, 빛만 안 흔들리게)
+    if (bFlashlightOn && FlashlightLight)
+    {
+        if (AController* FlashCtrl = GetController())
+        {
+            FlashlightLight->SetWorldRotation(FlashCtrl->GetControlRotation());
+        }
+    }
 
     if (!bAimRotationMode)
     {

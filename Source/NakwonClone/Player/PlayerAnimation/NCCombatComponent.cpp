@@ -12,6 +12,7 @@
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
 #include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
+#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h" //헌호수정
 
 UNCCombatComponent::UNCCombatComponent()
 {
@@ -339,6 +340,15 @@ bool UNCCombatComponent::CanAttack() const
 	if (ASC->HasMatchingGameplayTag(NCWeapon::Action_Swapping))
 	{
 		return false;
+	}
+
+	//헌호수정 - 스턴 중 공격 불가
+	if (ANCPlayerCharacter* Player = Cast<ANCPlayerCharacter>(GetOwner()))
+	{
+		if (Player->IsStunned())
+		{
+			return false;
+		}
 	}
 
 	if (bIsEquipped && EquippedWeapon.bIsBroken)
