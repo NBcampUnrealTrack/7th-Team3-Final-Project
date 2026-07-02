@@ -257,12 +257,20 @@ void ANCPlayerController::Attack()
 
     const bool bActivated = ASC->TryActivateAbilityByClass(PC->AttackAbilityClass);
 
-    UE_LOG(LogTemp, Warning, TEXT("[Attack] TryActivateAbilityByClass: %s"),
-        bActivated ? TEXT("TRUE") : TEXT("FALSE"));
 
-    if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
+    // 첫 입력은 GA_Attack 안에서 MeleeAttack 실행됨.
+    if (bActivated)
     {
-        Combat->MeleeAttack();
+        return;
+    }
+
+    // Ability가 이미 공격 중이라 FALSE인 경우에만 콤보 예약용으로 MeleeAttack 호출.
+    if (ASC->HasMatchingGameplayTag(NCWeapon::Action_Attacking))
+    {
+        if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
+        {
+            Combat->MeleeAttack();
+        }
     }
 }
 

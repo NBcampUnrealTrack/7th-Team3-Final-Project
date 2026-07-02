@@ -23,7 +23,6 @@ void UNCTimerText::NativeConstruct()
 
 void UNCTimerText::OnTimerTextChanged(int32 InToRemainingMatchTime)
 {
-	UE_LOG(LogTemp, Warning, TEXT("UI Received : %d"), InToRemainingMatchTime);
 	
 	int32 Minutes = InToRemainingMatchTime / 60;
 	int32 Seconds = InToRemainingMatchTime % 60;

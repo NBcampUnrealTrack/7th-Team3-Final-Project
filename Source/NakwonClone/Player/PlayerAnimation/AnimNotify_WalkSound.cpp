@@ -11,7 +11,6 @@ void UAnimNotify_WalkSound::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 	
 	if (APawn* MyPawn = Cast<APawn>(MeshComp->GetOwner()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[WalkSound] Notify 호출됨"));
 		UAISense_Hearing::ReportNoiseEvent(
 			GetWorld(),
 			MyPawn->GetActorLocation(),
