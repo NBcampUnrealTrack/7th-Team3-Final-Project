@@ -211,6 +211,9 @@ protected:
 
 	void HandleHealthChanged(const struct FOnAttributeChangeData& Data);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayHitReactMontage(UAnimMontage* MontageToPlay);
+
 private:
 	void InitCamera();
 	void InitComponents();

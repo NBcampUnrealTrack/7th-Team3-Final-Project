@@ -89,7 +89,12 @@ void AVGMonsterCharacterBase::BeginPlay()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MonsterAttributeSet->GetMoveSpeed();
 	}
-	
+
+	if (bRandomType)   // BP에서 켤 수 있는 플래그
+	{
+		const int32 Count = (int32)EVGMonsterType::Tank + 1;  // enum 개수
+		MonsterType = (EVGMonsterType)FMath::RandRange(0, Count - 1);
+	}
 	// 타입 데이터로 외형/스탯/공격 세팅 (랜덤메시 대체)
 	ApplyMonsterType();
 	
