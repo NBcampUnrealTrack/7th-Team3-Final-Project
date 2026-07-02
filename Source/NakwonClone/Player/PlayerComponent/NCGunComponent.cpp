@@ -753,6 +753,7 @@ void UNCGunComponent::HideGunMagazine()
 		return;
 
 	EquippedGunSkelMeshComp->HideBoneByName(TEXT("Magazine_joint"), EPhysBodyOp::PBO_None);
+	EquippedGunSkelMeshComp->HideBoneByName(TEXT("Bullets_joint"), EPhysBodyOp::PBO_None);
 }
 
 void UNCGunComponent::ShowGunMagazine()
@@ -761,4 +762,5 @@ void UNCGunComponent::ShowGunMagazine()
 		return;
 
 	EquippedGunSkelMeshComp->UnHideBoneByName(TEXT("Magazine_joint"));
+	EquippedGunSkelMeshComp->UnHideBoneByName(TEXT("Bullets_joint"));
 }

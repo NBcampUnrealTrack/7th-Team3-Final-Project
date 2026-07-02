@@ -61,7 +61,6 @@ void UNCCombatComponent::MeleeAttack()
 {
 	if (!CanAttack())
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MeleeAttack] FAIL - CanAttack false"));
 		return;
 	}
 
@@ -91,26 +90,18 @@ void UNCCombatComponent::MeleeAttack()
 
 	if (!Anim)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MeleeAttack] FAIL - Anim null"));
 		return;
 	}
 
 	if (!Montage)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MeleeAttack] FAIL - Montage null"));
 		return;
 	}
 
 	if (Sections.Num() == 0)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MeleeAttack] FAIL - Sections empty"));
 		return;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[MeleeAttack] SUCCESS - Montage: %s / Section: %s"),
-		*Montage->GetName(),
-		*Sections[0].ToString()
-	);
 
 	LastPlayedAttackMontage = Montage;
 
@@ -342,24 +333,19 @@ bool UNCCombatComponent::CanAttack() const
 {
 	if (!ASC)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[CanAttack] FAIL - ASC NULL"));
 		return false;
 	}
 
 	if (ASC->HasMatchingGameplayTag(NCWeapon::Action_Swapping))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[CanAttack] FAIL - Swapping"));
 		return false;
 	}
 
-	// 무기를 들고 있을 때만 내구도/파손 체크
 	if (bIsEquipped && EquippedWeapon.bIsBroken)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[CanAttack] FAIL - Broken"));
 		return false;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[CanAttack] SUCCESS"));
 	return true;
 }
 
