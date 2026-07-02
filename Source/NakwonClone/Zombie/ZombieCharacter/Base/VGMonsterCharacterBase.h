@@ -46,6 +46,7 @@ protected:
 public:
 	// 인터페이스 구현
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	UVGMonsterAttributeSet* GetMonsterAttributeSet() const { return MonsterAttributeSet; }
 
 protected:
 	// ASC 컴포넌트
