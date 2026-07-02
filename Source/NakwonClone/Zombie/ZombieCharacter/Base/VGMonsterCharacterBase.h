@@ -271,12 +271,32 @@ public:
 	// 공격 몽타주 끝나면 BT에 알림
 	FOnMonsterAttackFinished OnAttackFinished;
 
+	// ── 공격 트레이스/GE (AnimNotify_AttackTrace가 사용) ──────────
+	TSubclassOf<UGameplayEffect> GetAttackEffectClass() const { return CachedAttackEffectClass; }
+	const TArray<FName>& GetAttackSocketNames() const { return AttackSocketNames; }
+	float GetAttackTraceDistance() const { return AttackTraceDistance; }
+
 protected:
 	// 타입 데이터 적용 (메시/ABP/스탯/공격몽타주 캐시)
 	void ApplyMonsterType();
 
 	// 현재 타입 공격 몽타주 중 하나
 	UAnimMontage* GetAttackMontageForAI();
+
+	// 소켓 이름 (스켈레톤 에디터에서 추가한 이름과 동일하게)
+	UPROPERTY(EditAnywhere, Category = "Monster|Attack")
+	TArray<FName> AttackSocketNames = {
+		TEXT("AttackSocket_L_Fist"),
+		TEXT("AttackSocket_L_Wrist"),
+		TEXT("AttackSocket_L_Elbow"),
+		TEXT("AttackSocket_R_Fist"),
+		TEXT("AttackSocket_R_Wrist"),
+		TEXT("AttackSocket_R_Elbow"),
+	};
+
+	// 트레이스 크기
+	UPROPERTY(EditAnywhere, Category = "Monster|Attack")
+	float AttackTraceDistance = 10.f;
 
 private:
 	UFUNCTION(NetMulticast, Reliable)
@@ -294,6 +314,10 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CachedSpecialMontage = nullptr;
+
+	// 타입별 공격 GE 캐시
+	UPROPERTY()
+	TSubclassOf<UGameplayEffect> CachedAttackEffectClass;
 
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentPlayingMontage = nullptr;

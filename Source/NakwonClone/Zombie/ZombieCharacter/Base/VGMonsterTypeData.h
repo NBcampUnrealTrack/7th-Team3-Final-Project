@@ -7,6 +7,7 @@
 class USkeletalMesh;
 class UAnimInstance;
 class UAnimMontage;
+class UGameplayEffect;
 
 UENUM(BlueprintType)
 enum class EVGMonsterType : uint8
@@ -14,6 +15,7 @@ enum class EVGMonsterType : uint8
     Walker    UMETA(DisplayName = "Walker"),   // 기본 워커 (완성)
     Witch     UMETA(DisplayName = "Witch"),    // 자극→큰소리→강공격
     Tank      UMETA(DisplayName = "Tank"),     // 맷집(HP 큼)
+    Runner    UMETA(DisplayName = "Runner"),   // 이동 속도 빠름
 };
 
 USTRUCT(BlueprintType)
@@ -32,6 +34,9 @@ struct FVGMonsterTypeRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, Category = "Animation")
     TObjectPtr<UAnimMontage> SpecialMontage = nullptr;
+    
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    TSubclassOf<UGameplayEffect> AttackEffectClass = nullptr;
 
     UPROPERTY(EditAnywhere, Category = "Stat")
     float MaxHealth = 100.f;

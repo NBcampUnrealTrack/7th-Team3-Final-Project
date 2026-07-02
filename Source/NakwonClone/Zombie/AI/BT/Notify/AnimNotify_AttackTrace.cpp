@@ -5,8 +5,7 @@
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
-#include "NakwonClone/Zombie/ZombieCharacter/Runner/VGMonsterRunner.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "GameplayEffect.h"
 #include "Common/NCGameplayTags.h"
 #include "Engine/OverlapResult.h"
@@ -37,23 +36,24 @@ void UAnimNotify_AttackTrace::DoHitCheck(USkeletalMeshComponent* MeshComp)
 {
 	if (!MeshComp) return;
 
-	AVGMonsterWalker* Walker = Cast<AVGMonsterWalker>(MeshComp->GetOwner());
-	if (!Walker) return;
+	// Walker 전용 캐스팅 → Base로 변경 (Walker/Runner/Witch/Tank 전부 동작)
+	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(MeshComp->GetOwner());
+	if (!Monster) return;
 
-	UWorld* World = Walker->GetWorld();
+	UWorld* World = Monster->GetWorld();
 	if (!World) return;
 
-	if (!Walker->AttackEffectClass) return;
+	if (!Monster->GetAttackEffectClass()) return;
 
-	UAbilitySystemComponent* ASC = Walker->GetAbilitySystemComponent();
+	UAbilitySystemComponent* ASC = Monster->GetAbilitySystemComponent();
 	if (!ASC) return;
 
-	const float Radius = Walker->GetAttackTraceDistance();
+	const float Radius = Monster->GetAttackTraceDistance();
 
 	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(Walker);
+	Params.AddIgnoredActor(Monster);
 
-	for (const FName& SocketName : Walker->GetAttackSocketNames())
+	for (const FName& SocketName : Monster->GetAttackSocketNames())
 	{
 		if (!MeshComp->DoesSocketExist(SocketName)) continue;
 
@@ -102,7 +102,7 @@ void UAnimNotify_AttackTrace::DoHitCheck(USkeletalMeshComponent* MeshComp)
 			ContextHandle.AddHitResult(AttackHit);
 
 			FGameplayEffectSpecHandle Spec =
-				ASC->MakeOutgoingSpec(Walker->AttackEffectClass, 1.f, ContextHandle);
+				ASC->MakeOutgoingSpec(Monster->GetAttackEffectClass(), 1.f, ContextHandle);
 
 			if (Spec.IsValid())
 			{
@@ -110,7 +110,7 @@ void UAnimNotify_AttackTrace::DoHitCheck(USkeletalMeshComponent* MeshComp)
 
 				if (ANCPlayerCharacter* HitPlayer = Cast<ANCPlayerCharacter>(HitActor))
 				{
-					HitPlayer->HandleHitReact(Walker);
+					HitPlayer->HandleHitReact(Monster);
 				}
 			}
 		}
