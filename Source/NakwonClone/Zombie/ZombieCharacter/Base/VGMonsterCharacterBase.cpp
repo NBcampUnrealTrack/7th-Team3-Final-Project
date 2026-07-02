@@ -455,6 +455,8 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = Row->MoveSpeed;
 	}
+	
+	CachedAttackEffectClass = Row->AttackEffectClass;
 }
 
 UAnimMontage* AVGMonsterCharacterBase::GetAttackMontageForAI()
