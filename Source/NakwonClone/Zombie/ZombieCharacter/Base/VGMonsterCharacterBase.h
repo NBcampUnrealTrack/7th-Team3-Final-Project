@@ -331,14 +331,14 @@ public:
 	void TryPlaySpecialMontage();
 
 	// 큰소리 재생 최소 간격(초) — 연속 피격 스팸 방지
-	UPROPERTY(EditAnywhere, Category = "Monster|Scream")
-	float ScreamCooldown = 3.f;
+	UPROPERTY(EditAnywhere, Category = "Monster|Special")
+	float SpecialMontageCooldown = 3.f;
 
 private:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlaySpecialMontage(UAnimMontage* Montage);
 
-	float LastScreamTime = -100.f;
+	float LastSpecialMontageTime = -100.f;
 
 #pragma endregion
 };
