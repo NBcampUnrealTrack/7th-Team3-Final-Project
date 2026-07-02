@@ -185,6 +185,8 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 {
 	if (bIsDead || bIsBeingAssassinated || MonsterAttributeSet->GetHealth() <= 0.f) return;
+	// 피격 시에도 큰소리(스페셜) 재생 — "총 맞아도 운다"
+	TryPlaySpecialMontage();
 	
 	const EVGHitBodyPart BodyPart = HitData.BodyPart;
 
@@ -462,6 +464,28 @@ UAnimMontage* AVGMonsterCharacterBase::GetAttackMontageForAI()
 	if (CachedAttackMontages.Num() > 0)
 		return GetRandomMontage(CachedAttackMontages);
 	return nullptr;
+}
+
+void AVGMonsterCharacterBase::TryPlaySpecialMontage()
+{
+	// 스페셜 몽타주 없는 타입(Walker/Tank)은 자동 무시 → 타입 분기 불필요
+	if (!CachedSpecialMontage) return;
+	if (bIsDead || bIsBeingAssassinated) return;
+
+	// 쿨다운: 접촉 + 연속 피격이 겹쳐도 한 번씩만
+	const float Now = GetWorld()->GetTimeSeconds();
+	if (Now - LastScreamTime < ScreamCooldown) return;
+	LastScreamTime = Now;
+
+	Multicast_PlaySpecialMontage(CachedSpecialMontage);
+}
+
+void AVGMonsterCharacterBase::Multicast_PlaySpecialMontage_Implementation(UAnimMontage* Montage)
+{
+	if (UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+	{
+		if (Montage) Anim->Montage_Play(Montage);
+	}
 }
 
 void AVGMonsterCharacterBase::StartAttack()

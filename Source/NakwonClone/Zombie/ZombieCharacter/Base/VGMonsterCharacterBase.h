@@ -28,7 +28,7 @@ UCLASS()
 class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-	
+
 #pragma region 코어/라이프사이클
 public:
 	// 생성자
@@ -46,7 +46,7 @@ protected:
 public:
 	// 인터페이스 구현
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
+
 protected:
 	// ASC 컴포넌트
 	UPROPERTY(VisibleAnywhere, Category = "GAS|ASC")
@@ -54,12 +54,12 @@ protected:
 	// 몬스터 어트로뷰트셋
 	UPROPERTY(VisibleAnywhere, Category = "GAS|AttributeSet")
 	TObjectPtr<UVGMonsterAttributeSet> MonsterAttributeSet;
-	
-public:          
+
+public:
 	// 공격 (물기) GE 슬롯
 	UPROPERTY(EditAnywhere, Category = "Monster|Bite")
 	TSubclassOf<UGameplayEffect> BiteEffectClass;
-	
+
 	// 속도 GE 슬롯
 	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
 	TSubclassOf<UGameplayEffect> MoveSpeedEffectClass;
@@ -76,7 +76,7 @@ private:
 public:
 	// 랜덤 몽타주 가져오기
 	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
-	
+
 	// 슬롯 배열에서 랜덤 애니메이션 몽타주 추출
 	UAnimMontage* GetRandomMoveMontage() { return GetRandomMontage(AnimMove); }
 	UAnimMontage* GetRandomStopMontage() { return GetRandomMontage(AnimStop); }
@@ -98,7 +98,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimChase;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimHit;
 
@@ -124,12 +124,12 @@ protected:
 	UPROPERTY()
 	int32 SelectedChaseLevel;
 #pragma endregion
-	
+
 #pragma region 좀비 메시 (랜덤)
 	UPROPERTY(EditDefaultsOnly, Category = "Mesh")
 	TArray<USkeletalMesh*> RandomMesh;
 #pragma endregion
-	
+
 #pragma region 피격 처리
 public:
 	UFUNCTION()
@@ -170,7 +170,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Monster|Death")
 	void OnStartDissolve();
 	bool IsDead() const { return bIsDead; }
-	
+
 private:
 	bool bIsDead = false;
 #pragma endregion
@@ -301,5 +301,20 @@ private:
 	// Witch: 첫 공격 때 큰소리 1회
 	bool bScreamPhase = false;
 	bool bHasScreamed = false;
+
+public:
+	// 큰소리(스페셜) 몽타주 재생 시도 — 접촉/피격 공용 진입점
+	void TryPlaySpecialMontage();
+
+	// 큰소리 재생 최소 간격(초) — 연속 피격 스팸 방지
+	UPROPERTY(EditAnywhere, Category = "Monster|Scream")
+	float ScreamCooldown = 3.f;
+
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlaySpecialMontage(UAnimMontage* Montage);
+
+	float LastScreamTime = -100.f;
+
 #pragma endregion
 };
