@@ -387,6 +387,12 @@ void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
         float Duration = PlayAnimMontage(MontageToPlay);
         UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] 몽타지 duration: %.2f"), Duration);
 
+        // 사용 중 다른 행동(줍기/무기스왑 등) 차단용 태그
+        if (UAbilitySystemComponent* NCASC = GetAbilitySystemComponent())
+        {
+            NCASC->AddLooseGameplayTag(NCWeapon::Action_UsingItem);
+        }
+
         if (UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
         {
             AnimInst->OnMontageEnded.RemoveDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
@@ -443,12 +449,31 @@ void ANCPlayerCharacter::OnUseItemMontageEnded()
         }
     }
 
-    // 소모품 사용 전 장착중이던 프리셋 복귀 (효과 적용 성공 여부와 무관하게 항상 실행)
-    const int32 ReEquipIndex = PlayerInventoryRef->PendingReEquipPresetIndex;
-    PlayerInventoryRef->PendingReEquipPresetIndex = -1;
-    if (ReEquipIndex != -1)
+    // 소모품 사용 전 장착중이던 무기 복원 (효과 적용 성공 여부와 무관하게 항상 실행)
+    const ENCGunSlot ReEquipGunSlot = PlayerInventoryRef->PendingReEquipGunSlot;
+    PlayerInventoryRef->PendingReEquipGunSlot = ENCGunSlot::None;
+    if (ReEquipGunSlot != ENCGunSlot::None)
     {
-        PlayerInventoryRef->ApplyPreset(ReEquipIndex);
+        if (UNCEquipmentComponent* EquipComp = GetEquipmentComponent())
+        {
+            EquipComp->SelectSlot(ReEquipGunSlot);
+        }
+    }
+
+    const bool bReEquipMelee = PlayerInventoryRef->bPendingReEquipMelee;
+    PlayerInventoryRef->bPendingReEquipMelee = false;
+    if (bReEquipMelee)
+    {
+        if (UNCCombatComponent* Combat = FindComponentByClass<UNCCombatComponent>())
+        {
+            Combat->EquipWeapon(PlayerInventoryRef->PendingReEquipMeleeInstance);
+        }
+    }
+
+    // 사용 중 차단 태그 해제
+    if (UAbilitySystemComponent* NCASC = GetAbilitySystemComponent())
+    {
+        NCASC->RemoveLooseGameplayTag(NCWeapon::Action_UsingItem);
     }
 }
 
