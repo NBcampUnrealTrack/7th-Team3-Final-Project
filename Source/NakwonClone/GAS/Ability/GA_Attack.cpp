@@ -73,12 +73,14 @@ void UGA_Attack::ActivateAbility(
 
 void UGA_Attack::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
+
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
 	if (ASC)
 	{
 		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Attacking);
 		ASC->RemoveLooseGameplayTag(NCWeapon::Action_Firing);
 	}
+
 
 	EndAbility(
 		GetCurrentAbilitySpecHandle(),
@@ -90,12 +92,18 @@ void UGA_Attack::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 }
 
 void UGA_Attack::EndAbility(
-    const FGameplayAbilitySpecHandle Handle,
-    const FGameplayAbilityActorInfo* ActorInfo,
-    const FGameplayAbilityActivationInfo ActivationInfo,
-    bool bReplicateEndAbility,
-    bool bWasCancelled)
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo,
+	bool bReplicateEndAbility,
+	bool bWasCancelled)
 {
-    Super::EndAbility(Handle, ActorInfo, ActivationInfo,
-        bReplicateEndAbility, bWasCancelled);
+	Super::EndAbility(
+		Handle,
+		ActorInfo,
+		ActivationInfo,
+		bReplicateEndAbility,
+		bWasCancelled
+	);
+
 }

@@ -19,6 +19,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGunUnequipped);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFireModeChanged, ENCFireMode, NewFireMode);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSwapCompleted, ENCGunSlot, NewSlot);
 
+// 슬롯 단위 장착 상태 변경
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGunSlotChanged, ENCGunSlot, Slot, FName, GunID);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NAKWONCLONE_API UNCGunComponent : public UActorComponent
 {

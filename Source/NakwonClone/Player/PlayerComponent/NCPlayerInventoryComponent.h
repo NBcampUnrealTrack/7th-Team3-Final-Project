@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Inventory/NCInventoryBaseComponent.h"
 #include "Inventory/NCInventoryType.h"
+#include "Weapon/Gun/GunType/NCGunType.h"
 
 #include "NCPlayerInventoryComponent.generated.h"
 
@@ -216,6 +217,18 @@ public:
 	FConsumableItemData PendingConsumableData;
 	bool bHasPendingConsumable = false;
 	int32 PendingReEquipPresetIndex = -1;
+
+	ENCGunSlot PendingReEquipGunSlot = ENCGunSlot::None;
+	bool bPendingReEquipMelee = false;
+	FNCWeaponInstance PendingReEquipMeleeInstance;
+
+	FGameplayTag PendingUseItemTag;
+
+	UFUNCTION()
+	void OnPreItemUseGunUnequipped(ENCGunSlot NewSlot);
+
+	UFUNCTION()
+	void OnPreItemUseMeleeUnequipped(const FNCWeaponInstance& NewWeapon);
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
 	TObjectPtr<UDataTable> ConsumableDataTable;

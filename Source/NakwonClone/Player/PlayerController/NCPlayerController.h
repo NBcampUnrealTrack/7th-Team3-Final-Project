@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
@@ -51,7 +51,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsInventoryOpen = false;
-	
+
+	void SetUnArmPending(bool bPending) { bUnArmPending = bPending; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -71,8 +73,8 @@ private:
 	void Interact();
 	void QuickSlot1();
 	void QuickSlot2();
-	void QuickSlot3();
 	void QuickSlot4();
+	void QuickSlot5();
 	void UnArm();
 	// ----------
 	
@@ -103,6 +105,8 @@ private:
 
 	// 헌호수정 - 공격 중 여부 체크
 	bool IsAttacking() const;
+
+	bool IsUsingItem() const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -136,9 +140,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> QuickSlot2Action;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> QuickSlot3Action;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> QuickSlot4Action;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> QuickSlot5Action;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> UnArmAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -182,4 +186,5 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> AssassinateAction;
 
+	FTimerHandle SwapTimerHandle;
 };

@@ -11,6 +11,7 @@
 class ANCProjectile;
 class ANCGunActor;
 class USoundBase;
+class UTexture2D;
 
 UENUM(BlueprintType)
 enum class ENCGunSlot : uint8
@@ -40,6 +41,7 @@ struct FNCGunData : public FTableRowBase
 
     // UI
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FText DisplayName;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) TObjectPtr<UTexture2D> Icon;
 
     // 전투 수치
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float Damage          = 30.f;

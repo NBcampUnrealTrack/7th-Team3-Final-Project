@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGHitTypes.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterTypeData.h" 
 #include "VGMonsterCharacterBase.generated.h"
 
 // 전방 선언
@@ -19,13 +20,15 @@ class USoundAttenuation;
 class UNiagaraSystem;
 class UGameplayEffect;
 
+DECLARE_DELEGATE(FOnMonsterAttackFinished);
+
 struct FOnAttributeChangeData;
 
 UCLASS()
 class NAKWONCLONE_API AVGMonsterCharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-	
+
 #pragma region 코어/라이프사이클
 public:
 	// 생성자
@@ -43,7 +46,7 @@ protected:
 public:
 	// 인터페이스 구현
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
+
 protected:
 	// ASC 컴포넌트
 	UPROPERTY(VisibleAnywhere, Category = "GAS|ASC")
@@ -51,12 +54,12 @@ protected:
 	// 몬스터 어트로뷰트셋
 	UPROPERTY(VisibleAnywhere, Category = "GAS|AttributeSet")
 	TObjectPtr<UVGMonsterAttributeSet> MonsterAttributeSet;
-	
-public:          
+
+public:
 	// 공격 (물기) GE 슬롯
 	UPROPERTY(EditAnywhere, Category = "Monster|Bite")
 	TSubclassOf<UGameplayEffect> BiteEffectClass;
-	
+
 	// 속도 GE 슬롯
 	UPROPERTY(EditAnywhere, Category = "Monster|Speed")
 	TSubclassOf<UGameplayEffect> MoveSpeedEffectClass;
@@ -73,7 +76,7 @@ private:
 public:
 	// 랜덤 몽타주 가져오기
 	UAnimMontage* GetRandomMontage(const TArray<TObjectPtr<UAnimMontage>>& Montages);
-	
+
 	// 슬롯 배열에서 랜덤 애니메이션 몽타주 추출
 	UAnimMontage* GetRandomMoveMontage() { return GetRandomMontage(AnimMove); }
 	UAnimMontage* GetRandomStopMontage() { return GetRandomMontage(AnimStop); }
@@ -95,7 +98,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimChase;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AnimHit;
 
@@ -121,12 +124,12 @@ protected:
 	UPROPERTY()
 	int32 SelectedChaseLevel;
 #pragma endregion
-	
+
 #pragma region 좀비 메시 (랜덤)
 	UPROPERTY(EditDefaultsOnly, Category = "Mesh")
 	TArray<USkeletalMesh*> RandomMesh;
 #pragma endregion
-	
+
 #pragma region 피격 처리
 public:
 	UFUNCTION()
@@ -167,7 +170,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Monster|Death")
 	void OnStartDissolve();
 	bool IsDead() const { return bIsDead; }
-	
+
 private:
 	bool bIsDead = false;
 #pragma endregion
@@ -248,5 +251,94 @@ private:
 	void Multicast_PlayAssassinationMontage(UAnimMontage* Montage);
 
 	bool bIsBeingAssassinated = false;
+#pragma endregion
+
+#pragma region 타입/공격 (AI)
+public:
+	// 스폰 시 이 타입으로 세팅
+	UPROPERTY(EditAnywhere, Category = "Monster|Type")
+	EVGMonsterType MonsterType = EVGMonsterType::Walker;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Type")
+	TObjectPtr<UDataTable> MonsterTypeTable = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Type")
+	bool bRandomType = false;
+
+	// BT가 부르는 진입점 — "공격 시작" (재생은 캐릭터가)
+	void StartAttack();
+
+	// 공격 몽타주 끝나면 BT에 알림
+	FOnMonsterAttackFinished OnAttackFinished;
+
+	// ── 공격 트레이스/GE (AnimNotify_AttackTrace가 사용) ──────────
+	TSubclassOf<UGameplayEffect> GetAttackEffectClass() const { return CachedAttackEffectClass; }
+	const TArray<FName>& GetAttackSocketNames() const { return AttackSocketNames; }
+	float GetAttackTraceDistance() const { return AttackTraceDistance; }
+
+protected:
+	// 타입 데이터 적용 (메시/ABP/스탯/공격몽타주 캐시)
+	void ApplyMonsterType();
+
+	// 현재 타입 공격 몽타주 중 하나
+	UAnimMontage* GetAttackMontageForAI();
+
+	// 소켓 이름 (스켈레톤 에디터에서 추가한 이름과 동일하게)
+	UPROPERTY(EditAnywhere, Category = "Monster|Attack")
+	TArray<FName> AttackSocketNames = {
+		TEXT("AttackSocket_L_Fist"),
+		TEXT("AttackSocket_L_Wrist"),
+		TEXT("AttackSocket_L_Elbow"),
+		TEXT("AttackSocket_R_Fist"),
+		TEXT("AttackSocket_R_Wrist"),
+		TEXT("AttackSocket_R_Elbow"),
+	};
+
+	// 트레이스 크기
+	UPROPERTY(EditAnywhere, Category = "Monster|Attack")
+	float AttackTraceDistance = 10.f;
+
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayAttackMontage(UAnimMontage* Montage);
+
+	UFUNCTION()
+	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	// 실제 공격 몽타주 재생 (내부용)
+	void PlayAttackNow();
+
+	// 타입 데이터 런타임 캐시
+	UPROPERTY()
+	TArray<TObjectPtr<UAnimMontage>> CachedAttackMontages;
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CachedSpecialMontage = nullptr;
+
+	// 타입별 공격 GE 캐시
+	UPROPERTY()
+	TSubclassOf<UGameplayEffect> CachedAttackEffectClass;
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentPlayingMontage = nullptr;
+
+	// Witch: 첫 공격 때 큰소리 1회
+	bool bScreamPhase = false;
+	bool bHasScreamed = false;
+
+public:
+	// 큰소리(스페셜) 몽타주 재생 시도 — 접촉/피격 공용 진입점
+	void TryPlaySpecialMontage();
+
+	// 큰소리 재생 최소 간격(초) — 연속 피격 스팸 방지
+	UPROPERTY(EditAnywhere, Category = "Monster|Special")
+	float SpecialMontageCooldown = 3.f;
+
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlaySpecialMontage(UAnimMontage* Montage);
+
+	float LastSpecialMontageTime = -100.f;
+
 #pragma endregion
 };

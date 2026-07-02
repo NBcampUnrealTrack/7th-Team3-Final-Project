@@ -89,12 +89,14 @@ void AVGMonsterCharacterBase::BeginPlay()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MonsterAttributeSet->GetMoveSpeed();
 	}
-	
-	if (RandomMesh.Num() > 0)
+
+	if (bRandomType)   // BP에서 켤 수 있는 플래그
 	{
-		int32 RandIndex = FMath::RandRange(0, RandomMesh.Num() - 1);
-		GetMesh()->SetSkeletalMesh(RandomMesh[RandIndex]);
+		const int32 Count = (int32)EVGMonsterType::Tank + 1;  // enum 개수
+		MonsterType = (EVGMonsterType)FMath::RandRange(0, Count - 1);
 	}
+	// 타입 데이터로 외형/스탯/공격 세팅 (랜덤메시 대체)
+	ApplyMonsterType();
 	
 	if (AnimMove.Num() > 0)
 	{
@@ -183,6 +185,8 @@ void AVGMonsterCharacterBase::OnStartRagdoll()
 void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 {
 	if (bIsDead || bIsBeingAssassinated || MonsterAttributeSet->GetHealth() <= 0.f) return;
+	// 피격 시에도 큰소리(스페셜) 재생 — "총 맞아도 운다"
+	TryPlaySpecialMontage();
 	
 	const EVGHitBodyPart BodyPart = HitData.BodyPart;
 
@@ -420,4 +424,139 @@ void AVGMonsterCharacterBase::Multicast_PlayAssassinationMontage_Implementation(
 	if (!Montage) return;
 	if (UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
 		Anim->Montage_Play(Montage);
+}
+
+void AVGMonsterCharacterBase::ApplyMonsterType()
+{
+	if (!MonsterTypeTable) return;
+
+	// enum 이름 → 행 이름 ("EVGMonsterType::Walker" → "Walker")
+	FString EnumStr = UEnum::GetValueAsString(MonsterType);
+	FString RowStr;
+	EnumStr.Split(TEXT("::"), nullptr, &RowStr);
+	const FName RowName(*RowStr);
+
+	FVGMonsterTypeRow* Row = MonsterTypeTable->FindRow<FVGMonsterTypeRow>(RowName, TEXT("ApplyMonsterType"));
+	if (!Row) return;
+
+	// 공격/특수 몽타주 캐시
+	CachedAttackMontages = Row->AttackMontages;
+	CachedSpecialMontage = Row->SpecialMontage;
+
+	// 외형
+	if (Row->Mesh)      GetMesh()->SetSkeletalMesh(Row->Mesh);
+	if (Row->AnimClass) GetMesh()->SetAnimInstanceClass(Row->AnimClass);
+
+	// 스탯 (Tank는 Health 크게)
+	if (MonsterAttributeSet)
+	{
+		MonsterAttributeSet->InitHealth(Row->MaxHealth);
+		MonsterAttributeSet->InitMoveSpeed(Row->MoveSpeed);
+	}
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = Row->MoveSpeed;
+	}
+	
+	CachedAttackEffectClass = Row->AttackEffectClass;
+}
+
+UAnimMontage* AVGMonsterCharacterBase::GetAttackMontageForAI()
+{
+	if (CachedAttackMontages.Num() > 0)
+		return GetRandomMontage(CachedAttackMontages);
+	return nullptr;
+}
+
+void AVGMonsterCharacterBase::TryPlaySpecialMontage()
+{
+	// 스페셜 몽타주 없는 타입(Walker/Tank)은 자동 무시 → 타입 분기 불필요
+	if (!CachedSpecialMontage) return;
+	if (bIsDead || bIsBeingAssassinated) return;
+
+	// 쿨다운: 접촉 + 연속 피격이 겹쳐도 한 번씩만
+	const float Now = GetWorld()->GetTimeSeconds();
+	if (Now - LastSpecialMontageTime < SpecialMontageCooldown) return;
+	LastSpecialMontageTime = Now;
+
+	Multicast_PlaySpecialMontage(CachedSpecialMontage);
+}
+
+void AVGMonsterCharacterBase::Multicast_PlaySpecialMontage_Implementation(UAnimMontage* Montage)
+{
+	if (UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+	{
+		if (Montage) Anim->Montage_Play(Montage);
+	}
+}
+
+void AVGMonsterCharacterBase::StartAttack()
+{
+	// Witch: 첫 공격이면 큰소리 먼저 → 끝나면 공격
+	if (MonsterType == EVGMonsterType::Witch && !bHasScreamed && CachedSpecialMontage)
+	{
+		bScreamPhase = true;
+		CurrentPlayingMontage = CachedSpecialMontage;
+		Multicast_PlayAttackMontage(CachedSpecialMontage);
+
+		if (UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+		{
+			Anim->OnMontageEnded.RemoveDynamic(this, &AVGMonsterCharacterBase::OnAttackMontageEnded);
+			Anim->OnMontageEnded.AddDynamic(this, &AVGMonsterCharacterBase::OnAttackMontageEnded);
+		}
+		return;
+	}
+
+	// Walker / Tank / (Witch 큰소리 이후) → 바로 공격
+	PlayAttackNow();
+}
+
+void AVGMonsterCharacterBase::PlayAttackNow()
+{
+	UAnimMontage* Montage = GetAttackMontageForAI();
+	if (!Montage)
+	{
+		OnAttackFinished.ExecuteIfBound();   // 공격 몽타주 없으면 즉시 완료
+		return;
+	}
+
+	bScreamPhase = false;
+	CurrentPlayingMontage = Montage;
+	Multicast_PlayAttackMontage(Montage);
+
+	if (UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+	{
+		Anim->OnMontageEnded.RemoveDynamic(this, &AVGMonsterCharacterBase::OnAttackMontageEnded);
+		Anim->OnMontageEnded.AddDynamic(this, &AVGMonsterCharacterBase::OnAttackMontageEnded);
+	}
+}
+
+void AVGMonsterCharacterBase::Multicast_PlayAttackMontage_Implementation(UAnimMontage* Montage)
+{
+	if (UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+	{
+		if (Montage) Anim->Montage_Play(Montage);
+	}
+}
+
+void AVGMonsterCharacterBase::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (Montage != CurrentPlayingMontage) return;
+
+	// Witch 큰소리가 끝난 거면 → 이제 진짜 공격
+	if (bScreamPhase)
+	{
+		bScreamPhase = false;
+		bHasScreamed = true;
+		PlayAttackNow();     // 아직 OnAttackFinished 안 쏨 (공격까지 기다림)
+		return;
+	}
+
+	// 공격이 끝난 거면 → BT에 알림
+	if (UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+	{
+		Anim->OnMontageEnded.RemoveDynamic(this, &AVGMonsterCharacterBase::OnAttackMontageEnded);
+	}
+	CurrentPlayingMontage = nullptr;
+	OnAttackFinished.ExecuteIfBound();
 }
