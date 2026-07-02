@@ -476,8 +476,8 @@ void AVGMonsterCharacterBase::TryPlaySpecialMontage()
 
 	// 쿨다운: 접촉 + 연속 피격이 겹쳐도 한 번씩만
 	const float Now = GetWorld()->GetTimeSeconds();
-	if (Now - LastScreamTime < ScreamCooldown) return;
-	LastScreamTime = Now;
+	if (Now - LastSpecialMontageTime < SpecialMontageCooldown) return;
+	LastSpecialMontageTime = Now;
 
 	Multicast_PlaySpecialMontage(CachedSpecialMontage);
 }
