@@ -19,8 +19,13 @@ protected:
 	
 	virtual void BeginPlay() override;
 	
+	FTimerHandle NextMapReadyTimerHandle;
+	void TryCommitMapChange();
+	
 public:
 	UFUNCTION(BlueprintCallable)
-	void MoveToShopLevel();
+	void CheckMapReady();
 	
+	UFUNCTION(BlueprintCallable)
+	void MoveToShopLevel();
 };
