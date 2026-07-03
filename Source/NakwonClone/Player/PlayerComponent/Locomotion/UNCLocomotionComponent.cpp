@@ -80,22 +80,6 @@ void UNCLocomotionComponent::ApplyMovementSpeed()
 		if (CurrentStanceTag == NCCharacter::Crouch)
 			MovementComponent->MaxWalkSpeedCrouched = Data->MovementSpeed;
 
-		// 헌호수정 - 디버그 화면 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Cyan,
-				FString::Printf(TEXT("[Locomotion] Row: %s | Speed: %.0f | Accel: %.0f"),
-					*RowName.ToString(), Data->MovementSpeed, Data->MaxAcceleration));
-		}
-	}
-	else
-	{
-		// 헌호수정 - DataTable 조회 실패 시 화면 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red,
-				FString::Printf(TEXT("[Locomotion] DataTable 조회 실패! Row: %s"), *RowName.ToString()));
-		}
 	}
 }
 
