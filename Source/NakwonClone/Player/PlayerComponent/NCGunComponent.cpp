@@ -129,7 +129,16 @@ bool UNCGunComponent::CanFire() const
 {
 	if (!HasActiveGun())  return false;
 	if (IsReloading())    return false;
-	return CurrentAmmo > 0;
+	if (CurrentAmmo <= 0) return false;
+
+	if (CurrentFireMode == ENCFireMode::SemiAuto && ActiveGunData->FireRate > 0.f && GetWorld())
+	{
+		const float MinInterval = 1.f / ActiveGunData->FireRate;
+		if (GetWorld()->GetTimeSeconds() - LastFireTime < MinInterval)
+			return false;
+	}
+
+	return true;
 }
 
 // ─────────────────────────────────────────────
@@ -250,6 +259,8 @@ void UNCGunComponent::FireOnce()
 
 	const FNCGunData* Data = ActiveGunData;
 	if (!Data || !Data->ProjectileClass) return;
+
+	LastFireTime = GetWorld() ? GetWorld()->GetTimeSeconds() : LastFireTime;
 
 	--CurrentAmmo;
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
