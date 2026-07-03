@@ -205,7 +205,7 @@ protected:
 #pragma region 사운드
 public:
 	UFUNCTION(NetMulticast, Unreliable)
-	void Multicast_PlaySound(USoundBase* Sound);
+	void Multicast_PlaySound(USoundBase* Sound, USoundAttenuation* AttenuationOverride);
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
 	TMap<EVGHitBodyPart, TObjectPtr<USoundBase>> HitSoundsByPart;
@@ -234,10 +234,23 @@ protected:
 	TObjectPtr<USoundAttenuation> SoundAttenuation;
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	TObjectPtr<USoundAttenuation> CombatAttenuation;
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
 	float HowlIntervalMin = 6.f;
 
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
 	float HowlIntervalMax = 14.f;
+
+	UPROPERTY()
+	TObjectPtr<USoundBase> IdleSound = nullptr;
+
+	UPROPERTY()
+	float IdleSoundCooldown = 5.f;
+
+	FTimerHandle IdleTimerHandle;
+	void StartIdleTimer();
+	void HandleIdle();
 
 	USoundBase* GetHitSoundByPart(EVGHitBodyPart BodyPart) const;
 	UNiagaraSystem* GetHitVFXByPart(EVGHitBodyPart BodyPart) const;

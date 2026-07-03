@@ -120,6 +120,7 @@ void AVGMonsterCharacterBase::BeginPlay()
 	if (HasAuthority())
 	{
 		StartHowlTimer();
+		StartIdleTimer();
 	}
 }
 
@@ -133,7 +134,7 @@ void AVGMonsterCharacterBase::HandleDead()
 	
 	//H
 	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
-	Multicast_PlaySound(DeathSound);
+	Multicast_PlaySound(DeathSound, CombatAttenuation);
 	
 	// 레그돌
 	OnStartRagdoll();
@@ -196,7 +197,7 @@ void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 	// 사운드 (부위별, 없으면 기본 HitSound)  //H
 	if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
 	{
-		Multicast_PlaySound(Sound);
+		Multicast_PlaySound(Sound, CombatAttenuation);
 	}
 
 	// VFX (부위별, 타격 위치에)
@@ -317,13 +318,12 @@ void AVGMonsterCharacterBase::OnDetectionOverlap(UPrimitiveComponent* Overlapped
 }
 
 //H 사운드 재생 본체 (모든 사운드가 여기로 모임)
-void AVGMonsterCharacterBase::Multicast_PlaySound_Implementation(USoundBase* Sound)
+void AVGMonsterCharacterBase::Multicast_PlaySound_Implementation(USoundBase* Sound, USoundAttenuation* AttenuationOverride)
 {
-	if (Sound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this, Sound, GetActorLocation(), 1.f, 1.f, 0.f, SoundAttenuation);
-	}
+	if (!Sound) return;
+	USoundAttenuation* Atten = AttenuationOverride ? AttenuationOverride : SoundAttenuation.Get();
+	UGameplayStatics::PlaySoundAtLocation(
+		this, Sound, GetActorLocation(), 1.f, 1.f, 0.f, Atten);
 }
 
 void AVGMonsterCharacterBase::StartHowlTimer()
@@ -349,10 +349,27 @@ void AVGMonsterCharacterBase::HandleHowl()
 
 	if (!bAwake)
 	{
-		Multicast_PlaySound(HowlSound);
+		Multicast_PlaySound(HowlSound, CombatAttenuation);
 	}
 
 	StartHowlTimer();
+}
+
+void AVGMonsterCharacterBase::StartIdleTimer()
+{
+	if (!HasAuthority() || !IdleSound) return;
+
+	const float Delay = IdleSound->GetDuration() + IdleSoundCooldown;
+	GetWorldTimerManager().SetTimer(
+		IdleTimerHandle, this, &AVGMonsterCharacterBase::HandleIdle, Delay, false);
+}
+
+void AVGMonsterCharacterBase::HandleIdle()
+{
+	if (bIsDead) return;   // 죽으면 멈춤 (재예약 안 함)
+
+	Multicast_PlaySound(IdleSound, CombatAttenuation);
+	StartIdleTimer();      // 다음 주기 예약
 }
 
 USoundBase* AVGMonsterCharacterBase::GetHitSoundByPart(EVGHitBodyPart BodyPart) const
@@ -458,6 +475,10 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	}
 	
 	CachedAttackEffectClass = Row->AttackEffectClass;
+
+	if (Row->HitSound)                  HitSound = Row->HitSound;
+	if (Row->HitSoundsByPart.Num() > 0) HitSoundsByPart = Row->HitSoundsByPart;
+
 	HitReactChance = Row->HitReactChance; 
 }
 
@@ -560,3 +581,4 @@ void AVGMonsterCharacterBase::OnAttackMontageEnded(UAnimMontage* Montage, bool b
 	CurrentPlayingMontage = nullptr;
 	OnAttackFinished.ExecuteIfBound();
 }
+

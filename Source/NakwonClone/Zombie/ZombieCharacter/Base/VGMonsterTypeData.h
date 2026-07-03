@@ -2,12 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGHitTypes.h" 
 #include "VGMonsterTypeData.generated.h"
 
 class USkeletalMesh;
 class UAnimInstance;
 class UAnimMontage;
 class UGameplayEffect;
+class USoundBase;
 
 UENUM(BlueprintType)
 enum class EVGMonsterType : uint8
@@ -56,4 +58,16 @@ struct FVGMonsterTypeRow : public FTableRowBase
     
     UPROPERTY(EditAnywhere, Category = "Stat")
     float PatrolSpeed = 100.f;
+
+    UPROPERTY(EditAnywhere, Category = "Sound")
+    TObjectPtr<USoundBase> HitSound = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = "Sound")
+    TMap<EVGHitBodyPart, TObjectPtr<USoundBase>> HitSoundsByPart;
+
+    UPROPERTY(EditAnywhere, Category = "Sound")
+    TObjectPtr<USoundBase> IdleSound = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = "Sound")
+    float IdleSoundCooldown = 5.f;   // 재생 종료 후 쉬는 시간
 };
