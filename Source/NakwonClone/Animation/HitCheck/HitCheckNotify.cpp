@@ -116,11 +116,6 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
                     FCollisionShape::MakeSphere(Radius),
                     Params
                 );
-
-                DrawDebugSphere(World, TrailStart, Radius, 12,
-                    bHit ? FColor::Red : FColor::Green, false, 0.05f, 0, 1.f);
-                DrawDebugSphere(World, TrailEnd, Radius, 12,
-                    bHit ? FColor::Red : FColor::Green, false, 0.05f, 0, 1.f);
             }
         }
     }
@@ -136,9 +131,6 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
             FCollisionShape::MakeSphere(Radius),
             Params
         );
-
-        DrawDebugSphere(World, End, Radius, 12,
-            bHit ? FColor::Red : FColor::Green, false, 0.05f, 0, 2.f);
     }
 
     UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OwnerChar);
@@ -184,9 +176,6 @@ void UHitCheckNotify::DoHitCheck(USkeletalMeshComponent* MeshComp)
         {
             Spec.Data->SetSetByCallerMagnitude(NCData::Damage, -WeaponData->Damage);
             SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
-
-            UE_LOG(LogTemp, Warning, TEXT("[HitCheckNotify] 좀비 데미지 적용: %.1f → %s"),
-                WeaponData->Damage, *Monster->GetName());
 
             if (!bHitMonster)
                 FirstHitLocation = Hit.ImpactPoint;
