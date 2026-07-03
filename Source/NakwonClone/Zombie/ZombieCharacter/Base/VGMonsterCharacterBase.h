@@ -150,6 +150,10 @@ public:
 	// 피격 후 몽타주 재생까지 딜레이 (0 = 즉시)
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
 	float HitReactDelay = 0.f;
+	
+	// 피격 시 넉백 재생 확률
+	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	float HitReactChance;
 
 	// 연속 피격 시 이전 몽타주 블렌드아웃 시간
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")

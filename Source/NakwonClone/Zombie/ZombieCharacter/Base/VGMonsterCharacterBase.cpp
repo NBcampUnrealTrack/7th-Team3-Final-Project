@@ -207,29 +207,24 @@ void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 			: HitData.HitLocation;
 		Multicast_SpawnHitVFX(VFX, Loc);
 	}
-
-	// AI '맞는 중' 신호 — [BT 리팩터] IsHitKey 폐기, 블록 주석 처리
-	//if (AIController)
-	//{
-	//	if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
-	//	{
-	//		Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsHitKey, true);
-	//	}
-	//}
-
-	// 부위별 피격 몽타주 (무조건 끊고 새로)
-	PendingHitBodyPart = BodyPart;
-	GetWorldTimerManager().ClearTimer(HitReactTimerHandle);
-	if (HitReactDelay <= 0.f)
+	
+	// 부위별 피격 몽타주 (확률적으로만 재생 = 넉백)
+	if (FMath::FRand() <= HitReactChance)
 	{
-		PlayHitReactMontage(BodyPart);
+		PendingHitBodyPart = BodyPart;
+		GetWorldTimerManager().ClearTimer(HitReactTimerHandle);
+		if (HitReactDelay <= 0.f)
+		{
+			PlayHitReactMontage(BodyPart);
+		}
+		else
+		{
+			GetWorldTimerManager().SetTimer(
+				HitReactTimerHandle, this,
+				&AVGMonsterCharacterBase::OnHitReactDelayElapsed, HitReactDelay, false);
+		}
 	}
-	else
-	{
-		GetWorldTimerManager().SetTimer(
-			HitReactTimerHandle, this,
-			&AVGMonsterCharacterBase::OnHitReactDelayElapsed, HitReactDelay, false);
-	}
+	
 	// 피격 GameplayCue (혈흔 VFX + 데칼)
 	if (AbilitySystemComponent)
 	{
@@ -463,6 +458,7 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	}
 	
 	CachedAttackEffectClass = Row->AttackEffectClass;
+	HitReactChance = Row->HitReactChance; 
 }
 
 UAnimMontage* AVGMonsterCharacterBase::GetAttackMontageForAI()
