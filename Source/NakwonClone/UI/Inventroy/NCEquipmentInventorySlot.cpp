@@ -1,7 +1,4 @@
 ﻿#include "NCEquipmentInventorySlot.h"
-
-#include <strmif.h>
-
 #include "GameplayTagContainer.h"
 #include "Common/NCGameplayTags.h"
 #include "Inventory/NCInventoryType.h"
