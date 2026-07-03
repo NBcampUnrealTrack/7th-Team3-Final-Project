@@ -310,6 +310,16 @@ void ANCPlayerCharacter::ToggleCrouch()
 
 void ANCPlayerCharacter::OnDead()
 {
+    if (PlayerInventoryRef)
+    {
+        PlayerInventoryRef->bHasPendingConsumable = false;
+        PlayerInventoryRef->PendingConsumableData = FConsumableItemData();
+        PlayerInventoryRef->PendingReEquipGunSlot = ENCGunSlot::None;
+        PlayerInventoryRef->bPendingReEquipMelee = false;
+        PlayerInventoryRef->PendingReEquipMeleeInstance = FNCWeaponInstance();
+        PlayerInventoryRef->PendingUseItemTag = FGameplayTag::EmptyTag;
+    }
+
     // 헌호수정 - 서버: 물리/GAS/컴포넌트 처리
     if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
         ASC->AddLooseGameplayTag(NCCharacter::Dead);
