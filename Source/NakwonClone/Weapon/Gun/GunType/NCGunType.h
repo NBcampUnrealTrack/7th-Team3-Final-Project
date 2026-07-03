@@ -92,8 +92,12 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
     TSoftObjectPtr<USoundBase> ReloadSound;
     
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
     TSoftObjectPtr<USoundBase> EmptyClickSound;
+
+    // 발사모드 전환 사운드 (bCanToggleFireMode 체크해야 슬롯 노출)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound", meta = (EditCondition = "bCanToggleFireMode", EditConditionHides))
+    TSoftObjectPtr<USoundBase> ToggleFireModeSound;
 
     // 이펙트 (나이아가라)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")

@@ -241,6 +241,9 @@ void UNCGunComponent::FireOnce()
 {
 	if (!CanFire())
 	{
+		if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0 && !ActiveGunData->EmptyClickSound.IsNull())
+			UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
+
 		StopFire();
 		return;
 	}
@@ -564,15 +567,16 @@ void UNCGunComponent::ToggleFireMode()
 {
 	if (!ActiveGunData || !ActiveGunData->bCanToggleFireMode) return;
 
-	ActiveGunActions.AddTag(NCGun::Action_ToggleFireMode);
+	if (IsFiring()) return;
 
 	CurrentFireMode = (CurrentFireMode == ENCFireMode::SemiAuto)
 		? ENCFireMode::FullAuto
 		: ENCFireMode::SemiAuto;
 
-	OnFireModeChanged.Broadcast(CurrentFireMode);
+	if (!ActiveGunData->ToggleFireModeSound.IsNull())
+		UGameplayStatics::PlaySound2D(this, ActiveGunData->ToggleFireModeSound.LoadSynchronous());
 
-	ActiveGunActions.RemoveTag(NCGun::Action_ToggleFireMode);
+	OnFireModeChanged.Broadcast(CurrentFireMode);
 }
 
 // ─────────────────────────────────────────────
