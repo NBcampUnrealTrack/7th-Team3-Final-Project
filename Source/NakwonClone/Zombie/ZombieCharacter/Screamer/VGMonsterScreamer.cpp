@@ -83,7 +83,7 @@ void AVGMonsterScreamer::PerformScream(AActor* TargetActor)
 	{
 		Multicast_PlayScreamMontage(ScreamMontage);
 	}
-	Multicast_PlaySound(ScreamSound ? ScreamSound : HowlSound);
+	Multicast_PlaySound(ScreamSound ? ScreamSound : HowlSound, SoundAttenuation);
 
 
 	if (TargetActor)

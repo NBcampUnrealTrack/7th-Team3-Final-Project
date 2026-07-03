@@ -50,7 +50,7 @@ void AVGMonsterWalker::WakeUp()
 		// [BT 리팩터] IsAwakeKey 폐기 — DetectSound 사운드는 유지, 키 참조만 주석
 		//if (!Blackboard->GetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey))
 		//{
-			Multicast_PlaySound(DetectSound);
+		Multicast_PlaySound(DetectSound, SoundAttenuation);
 		//}
 		// 몬스터 기상
 		//Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsAwakeKey, true);
