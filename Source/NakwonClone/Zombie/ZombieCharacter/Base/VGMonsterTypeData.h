@@ -44,6 +44,9 @@ struct FVGMonsterTypeRow : public FTableRowBase
     
     UPROPERTY(EditAnywhere, Category = "Combat")
     TSubclassOf<UGameplayEffect> AttackEffectClass = nullptr;
+    
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float HitReactChance = 0.7f;
 
     UPROPERTY(EditAnywhere, Category = "Stat")
     float MaxHealth = 100.f;
