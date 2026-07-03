@@ -92,6 +92,8 @@ FName UNCEquipmentComponent::GetOccupantGunID(FName ForGunID) const
 
 bool UNCEquipmentComponent::EquipGun(FName GunID)
 {
+	if (bIsSwapping) return false;
+
 	const FNCGunData* Data = FindGunData(GunID);
 	if (!Data) return false;
 
@@ -118,6 +120,8 @@ bool UNCEquipmentComponent::EquipGun(FName GunID)
 
 bool UNCEquipmentComponent::EquipGunWithAmmo(FName GunID, int32 CurrentAmmo, int32 ReserveAmmo)
 {
+	if (bIsSwapping) return false;
+
 	const FNCGunData* Data = FindGunData(GunID);
 	if (!Data) return false;
 
