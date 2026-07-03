@@ -95,8 +95,6 @@ void UNCPlayerInventoryComponent::ForceUnArm()
             {
                 NCCombatComp->UnEquipWeapon();
                 CurrentEquippedPresetIndex = -1;
-
-                GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::White, TEXT("[H키 : 맨손 전환]"));
             }
         }
     }
@@ -153,9 +151,6 @@ void UNCPlayerInventoryComponent::Server_ApplyPreset_Implementation(int32 Preset
 
     CurrentEquippedPresetIndex = PresetIndex;
     OnPresetUpdated.Broadcast();
-
-    GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow,
-        FString::Printf(TEXT("[프리셋 %d 적용]"), PresetIndex));
 }
 
 bool UNCPlayerInventoryComponent::EquipToPreset(int32 MainSlotIndex, int32 PresetIndex, ENCPresetCell Cell)
