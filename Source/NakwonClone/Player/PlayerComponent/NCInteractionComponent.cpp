@@ -53,10 +53,16 @@ void UNCInteractionComponent::Interact()
 		//헌호수정 - 몽타주가 있으면: 몽타주 재생 → 손에 부착 → 몽타주 끝날 때 실제 획득
 		if (LootMontage && OwnerCharacter)
 		{
+			const float MontageLength = OwnerCharacter->PlayAnimMontage(LootMontage);
+			if (MontageLength <= 0.f)
+			{
+				INCInteractableInterface::Execute_Interact(Item, GetOwner());
+				UpdateInteractableTarget();
+				return;
+			}
+
 			bIsLooting = true;
 			PendingLootTarget = Item;
-
-			OwnerCharacter->PlayAnimMontage(LootMontage);
 
 			// 손에 임시 메시 부착 + 바닥 아이템 숨김
 			AttachLootMeshToHand(Item);
