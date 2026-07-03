@@ -115,6 +115,8 @@ private:
 	void FireOnce();
 	void OnReloadFinished();
 
+	float LastFireTime = -100.f;
+
 	FTimerHandle ShowMagazineTimerHandle;
 
 	void HideGunMagazine();

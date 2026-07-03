@@ -129,7 +129,16 @@ bool UNCGunComponent::CanFire() const
 {
 	if (!HasActiveGun())  return false;
 	if (IsReloading())    return false;
-	return CurrentAmmo > 0;
+	if (CurrentAmmo <= 0) return false;
+
+	if (CurrentFireMode == ENCFireMode::SemiAuto && ActiveGunData->FireRate > 0.f && GetWorld())
+	{
+		const float MinInterval = 1.f / ActiveGunData->FireRate;
+		if (GetWorld()->GetTimeSeconds() - LastFireTime < MinInterval)
+			return false;
+	}
+
+	return true;
 }
 
 // ─────────────────────────────────────────────
@@ -241,12 +250,17 @@ void UNCGunComponent::FireOnce()
 {
 	if (!CanFire())
 	{
+		if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0 && !ActiveGunData->EmptyClickSound.IsNull())
+			UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
+
 		StopFire();
 		return;
 	}
 
 	const FNCGunData* Data = ActiveGunData;
 	if (!Data || !Data->ProjectileClass) return;
+
+	LastFireTime = GetWorld() ? GetWorld()->GetTimeSeconds() : LastFireTime;
 
 	--CurrentAmmo;
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
@@ -564,15 +578,16 @@ void UNCGunComponent::ToggleFireMode()
 {
 	if (!ActiveGunData || !ActiveGunData->bCanToggleFireMode) return;
 
-	ActiveGunActions.AddTag(NCGun::Action_ToggleFireMode);
+	if (IsFiring()) return;
 
 	CurrentFireMode = (CurrentFireMode == ENCFireMode::SemiAuto)
 		? ENCFireMode::FullAuto
 		: ENCFireMode::SemiAuto;
 
-	OnFireModeChanged.Broadcast(CurrentFireMode);
+	if (!ActiveGunData->ToggleFireModeSound.IsNull())
+		UGameplayStatics::PlaySound2D(this, ActiveGunData->ToggleFireModeSound.LoadSynchronous());
 
-	ActiveGunActions.RemoveTag(NCGun::Action_ToggleFireMode);
+	OnFireModeChanged.Broadcast(CurrentFireMode);
 }
 
 // ─────────────────────────────────────────────

@@ -6,6 +6,7 @@
 #include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 
 #include "NakwonClone/Framwork/GameState/NCGameState.h"
+#include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
 
 ANCGameMode::ANCGameMode()
 {
@@ -19,7 +20,12 @@ ANCGameMode::ANCGameMode()
 void ANCGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (UNCGameInstance* GI = Cast<UNCGameInstance>(GetGameInstance()))
+	{
+		GI->StartPreloading();
+	}
+
 	ANCGameState* GS = GetGameState<ANCGameState>();
 	GS->RemainingMatchTime = 900; // 15분
 	
