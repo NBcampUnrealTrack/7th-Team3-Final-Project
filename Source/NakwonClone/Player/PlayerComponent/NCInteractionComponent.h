@@ -29,6 +29,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Animation")
 	void OnLootMontageEnded();
 
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Animation")
+	void AttachPendingLootToHand();
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Animation")
+	void StorePendingLoot();
+
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
 	FOnInteractTargetChangedSignature OnInteractTargetChanged;
 
@@ -37,7 +43,7 @@ public:
 
 	//헌호수정 - 줍기 시 아이템을 붙일 손 소켓 이름
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Animation")
-	FName LootHandSocketName = TEXT("hand_rSocket");
+	FName LootHandSocketName = TEXT("hand_ItemSocket");
 
 private:
 	FTimerHandle TimerHandle_UpdateInteractable;
@@ -45,6 +51,8 @@ private:
 	//헌호수정 - 줍기 몽타주 진행 중 상태
 	// 몽타주 끝날 때 실제 획득할 대상 (도중에 파괴될 수 있어 WeakPtr)
 	TWeakObjectPtr<class ANCItemActor> PendingLootTarget;
+
+	bool bLootStored = false;
 
 	// 손에 붙이는 임시 시각용 메시 (총기 장착 방식과 동일, 리플리케이션 충돌 방지)
 	UPROPERTY()
