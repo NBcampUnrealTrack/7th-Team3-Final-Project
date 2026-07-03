@@ -70,6 +70,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Components|Combat")
 	FRotator StoredMeleePickupRotation;
 
+	UFUNCTION(BlueprintPure, Category = "Components|Inventory")
 	FORCEINLINE UNCPlayerInventoryComponent* GetInventoryComponent() const { return PlayerInventoryRef; }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")

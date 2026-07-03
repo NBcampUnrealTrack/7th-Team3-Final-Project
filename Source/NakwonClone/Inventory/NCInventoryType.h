@@ -21,6 +21,9 @@ public:
 	class UStaticMesh* ItemMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
 	class UTexture2D* ItemIcon;
+	// 루팅박스 슬롯 표시용 아이콘
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
+	class UTexture2D* LootBoxIcon;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
 	FGameplayTag ItemTypeTag;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
@@ -31,6 +34,7 @@ public:
 	FItemData()
 		: ItemMesh(nullptr)
 		, ItemIcon(nullptr)
+		, LootBoxIcon(nullptr)
 		, ItemTypeTag(FGameplayTag::EmptyTag)
 		, MaxStackSize(1)
 	{}

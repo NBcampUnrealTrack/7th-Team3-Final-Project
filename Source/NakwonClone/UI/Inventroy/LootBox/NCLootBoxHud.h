@@ -21,6 +21,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CloseLootBoxUI();
 
+	UFUNCTION(BlueprintPure, Category = "LootBox")
+	AANCLootBoxActor* GetCurrentLootBox() const { return CurrentLootBox; }
+
 protected:
 	virtual void NativeConstruct() override;
 

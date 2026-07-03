@@ -213,7 +213,13 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void Server_PutItemToLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex);
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|LootBox")
+	void SwapLootBoxItemToActiveSlot(AANCLootBoxActor* LootBox, int32 BoxSlotIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SwapLootBoxItemToActiveSlot(AANCLootBoxActor* LootBox, int32 BoxSlotIndex);
+
 	FConsumableItemData PendingConsumableData;
 	bool bHasPendingConsumable = false;
 	int32 PendingReEquipPresetIndex = -1;
@@ -238,6 +244,8 @@ public:
 	
 private:
 	FGameplayTag GetWeaponTypeTag(FName WeaponID) const;
+
+	FInventorySlot EquipLootedItemToActiveSlot(FName ItemID, FGameplayTag ItemTag, int32 Quantity, const FNCWeaponInstance& WeaponInstance);
 
 	// 실제 인벤토리 변경 로직 — 항상 서버(Authority)에서만 실행됨
 	bool EquipToPreset_Internal(int32 MainSlotIndex, int32 PresetIndex, ENCPresetCell Cell);
