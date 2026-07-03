@@ -53,6 +53,14 @@ void UNCInteractionComponent::Interact()
 
 		if (LootMontage && OwnerCharacter)
 		{
+			const float MontageLength = OwnerCharacter->PlayAnimMontage(LootMontage);
+			if (MontageLength <= 0.f)
+			{
+				INCInteractableInterface::Execute_Interact(Item, GetOwner());
+				UpdateInteractableTarget();
+				return;
+			}
+
 			bIsLooting = true;
 			bLootStored = false;
 			PendingLootTarget = Item;

@@ -108,7 +108,6 @@ UE_DEFINE_GAMEPLAY_TAG(NCGun::FireMode_Auto, "Gun.FireMode.Auto");
 UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_Firing,          "Gun.Action.Firing");
 UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_Reloading,       "Gun.Action.Reloading");
 UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_ADS,             "Gun.Action.ADS");
-UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_ToggleFireMode,  "Gun.Action.ToggleFireMode");
 UE_DEFINE_GAMEPLAY_TAG(NCGun::Action_Swapping,        "Gun.Action.Swapping");
 
 // 총기 이펙트
