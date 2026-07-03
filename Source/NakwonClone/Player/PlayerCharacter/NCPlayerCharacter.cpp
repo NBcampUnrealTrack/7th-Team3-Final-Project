@@ -143,10 +143,6 @@ void ANCPlayerCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)
 {
     if (Data.NewValue >= Data.OldValue) return;
     if (Data.NewValue <= 0.f) return;
-
-    UE_LOG(LogTemp, Warning, TEXT("[HitReact] 피격! HP %.1f -> %.1f"),
-        Data.OldValue, Data.NewValue);
-
 }
 
 void ANCPlayerCharacter::PossessedBy(AController* NewController)
@@ -314,8 +310,6 @@ void ANCPlayerCharacter::ToggleCrouch()
 
 void ANCPlayerCharacter::OnDead()
 {
-    UE_LOG(LogTemp, Warning, TEXT("[OnDead] 호출됨!"));
-
     // 헌호수정 - 서버: 물리/GAS/컴포넌트 처리
     if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
         ASC->AddLooseGameplayTag(NCCharacter::Dead);
@@ -385,9 +379,7 @@ void ANCPlayerCharacter::OnItemUsed(FGameplayTag UsedItemTag)
 
     if (MontageToPlay)
     {
-        float Duration = PlayAnimMontage(MontageToPlay);
-        UE_LOG(LogTemp, Warning, TEXT("[OnItemUsed] 몽타지 duration: %.2f"), Duration);
-
+        PlayAnimMontage(MontageToPlay);
 
         if (UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
         {
@@ -421,8 +413,6 @@ void ANCPlayerCharacter::OnConsumableMontageEnded(UAnimMontage* Montage, bool bI
 void ANCPlayerCharacter::OnUseItemMontageEnded()
 {
     if (!PlayerInventoryRef) return;
-    UE_LOG(LogTemp, Warning, TEXT("[MontageEnded] Called. PendingReEquip=%d bHasPending=%d"),
-        PlayerInventoryRef->PendingReEquipPresetIndex, PlayerInventoryRef->bHasPendingConsumable);
 
     // 소모품 효과 적용
     if (PlayerInventoryRef->bHasPendingConsumable)
@@ -732,13 +722,8 @@ void ANCPlayerCharacter::SetAimRotationMode(bool bEnable)
 
 void ANCPlayerCharacter::Multicast_PlayHitReactMontage_Implementation(UAnimMontage* MontageToPlay)
 {
-    UE_LOG(LogTemp, Warning, TEXT("[HitReact] Multicast_PlayHitReactMontage 호출됨 Montage=%s"),
-        MontageToPlay ? *MontageToPlay->GetName() : TEXT("None"));
-
     if (MontageToPlay)
     {
-        const float Result = PlayAnimMontage(MontageToPlay);
-
-        UE_LOG(LogTemp, Warning, TEXT("[HitReact] PlayAnimMontage Result=%.2f"), Result);
+        PlayAnimMontage(MontageToPlay);
     }
 }
