@@ -15,14 +15,15 @@ class NAKWONCLONE_API UNCHPBar : public UUserWidget
 protected:
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* HPProgressBar;
-	
-	UPROPERTY(meta = (BindWidget))
+
+	//헌호수정 - 백팩용 심플 체력바(숫자/스페이서 없음)도 쓸 수 있게 옵셔널 처리
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<USpacer> LeftSpacer;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<USpacer> RightSpacer;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> HPText;
 
 public:

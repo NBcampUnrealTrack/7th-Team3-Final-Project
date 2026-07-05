@@ -191,6 +191,27 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
 	TObjectPtr<UPointLightComponent> FlashlightGlowLight;
 
+	//헌호수정 - 디비전 스타일 백팩 체력바 (3D 위젯, 등 소켓에 부착)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|HUD")
+	TObjectPtr<class UWidgetComponent> BackpackHPWidget;
+
+	//헌호수정 - 백팩 체력바 갱신
+	void UpdateBackpackHP();
+
+	//헌호수정 - 정조준(ADS) 시 뜨는 화면 HUD 클래스 (BP에서 WBP_ADSInfo 지정)
+	UPROPERTY(EditDefaultsOnly, Category = "Components|HUD")
+	TSubclassOf<class UNCADSHUD> ADSHUDWidgetClass;
+
+	//헌호수정 - 생성된 ADS HUD 인스턴스 (한 번 만들고 토글)
+	UPROPERTY()
+	TObjectPtr<class UNCADSHUD> ADSHUDWidget;
+
+	//헌호수정 - ADS 상태 추적 (전환 감지용)
+	bool bWasADS = false;
+
+	//헌호수정 - 백팩/ADS UI 전환 갱신
+	void UpdateWeaponHUDs();
+
 	UPROPERTY(ReplicatedUsing = OnRep_bFlashlightOn)
 	bool bFlashlightOn = false;
 
