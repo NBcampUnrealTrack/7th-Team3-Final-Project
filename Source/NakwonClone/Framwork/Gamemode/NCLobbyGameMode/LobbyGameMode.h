@@ -16,4 +16,7 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable)
 	void MoveToParkingLevel();
+	
+	UFUNCTION(BlueprintCallable)
+	void MoveToTitle();
 };
