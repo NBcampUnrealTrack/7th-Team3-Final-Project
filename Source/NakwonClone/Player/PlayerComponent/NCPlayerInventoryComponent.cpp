@@ -882,6 +882,123 @@ bool UNCPlayerInventoryComponent::DropItem(int32 SlotIndex, int32 Quantity)
     return true;
 }
 
+void UNCPlayerInventoryComponent::DropStoredMeleeForPickupReplace()
+{
+    if (GetOwner() && GetOwner()->HasAuthority())
+    {
+        Server_DropStoredMeleeForPickupReplace_Implementation();
+        return;
+    }
+
+    Server_DropStoredMeleeForPickupReplace();
+}
+
+void UNCPlayerInventoryComponent::Server_DropStoredMeleeForPickupReplace_Implementation()
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority())
+    {
+        return;
+    }
+
+    ANCPlayerState* OwningPlayerState = Cast<ANCPlayerState>(GetOwner());
+    if (!OwningPlayerState)
+    {
+        return;
+    }
+
+    APawn* Pawn = OwningPlayerState->GetPawn();
+    ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(Pawn);
+    if (!PlayerCharacter)
+    {
+        return;
+    }
+
+    if (PlayerCharacter->StoredMeleeWeaponID.IsNone())
+    {
+        return;
+    }
+
+    FName DropItemID = PlayerCharacter->StoredMeleeWeaponID;
+    FGameplayTag ItemTag = NCItemTag::Weapon;
+    int32 DropQuantity = 1;
+
+    FNCWeaponInstance DroppedWeaponInstance;
+
+    if (UNCCombatComponent* CombatComp = PlayerCharacter->GetCombatComponent())
+    {
+        if (CombatComp->IsWeaponEquipped())
+        {
+            DroppedWeaponInstance = CombatComp->GetEquippedWeapon();
+            CombatComp->UnEquipWeapon();
+        }
+    }
+
+    FVector SpawnLocation =
+        PlayerCharacter->GetActorLocation()
+        + (PlayerCharacter->GetActorForwardVector() * 100.0f);
+
+    SpawnLocation.Z -= 20.0f;
+
+    FRotator SpawnRotation = PlayerCharacter->GetActorRotation();
+
+    if (BaseItemActorClass)
+    {
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.SpawnCollisionHandlingOverride =
+            ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+        AActor* DroppedItem = GetWorld()->SpawnActor<AActor>(
+            BaseItemActorClass,
+            SpawnLocation,
+            SpawnRotation,
+            SpawnParams
+        );
+
+        ANCItemActor* SpawnedItemActor = Cast<ANCItemActor>(DroppedItem);
+        if (SpawnedItemActor)
+        {
+            UStaticMesh* MeshToSet = nullptr;
+
+            UDataTable* LoadedItemDataTable = LoadObject<UDataTable>(
+                nullptr,
+                TEXT("/Game/NakwonClone/Blueprints/Item/ItemData/DT_ItemTypeData.DT_ItemTypeData")
+            );
+
+            if (LoadedItemDataTable && !DropItemID.IsNone())
+            {
+                FItemData* FoundData = LoadedItemDataTable->FindRow<FItemData>(
+                    DropItemID,
+                    TEXT("DropStoredMeleeForPickupReplace")
+                );
+
+                if (FoundData)
+                {
+                    MeshToSet = FoundData->ItemMesh;
+                }
+            }
+
+            SpawnedItemActor->InitializeItemData(
+                DropItemID,
+                ItemTag,
+                DropQuantity,
+                MeshToSet
+            );
+
+            // ANCItemActor에 WeaponInstance 변수가 public으로 있다면 아래 줄도 추가 가능
+            // SpawnedItemActor->WeaponInstance = DroppedWeaponInstance;
+        }
+    }
+
+    PlayerCharacter->StoredMeleeWeaponID = NAME_None;
+    PlayerCharacter->StoredMeleePickupClass = nullptr;
+    PlayerCharacter->OnMeleeStoredChanged.Broadcast();
+
+    CurrentEquippedPresetIndex = -1;
+
+    OnInventoryUpdated.Broadcast();
+    OnPresetUpdated.Broadcast();
+}
+
 void UNCPlayerInventoryComponent::Server_DropItem_Implementation(int32 SlotIndex, int32 Quantity)
 {
     if (!Items.IsValidIndex(SlotIndex) || Items[SlotIndex].IsEmpty() || Quantity <= 0) return;
@@ -1219,61 +1336,82 @@ void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANC
     }
 }
 
-FInventorySlot UNCPlayerInventoryComponent::EquipLootedItemToActiveSlot(FName ItemID, FGameplayTag ItemTag, int32 Quantity, const FNCWeaponInstance& WeaponInstance)
+FInventorySlot UNCPlayerInventoryComponent::EquipLootedItemToActiveSlot(
+    FName ItemID,
+    FGameplayTag ItemTag,
+    int32 Quantity,
+    const FNCWeaponInstance& WeaponInstance)
 {
-    if (!GetOwner()->HasAuthority()) return FInventorySlot();
+    if (!GetOwner() || !GetOwner()->HasAuthority())
+    {
+        return FInventorySlot();
+    }
 
+    // ─────────────────────────────────────
+    // 무기
+    // 기존 근접무기 Drop은 여기서 하지 않는다.
+    // Pickup 시작 전에 DropStoredMeleeForPickupReplace()에서 이미 처리한다.
+    // 이 함수는 새 무기를 StoredMeleeWeaponID에 저장하고,
+    // 현재 총기가 없는 상태라면 근접무기로 장착만 한다.
+    // ─────────────────────────────────────
     if (ItemTag.MatchesTag(NCItemTag::Weapon))
     {
         ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner());
         APawn* Pawn = PS ? PS->GetPawn() : nullptr;
         ANCPlayerCharacter* Char = Cast<ANCPlayerCharacter>(Pawn);
-        if (!Char) return FInventorySlot();
+
+        if (!Char)
+        {
+            return FInventorySlot();
+        }
 
         UNCCombatComponent* Combat = Char->GetCombatComponent();
         UNCEquipmentComponent* GunComp = Char->GetEquipmentComponent();
+
         const bool bMeleeSlotActive = GunComp && !GunComp->HasActiveGun();
-        const bool bWeaponInHand = Combat && Combat->IsWeaponEquipped();
-
-        FInventorySlot Displaced;
-        if (!Char->StoredMeleeWeaponID.IsNone())
-        {
-            Displaced.ItemID = Char->StoredMeleeWeaponID;
-            Displaced.ItemTypeTag = NCItemTag::Weapon;
-            Displaced.Quantity = 1;
-
-            if (bWeaponInHand && Combat)
-            {
-                Displaced.WeaponInstance = Combat->GetEquippedWeapon();
-                Combat->UnEquipWeapon();
-            }
-        }
 
         Char->StoredMeleeWeaponID = ItemID;
-        Char->StoredMeleePickupClass = nullptr; 
+        Char->StoredMeleePickupClass = nullptr;
         Char->OnMeleeStoredChanged.Broadcast();
 
-        if (bMeleeSlotActive && bWeaponInHand && Combat)
+        if (bMeleeSlotActive && Combat)
         {
             FNCWeaponInstance NewInstance = WeaponInstance;
+
             if (NewInstance.WeaponID.IsNone())
             {
                 NewInstance.WeaponID = ItemID;
                 NewInstance.UniqueID = FGuid::NewGuid();
                 NewInstance.CurrentDurability = 100.f;
+                NewInstance.bIsBroken = false;
             }
+
             Combat->EquipWeapon(NewInstance);
         }
 
-        return Displaced;
+        OnPresetUpdated.Broadcast();
+
+        return FInventorySlot();
     }
 
+    // ─────────────────────────────────────
+    // 회복 / 음식
+    // 기존 구조 유지
+    // 같은 아이템이면 스택 채우고, 남으면 Leftover 반환
+    // 다른 아이템이면 기존 슬롯 아이템을 Displaced로 반환
+    // ─────────────────────────────────────
     if (ItemTag.MatchesTag(NCItemTag::Heal) || ItemTag.MatchesTag(NCItemTag::Food))
     {
-        if (!EquipmentPresets.IsValidIndex(0)) return FInventorySlot();
+        if (!EquipmentPresets.IsValidIndex(0))
+        {
+            return FInventorySlot();
+        }
 
         const bool bIsHeal = ItemTag.MatchesTag(NCItemTag::Heal);
-        FInventorySlot& Slot = bIsHeal ? EquipmentPresets[0].ConsumableHeal : EquipmentPresets[0].ConsumableFood;
+
+        FInventorySlot& Slot = bIsHeal
+            ? EquipmentPresets[0].ConsumableHeal
+            : EquipmentPresets[0].ConsumableFood;
 
         if (!Slot.IsEmpty() && Slot.ItemID == ItemID && Slot.ItemTypeTag == ItemTag)
         {
@@ -1282,29 +1420,39 @@ FInventorySlot UNCPlayerInventoryComponent::EquipLootedItemToActiveSlot(FName It
             {
                 const int32 Room = ItemData.MaxStackSize - Slot.Quantity;
                 const int32 Taken = FMath::Max(0, FMath::Min(Quantity, Room));
-                Slot.Quantity += Taken;
-                OnPresetUpdated.Broadcast();
+
+                if (Taken > 0)
+                {
+                    Slot.Quantity += Taken;
+                    OnPresetUpdated.Broadcast();
+                }
 
                 const int32 Remaining = Quantity - Taken;
-                if (Remaining <= 0) return FInventorySlot();
+
+                if (Remaining <= 0)
+                {
+                    return FInventorySlot();
+                }
 
                 FInventorySlot Leftover;
                 Leftover.ItemID = ItemID;
                 Leftover.ItemTypeTag = ItemTag;
                 Leftover.Quantity = Remaining;
+
                 return Leftover;
             }
         }
-
         FInventorySlot Displaced = Slot;
 
         FInventorySlot NewSlot;
         NewSlot.ItemID = ItemID;
         NewSlot.ItemTypeTag = ItemTag;
         NewSlot.Quantity = Quantity;
+
         Slot = NewSlot;
 
         OnPresetUpdated.Broadcast();
+
         return Displaced;
     }
 

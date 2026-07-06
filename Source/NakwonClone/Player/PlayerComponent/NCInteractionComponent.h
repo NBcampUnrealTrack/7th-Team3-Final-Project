@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-
+#include "NakwonClone/Player/PlayerComponent/NCGunComponent.h"
 #include "NCInteractionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractTargetChangedSignature, AActor*, NewTarget);
@@ -48,6 +48,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Animation")
 	FName LootHandSocketName = TEXT("hand_ItemSocket");
 
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Action")
+	void StartPickup();
+
+
 private:
 	FTimerHandle TimerHandle_UpdateInteractable;
 
@@ -84,4 +88,12 @@ private:
 	
 	void SetHighlight(AActor* TargetActor, bool bHighlight);
 	
+	UPROPERTY()
+	TWeakObjectPtr<class ANCItemActor> QueuedPickupTarget;
+
+	UFUNCTION()
+	void OnMeleeUnequipForPickupFinished();
+
+	UFUNCTION()
+	void OnGunUnequipForPickupFinished(ENCGunSlot FinishedSlot);
 };
