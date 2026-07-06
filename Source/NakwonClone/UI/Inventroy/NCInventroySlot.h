@@ -29,10 +29,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FName ItemID;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UImage* ItemImage;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* ItemCountText;
 	
 	UPROPERTY(BlueprintReadWrite)

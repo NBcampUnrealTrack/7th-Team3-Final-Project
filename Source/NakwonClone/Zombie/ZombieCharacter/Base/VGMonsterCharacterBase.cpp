@@ -96,7 +96,11 @@ void AVGMonsterCharacterBase::BeginPlay()
 		MonsterType = (EVGMonsterType)FMath::RandRange(0, Count - 1);
 	}
 	// 타입 데이터로 외형/스탯/공격 세팅 (랜덤메시 대체)
+	AnimPlayRateScale = FMath::FRandRange(0.92f, 1.08f);   // ±8%
+	AnimStartPosition = FMath::FRandRange(0.f, 0.5f);       // 시작 위상(초) — 클립 길이에 맞춰 조정
 	ApplyMonsterType();
+
+	// 개체별 애님 편차 — 스폰 시 한 번만 (이동 속도엔 안 곱함)
 	
 	if (AnimMove.Num() > 0)
 	{
@@ -197,9 +201,14 @@ void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 		static_cast<int32>(BodyPart));
 
 	// 사운드 (부위별, 없으면 기본 HitSound)  //H
-	if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
+	const float Now = GetWorld()->GetTimeSeconds();
+	if (Now - LastHitSoundTime >= HitSoundCooldown)
 	{
-		Multicast_PlaySound(Sound, CombatAttenuation);
+		if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
+		{
+			Multicast_PlaySound(Sound, CombatAttenuation);
+			LastHitSoundTime = Now;
+		}
 	}
 
 	// VFX (부위별, 타격 위치에)
@@ -468,15 +477,16 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	if (MonsterAttributeSet)
 	{
 		MonsterAttributeSet->InitHealth(Row->MaxHealth);
-		MonsterAttributeSet->InitMoveSpeed(Row->MoveSpeed);
+		MonsterAttributeSet->InitMoveSpeed(Row->MoveSpeed * AnimPlayRateScale);
 	}
 	
-	CachedPatrolSpeed = Row->PatrolSpeed;
+	CachedPatrolSpeed = Row->PatrolSpeed * AnimPlayRateScale;
+
 	if (GetCharacterMovement())
 	{
-		GetCharacterMovement()->MaxWalkSpeed = Row->PatrolSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = Row->PatrolSpeed * AnimPlayRateScale;
 	}
-	
+
 	CachedAttackEffectClass = Row->AttackEffectClass;
 
 	if (Row->HitSound)                  HitSound = Row->HitSound;
