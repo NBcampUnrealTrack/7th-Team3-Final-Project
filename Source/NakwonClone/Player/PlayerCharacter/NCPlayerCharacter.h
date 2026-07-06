@@ -19,6 +19,7 @@ class UNCPistolComponent;
 class UNCEquipmentComponent;
 class USpotLightComponent;
 class UStaticMeshComponent;
+class UVGAttackSlotComponent; 
 class UUserWidget;
 class UTexture2D;
 
@@ -271,4 +272,12 @@ private:
 	float LastHitReactTime = -999.f;
 
 	bool bAimRotationMode = false;
+	
+public:
+	// 유시환 추가 - 좀비 공격 슬롯 적용
+	UFUNCTION(BlueprintPure, Category = "Components|Combat")
+	UVGAttackSlotComponent* GetAttackSlotComponent() const { return AttackSlotComponent; }
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
+	TObjectPtr<UVGAttackSlotComponent> AttackSlotComponent;
 };

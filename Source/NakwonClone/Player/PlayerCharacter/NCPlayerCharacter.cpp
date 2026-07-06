@@ -30,6 +30,7 @@
 #include "GameFramework/PlayerController.h"
 #include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
 #include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
+#include "NakwonClone/Zombie/AI/AttackSlot/VGAttackSlotComponent.h"
 #include "Player/PlayerData/NCWeaponData.h"
 #include "Engine/Texture2D.h"
 
@@ -109,6 +110,9 @@ void ANCPlayerCharacter::InitComponents()
     BackpackHPWidget->SetWidgetSpace(EWidgetSpace::World);           // 3D 월드 공간
     BackpackHPWidget->SetDrawSize(FVector2D(120.f, 20.f));           // 심플 게이지 크기
     BackpackHPWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    
+    // 시환 추가 - 좀비 공격 슬롯 추가
+    AttackSlotComponent = CreateDefaultSubobject<UVGAttackSlotComponent>(TEXT("AttackSlotComponent"));
 }
 
 void ANCPlayerCharacter::BeginPlay()

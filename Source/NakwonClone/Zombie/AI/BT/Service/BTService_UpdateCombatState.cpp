@@ -10,7 +10,10 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Common/NCGameplayTags.h"
+#include "GameFramework/Character.h"
+#include "Components/CapsuleComponent.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
 UBTService_UpdateCombatState::UBTService_UpdateCombatState()
 {
@@ -36,8 +39,10 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	UAIPerceptionComponent* Perception = AICon->GetPerceptionComponent();
 	if (!SelfPawn || !BB || !Perception) return;
 
-	const FVector SelfLoc = SelfPawn->GetActorLocation();
+	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(SelfPawn);
 
+	const FVector SelfLoc = SelfPawn->GetActorLocation();
+	
 	// ── 1) 최근접 플레이어 ──
 	APawn* NearestPlayer = nullptr;
 	float NearestDist = TNumericLimits<float>::Max();
@@ -52,24 +57,44 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	{
 		BB->SetValueAsBool(AVGMonsterAIControllerBase::BIsCombatKey, false);
 		BB->ClearValue(AVGMonsterAIControllerBase::TargetActorKey);
+		if (Monster) Monster->ReleaseAttackSlot();
 		return;
 	}
+
+	// ── 캡슐 반지름 빼서 "표면 사이 거리"로 보정 ──
+	float SelfRadius = 0.f;
+	if (ACharacter* SelfChar = Cast<ACharacter>(SelfPawn))
+	{
+		if (UCapsuleComponent* Cap = SelfChar->GetCapsuleComponent())
+			SelfRadius = Cap->GetScaledCapsuleRadius();
+	}
+	float TargetRadius = 0.f;
+	if (ACharacter* TargetChar = Cast<ACharacter>(NearestPlayer))
+	{
+		if (UCapsuleComponent* Cap = TargetChar->GetCapsuleComponent())
+			TargetRadius = Cap->GetScaledCapsuleRadius();
+	}
+	NearestDist = FMath::Max(0.f, NearestDist - SelfRadius - TargetRadius);
 
 	// ── 2) 거리 기반 전투 판별 ──
 	const bool bIsCombat = (NearestDist <= DetectRadius);
 	BB->SetValueAsBool(AVGMonsterAIControllerBase::BIsCombatKey, bIsCombat);
-	BB->SetValueAsFloat(AVGMonsterAIControllerBase::DistanceKey, NearestDist);  // ← 항상 갱신
-	/*// ── 2-1) 공격 거리 판별 (가까우면 공격) ──
-	const bool bIsAttack = (NearestDist <= 150.f);
-	BB->SetValueAsBool(AVGMonsterAIControllerBase::BIsAttackKey, bIsAttack);*/
+	BB->SetValueAsFloat(AVGMonsterAIControllerBase::DistanceKey, NearestDist);
 
 	if (bIsCombat)
 	{
 		BB->SetValueAsObject(AVGMonsterAIControllerBase::TargetActorKey, NearestPlayer);
+
+		FVector SlotLoc;
+		if (Monster && Monster->GetReservedSlotLocation(SlotLoc))
+		{
+			BB->SetValueAsVector(AVGMonsterAIControllerBase::SlotLocationKey, SlotLoc);
+		}
 	}
 	else
 	{
 		BB->ClearValue(AVGMonsterAIControllerBase::TargetActorKey);
+		if (Monster) Monster->ReleaseAttackSlot();
 	}
 }
 	
