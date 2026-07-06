@@ -199,9 +199,14 @@ void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 		static_cast<int32>(BodyPart));
 
 	// 사운드 (부위별, 없으면 기본 HitSound)  //H
-	if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
+	const float Now = GetWorld()->GetTimeSeconds();
+	if (Now - LastHitSoundTime >= HitSoundCooldown)
 	{
-		Multicast_PlaySound(Sound, CombatAttenuation);
+		if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
+		{
+			Multicast_PlaySound(Sound, CombatAttenuation);
+			LastHitSoundTime = Now;
+		}
 	}
 
 	// VFX (부위별, 타격 위치에)
