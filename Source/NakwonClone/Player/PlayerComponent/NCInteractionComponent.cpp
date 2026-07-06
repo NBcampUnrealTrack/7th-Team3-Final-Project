@@ -4,12 +4,10 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/OverlapResult.h"
 #include "Item/NCItemActor.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 #include "NakwonClone/Common/NCInteractableInterface.h"
-#include "Animation/AnimInstance.h" //헌호수정
-#include "Components/StaticMeshComponent.h" //헌호수정
-#include "Components/WidgetComponent.h" //헌호수정
+#include "Animation/AnimInstance.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/WidgetComponent.h"
 
 UNCInteractionComponent::UNCInteractionComponent()
 {
@@ -24,10 +22,10 @@ void UNCInteractionComponent::BeginPlay()
 	if (OwnerPawn && OwnerPawn->IsLocallyControlled())
 	{
 		GetWorld()->GetTimerManager().SetTimer(
-			TimerHandle_UpdateInteractable, 
-			this, 
-			&UNCInteractionComponent::UpdateInteractableTarget, 
-			InteractionCheckInterval, 
+			TimerHandle_UpdateInteractable,
+			this,
+			&UNCInteractionComponent::UpdateInteractableTarget,
+			InteractionCheckInterval,
 			true
 		);
 	}
@@ -51,29 +49,26 @@ void UNCInteractionComponent::Interact()
 
 		ANCItemActor* Item = Cast<ANCItemActor>(CurrentInteractableTarget);
 
-		if (LootMontage && OwnerCharacter)
+		if (PickupMontage && OwnerCharacter)
 		{
 			bIsLooting = true;
 			bLootStored = false;
 			PendingLootTarget = Item;
 
-			OwnerCharacter->PlayAnimMontage(LootMontage);
+			OwnerCharacter->PlayAnimMontage(PickupMontage);
 
-			if (OwnerCharacter->GetCharacterMovement())
+			if (UAnimInstance* AnimInst =
+				OwnerCharacter->GetMesh()
+				? OwnerCharacter->GetMesh()->GetAnimInstance()
+				: nullptr)
 			{
-				OwnerCharacter->GetCharacterMovement()->DisableMovement();
-			}
+				AnimInst->OnMontageEnded.RemoveDynamic(
+					this,
+					&UNCInteractionComponent::OnLootMontageEndedInternal);
 
-			if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
-			{
-				PC->SetIgnoreMoveInput(true);
-				PC->SetIgnoreLookInput(true);
-			}
-
-			if (UAnimInstance* AnimInst = OwnerCharacter->GetMesh() ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr)
-			{
-				AnimInst->OnMontageEnded.RemoveDynamic(this, &UNCInteractionComponent::OnLootMontageEndedInternal);
-				AnimInst->OnMontageEnded.AddDynamic(this, &UNCInteractionComponent::OnLootMontageEndedInternal);
+				AnimInst->OnMontageEnded.AddDynamic(
+					this,
+					&UNCInteractionComponent::OnLootMontageEndedInternal);
 			}
 
 			return;
@@ -87,53 +82,98 @@ void UNCInteractionComponent::Interact()
 	INCInteractableInterface::Execute_Interact(CurrentInteractableTarget, GetOwner());
 }
 
-//헌호수정 - 줍기 몽타주 종료 시: 중단이면 취소, 정상 종료면 실제 획득
 void UNCInteractionComponent::OnLootMontageEndedInternal(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage != LootMontage)
+	if (Montage != PickupMontage && Montage != PickupStoreMontage)
 	{
 		return;
 	}
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 
-	if (UAnimInstance* AnimInst = OwnerCharacter && OwnerCharacter->GetMesh() ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr)
+	if (UAnimInstance* AnimInst =
+		OwnerCharacter && OwnerCharacter->GetMesh()
+		? OwnerCharacter->GetMesh()->GetAnimInstance()
+		: nullptr)
 	{
-		AnimInst->OnMontageEnded.RemoveDynamic(this, &UNCInteractionComponent::OnLootMontageEndedInternal);
+		AnimInst->OnMontageEnded.RemoveDynamic(
+			this,
+			&UNCInteractionComponent::OnLootMontageEndedInternal);
 	}
 
-	if (OwnerCharacter)
+	// 첫 번째 몽타주: 숙이기 + 잡기 + 들어올리기
+	if (Montage == PickupMontage)
 	{
-		if (OwnerCharacter->GetCharacterMovement())
+		if (bInterrupted)
 		{
-			OwnerCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			ClearHeldItemMesh();
+
+			if (ANCItemActor* Item = PendingLootTarget.Get())
+			{
+				if (Item->ItemMesh)
+				{
+					Item->ItemMesh->SetVisibility(true);
+				}
+			}
+
+			PendingLootTarget = nullptr;
+			bIsLooting = false;
+			bLootStored = false;
+			return;
 		}
 
-		if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
+		// 첫 번째 몽타주가 정상 종료되면 두 번째 몽타주 재생
+		if (OwnerCharacter && PickupStoreMontage)
 		{
-			PC->SetIgnoreMoveInput(false);
-			PC->SetIgnoreLookInput(false);
+			OwnerCharacter->PlayAnimMontage(PickupStoreMontage);
+
+			if (UAnimInstance* AnimInst =
+				OwnerCharacter->GetMesh()
+				? OwnerCharacter->GetMesh()->GetAnimInstance()
+				: nullptr)
+			{
+				AnimInst->OnMontageEnded.RemoveDynamic(
+					this,
+					&UNCInteractionComponent::OnLootMontageEndedInternal);
+
+				AnimInst->OnMontageEnded.AddDynamic(
+					this,
+					&UNCInteractionComponent::OnLootMontageEndedInternal);
+			}
+
+			return;
 		}
+
+		// 두 번째 몽타주가 없으면 바로 정리
+		ClearHeldItemMesh();
+		PendingLootTarget = nullptr;
+		bIsLooting = false;
+		bLootStored = false;
+		return;
 	}
 
-	ClearHeldItemMesh();
-
-	ANCItemActor* Item = PendingLootTarget.Get();
-
-	if (bInterrupted && !bLootStored)
+	// 두 번째 몽타주: 등에 넣기
+	if (Montage == PickupStoreMontage)
 	{
-		if (IsValid(Item) && Item->ItemMesh)
-		{
-			Item->ItemMesh->SetVisibility(true);
-		}
-	}
+		ClearHeldItemMesh();
 
-	PendingLootTarget = nullptr;
-	bIsLooting = false;
-	bLootStored = false;
+		if (bInterrupted && !bLootStored)
+		{
+			if (ANCItemActor* Item = PendingLootTarget.Get())
+			{
+				if (Item->ItemMesh)
+				{
+					Item->ItemMesh->SetVisibility(true);
+				}
+			}
+		}
+
+		PendingLootTarget = nullptr;
+		bIsLooting = false;
+		bLootStored = false;
+	}
 }
 
-//헌호수정 - 손 소켓에 임시 시각용 메시 부착 + 바닥 아이템 숨김
 void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 {
 	ClearHeldItemMesh();
@@ -160,14 +200,12 @@ void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 	HeldItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HeldItemMeshComp->RegisterComponent();
 
-	// 1차로 캐릭터 손 소켓에 부착
 	HeldItemMeshComp->AttachToComponent(
 		OwnerCharacter->GetMesh(),
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		LootHandSocketName
 	);
 
-	// StaticMesh 안의 PickupHand 소켓이 hand_ItemSocket에 오도록 역보정
 	const FName PickupSocketName = TEXT("PickupHand");
 
 	if (HeldItemMeshComp->DoesSocketExist(PickupSocketName))
@@ -186,7 +224,6 @@ void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 	Item->ItemMesh->SetVisibility(false);
 }
 
-//헌호수정 - 손에 붙인 임시 메시 제거
 void UNCInteractionComponent::ClearHeldItemMesh()
 {
 	if (HeldItemMeshComp)
@@ -208,20 +245,6 @@ void UNCInteractionComponent::StopInteraction()
 	CurrentInteractableTarget = nullptr;
 	bIsLooting = false;
 
-	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
-	{
-		if (OwnerCharacter->GetCharacterMovement())
-		{
-			OwnerCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		}
-
-		if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
-		{
-			PC->SetIgnoreMoveInput(false);
-			PC->SetIgnoreLookInput(false);
-		}
-	}
-
 	ClearHeldItemMesh();
 
 	if (ANCItemActor* Item = PendingLootTarget.Get())
@@ -233,6 +256,7 @@ void UNCInteractionComponent::StopInteraction()
 	}
 
 	PendingLootTarget = nullptr;
+	bLootStored = false;
 }
 
 void UNCInteractionComponent::OnLootMontageEnded()
@@ -247,15 +271,15 @@ void UNCInteractionComponent::UpdateInteractableTarget()
 	{
 		return;
 	}
-	
+
 	FVector SearchLocation = OwnerCharacter->GetActorLocation();
-	
+
 	FCollisionShape RadarSphere = FCollisionShape::MakeSphere(InteractionSearchRadius);
-	
-	TArray<FOverlapResult> OverlapResults; 
+
+	TArray<FOverlapResult> OverlapResults;
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(OwnerCharacter);
-	
+
 	bool bHit = GetWorld()->OverlapMultiByChannel(
 		OverlapResults,
 		SearchLocation,
@@ -264,25 +288,24 @@ void UNCInteractionComponent::UpdateInteractableTarget()
 		RadarSphere,
 		QueryParams
 	);
-	
+
 	AActor* ClosestTarget = nullptr;
 	float MinDistance = InteractionSearchRadius + 1.0f;
-	
+
 	if (bHit)
 	{
 		for (const FOverlapResult& Result : OverlapResults)
 		{
 			AActor* HitActor = Result.GetActor();
-            
+
 			if (HitActor && HitActor->Implements<UNCInteractableInterface>())
 			{
-				// 헌호수정 - 캐릭터에 부착된 액터(장착된 무기 등)는 상호작용 대상 제외
 				if (HitActor->IsAttachedTo(OwnerCharacter)) continue;
 
 				if (INCInteractableInterface::Execute_CanInteract(HitActor, OwnerCharacter))
 				{
 					float Distance = FVector::Dist(SearchLocation, HitActor->GetActorLocation());
-                    
+
 					if (Distance < MinDistance)
 					{
 						MinDistance = Distance;
@@ -292,7 +315,7 @@ void UNCInteractionComponent::UpdateInteractableTarget()
 			}
 		}
 	}
-	
+
 	if (ClosestTarget != CurrentInteractableTarget)
 	{
 		if (CurrentInteractableTarget)
@@ -317,7 +340,7 @@ void UNCInteractionComponent::SetHighlight(AActor* TargetActor, bool bHighlight)
 	{
 		return;
 	}
-	
+
 	if (TargetActor->Implements<UNCInteractableInterface>())
 	{
 		INCInteractableInterface::Execute_ToggleHighlight(TargetActor, bHighlight);
