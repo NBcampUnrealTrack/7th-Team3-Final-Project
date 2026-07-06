@@ -35,7 +35,7 @@ protected:
 	
 	// 슬롯 반경
 	UPROPERTY(EditAnywhere, Category = "AttackSlot")
-	float SlotRadius = 40.f;
+	float SlotRadius = 50.f;
 	
 	UPROPERTY(EditAnywhere, Category = "AttackSlot|Wait")
 	int32 MaxWaitSlots = 16;
