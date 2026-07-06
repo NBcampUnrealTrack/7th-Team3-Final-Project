@@ -7,6 +7,7 @@
 #include "Item/NCItemActor.h"
 #include "Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerCharacter/NCBaseCharacter.h"
+#include "Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Player/PlayerComponent/NCEquipmentComponent.h"
 #include "Player/PlayerController/NCPlayerController.h"
 #include "AbilitySystemComponent.h"
@@ -1216,6 +1217,123 @@ void UNCPlayerInventoryComponent::Server_TakeItemFromLootBox_Implementation(AANC
     {
         LootInventory->TransferItemTo(this, BoxSlotIndex, TargetSlot);
     }
+}
+
+FInventorySlot UNCPlayerInventoryComponent::EquipLootedItemToActiveSlot(FName ItemID, FGameplayTag ItemTag, int32 Quantity, const FNCWeaponInstance& WeaponInstance)
+{
+    if (!GetOwner()->HasAuthority()) return FInventorySlot();
+
+    if (ItemTag.MatchesTag(NCItemTag::Weapon))
+    {
+        ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner());
+        APawn* Pawn = PS ? PS->GetPawn() : nullptr;
+        ANCPlayerCharacter* Char = Cast<ANCPlayerCharacter>(Pawn);
+        if (!Char) return FInventorySlot();
+
+        UNCCombatComponent* Combat = Char->GetCombatComponent();
+        UNCEquipmentComponent* GunComp = Char->GetEquipmentComponent();
+        const bool bMeleeSlotActive = GunComp && !GunComp->HasActiveGun();
+        const bool bWeaponInHand = Combat && Combat->IsWeaponEquipped();
+
+        FInventorySlot Displaced;
+        if (!Char->StoredMeleeWeaponID.IsNone())
+        {
+            Displaced.ItemID = Char->StoredMeleeWeaponID;
+            Displaced.ItemTypeTag = NCItemTag::Weapon;
+            Displaced.Quantity = 1;
+
+            if (bWeaponInHand && Combat)
+            {
+                Displaced.WeaponInstance = Combat->GetEquippedWeapon();
+                Combat->UnEquipWeapon();
+            }
+        }
+
+        Char->StoredMeleeWeaponID = ItemID;
+        Char->StoredMeleePickupClass = nullptr; 
+        Char->OnMeleeStoredChanged.Broadcast();
+
+        if (bMeleeSlotActive && bWeaponInHand && Combat)
+        {
+            FNCWeaponInstance NewInstance = WeaponInstance;
+            if (NewInstance.WeaponID.IsNone())
+            {
+                NewInstance.WeaponID = ItemID;
+                NewInstance.UniqueID = FGuid::NewGuid();
+                NewInstance.CurrentDurability = 100.f;
+            }
+            Combat->EquipWeapon(NewInstance);
+        }
+
+        return Displaced;
+    }
+
+    if (ItemTag.MatchesTag(NCItemTag::Heal) || ItemTag.MatchesTag(NCItemTag::Food))
+    {
+        if (!EquipmentPresets.IsValidIndex(0)) return FInventorySlot();
+
+        const bool bIsHeal = ItemTag.MatchesTag(NCItemTag::Heal);
+        FInventorySlot& Slot = bIsHeal ? EquipmentPresets[0].ConsumableHeal : EquipmentPresets[0].ConsumableFood;
+
+        if (!Slot.IsEmpty() && Slot.ItemID == ItemID && Slot.ItemTypeTag == ItemTag)
+        {
+            FItemData ItemData;
+            if (GetItemDataByTag(ItemID, ItemTag, ItemData))
+            {
+                const int32 Room = ItemData.MaxStackSize - Slot.Quantity;
+                const int32 Taken = FMath::Max(0, FMath::Min(Quantity, Room));
+                Slot.Quantity += Taken;
+                OnPresetUpdated.Broadcast();
+
+                const int32 Remaining = Quantity - Taken;
+                if (Remaining <= 0) return FInventorySlot();
+
+                FInventorySlot Leftover;
+                Leftover.ItemID = ItemID;
+                Leftover.ItemTypeTag = ItemTag;
+                Leftover.Quantity = Remaining;
+                return Leftover;
+            }
+        }
+
+        FInventorySlot Displaced = Slot;
+
+        FInventorySlot NewSlot;
+        NewSlot.ItemID = ItemID;
+        NewSlot.ItemTypeTag = ItemTag;
+        NewSlot.Quantity = Quantity;
+        Slot = NewSlot;
+
+        OnPresetUpdated.Broadcast();
+        return Displaced;
+    }
+
+    return FInventorySlot();
+}
+
+void UNCPlayerInventoryComponent::SwapLootBoxItemToActiveSlot(AANCLootBoxActor* LootBox, int32 BoxSlotIndex)
+{
+    if (!LootBox) return;
+    Server_SwapLootBoxItemToActiveSlot(LootBox, BoxSlotIndex);
+}
+
+void UNCPlayerInventoryComponent::Server_SwapLootBoxItemToActiveSlot_Implementation(AANCLootBoxActor* LootBox, int32 BoxSlotIndex)
+{
+    if (!LootBox) return;
+    UNCInventoryBaseComponent* LootInventory = LootBox->GetLootInventory();
+    if (!LootInventory) return;
+    if (!LootInventory->Items.IsValidIndex(BoxSlotIndex) || LootInventory->Items[BoxSlotIndex].IsEmpty()) return;
+
+    const FInventorySlot Looted = LootInventory->Items[BoxSlotIndex];
+    const bool bSupported = Looted.ItemTypeTag.MatchesTag(NCItemTag::Weapon)
+        || Looted.ItemTypeTag.MatchesTag(NCItemTag::Heal)
+        || Looted.ItemTypeTag.MatchesTag(NCItemTag::Food);
+    if (!bSupported) return;
+
+    LootInventory->Items[BoxSlotIndex] =
+        EquipLootedItemToActiveSlot(Looted.ItemID, Looted.ItemTypeTag, Looted.Quantity, Looted.WeaponInstance);
+
+    LootInventory->OnInventoryUpdated.Broadcast();
 }
 
 // 헌호 - 서버에서 호출 → 모든 클라에서 OnItemUsed 델리게이트 실행

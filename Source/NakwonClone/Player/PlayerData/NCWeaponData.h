@@ -20,6 +20,10 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info")
 	TObjectPtr<UTexture2D> Icon;
 
+	// 루팅박스 슬롯 표시용 아이콘
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info")
+	TObjectPtr<UTexture2D> LootBoxIcon;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag")
 	FGameplayTag WeaponTypeTag;
 

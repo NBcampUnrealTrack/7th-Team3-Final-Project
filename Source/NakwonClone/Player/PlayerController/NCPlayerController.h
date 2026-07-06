@@ -46,6 +46,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	bool IsMenuBlockingInput() const { return bIsInventoryOpen || LootBoxWidget != nullptr || bIsPauseMenuOpen; }
 
+	UFUNCTION(BlueprintPure, Category = "UI|LootBox")
+	UNCLootBoxHud* GetLootBoxWidget() const { return LootBoxWidget; }
+
 	UPROPERTY(BlueprintReadOnly, Category = "UI|Pause")
 	bool bIsPauseMenuOpen = false;
 
