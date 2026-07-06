@@ -231,6 +231,11 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SpawnHitVFX(UNiagaraSystem* VFX, FVector Location);
 
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	float HitSoundCooldown = 0.1f;   // 이 시간 안엔 피격음 재생 안 함
+
+	float LastHitSoundTime = -100.f; // 마지막 피격음 재생 시각
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
 	TObjectPtr<USoundBase> HitSound;
