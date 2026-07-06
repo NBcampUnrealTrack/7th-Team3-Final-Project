@@ -149,11 +149,6 @@ void AVGMonsterCharacterBase::HandleDead()
 
 	if (AIController)
 	{
-		// [BT 리팩터] IsDeadKey 폐기 — UnPossess로 BT 정지 처리, 아래 키 세팅만 주석
-		//if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
-		//{
-		//	Blackboard->SetValueAsBool(AVGMonsterAIControllerBase::IsDeadKey, true);
-		//}
 		AIController->StopMovement();
 		AIController->UnPossess();
 	}

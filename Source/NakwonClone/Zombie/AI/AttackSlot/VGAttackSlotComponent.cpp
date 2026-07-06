@@ -13,34 +13,25 @@ UVGAttackSlotComponent::UVGAttackSlotComponent()
 bool UVGAttackSlotComponent::RequestSlot(AActor* Requester, int32& OutSlotIndex)
 {
 	if (!Requester) return false;
+	if (SlotOwners.Num() != MaxSlots) SlotOwners.SetNum(MaxSlots);
 
-	if (SlotOwners.Num() != MaxSlots)
-	{
-		SlotOwners.SetNum(MaxSlots);
-	}
+	for (int32 i = 0; i < SlotOwners.Num(); ++i)
+		if (SlotOwners[i].Get() == Requester) { OutSlotIndex = i; return true; }
 
-	// 이미 슬롯 보유중이면 그대로 반환
+	int32 BestIndex = -1;
+	float BestDistSq = TNumericLimits<float>::Max();
+	const FVector RequesterLoc = Requester->GetActorLocation();
 	for (int32 i = 0; i < SlotOwners.Num(); ++i)
 	{
-		if (SlotOwners[i].Get() == Requester)
-		{
-			OutSlotIndex = i;
-			return true;
-		}
+		if (SlotOwners[i].IsValid()) continue;
+		const float DistSq = FVector::DistSquared(RequesterLoc, GetSlotLocation(i));
+		if (DistSq < BestDistSq) { BestDistSq = DistSq; BestIndex = i; }
 	}
+	if (BestIndex == -1) return false;
 
-	// 빈 슬롯(또는 소멸된 참조) 탐색
-	for (int32 i = 0; i < SlotOwners.Num(); ++i)
-	{
-		if (!SlotOwners[i].IsValid())
-		{
-			SlotOwners[i] = Requester;
-			OutSlotIndex = i;
-			return true;
-		}
-	}
-
-	return false;   // 슬롯 다 찼음
+	SlotOwners[BestIndex] = Requester;
+	OutSlotIndex = BestIndex;
+	return true;
 }
 
 void UVGAttackSlotComponent::ReleaseSlot(AActor* Requester)
