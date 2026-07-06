@@ -91,6 +91,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Monster")
 	UBlendSpace* GetLocomotionBS() const { return CachedLocomotionBS; }
+
+	UFUNCTION(BlueprintPure, Category = "Monster")
+	float GetAnimPlayRateScale() const { return AnimPlayRateScale; }
+
+	UFUNCTION(BlueprintPure, Category = "Monster")
+	float GetAnimStartPosition() const { return AnimStartPosition; }
+
 protected:
 	// ── 몽타주 슬롯 (에디터에서 채움) ────────────────────────
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
@@ -130,6 +137,13 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<UBlendSpace> CachedLocomotionBS = nullptr;
+
+	UPROPERTY()
+	float AnimPlayRateScale = 1.f;
+
+	UPROPERTY()
+	float AnimStartPosition = 0.f;
+
 #pragma endregion
 
 #pragma region 좀비 메시 (랜덤)
