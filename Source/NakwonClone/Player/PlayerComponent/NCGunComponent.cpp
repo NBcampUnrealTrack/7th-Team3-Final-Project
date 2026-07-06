@@ -498,6 +498,7 @@ void UNCGunComponent::OnReloadFinished()
 void UNCGunComponent::StartADS()
 {
 	if (!HasActiveGun()) return;
+	if (IsReloading()) return;
 
 	ActiveGunActions.AddTag(NCGun::Action_ADS);
 
