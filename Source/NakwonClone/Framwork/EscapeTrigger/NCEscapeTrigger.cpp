@@ -6,6 +6,7 @@
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Framwork/Gamemode/NCGameMode.h"
+#include "TimerManager.h"
 
 ANCEscapeTrigger::ANCEscapeTrigger()
 {
@@ -73,4 +74,18 @@ void ANCEscapeTrigger::OnTriggerBeginOverlap(
 			}
 		}
 	}
+
+	// 다른 레벨로 이동 
+	if (!NextLevel.IsNull())
+	{
+		GetWorldTimerManager().SetTimer(
+			LevelOpenTimerHandle, this,
+			&ANCEscapeTrigger::OpenNextLevel, FMath::Max(0.01f, LevelOpenDelay), false);
+	}
+}
+
+void ANCEscapeTrigger::OpenNextLevel()
+{
+	if (NextLevel.IsNull()) return;
+	UGameplayStatics::OpenLevelBySoftObjectPtr(this, NextLevel);
 }
