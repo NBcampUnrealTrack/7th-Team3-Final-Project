@@ -15,8 +15,8 @@ void UNCLootBoxHud::InitWithLootBox(AANCLootBoxActor* TargetBox, UNCInventoryBas
 	if (!LootInventoryComp) return;
 
 	// 인벤토리 실제 크기에 맞게 슬롯 생성
-	int32 TotalSlots = 25;
-	int32 Columns = 5;
+	int32 TotalSlots = 16;
+	int32 Columns = 4;
 
 	LootGrid->ClearChildren();
 	LootSlotWidgets.Empty();
