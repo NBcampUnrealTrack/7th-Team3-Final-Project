@@ -236,6 +236,13 @@ void ANCPlayerController::Interact()
 {
     if (IsAttacking()) return; //헌호수정 - 공격 중 상호작용 차단
     if (IsUsingItem()) return; // 소모품 사용 중 상호작용(줍기) 차단
+
+    if (LootBoxWidget)
+    {
+        LootBoxWidget->CloseLootBoxUI();
+        return;
+    }
+
     if (IsMenuBlockingInput())
     {
         return;
