@@ -6,7 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "NakwonClone/GAS/AttributeSet/VGMonsterAttributeSet.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
-#include "BehaviorTree/BlackboardComponent.h"
+#include "NakwonClone/Zombie/AI/AttackSlot/VGAttackSlotComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Animation/AnimInstance.h"
@@ -140,6 +140,8 @@ void AVGMonsterCharacterBase::HandleDead()
 	OnStartRagdoll();
 
 	OnStartDissolve();
+	
+	ReleaseAttackSlot();
 
 	if (AIController)
 	{
@@ -469,6 +471,7 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 		MonsterAttributeSet->InitMoveSpeed(Row->MoveSpeed);
 	}
 	
+	CachedPatrolSpeed = Row->PatrolSpeed;
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = Row->PatrolSpeed;
@@ -582,3 +585,73 @@ void AVGMonsterCharacterBase::OnAttackMontageEnded(UAnimMontage* Montage, bool b
 	OnAttackFinished.ExecuteIfBound();
 }
 
+bool AVGMonsterCharacterBase::ReserveAttackSlot(AActor* Target, FVector& OutSlotLocation)
+{
+	if (!Target) return false;
+	UVGAttackSlotComponent* SlotComp = Target->FindComponentByClass<UVGAttackSlotComponent>();
+	if (!SlotComp) { SlotComp = NewObject<UVGAttackSlotComponent>(Target); SlotComp->RegisterComponent(); }
+
+	if (ReservedSlotComp.Get() && ReservedSlotComp.Get() != SlotComp)
+	{
+		ReleaseAttackSlot();
+	}
+	else if (ReservedSlotComp.Get() == SlotComp && bReservedIsWaitSlot)
+	{
+		// 같은 대상, Wait → Attack 승급: 기존 Wait Slot 반납
+		SlotComp->ReleaseWaitSlot(this);
+	}
+
+	int32 SlotIndex;
+	if (!SlotComp->RequestSlot(this, SlotIndex)) return false;
+
+	ReservedSlotComp = SlotComp;
+	ReservedSlotIndex = SlotIndex;
+	bReservedIsWaitSlot = false;
+	OutSlotLocation = SlotComp->GetSlotLocation(SlotIndex);
+	return true;
+}
+
+void AVGMonsterCharacterBase::ReleaseAttackSlot()
+{
+	if (UVGAttackSlotComponent* SlotComp = ReservedSlotComp.Get())
+	{
+		if (bReservedIsWaitSlot) SlotComp->ReleaseWaitSlot(this);
+		else SlotComp->ReleaseSlot(this);
+	}
+	ReservedSlotComp = nullptr;
+	ReservedSlotIndex = -1;
+	bReservedIsWaitSlot = false;
+}
+
+bool AVGMonsterCharacterBase::GetReservedSlotLocation(FVector& OutLocation) const
+{
+	UVGAttackSlotComponent* SlotComp = ReservedSlotComp.Get();
+	if (!SlotComp || ReservedSlotIndex == -1) return false;
+	OutLocation = bReservedIsWaitSlot ? SlotComp->GetWaitSlotLocation(ReservedSlotIndex) : SlotComp->GetSlotLocation(ReservedSlotIndex);
+	return true;
+}
+
+bool AVGMonsterCharacterBase::ReserveWaitSlot(AActor* Target, FVector& OutSlotLocation)
+{
+	if (!Target) return false;
+	UVGAttackSlotComponent* SlotComp = Target->FindComponentByClass<UVGAttackSlotComponent>();
+	if (!SlotComp) { SlotComp = NewObject<UVGAttackSlotComponent>(Target); SlotComp->RegisterComponent(); }
+
+	if (ReservedSlotComp.Get() && ReservedSlotComp.Get() != SlotComp)
+	{
+		ReleaseAttackSlot();
+	}
+	else if (ReservedSlotComp.Get() == SlotComp && !bReservedIsWaitSlot)
+	{
+		SlotComp->ReleaseSlot(this);
+	}
+
+	int32 SlotIndex;
+	if (!SlotComp->RequestWaitSlot(this, SlotIndex)) return false;
+
+	ReservedSlotComp = SlotComp;
+	ReservedSlotIndex = SlotIndex;
+	bReservedIsWaitSlot = true;
+	OutSlotLocation = SlotComp->GetWaitSlotLocation(SlotIndex);
+	return true;
+}

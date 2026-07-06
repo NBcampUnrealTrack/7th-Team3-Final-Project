@@ -24,6 +24,7 @@ const FName AVGMonsterAIControllerBase::BIsAttackKey         = "bIsAttack";
 const FName AVGMonsterAIControllerBase::DistanceKey          = "Distance";
 const FName AVGMonsterAIControllerBase::HeardLocationKey     = "HeardLocation";
 const FName AVGMonsterAIControllerBase::PatrolLocationKey    = "PatrolLocation";
+const FName AVGMonsterAIControllerBase::SlotLocationKey      = "SlotLocation";
 #pragma endregion
 
 AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()

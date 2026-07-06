@@ -69,13 +69,13 @@ void UAnimNotify_AttackTrace::DoHitCheck(USkeletalMeshComponent* MeshComp)
 			Params);
 
 #if WITH_EDITOR
-		DrawDebugSphere(World,
+		/*DrawDebugSphere(World,
 			SocketLocation,
 			Radius,
 			8,
 			bHit ? FColor::Red : FColor::Green,
 			false,
-			0.2f);
+			0.2f);*/
 #endif
 
 		if (!bHit) continue;

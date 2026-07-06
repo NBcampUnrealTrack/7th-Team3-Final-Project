@@ -369,6 +369,26 @@ private:
 	void Multicast_PlaySpecialMontage(UAnimMontage* Montage);
 
 	float LastSpecialMontageTime = -100.f;
+	
+public:
+	// 타겟 주변 공격 슬롯 예약. 성공 시 OutSlotLocation에 이동할 좌표 기록
+	bool ReserveAttackSlot(AActor* Target, FVector& OutSlotLocation);
+	bool ReserveWaitSlot(AActor* Target, FVector& OutSlotLocation); 
+
+	// 슬롯 반납 (사망/전투 이탈 시 호출)
+	void ReleaseAttackSlot();
+	
+	bool GetReservedSlotLocation(FVector& OutLocation) const;
+
+private:
+	UPROPERTY()
+	TWeakObjectPtr<class UVGAttackSlotComponent> ReservedSlotComp;
+	
+	UPROPERTY()
+	int32 ReservedSlotIndex = -1;
+	
+	UPROPERTY()
+	bool bReservedIsWaitSlot = false;
 
 #pragma endregion
 };
