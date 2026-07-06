@@ -39,7 +39,10 @@ public:
 	FOnInteractTargetChangedSignature OnInteractTargetChanged;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Animation")
-	TObjectPtr<UAnimMontage> LootMontage;
+	TObjectPtr<UAnimMontage> PickupMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Animation")
+	TObjectPtr<UAnimMontage> PickupStoreMontage;
 
 	//헌호수정 - 줍기 시 아이템을 붙일 손 소켓 이름
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Animation")
