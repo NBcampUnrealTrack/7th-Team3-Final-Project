@@ -4,8 +4,6 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/OverlapResult.h"
 #include "Item/NCItemActor.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 #include "NakwonClone/Common/NCInteractableInterface.h"
 #include "Animation/AnimInstance.h" //헌호수정
 #include "Components/StaticMeshComponent.h" //헌호수정
@@ -59,21 +57,19 @@ void UNCInteractionComponent::Interact()
 
 			OwnerCharacter->PlayAnimMontage(LootMontage);
 
-			if (OwnerCharacter->GetCharacterMovement())
+			// 몽타주 종료 콜백 등록
+			if (UAnimInstance* AnimInst =
+				OwnerCharacter->GetMesh()
+				? OwnerCharacter->GetMesh()->GetAnimInstance()
+				: nullptr)
 			{
-				OwnerCharacter->GetCharacterMovement()->DisableMovement();
-			}
+				AnimInst->OnMontageEnded.RemoveDynamic(
+					this,
+					&UNCInteractionComponent::OnLootMontageEndedInternal);
 
-			if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
-			{
-				PC->SetIgnoreMoveInput(true);
-				PC->SetIgnoreLookInput(true);
-			}
-
-			if (UAnimInstance* AnimInst = OwnerCharacter->GetMesh() ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr)
-			{
-				AnimInst->OnMontageEnded.RemoveDynamic(this, &UNCInteractionComponent::OnLootMontageEndedInternal);
-				AnimInst->OnMontageEnded.AddDynamic(this, &UNCInteractionComponent::OnLootMontageEndedInternal);
+				AnimInst->OnMontageEnded.AddDynamic(
+					this,
+					&UNCInteractionComponent::OnLootMontageEndedInternal);
 			}
 
 			return;
@@ -97,23 +93,14 @@ void UNCInteractionComponent::OnLootMontageEndedInternal(UAnimMontage* Montage, 
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 
-	if (UAnimInstance* AnimInst = OwnerCharacter && OwnerCharacter->GetMesh() ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr)
+	if (UAnimInstance* AnimInst =
+		OwnerCharacter && OwnerCharacter->GetMesh()
+		? OwnerCharacter->GetMesh()->GetAnimInstance()
+		: nullptr)
 	{
-		AnimInst->OnMontageEnded.RemoveDynamic(this, &UNCInteractionComponent::OnLootMontageEndedInternal);
-	}
-
-	if (OwnerCharacter)
-	{
-		if (OwnerCharacter->GetCharacterMovement())
-		{
-			OwnerCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		}
-
-		if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
-		{
-			PC->SetIgnoreMoveInput(false);
-			PC->SetIgnoreLookInput(false);
-		}
+		AnimInst->OnMontageEnded.RemoveDynamic(
+			this,
+			&UNCInteractionComponent::OnLootMontageEndedInternal);
 	}
 
 	ClearHeldItemMesh();
@@ -207,20 +194,6 @@ void UNCInteractionComponent::StopInteraction()
 
 	CurrentInteractableTarget = nullptr;
 	bIsLooting = false;
-
-	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
-	{
-		if (OwnerCharacter->GetCharacterMovement())
-		{
-			OwnerCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		}
-
-		if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
-		{
-			PC->SetIgnoreMoveInput(false);
-			PC->SetIgnoreLookInput(false);
-		}
-	}
 
 	ClearHeldItemMesh();
 
