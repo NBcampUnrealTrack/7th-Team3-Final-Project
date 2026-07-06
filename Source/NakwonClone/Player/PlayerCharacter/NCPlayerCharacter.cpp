@@ -23,6 +23,10 @@
 #include "Player/PlayerComponent/NCEquipmentComponent.h"
 #include "Common/NCGameplayTags.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/WidgetComponent.h" //헌호수정
+#include "UI/InGame/NCHPBar.h" //헌호수정
+#include "UI/InGame/NCBackpackHUD.h" //헌호수정
+#include "UI/InGame/NCADSHUD.h" //헌호수정
 #include "GameFramework/PlayerController.h"
 #include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
 #include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
@@ -95,6 +99,16 @@ void ANCPlayerCharacter::InitComponents()
     FlashlightGlowLight->SetAttenuationRadius(50.f);
     FlashlightGlowLight->SetLightColor(FLinearColor::White);
     FlashlightGlowLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
+
+    //헌호수정 - 디비전 스타일 백팩 체력바 (3D 위젯)
+    // 애니메이션(뛰기/공격)에 안 흔들리도록 본이 아닌 캡슐(루트)에 부착 → 캐릭터 이동/회전만 따라감
+    BackpackHPWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("BackpackHPWidget"));
+    BackpackHPWidget->SetupAttachment(GetCapsuleComponent());        // 루트에 부착 (흔들림 방지)
+    BackpackHPWidget->SetRelativeLocation(FVector(-30.f, 0.f, 40.f)); // 등 뒤 위쪽 (BP에서 조정)
+    BackpackHPWidget->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));  // 등 뒤 방향 (BP에서 조정)
+    BackpackHPWidget->SetWidgetSpace(EWidgetSpace::World);           // 3D 월드 공간
+    BackpackHPWidget->SetDrawSize(FVector2D(120.f, 20.f));           // 심플 게이지 크기
+    BackpackHPWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ANCPlayerCharacter::BeginPlay()
@@ -126,6 +140,23 @@ void ANCPlayerCharacter::BeginPlay()
             .AddUObject(this, &ANCPlayerCharacter::HandleHealthChanged);
     }
 
+    //헌호수정 - 백팩 체력바 초기값 표시 (풀피)
+    UpdateBackpackHP();
+
+    //헌호수정 - 정조준 HUD 위젯 한 번 생성 후 숨김 (로컬 플레이어만)
+    if (IsLocallyControlled() && ADSHUDWidgetClass)
+    {
+        if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        {
+            ADSHUDWidget = CreateWidget<UNCADSHUD>(PC, ADSHUDWidgetClass);
+            if (ADSHUDWidget)
+            {
+                ADSHUDWidget->AddToViewport();
+                ADSHUDWidget->SetVisibility(ESlateVisibility::Collapsed); // 기본 숨김
+            }
+        }
+    }
+
 
     //// TODO: 테스트용 임시 크로우바 장착 - 아이템 픽업 시스템 완성 후 제거
     // if (HasAuthority() && CombatComponent)
@@ -141,8 +172,67 @@ void ANCPlayerCharacter::BeginPlay()
 
 void ANCPlayerCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)
 {
+    //헌호수정 - 체력 증감 모두 백팩 체력바에 반영 (아래 early return 전에 갱신)
+    UpdateBackpackHP();
+
     if (Data.NewValue >= Data.OldValue) return;
     if (Data.NewValue <= 0.f) return;
+}
+
+//헌호수정 - 백팩 3D 체력바 갱신 (모든 클라이언트에서 호출됨 → 상대 플레이어도 보임)
+void ANCPlayerCharacter::UpdateBackpackHP()
+{
+    if (!BackpackHPWidget)
+    {
+        return;
+    }
+
+    if (UNCBackpackHUD* HUD = Cast<UNCBackpackHUD>(BackpackHPWidget->GetUserWidgetObject()))
+    {
+        HUD->RefreshAll(this);
+    }
+}
+
+//헌호수정 - 정조준 여부에 따라 백팩 UI ↔ 정조준 UI 전환 + 데이터 갱신
+void ANCPlayerCharacter::UpdateWeaponHUDs()
+{
+    // 현재 ADS 상태 확인
+    bool bIsADS = false;
+    if (UNCEquipmentComponent* Equip = GetEquipmentComponent())
+    {
+        bIsADS = Equip->IsADS();
+    }
+
+    // 상태가 바뀐 순간에만 UI 전환 (매 프레임 SetVisibility 낭비 방지)
+    if (bIsADS != bWasADS)
+    {
+        bWasADS = bIsADS;
+
+        // 백팩 UI: ADS 중이면 숨김
+        if (BackpackHPWidget)
+        {
+            BackpackHPWidget->SetVisibility(!bIsADS);
+        }
+
+        // 정조준 UI: ADS 중이면 표시 (로컬 플레이어만 생성돼있음)
+        if (ADSHUDWidget)
+        {
+            ADSHUDWidget->SetVisibility(bIsADS ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        }
+    }
+
+    // 켜져 있는 쪽만 데이터 갱신
+    if (bIsADS)
+    {
+        if (ADSHUDWidget)
+        {
+            ADSHUDWidget->RefreshAll(this);
+        }
+    }
+    else
+    {
+        UpdateBackpackHP();
+    }
 }
 
 void ANCPlayerCharacter::PossessedBy(AController* NewController)
@@ -679,6 +769,9 @@ void ANCPlayerCharacter::ApplyFlashlightState()
 void ANCPlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    //헌호수정 - 백팩/ADS HUD 실시간 갱신 + 전환
+    UpdateWeaponHUDs();
 
     //헌호수정 - 플래시라이트 빛 방향만 컨트롤러(카메라) 조준 방향으로 고정
     // (손전등 메시 모델은 어깨에 자연스럽게 유지, 빛만 안 흔들리게)
