@@ -15,6 +15,17 @@ void UNCEquipmentComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+void UNCEquipmentComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(SwapTimerHandle);
+		GetWorld()->GetTimerManager().ClearTimer(EquipDelayTimerHandle);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 // ─────────────────────────────────────────────
 // 상태 조회
 
