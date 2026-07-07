@@ -101,6 +101,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void SetSpawnedWeaponVisible(bool bVisible);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat|Combo")
+	void OpenComboInput();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Combo")
+	void HandleComboBranch();
+
+
+	bool IsMeleeAttackMontagePlaying() const;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	FNCWeaponComboData CurrentWeaponCombo;
@@ -140,6 +148,18 @@ private:
 	FTimerHandle MeleeUnequipTimerHandle;
 
 	bool bIsSwappingWeapon = false;
+
+	UFUNCTION()
+	void OnMeleeAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	void ResetComboState();
+
+	bool bCanStartNextAttack = false;
+	bool bComboInputBuffered = false;
+	bool bIsMeleeComboPlaying = false;
+
+	int32 CurrentComboIndex = 0;
+
 
 private:
 	UPROPERTY()

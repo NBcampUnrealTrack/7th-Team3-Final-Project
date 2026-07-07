@@ -52,7 +52,7 @@ void UNCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     {
         if (!World->IsNetMode(NM_DedicatedServer))
         {
-            UpdateLeftHandIK();
+            UpdateWeaponIK();
         }
     }
 }
@@ -260,7 +260,7 @@ void UNCAnimInstance::UpdateWeaponStateTags()
         }
     }
 }
-void UNCAnimInstance::UpdateLeftHandIK()
+void UNCAnimInstance::UpdateWeaponIK()
 {
     const bool bDisableIKDuringStandingRun =
         bIsTwoHandedWeapon &&
@@ -328,7 +328,9 @@ void UNCAnimInstance::UpdateLeftHandIK()
                     return;
                 }
 
-                if (!GunData->LeftHandIKSocketName.IsNone())
+                // Left Hand IK
+                if (GunData->bUseLeftHandIK &&
+                    !GunData->LeftHandIKSocketName.IsNone())
                 {
                     const FVector SocketWorldLocation =
                         GunMesh->GetSocketLocation(GunData->LeftHandIKSocketName);
@@ -345,7 +347,9 @@ void UNCAnimInstance::UpdateLeftHandIK()
                     bUseLeftHandIK = false;
                 }
 
-                if (!GunData->RightHandIKSocketName.IsNone())
+                // Right Hand IK
+                if (GunData->bUseRightHandIK &&
+                    !GunData->RightHandIKSocketName.IsNone())
                 {
                     const FVector SocketWorldLocation =
                         GunMesh->GetSocketLocation(GunData->RightHandIKSocketName);
@@ -411,7 +415,9 @@ void UNCAnimInstance::UpdateLeftHandIK()
         return;
     }
 
-    if (!WeaponData->LeftHandIKSocketName.IsNone())
+    // Left Hand IK
+    if (WeaponData->bUseLeftHandIK &&
+        !WeaponData->LeftHandIKSocketName.IsNone())
     {
         const FVector SocketWorldLocation =
             WeaponMesh->GetSocketLocation(WeaponData->LeftHandIKSocketName);
@@ -428,7 +434,9 @@ void UNCAnimInstance::UpdateLeftHandIK()
         bUseLeftHandIK = false;
     }
 
-    if (!WeaponData->RightHandIKSocketName.IsNone())
+    // Right Hand IK
+    if (WeaponData->bUseRightHandIK &&
+        !WeaponData->RightHandIKSocketName.IsNone())
     {
         const FVector SocketWorldLocation =
             WeaponMesh->GetSocketLocation(WeaponData->RightHandIKSocketName);
