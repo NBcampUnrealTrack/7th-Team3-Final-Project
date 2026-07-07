@@ -39,6 +39,7 @@ public:
 	static const FName DistanceKey;          // 좀비-타겟 거리 (Float)
 	static const FName HeardLocationKey;     // 들린 소리 위치 (Vector)
 	static const FName PatrolLocationKey;    // 순찰 목적지 좌표 (Vector)
+	static const FName SlotLocationKey;      // 예약된 공격 슬롯 좌표 (Vector)
 #pragma endregion
 	
 #pragma region Patrol

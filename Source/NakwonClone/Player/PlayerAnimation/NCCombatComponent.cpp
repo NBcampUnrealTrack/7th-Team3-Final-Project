@@ -549,6 +549,7 @@ void UNCCombatComponent::FinishUnEquipWeapon()
 	bIsSwappingWeapon = false;
 
 	OnWeaponChanged.Broadcast(FNCWeaponInstance{});
+	OnMeleeUnequipCompleted.Broadcast();
 }
 
 void UNCCombatComponent::PlayUnequipMontage()
@@ -575,4 +576,15 @@ void UNCCombatComponent::PlayUnequipMontage()
 	}
 
 	Anim->Montage_Play(Montage);
+}
+
+void UNCCombatComponent::SetSpawnedWeaponVisible(bool bVisible)
+{
+	if (!SpawnedWeaponActor)
+	{
+		return;
+	}
+
+	SpawnedWeaponActor->SetActorHiddenInGame(!bVisible);
+	SpawnedWeaponActor->SetActorEnableCollision(bVisible);
 }

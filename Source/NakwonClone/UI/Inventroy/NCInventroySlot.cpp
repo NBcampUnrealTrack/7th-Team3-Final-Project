@@ -29,9 +29,10 @@ void UNCInventroySlot::SetSlotData(int32 InIndex, int32 InQuantity, FGameplayTag
 		ItemCountText->SetText(FText::AsNumber(Quantity));
 		ItemCountText->SetVisibility(ESlateVisibility::Visible);
 	}
-	if (ItemData->ItemIcon)
+	UTexture2D* IconToShow = bIsLootBoxSlot && ItemData->LootBoxIcon ? ItemData->LootBoxIcon : ItemData->ItemIcon;
+	if (IconToShow)
 	{
-		ItemImage->SetBrushFromTexture(ItemData->ItemIcon);
+		ItemImage->SetBrushFromTexture(IconToShow);
 		ItemImage->SetVisibility(ESlateVisibility::Visible);
 	}
 }

@@ -91,6 +91,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Monster")
 	UBlendSpace* GetLocomotionBS() const { return CachedLocomotionBS; }
+
+	UFUNCTION(BlueprintPure, Category = "Monster")
+	float GetAnimPlayRateScale() const { return AnimPlayRateScale; }
+
+	UFUNCTION(BlueprintPure, Category = "Monster")
+	float GetAnimStartPosition() const { return AnimStartPosition; }
+
 protected:
 	// ── 몽타주 슬롯 (에디터에서 채움) ────────────────────────
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
@@ -130,6 +137,13 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<UBlendSpace> CachedLocomotionBS = nullptr;
+
+	UPROPERTY()
+	float AnimPlayRateScale = 1.f;
+
+	UPROPERTY()
+	float AnimStartPosition = 0.f;
+
 #pragma endregion
 
 #pragma region 좀비 메시 (랜덤)
@@ -216,6 +230,11 @@ public:
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SpawnHitVFX(UNiagaraSystem* VFX, FVector Location);
+
+	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
+	float HitSoundCooldown = 0.1f;   // 이 시간 안엔 피격음 재생 안 함
+
+	float LastHitSoundTime = -100.f; // 마지막 피격음 재생 시각
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Monster|Sound")
@@ -369,6 +388,26 @@ private:
 	void Multicast_PlaySpecialMontage(UAnimMontage* Montage);
 
 	float LastSpecialMontageTime = -100.f;
+	
+public:
+	// 타겟 주변 공격 슬롯 예약. 성공 시 OutSlotLocation에 이동할 좌표 기록
+	bool ReserveAttackSlot(AActor* Target, FVector& OutSlotLocation);
+	bool ReserveWaitSlot(AActor* Target, FVector& OutSlotLocation); 
+
+	// 슬롯 반납 (사망/전투 이탈 시 호출)
+	void ReleaseAttackSlot();
+	
+	bool GetReservedSlotLocation(FVector& OutLocation) const;
+
+private:
+	UPROPERTY()
+	TWeakObjectPtr<class UVGAttackSlotComponent> ReservedSlotComp;
+	
+	UPROPERTY()
+	int32 ReservedSlotIndex = -1;
+	
+	UPROPERTY()
+	bool bReservedIsWaitSlot = false;
 
 #pragma endregion
 };

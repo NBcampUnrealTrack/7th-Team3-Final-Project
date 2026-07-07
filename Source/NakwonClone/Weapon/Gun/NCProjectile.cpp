@@ -1,5 +1,6 @@
 #include "NCProjectile.h"
 #include "Components/SphereComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "NiagaraFunctionLibrary.h"
@@ -43,8 +44,29 @@ void ANCProjectile::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (AActor* OwnerActor = GetOwner())
-        CollisionComp->IgnoreActorWhenMoving(OwnerActor, true);
+    if (AActor* OwnerActor = GetOwner()) CollisionComp->IgnoreActorWhenMoving(OwnerActor, true);
+
+    {
+        TArray<AActor*> ActorsToIgnore;
+        ActorsToIgnore.Add(this);
+        if (AActor* OwnerActor = GetOwner())
+            ActorsToIgnore.Add(OwnerActor);
+
+        TArray<AActor*> OverlappingActors;
+        UKismetSystemLibrary::SphereOverlapActors(
+            this,
+            GetActorLocation(),
+            CollisionComp->GetScaledSphereRadius(),
+            { UEngineTypes::ConvertToObjectType(ECC_Pawn) },
+            APawn::StaticClass(),
+            ActorsToIgnore,
+            OverlappingActors);
+
+        for (AActor* OverlapActor : OverlappingActors)
+        {
+            CollisionComp->IgnoreActorWhenMoving(OverlapActor, true);
+        }
+    }
 
     // ProjectileSpeed는 GunComponent가 SpawnActor 직후 설정
     MovementComp->InitialSpeed = ProjectileSpeed;

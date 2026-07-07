@@ -299,10 +299,14 @@ void UNCGunComponent::FireOnce()
 	if (GetWorld()->LineTraceSingleByChannel(AimHit, CamLocation, AimPoint, ECC_Visibility, Params))
 		AimPoint = AimHit.ImpactPoint;
 
-	if (EquippedGunMeshComp && !Data->MuzzleSocketName.IsNone()
-		&& EquippedGunMeshComp->DoesSocketExist(Data->MuzzleSocketName))
+	UMeshComponent* MuzzleMeshComp = EquippedGunSkelMeshComp
+		? static_cast<UMeshComponent*>(EquippedGunSkelMeshComp)
+		: static_cast<UMeshComponent*>(EquippedGunMeshComp);
+
+	if (MuzzleMeshComp && !Data->MuzzleSocketName.IsNone()
+		&& MuzzleMeshComp->DoesSocketExist(Data->MuzzleSocketName))
 	{
-		SpawnLocation = EquippedGunMeshComp->GetSocketLocation(Data->MuzzleSocketName);
+		SpawnLocation = MuzzleMeshComp->GetSocketLocation(Data->MuzzleSocketName);
 		const FVector ToAim = AimPoint - SpawnLocation;
 		SpawnRotation = ToAim.SizeSquared() > (10.f * 10.f) ? ToAim.Rotation() : CamForward.Rotation();
 	}
@@ -494,6 +498,7 @@ void UNCGunComponent::OnReloadFinished()
 void UNCGunComponent::StartADS()
 {
 	if (!HasActiveGun()) return;
+	if (IsReloading()) return;
 
 	ActiveGunActions.AddTag(NCGun::Action_ADS);
 
