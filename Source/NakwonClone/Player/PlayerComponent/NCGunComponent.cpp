@@ -38,6 +38,18 @@ void UNCGunComponent::BeginPlay()
 	}
 }
 
+void UNCGunComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
+		GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
+		GetWorld()->GetTimerManager().ClearTimer(ShowMagazineTimerHandle);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void UNCGunComponent::TickComponent(
 	float DeltaTime,
 	ELevelTick TickType,
@@ -434,6 +446,7 @@ void UNCGunComponent::Reload()
 	if (CurrentAmmo >= Data->MagazineSize) return;
 
 	StopFire();
+	if (IsADS()) StopADS();
 	ActiveGunActions.AddTag(NCGun::Action_Reloading);
 
 	if (!Data->ReloadSound.IsNull())

@@ -63,14 +63,14 @@ void AANCLootBoxActor::GenerateLoot()
 		TArray<FNCLootDropData*> AllDropData;
 		RandomDropTable->GetAllRows<FNCLootDropData>(TEXT("LootBox_RandomDrop"), AllDropData);
 
-		if (AllDropData.Num() > 0)
+		float TotalWeight = 0.0f;
+		for (const FNCLootDropData* DropData : AllDropData)
 		{
-			float TotalWeight = 0.0f;
-			for (const FNCLootDropData* DropData : AllDropData)
-			{
-				TotalWeight += DropData->DropWeight;
-			}
+			TotalWeight += DropData->DropWeight;
+		}
 
+		if (AllDropData.Num() > 0 && TotalWeight > 0.0f)
+		{
 			for (int32 i = 0; i < RandomRollCount; ++i)
 			{
 				float RandomRoll = FMath::FRandRange(0.0f, TotalWeight);
