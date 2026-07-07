@@ -15,6 +15,7 @@ class UAbilitySystemComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
 	FOnWeaponChanged, const FNCWeaponInstance&, NewWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMeleeUnequipCompletedSignature);
 
 USTRUCT(BlueprintType)
 struct FNCWeaponComboData
@@ -93,6 +94,12 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
 	bool IsSwappingWeapon() const { return bIsSwappingWeapon; }
+
+	UPROPERTY(BlueprintAssignable, Category = "Combat|Event")
+	FOnMeleeUnequipCompletedSignature OnMeleeUnequipCompleted;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void SetSpawnedWeaponVisible(bool bVisible);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")

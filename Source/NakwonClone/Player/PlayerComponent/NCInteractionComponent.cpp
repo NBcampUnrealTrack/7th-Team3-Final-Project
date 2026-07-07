@@ -4,12 +4,16 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/OverlapResult.h"
 #include "Item/NCItemActor.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 #include "NakwonClone/Common/NCInteractableInterface.h"
-#include "Animation/AnimInstance.h" //헌호수정
-#include "Components/StaticMeshComponent.h" //헌호수정
-#include "Components/WidgetComponent.h" //헌호수정
+#include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"	
+#include "Framwork/PlayerState/NCPlayerState.h"
+#include "Player/PlayerController/NCPlayerController.h"
+#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
+#include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
+#include "NakwonClone/Player/PlayerComponent/NCEquipmentComponent.h"
+#include "Animation/AnimInstance.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/WidgetComponent.h"
 
 UNCInteractionComponent::UNCInteractionComponent()
 {
@@ -24,10 +28,10 @@ void UNCInteractionComponent::BeginPlay()
 	if (OwnerPawn && OwnerPawn->IsLocallyControlled())
 	{
 		GetWorld()->GetTimerManager().SetTimer(
-			TimerHandle_UpdateInteractable, 
-			this, 
-			&UNCInteractionComponent::UpdateInteractableTarget, 
-			InteractionCheckInterval, 
+			TimerHandle_UpdateInteractable,
+			this,
+			&UNCInteractionComponent::UpdateInteractableTarget,
+			InteractionCheckInterval,
 			true
 		);
 	}
@@ -40,8 +44,6 @@ void UNCInteractionComponent::Interact()
 		return;
 	}
 
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-
 	if (CurrentInteractableTarget->IsA<ANCItemActor>())
 	{
 		if (bIsLooting)
@@ -50,90 +52,164 @@ void UNCInteractionComponent::Interact()
 		}
 
 		ANCItemActor* Item = Cast<ANCItemActor>(CurrentInteractableTarget);
-
-		if (LootMontage && OwnerCharacter)
+		if (!IsValid(Item))
 		{
-			bIsLooting = true;
-			bLootStored = false;
-			PendingLootTarget = Item;
-
-			OwnerCharacter->PlayAnimMontage(LootMontage);
-
-			if (OwnerCharacter->GetCharacterMovement())
-			{
-				OwnerCharacter->GetCharacterMovement()->DisableMovement();
-			}
-
-			if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
-			{
-				PC->SetIgnoreMoveInput(true);
-				PC->SetIgnoreLookInput(true);
-			}
-
-			if (UAnimInstance* AnimInst = OwnerCharacter->GetMesh() ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr)
-			{
-				AnimInst->OnMontageEnded.RemoveDynamic(this, &UNCInteractionComponent::OnLootMontageEndedInternal);
-				AnimInst->OnMontageEnded.AddDynamic(this, &UNCInteractionComponent::OnLootMontageEndedInternal);
-			}
-
 			return;
 		}
 
-		INCInteractableInterface::Execute_Interact(Item, GetOwner());
-		UpdateInteractableTarget();
+		QueuedPickupTarget = Item;
+
+		ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+		if (!OwnerCharacter)
+		{
+			return;
+		}
+
+		if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+		{
+			// 1. 총기 장착 중이면 총기 Unequip 후 Pickup
+			if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+			{
+				if (EquipComp->HasActiveGun() && !EquipComp->IsSwapping())
+				{
+					// 핵심 수정:
+					// 총기 Unequip 완료 후 저장된 근접무기가 자동 장착되는 것을 막는다.
+					// 이게 없으면 라이플을 내리는 순간 기존 도끼/카타나가 손에 장착되고,
+					// Pickup Attach 시 새 무기까지 붙어서 무기가 2개 보인다.
+					if (ANCPlayerController* PC = Cast<ANCPlayerController>(PlayerCharacter->GetController()))
+					{
+						PC->SetUnArmPending(true);
+					}
+
+					EquipComp->OnSwapCompleted.RemoveDynamic(
+						this,
+						&UNCInteractionComponent::OnGunUnequipForPickupFinished);
+
+					EquipComp->OnSwapCompleted.AddDynamic(
+						this,
+						&UNCInteractionComponent::OnGunUnequipForPickupFinished);
+
+					EquipComp->SelectSlot(ENCGunSlot::None);
+					return;
+				}
+			}
+
+			// 2. 근접무기 장착 중이면 근접 Unequip 후 Pickup
+			if (UNCCombatComponent* CombatComp = PlayerCharacter->GetCombatComponent())
+			{
+				if (CombatComp->IsWeaponEquipped())
+				{
+					CombatComp->OnMeleeUnequipCompleted.RemoveDynamic(
+						this,
+						&UNCInteractionComponent::OnMeleeUnequipForPickupFinished);
+
+					CombatComp->OnMeleeUnequipCompleted.AddDynamic(
+						this,
+						&UNCInteractionComponent::OnMeleeUnequipForPickupFinished);
+
+					CombatComp->UnEquipWeapon();
+					return;
+				}
+			}
+		}
+
+		StartPickup();
 		return;
 	}
 
 	INCInteractableInterface::Execute_Interact(CurrentInteractableTarget, GetOwner());
 }
 
-//헌호수정 - 줍기 몽타주 종료 시: 중단이면 취소, 정상 종료면 실제 획득
 void UNCInteractionComponent::OnLootMontageEndedInternal(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage != LootMontage)
+	if (Montage != PickupMontage && Montage != PickupStoreMontage)
 	{
 		return;
 	}
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 
-	if (UAnimInstance* AnimInst = OwnerCharacter && OwnerCharacter->GetMesh() ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr)
+	if (UAnimInstance* AnimInst =
+		OwnerCharacter && OwnerCharacter->GetMesh()
+		? OwnerCharacter->GetMesh()->GetAnimInstance()
+		: nullptr)
 	{
-		AnimInst->OnMontageEnded.RemoveDynamic(this, &UNCInteractionComponent::OnLootMontageEndedInternal);
+		AnimInst->OnMontageEnded.RemoveDynamic(
+			this,
+			&UNCInteractionComponent::OnLootMontageEndedInternal);
 	}
 
-	if (OwnerCharacter)
+	if (Montage == PickupMontage)
 	{
-		if (OwnerCharacter->GetCharacterMovement())
+		if (bInterrupted)
 		{
-			OwnerCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			ClearHeldItemMesh();
+
+			if (ANCItemActor* Item = PendingLootTarget.Get())
+			{
+				if (Item->ItemMesh)
+				{
+					Item->ItemMesh->SetVisibility(true, true);
+					Item->SetActorEnableCollision(true);
+				}
+			}
+
+			PendingLootTarget = nullptr;
+			bIsLooting = false;
+			bLootStored = false;
+			return;
 		}
 
-		if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
+		if (OwnerCharacter && PickupStoreMontage)
 		{
-			PC->SetIgnoreMoveInput(false);
-			PC->SetIgnoreLookInput(false);
+			OwnerCharacter->PlayAnimMontage(PickupStoreMontage);
+
+			if (UAnimInstance* AnimInst =
+				OwnerCharacter->GetMesh()
+				? OwnerCharacter->GetMesh()->GetAnimInstance()
+				: nullptr)
+			{
+				AnimInst->OnMontageEnded.RemoveDynamic(
+					this,
+					&UNCInteractionComponent::OnLootMontageEndedInternal);
+
+				AnimInst->OnMontageEnded.AddDynamic(
+					this,
+					&UNCInteractionComponent::OnLootMontageEndedInternal);
+			}
+
+			return;
 		}
+
+		ClearHeldItemMesh();
+		PendingLootTarget = nullptr;
+		bIsLooting = false;
+		bLootStored = false;
+		return;
 	}
 
-	ClearHeldItemMesh();
-
-	ANCItemActor* Item = PendingLootTarget.Get();
-
-	if (bInterrupted && !bLootStored)
+	if (Montage == PickupStoreMontage)
 	{
-		if (IsValid(Item) && Item->ItemMesh)
-		{
-			Item->ItemMesh->SetVisibility(true);
-		}
-	}
+		ClearHeldItemMesh();
 
-	PendingLootTarget = nullptr;
-	bIsLooting = false;
-	bLootStored = false;
+		if (bInterrupted && !bLootStored)
+		{
+			if (ANCItemActor* Item = PendingLootTarget.Get())
+			{
+				if (Item->ItemMesh)
+				{
+					Item->ItemMesh->SetVisibility(true, true);
+					Item->SetActorEnableCollision(true);
+				}
+			}
+		}
+
+		PendingLootTarget = nullptr;
+		bIsLooting = false;
+		bLootStored = false;
+	}
 }
 
-//헌호수정 - 손 소켓에 임시 시각용 메시 부착 + 바닥 아이템 숨김
 void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 {
 	ClearHeldItemMesh();
@@ -160,14 +236,12 @@ void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 	HeldItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HeldItemMeshComp->RegisterComponent();
 
-	// 1차로 캐릭터 손 소켓에 부착
 	HeldItemMeshComp->AttachToComponent(
 		OwnerCharacter->GetMesh(),
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		LootHandSocketName
 	);
 
-	// StaticMesh 안의 PickupHand 소켓이 hand_ItemSocket에 오도록 역보정
 	const FName PickupSocketName = TEXT("PickupHand");
 
 	if (HeldItemMeshComp->DoesSocketExist(PickupSocketName))
@@ -183,10 +257,10 @@ void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 		UE_LOG(LogTemp, Warning, TEXT("PickupHand socket not found on mesh: %s"), *Mesh->GetName());
 	}
 
-	Item->ItemMesh->SetVisibility(false);
+	Item->ItemMesh->SetVisibility(false, true);
+	Item->SetActorEnableCollision(false);
 }
 
-//헌호수정 - 손에 붙인 임시 메시 제거
 void UNCInteractionComponent::ClearHeldItemMesh()
 {
 	if (HeldItemMeshComp)
@@ -208,31 +282,19 @@ void UNCInteractionComponent::StopInteraction()
 	CurrentInteractableTarget = nullptr;
 	bIsLooting = false;
 
-	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
-	{
-		if (OwnerCharacter->GetCharacterMovement())
-		{
-			OwnerCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		}
-
-		if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
-		{
-			PC->SetIgnoreMoveInput(false);
-			PC->SetIgnoreLookInput(false);
-		}
-	}
-
 	ClearHeldItemMesh();
 
 	if (ANCItemActor* Item = PendingLootTarget.Get())
 	{
 		if (Item->ItemMesh)
 		{
-			Item->ItemMesh->SetVisibility(true);
+			Item->ItemMesh->SetVisibility(true, true);
+			Item->SetActorEnableCollision(true);
 		}
 	}
 
 	PendingLootTarget = nullptr;
+	bLootStored = false;
 }
 
 void UNCInteractionComponent::OnLootMontageEnded()
@@ -247,15 +309,15 @@ void UNCInteractionComponent::UpdateInteractableTarget()
 	{
 		return;
 	}
-	
+
 	FVector SearchLocation = OwnerCharacter->GetActorLocation();
-	
+
 	FCollisionShape RadarSphere = FCollisionShape::MakeSphere(InteractionSearchRadius);
-	
-	TArray<FOverlapResult> OverlapResults; 
+
+	TArray<FOverlapResult> OverlapResults;
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(OwnerCharacter);
-	
+
 	bool bHit = GetWorld()->OverlapMultiByChannel(
 		OverlapResults,
 		SearchLocation,
@@ -264,25 +326,24 @@ void UNCInteractionComponent::UpdateInteractableTarget()
 		RadarSphere,
 		QueryParams
 	);
-	
+
 	AActor* ClosestTarget = nullptr;
 	float MinDistance = InteractionSearchRadius + 1.0f;
-	
+
 	if (bHit)
 	{
 		for (const FOverlapResult& Result : OverlapResults)
 		{
 			AActor* HitActor = Result.GetActor();
-            
+
 			if (HitActor && HitActor->Implements<UNCInteractableInterface>())
 			{
-				// 헌호수정 - 캐릭터에 부착된 액터(장착된 무기 등)는 상호작용 대상 제외
 				if (HitActor->IsAttachedTo(OwnerCharacter)) continue;
 
 				if (INCInteractableInterface::Execute_CanInteract(HitActor, OwnerCharacter))
 				{
 					float Distance = FVector::Dist(SearchLocation, HitActor->GetActorLocation());
-                    
+
 					if (Distance < MinDistance)
 					{
 						MinDistance = Distance;
@@ -292,7 +353,7 @@ void UNCInteractionComponent::UpdateInteractableTarget()
 			}
 		}
 	}
-	
+
 	if (ClosestTarget != CurrentInteractableTarget)
 	{
 		if (CurrentInteractableTarget)
@@ -317,7 +378,7 @@ void UNCInteractionComponent::SetHighlight(AActor* TargetActor, bool bHighlight)
 	{
 		return;
 	}
-	
+
 	if (TargetActor->Implements<UNCInteractableInterface>())
 	{
 		INCInteractableInterface::Execute_ToggleHighlight(TargetActor, bHighlight);
@@ -348,6 +409,7 @@ void UNCInteractionComponent::StorePendingLoot()
 
 	ANCItemActor* Item = PendingLootTarget.Get();
 	PendingLootTarget = nullptr;
+	QueuedPickupTarget = nullptr;
 
 	if (!IsValid(Item))
 	{
@@ -356,4 +418,122 @@ void UNCInteractionComponent::StorePendingLoot()
 
 	INCInteractableInterface::Execute_Interact(Item, GetOwner());
 	UpdateInteractableTarget();
+}
+
+void UNCInteractionComponent::StartPickup()
+{
+	if (bIsLooting)
+	{
+		return;
+	}
+
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	ANCItemActor* Item = QueuedPickupTarget.Get();
+
+	if (!OwnerCharacter || !IsValid(Item))
+	{
+		QueuedPickupTarget = nullptr;
+		return;
+	}
+
+	// ─────────────────────────────────────
+	// 핵심 수정
+	// 무기 Pickup 시작 전에 기존 Stored 근접무기를 먼저 Drop + 시각 제거
+	// ─────────────────────────────────────
+	if (Item->ItemTypeTag.MatchesTag(NCItemTag::Weapon))
+	{
+		if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+		{
+			const bool bHadStoredMelee = !PlayerCharacter->StoredMeleeWeaponID.IsNone();
+
+			if (bHadStoredMelee)
+			{
+				// 서버에는 실제 바닥 DropActor 스폰 요청
+				if (ANCPlayerState* PlayerState = OwnerCharacter->GetPlayerState<ANCPlayerState>())
+				{
+					if (UNCPlayerInventoryComponent* InventoryComp =
+						PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>())
+					{
+						InventoryComp->DropStoredMeleeForPickupReplace();
+					}
+				}
+
+				// 로컬 시각 메쉬 즉시 제거
+				// 이걸 안 하면 PickupMontage 중 기존 근접무기 + 새 무기가 같이 보임
+				PlayerCharacter->StoredMeleeWeaponID = NAME_None;
+				PlayerCharacter->StoredMeleePickupClass = nullptr;
+				PlayerCharacter->OnMeleeStoredChanged.Broadcast();
+			}
+		}
+	}
+
+	if (!PickupMontage)
+	{
+		INCInteractableInterface::Execute_Interact(Item, GetOwner());
+		UpdateInteractableTarget();
+		QueuedPickupTarget = nullptr;
+		return;
+	}
+
+	bIsLooting = true;
+	bLootStored = false;
+	PendingLootTarget = Item;
+
+	OwnerCharacter->PlayAnimMontage(PickupMontage);
+
+	if (UAnimInstance* AnimInst =
+		OwnerCharacter->GetMesh()
+		? OwnerCharacter->GetMesh()->GetAnimInstance()
+		: nullptr)
+	{
+		AnimInst->OnMontageEnded.RemoveDynamic(
+			this,
+			&UNCInteractionComponent::OnLootMontageEndedInternal);
+
+		AnimInst->OnMontageEnded.AddDynamic(
+			this,
+			&UNCInteractionComponent::OnLootMontageEndedInternal);
+	}
+}
+
+void UNCInteractionComponent::OnMeleeUnequipForPickupFinished()
+{
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+
+	if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+	{
+		if (UNCCombatComponent* CombatComp = PlayerCharacter->GetCombatComponent())
+		{
+			CombatComp->OnMeleeUnequipCompleted.RemoveDynamic(
+				this,
+				&UNCInteractionComponent::OnMeleeUnequipForPickupFinished);
+		}
+	}
+
+	StartPickup();
+}
+
+void UNCInteractionComponent::OnGunUnequipForPickupFinished(ENCGunSlot FinishedSlot)
+{
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+
+	if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+	{
+		if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+		{
+			EquipComp->OnSwapCompleted.RemoveDynamic(
+				this,
+				&UNCInteractionComponent::OnGunUnequipForPickupFinished);
+		}
+	}
+
+	StartPickup();
 }

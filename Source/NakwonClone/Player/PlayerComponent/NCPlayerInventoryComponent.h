@@ -241,6 +241,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
 	TObjectPtr<UDataTable> CreditDataTable;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Pickup")
+	void DropStoredMeleeForPickupReplace();
+
+	UFUNCTION(Server, Reliable)
+	void Server_DropStoredMeleeForPickupReplace();
 	
 private:
 	FGameplayTag GetWeaponTypeTag(FName WeaponID) const;
