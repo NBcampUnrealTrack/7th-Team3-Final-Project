@@ -1077,6 +1077,29 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
         return;
     }
 
+    if (LootTag.MatchesTag(NCItemTag::Quest))
+    {
+        int32 EmptySlot = -1;
+        for (int32 i = 0; i < Items.Num(); ++i)
+        {
+            if (Items[i].IsEmpty())
+            {
+                EmptySlot = i;
+                break;
+            }
+        }
+
+        if (EmptySlot != -1)
+        {
+            Items[EmptySlot].ItemID = LootID;
+            Items[EmptySlot].ItemTypeTag = LootTag;
+            Items[EmptySlot].Quantity = LootQuantity;
+            OnInventoryUpdated.Broadcast();
+            ItemToLoot->Destroy();
+        }
+        return;
+    }
+
     // 힐/음식 아이템 가방 거치지 않고 고정 슬롯에 직접 채움
     // 최대 스택까지만 가져오고, 초과분은 바닥에 그대로 남김
     if (LootTag.MatchesTag(NCItemTag::Heal) || LootTag.MatchesTag(NCItemTag::Food))
