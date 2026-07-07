@@ -2,9 +2,10 @@
 #include "GameFramework/Actor.h"
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 
-void UNCAnimNotify_PickupAttach::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UNCAnimNotify_PickupAttach::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+	const FAnimNotifyEventReference& EventReference)
 {
-	Super::Notify(MeshComp, Animation);
+	Super::Notify(MeshComp, Animation, EventReference);
 
 	if (!MeshComp)
 	{

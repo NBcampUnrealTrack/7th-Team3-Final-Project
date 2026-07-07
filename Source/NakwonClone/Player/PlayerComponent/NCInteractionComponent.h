@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "NakwonClone/Player/PlayerComponent/NCGunComponent.h"
+#include "NakwonClone/Player/PlayerData/NCWeaponData.h"
 #include "NCInteractionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractTargetChangedSignature, AActor*, NewTarget);
@@ -54,6 +55,8 @@ public:
 
 
 private:
+	void RestorePreviousWeaponAfterPickup();
+
 	FTimerHandle TimerHandle_UpdateInteractable;
 
 	//헌호수정 - 줍기 몽타주 진행 중 상태
@@ -87,16 +90,26 @@ private:
 
 	bool bPickupPending = false;
 
-	void UpdateInteractableTarget();
-	
-	void SetHighlight(AActor* TargetActor, bool bHighlight);
-	
-	UPROPERTY()
-	TWeakObjectPtr<class ANCItemActor> QueuedPickupTarget;
+	ENCGunSlot PendingRestoreGunSlot = ENCGunSlot::None;
+	bool bPendingRestoreMeleeVisual = false;
+	FNCWeaponInstance PendingRestoreMeleeWeapon;
+
+	ENCGunSlot PendingSelectGunSlotAfterPickup = ENCGunSlot::None;
+
+	FTimerHandle PickupUnequipTimerHandle;
 
 	UFUNCTION()
 	void OnMeleeUnequipForPickupFinished();
 
+	void OnGunUnequipMontageFinishedForPickup();
+
 	UFUNCTION()
-	void OnGunUnequipForPickupFinished(ENCGunSlot FinishedSlot);
+	void OnGunFullUnequipForPickupFinished(ENCGunSlot FinishedSlot);
+
+	void UpdateInteractableTarget();
+
+	void SetHighlight(AActor* TargetActor, bool bHighlight);
+
+	UPROPERTY()
+	TWeakObjectPtr<class ANCItemActor> QueuedPickupTarget;
 };

@@ -125,6 +125,15 @@ public:
 	const FNCGunData* GetActiveGunData() const;
 	const FNCGunData* GetGunData(FName InGunID) const { return FindGunData(InGunID); }
 
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Manage")
+	void HideActiveWeaponVisualOnly();
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Manage")
+	void ShowActiveWeaponVisualAgain();
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Manage")
+	void DropOccupantGunForNewGun(FName NewGunID, FVector DropLocation, FRotator DropRotation);
+
 	UNCGunComponent* GetActiveWeapon() const;
 
 protected:

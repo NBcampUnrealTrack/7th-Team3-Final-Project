@@ -22,24 +22,8 @@ void ANCMeleePickupActor::Interact_Implementation(AActor* Interactor)
 	const bool bMeleeSlotActive = NCGunComp && !NCGunComp->HasActiveGun();
 	const bool bWeaponInHand    = NCCombat->IsWeaponEquipped();
 
-	// 기존 무기가 슬롯에 있으면 드랍 스폰 (손에 들고 있든 아니든)
 	if (!NCPlayer->StoredMeleeWeaponID.IsNone())
 	{
-		if (NCPlayer->StoredMeleePickupClass)
-		{
-			FActorSpawnParameters Params;
-			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-			ANCMeleePickupActor* Dropped = GetWorld()->SpawnActor<ANCMeleePickupActor>(
-				NCPlayer->StoredMeleePickupClass,
-				GetActorLocation(),
-				NCPlayer->StoredMeleePickupRotation,
-				Params);
-
-			if (Dropped)
-				Dropped->WeaponID = NCPlayer->StoredMeleeWeaponID;
-		}
-
 		// 손에 들고 있을 때만 해제
 		if (bWeaponInHand)
 			NCCombat->UnEquipWeapon();

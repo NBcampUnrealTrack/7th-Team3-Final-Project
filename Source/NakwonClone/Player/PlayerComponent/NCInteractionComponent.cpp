@@ -11,6 +11,8 @@
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "NakwonClone/Player/PlayerComponent/NCEquipmentComponent.h"
+#include "Weapon/Gun/NCGunActor.h"
+#include "Weapon/Melee/NCMeleePickupActor.h"
 #include "Animation/AnimInstance.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
@@ -42,6 +44,7 @@ void UNCInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (GetWorld())
 	{
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_UpdateInteractable);
+		GetWorld()->GetTimerManager().ClearTimer(PickupUnequipTimerHandle);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -77,40 +80,99 @@ void UNCInteractionComponent::Interact()
 
 		bPickupPending = true;
 
+		const bool bPickingUpGun = Item->IsA<ANCGunActor>();
+		const bool bPickingUpMelee = Item->IsA<ANCMeleePickupActor>();
+
 		if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
 		{
-			// 1. 총기 장착 중이면 총기 Unequip 후 Pickup
-			if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+			if (bPickingUpGun)
 			{
-				if (EquipComp->HasActiveGun() && !EquipComp->IsSwapping())
+				if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
 				{
-					// 핵심 수정:
-					// 총기 Unequip 완료 후 저장된 근접무기가 자동 장착되는 것을 막는다.
-					// 이게 없으면 라이플을 내리는 순간 기존 도끼/카타나가 손에 장착되고,
-					// Pickup Attach 시 새 무기까지 붙어서 무기가 2개 보인다.
-					if (ANCPlayerController* PC = Cast<ANCPlayerController>(PlayerCharacter->GetController()))
+					ANCGunActor* GunItem = Cast<ANCGunActor>(Item);
+					const FNCGunData* NewGunData = GunItem ? EquipComp->GetGunData(GunItem->GunID) : nullptr;
+
+					if (NewGunData && EquipComp->HasActiveGun() && !EquipComp->IsSwapping())
 					{
-						PC->SetUnArmPending(true);
+						if (EquipComp->ActiveSlot == NewGunData->SlotType)
+						{
+							EquipComp->HideActiveWeaponVisualOnly();
+						}
+						else
+						{
+							PendingSelectGunSlotAfterPickup = EquipComp->ActiveSlot;
+
+							if (ANCPlayerController* PC = Cast<ANCPlayerController>(PlayerCharacter->GetController()))
+							{
+								PC->SetUnArmPending(true);
+							}
+
+							EquipComp->OnSwapCompleted.RemoveDynamic(
+								this,
+								&UNCInteractionComponent::OnGunFullUnequipForPickupFinished);
+
+							EquipComp->OnSwapCompleted.AddDynamic(
+								this,
+								&UNCInteractionComponent::OnGunFullUnequipForPickupFinished);
+
+							EquipComp->SelectSlot(ENCGunSlot::None);
+							return;
+						}
 					}
-
-					EquipComp->OnSwapCompleted.RemoveDynamic(
-						this,
-						&UNCInteractionComponent::OnGunUnequipForPickupFinished);
-
-					EquipComp->OnSwapCompleted.AddDynamic(
-						this,
-						&UNCInteractionComponent::OnGunUnequipForPickupFinished);
-
-					EquipComp->SelectSlot(ENCGunSlot::None);
-					return;
 				}
 			}
 
-			// 2. 근접무기 장착 중이면 근접 Unequip 후 Pickup
+			if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+			{
+				if (EquipComp->HasActiveGun() && !EquipComp->IsSwapping() && !bPickingUpGun)
+				{
+					PendingRestoreGunSlot = EquipComp->ActiveSlot;
+
+					float UnequipLength = 0.f;
+					if (UNCGunComponent* CurrentWeapon = EquipComp->GetActiveWeapon())
+					{
+						if (const FNCGunData* Data = CurrentWeapon->GetActiveGunData())
+						{
+							UnequipLength = CurrentWeapon->PlayUnequipMontage(Data);
+						}
+					}
+
+					if (UnequipLength > 0.f)
+					{
+						GetWorld()->GetTimerManager().SetTimer(
+							PickupUnequipTimerHandle,
+							this,
+							&UNCInteractionComponent::OnGunUnequipMontageFinishedForPickup,
+							UnequipLength,
+							false);
+						return;
+					}
+
+					EquipComp->HideActiveWeaponVisualOnly();
+				}
+			}
+
+			if (bPickingUpMelee)
+			{
+				if (UNCCombatComponent* CombatComp = PlayerCharacter->GetCombatComponent())
+				{
+					if (CombatComp->IsWeaponEquipped() && !CombatComp->IsSwappingWeapon())
+					{
+						if (AActor* SpawnedWeapon = CombatComp->GetSpawnedWeaponActor())
+						{
+							SpawnedWeapon->SetActorHiddenInGame(true);
+						}
+					}
+				}
+			}
+
 			if (UNCCombatComponent* CombatComp = PlayerCharacter->GetCombatComponent())
 			{
-				if (CombatComp->IsWeaponEquipped())
+				if (CombatComp->IsWeaponEquipped() && !CombatComp->IsSwappingWeapon() && !bPickingUpMelee)
 				{
+					bPendingRestoreMeleeVisual = true;
+					PendingRestoreMeleeWeapon = CombatComp->GetEquippedWeapon();
+
 					CombatComp->OnMeleeUnequipCompleted.RemoveDynamic(
 						this,
 						&UNCInteractionComponent::OnMeleeUnequipForPickupFinished);
@@ -271,6 +333,34 @@ void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 
 	Item->ItemMesh->SetVisibility(false, true);
 	Item->SetActorEnableCollision(false);
+
+	if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+	{
+		if (ANCGunActor* GunItem = Cast<ANCGunActor>(Item))
+		{
+			if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+			{
+				EquipComp->DropOccupantGunForNewGun(
+					GunItem->GunID, Item->GetActorLocation(), Item->GetActorRotation());
+			}
+		}
+
+		if (Item->ItemTypeTag.MatchesTag(NCItemTag::Weapon) && !PlayerCharacter->StoredMeleeWeaponID.IsNone())
+		{
+			if (ANCPlayerState* PlayerState = OwnerCharacter->GetPlayerState<ANCPlayerState>())
+			{
+				if (UNCPlayerInventoryComponent* InventoryComp =
+					PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>())
+				{
+					InventoryComp->DropStoredMeleeForPickupReplace();
+				}
+			}
+
+			PlayerCharacter->StoredMeleeWeaponID = NAME_None;
+			PlayerCharacter->StoredMeleePickupClass = nullptr;
+			PlayerCharacter->OnMeleeStoredChanged.Broadcast();
+		}
+	}
 }
 
 void UNCInteractionComponent::ClearHeldItemMesh()
@@ -425,11 +515,110 @@ void UNCInteractionComponent::StorePendingLoot()
 
 	if (!IsValid(Item))
 	{
+		RestorePreviousWeaponAfterPickup();
 		return;
 	}
 
 	INCInteractableInterface::Execute_Interact(Item, GetOwner());
 	UpdateInteractableTarget();
+
+	RestorePreviousWeaponAfterPickup();
+}
+
+void UNCInteractionComponent::RestorePreviousWeaponAfterPickup()
+{
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	ANCPlayerCharacter* PlayerCharacter = OwnerCharacter ? Cast<ANCPlayerCharacter>(OwnerCharacter) : nullptr;
+	if (!PlayerCharacter)
+	{
+		PendingRestoreGunSlot = ENCGunSlot::None;
+		bPendingRestoreMeleeVisual = false;
+		PendingSelectGunSlotAfterPickup = ENCGunSlot::None;
+		return;
+	}
+
+	if (PendingRestoreGunSlot != ENCGunSlot::None)
+	{
+		if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+		{
+			EquipComp->ShowActiveWeaponVisualAgain();
+		}
+		PendingRestoreGunSlot = ENCGunSlot::None;
+	}
+
+	if (PendingSelectGunSlotAfterPickup != ENCGunSlot::None)
+	{
+		if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+		{
+			EquipComp->SelectSlot(PendingSelectGunSlotAfterPickup);
+		}
+		PendingSelectGunSlotAfterPickup = ENCGunSlot::None;
+	}
+
+	if (bPendingRestoreMeleeVisual)
+	{
+		if (!PendingRestoreMeleeWeapon.WeaponID.IsNone())
+		{
+			if (UNCCombatComponent* CombatComp = PlayerCharacter->GetCombatComponent())
+			{
+				CombatComp->EquipWeapon(PendingRestoreMeleeWeapon);
+			}
+		}
+		bPendingRestoreMeleeVisual = false;
+		PendingRestoreMeleeWeapon = FNCWeaponInstance();
+	}
+}
+
+void UNCInteractionComponent::OnGunUnequipMontageFinishedForPickup()
+{
+	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
+	{
+		if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+		{
+			if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+			{
+				EquipComp->HideActiveWeaponVisualOnly();
+			}
+		}
+	}
+
+	StartPickup();
+}
+
+void UNCInteractionComponent::OnGunFullUnequipForPickupFinished(ENCGunSlot FinishedSlot)
+{
+	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
+	{
+		if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+		{
+			if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
+			{
+				EquipComp->OnSwapCompleted.RemoveDynamic(
+					this,
+					&UNCInteractionComponent::OnGunFullUnequipForPickupFinished);
+			}
+		}
+	}
+
+	StartPickup();
+}
+
+void UNCInteractionComponent::OnMeleeUnequipForPickupFinished()
+{
+	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
+	{
+		if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
+		{
+			if (UNCCombatComponent* CombatComp = PlayerCharacter->GetCombatComponent())
+			{
+				CombatComp->OnMeleeUnequipCompleted.RemoveDynamic(
+					this,
+					&UNCInteractionComponent::OnMeleeUnequipForPickupFinished);
+			}
+		}
+	}
+
+	StartPickup();
 }
 
 void UNCInteractionComponent::StartPickup()
@@ -448,37 +637,6 @@ void UNCInteractionComponent::StartPickup()
 	{
 		QueuedPickupTarget = nullptr;
 		return;
-	}
-
-	// ─────────────────────────────────────
-	// 핵심 수정
-	// 무기 Pickup 시작 전에 기존 Stored 근접무기를 먼저 Drop + 시각 제거
-	// ─────────────────────────────────────
-	if (Item->ItemTypeTag.MatchesTag(NCItemTag::Weapon))
-	{
-		if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
-		{
-			const bool bHadStoredMelee = !PlayerCharacter->StoredMeleeWeaponID.IsNone();
-
-			if (bHadStoredMelee)
-			{
-				// 서버에는 실제 바닥 DropActor 스폰 요청
-				if (ANCPlayerState* PlayerState = OwnerCharacter->GetPlayerState<ANCPlayerState>())
-				{
-					if (UNCPlayerInventoryComponent* InventoryComp =
-						PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>())
-					{
-						InventoryComp->DropStoredMeleeForPickupReplace();
-					}
-				}
-
-				// 로컬 시각 메쉬 즉시 제거
-				// 이걸 안 하면 PickupMontage 중 기존 근접무기 + 새 무기가 같이 보임
-				PlayerCharacter->StoredMeleeWeaponID = NAME_None;
-				PlayerCharacter->StoredMeleePickupClass = nullptr;
-				PlayerCharacter->OnMeleeStoredChanged.Broadcast();
-			}
-		}
 	}
 
 	if (!PickupMontage)
@@ -510,44 +668,3 @@ void UNCInteractionComponent::StartPickup()
 	}
 }
 
-void UNCInteractionComponent::OnMeleeUnequipForPickupFinished()
-{
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (!OwnerCharacter)
-	{
-		return;
-	}
-
-	if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
-	{
-		if (UNCCombatComponent* CombatComp = PlayerCharacter->GetCombatComponent())
-		{
-			CombatComp->OnMeleeUnequipCompleted.RemoveDynamic(
-				this,
-				&UNCInteractionComponent::OnMeleeUnequipForPickupFinished);
-		}
-	}
-
-	StartPickup();
-}
-
-void UNCInteractionComponent::OnGunUnequipForPickupFinished(ENCGunSlot FinishedSlot)
-{
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (!OwnerCharacter)
-	{
-		return;
-	}
-
-	if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
-	{
-		if (UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent())
-		{
-			EquipComp->OnSwapCompleted.RemoveDynamic(
-				this,
-				&UNCInteractionComponent::OnGunUnequipForPickupFinished);
-		}
-	}
-
-	StartPickup();
-}

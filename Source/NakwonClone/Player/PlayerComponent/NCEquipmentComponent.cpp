@@ -4,6 +4,7 @@
 #include "Engine/Texture2D.h"
 #include "TimerManager.h"
 #include "AbilitySystemComponent.h"
+#include "Weapon/Gun/NCGunActor.h"
 
 UNCEquipmentComponent::UNCEquipmentComponent()
 {
@@ -388,6 +389,42 @@ void UNCEquipmentComponent::ActivateWeaponForSlot(ENCGunSlot Slot)
 	Weapon->OnFireModeChanged.AddDynamic(this, &UNCEquipmentComponent::OnActiveWeaponFireModeChanged);
 
 	OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
+}
+
+void UNCEquipmentComponent::HideActiveWeaponVisualOnly()
+{
+	DeactivateCurrentWeapon();
+}
+
+void UNCEquipmentComponent::ShowActiveWeaponVisualAgain()
+{
+	if (ActiveSlot != ENCGunSlot::None)
+	{
+		ActivateWeaponForSlot(ActiveSlot);
+	}
+}
+
+void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector DropLocation, FRotator DropRotation)
+{
+	const FName OldGunID = GetOccupantGunID(NewGunID);
+	if (OldGunID.IsNone()) return;
+
+	const FNCGunData* OldData = FindGunData(OldGunID);
+	if (!OldData || !OldData->GunActorClass) return;
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	ANCGunActor* DroppedGun = GetWorld()->SpawnActor<ANCGunActor>(
+		OldData->GunActorClass, DropLocation, DropRotation, Params);
+
+	if (DroppedGun)
+	{
+		const FNCGunSlotData& OldSlot = (OldData->SlotType == ENCGunSlot::Primary)
+			? PrimarySlot : SecondarySlot;
+		DroppedGun->SavedCurrentAmmo = OldSlot.CurrentAmmo;
+		DroppedGun->SavedReserveAmmo = OldSlot.ReserveAmmo;
+	}
 }
 
 void UNCEquipmentComponent::DeactivateCurrentWeapon()
