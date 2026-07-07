@@ -552,6 +552,16 @@ void ANCPlayerController::GunToggleFireMode()
     if (UNCEquipmentComponent* EC = GetGunComp()) EC->ToggleFireMode();
 }
 
+bool ANCPlayerController::IsWeaponSwapBusy() const
+{
+    ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
+    if (!PC) return false;
+
+    UNCInteractionComponent* InteractionComp = PC->FindComponentByClass<UNCInteractionComponent>();
+
+    return InteractionComp && InteractionComp->IsPickingUp();
+}
+
 void ANCPlayerController::GunSelectPrimary()
 {
     if (IsMenuBlockingInput()) return;
@@ -565,8 +575,7 @@ void ANCPlayerController::GunSelectPrimary()
     UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
 
     if (!EC) return;
-    if (EC->IsSwapping()) return;
-    if (Combat && Combat->IsSwappingWeapon()) return;
+    if (IsWeaponSwapBusy()) return;
 
     if (EC->PrimarySlot.GunID.IsNone())
     {
@@ -575,12 +584,16 @@ void ANCPlayerController::GunSelectPrimary()
 
     if (Combat && Combat->IsWeaponEquipped())
     {
+        if (PendingMeleeToGunTarget == ENCGunSlot::Primary) return;
+
+        PendingMeleeToGunTarget = ENCGunSlot::Primary;
         Combat->UnEquipWeapon();
 
         GetWorld()->GetTimerManager().SetTimer(
             SwapTimerHandle,
             FTimerDelegate::CreateLambda([this]()
                 {
+                    PendingMeleeToGunTarget = ENCGunSlot::None;
                     if (UNCEquipmentComponent* EC2 = GetGunComp())
                     {
                         EC2->SelectSlot(ENCGunSlot::Primary);
@@ -614,8 +627,7 @@ void ANCPlayerController::GunSelectSecondary()
     UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
 
     if (!EC) return;
-    if (EC->IsSwapping()) return;
-    if (Combat && Combat->IsSwappingWeapon()) return;
+    if (IsWeaponSwapBusy()) return;
 
     if (EC->SecondarySlot.GunID.IsNone())
     {
@@ -624,12 +636,16 @@ void ANCPlayerController::GunSelectSecondary()
 
     if (Combat && Combat->IsWeaponEquipped())
     {
+        if (PendingMeleeToGunTarget == ENCGunSlot::Secondary) return;
+
+        PendingMeleeToGunTarget = ENCGunSlot::Secondary;
         Combat->UnEquipWeapon();
 
         GetWorld()->GetTimerManager().SetTimer(
             SwapTimerHandle,
             FTimerDelegate::CreateLambda([this]()
                 {
+                    PendingMeleeToGunTarget = ENCGunSlot::None;
                     if (UNCEquipmentComponent* EC2 = GetGunComp())
                     {
                         EC2->SelectSlot(ENCGunSlot::Secondary);
@@ -662,7 +678,9 @@ void ANCPlayerController::GunSelectMelee()
     UNCEquipmentComponent* GunComp = GetGunComp();
     if (!GunComp) return;
 
-    if (GunComp->IsSwapping()) return;
+    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
+
+    if (IsWeaponSwapBusy()) return;
 
     // 3번 근접무기가 없으면 총기에서 3번으로 전환 금지
     if (PC->StoredMeleeWeaponID.IsNone())
@@ -676,7 +694,6 @@ void ANCPlayerController::GunSelectMelee()
         return;
     }
 
-    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
     if (!Combat) return;
     if (Combat->IsWeaponEquipped()) return;
 

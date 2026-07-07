@@ -53,6 +53,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Action")
 	void StartPickup();
 
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Action")
+	bool IsPickingUp() const { return bIsLooting || bPickupPending; }
 
 private:
 	void RestorePreviousWeaponAfterPickup();

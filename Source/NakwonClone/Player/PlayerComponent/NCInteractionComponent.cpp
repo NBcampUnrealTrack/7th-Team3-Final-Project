@@ -345,9 +345,9 @@ void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 			}
 		}
 
-		const bool bIsWeaponPickup = Item->IsA<ANCGunActor>() || Item->IsA<ANCMeleePickupActor>();
+		const bool bIsMeleePickup = Item->IsA<ANCMeleePickupActor>();
 
-		if (bIsWeaponPickup
+		if (bIsMeleePickup
 			&& !PlayerCharacter->StoredMeleeWeaponID.IsNone()
 			&& PlayerCharacter->StoredMeleePickupClass)
 		{
