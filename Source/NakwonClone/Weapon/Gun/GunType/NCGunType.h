@@ -77,6 +77,9 @@ struct FNCGunData : public FTableRowBase
     bool bUseTwoHandIK = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")
+    bool bUseRightHandIK = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")
     FName LeftHandIKSocketName = NAME_None;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IK")

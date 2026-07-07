@@ -279,6 +279,6 @@ protected:
     void UpdateLocomotion();
     void UpdateWeaponAndBlendSpace();
     void UpdateWeaponStateTags();
-    void UpdateLeftHandIK();
+    void UpdateWeaponIK();
     void UpdateStopState(float DeltaSeconds);
 };

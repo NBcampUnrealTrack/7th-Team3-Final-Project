@@ -63,6 +63,9 @@ struct FNCWeaponData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
 	bool bUseLeftHandIK = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	bool bUseRightHandIK = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitTrace")
 	FName TrailStartSocket = NAME_None;
 
