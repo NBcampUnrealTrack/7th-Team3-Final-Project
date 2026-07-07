@@ -6,6 +6,7 @@
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Framwork/Gamemode/NCGameMode.h"
+#include "NakwonClone/Framwork/Gamemode/ParkinglotGameMode/NCParkinglotGameMode.h"
 #include "TimerManager.h"
 
 ANCEscapeTrigger::ANCEscapeTrigger()
@@ -76,16 +77,25 @@ void ANCEscapeTrigger::OnTriggerBeginOverlap(
 	}
 
 	// 다른 레벨로 이동 
-	if (!NextLevel.IsNull())
-	{
-		GetWorldTimerManager().SetTimer(
-			LevelOpenTimerHandle, this,
-			&ANCEscapeTrigger::OpenNextLevel, FMath::Max(0.01f, LevelOpenDelay), false);
-	}
+	GetWorldTimerManager().SetTimer(
+		LevelOpenTimerHandle, this,
+		&ANCEscapeTrigger::OpenNextLevel, FMath::Max(0.01f, LevelOpenDelay), false);
+
 }
 
 void ANCEscapeTrigger::OpenNextLevel()
 {
-	if (NextLevel.IsNull()) return;
-	UGameplayStatics::OpenLevelBySoftObjectPtr(this, NextLevel);
+	// 커스텀 레벨이 지정돼 있으면 그쪽으로
+	if (!NextLevel.IsNull())
+	{
+		const FString LevelPath = NextLevel.ToSoftObjectPath().GetLongPackageName();
+		GetWorld()->ServerTravel(LevelPath);
+		return;
+	}
+
+	// 기본: 주차장 게임모드의 프리로드된 쇼핑몰 이동
+	if (ANCParkinglotGameMode* GM = GetWorld()->GetAuthGameMode<ANCParkinglotGameMode>())
+	{
+		GM->MoveToShopLevel();
+	}
 }
