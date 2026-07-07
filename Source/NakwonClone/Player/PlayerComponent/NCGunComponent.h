@@ -160,6 +160,7 @@ private:
 	FVector DefaultCameraLocation = FVector::ZeroVector;
 	FVector TargetCameraLocation = FVector::ZeroVector;
 
+	//헌호수정 - RE4 스타일 어깨 너머 정조준 (가까이+오른쪽 → 캐릭터 상반신 왼쪽에 꽉) — 모든 총기 공통
 	UPROPERTY(EditAnywhere, Category = "Camera|ADS")
-	FVector ADSCameraLocation = FVector(-10.f, 18.f, 8.f);
+	FVector ADSCameraLocation = FVector(40.f, 50.f, 6.f);
 };

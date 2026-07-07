@@ -189,10 +189,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
 	TObjectPtr<USpotLightComponent> FlashlightLight;
 
-	// 헌호수정 - 플래시라이트 렌즈 발광 느낌용 Point Light
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
-	TObjectPtr<UPointLightComponent> FlashlightGlowLight;
-
 	//헌호수정 - 디비전 스타일 백팩 체력바 (3D 위젯, 등 소켓에 부착)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|HUD")
 	TObjectPtr<class UWidgetComponent> BackpackHPWidget;
