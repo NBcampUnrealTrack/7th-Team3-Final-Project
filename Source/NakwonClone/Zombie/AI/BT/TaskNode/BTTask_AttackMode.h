@@ -23,5 +23,5 @@ protected:
 private:
 	// 공격 사거리
 	UPROPERTY(EditAnywhere, Category = "Attack")
-	float AttackRange = 90.f;
+	float AttackRange = 50.f;
 };
