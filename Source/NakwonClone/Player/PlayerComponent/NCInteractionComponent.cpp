@@ -345,15 +345,24 @@ void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 			}
 		}
 
-		if (Item->ItemTypeTag.MatchesTag(NCItemTag::Weapon) && !PlayerCharacter->StoredMeleeWeaponID.IsNone())
+		const bool bIsWeaponPickup = Item->IsA<ANCGunActor>() || Item->IsA<ANCMeleePickupActor>();
+
+		if (bIsWeaponPickup
+			&& !PlayerCharacter->StoredMeleeWeaponID.IsNone()
+			&& PlayerCharacter->StoredMeleePickupClass)
 		{
-			if (ANCPlayerState* PlayerState = OwnerCharacter->GetPlayerState<ANCPlayerState>())
+			FActorSpawnParameters Params;
+			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+			ANCMeleePickupActor* Dropped = GetWorld()->SpawnActor<ANCMeleePickupActor>(
+				PlayerCharacter->StoredMeleePickupClass,
+				Item->GetActorLocation(),
+				PlayerCharacter->StoredMeleePickupRotation,
+				Params);
+
+			if (Dropped)
 			{
-				if (UNCPlayerInventoryComponent* InventoryComp =
-					PlayerState->FindComponentByClass<UNCPlayerInventoryComponent>())
-				{
-					InventoryComp->DropStoredMeleeForPickupReplace();
-				}
+				Dropped->WeaponID = PlayerCharacter->StoredMeleeWeaponID;
 			}
 
 			PlayerCharacter->StoredMeleeWeaponID = NAME_None;
