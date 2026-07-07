@@ -111,6 +111,9 @@ void UNCLocomotionComponent::StopStaminaDrain()
 
 void UNCLocomotionComponent::DrainStamina()
 {
+	//헌호수정 - 스태미나 무제한: 소모 안 함 (달리기 무한, 잠금 안 걸림)
+	return;
+
 	if (!OwnerCharacter) return;
 
 	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
