@@ -46,7 +46,7 @@ void UNCInteractionComponent::Interact()
 
 	if (CurrentInteractableTarget->IsA<ANCItemActor>())
 	{
-		if (bIsLooting)
+		if (bIsLooting || bPickupPending)
 		{
 			return;
 		}
@@ -57,13 +57,15 @@ void UNCInteractionComponent::Interact()
 			return;
 		}
 
-		QueuedPickupTarget = Item;
-
 		ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 		if (!OwnerCharacter)
 		{
 			return;
 		}
+
+		QueuedPickupTarget = Item;
+
+		bPickupPending = true;
 
 		if (ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(OwnerCharacter))
 		{
@@ -422,6 +424,8 @@ void UNCInteractionComponent::StorePendingLoot()
 
 void UNCInteractionComponent::StartPickup()
 {
+	bPickupPending = false;
+
 	if (bIsLooting)
 	{
 		return;

@@ -83,7 +83,9 @@ private:
 	AActor* CurrentInteractableTarget = nullptr;
 	
 	bool bIsLooting = false;
-	
+
+	bool bPickupPending = false;
+
 	void UpdateInteractableTarget();
 	
 	void SetHighlight(AActor* TargetActor, bool bHighlight);
