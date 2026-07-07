@@ -5,6 +5,7 @@
 #include "Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
+#include "GameFramework/SpringArmComponent.h" //헌호수정 - ADS 카메라 랙 토글
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerComponent/NCEquipmentComponent.h" // 하상빈 추가
@@ -510,11 +511,31 @@ void ANCPlayerController::GunStartADS()
     if (IsMenuBlockingInput()) return;
     if (IsUsingItem()) return; // 소모품 사용 중 조준 차단
     if (UNCEquipmentComponent* EC = GetGunComp()) EC->StartADS();
+
+    //헌호수정 - 정조준 중 캐릭터가 조준(카메라) 방향 고정 → 좌우 이동 시 프레임 안 벗어남 (RE4 스타일)
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+    {
+        PC->SetAimRotationMode(true);
+
+        //헌호수정 - 정조준 중 카메라 랙 끔 → 카메라가 캐릭터에 딱 붙어 따라감 (좌우 이동 드리프트 방지)
+        if (USpringArmComponent* Boom = PC->GetCameraBoom())
+            Boom->bEnableCameraLag = false;
+    }
 }
 
 void ANCPlayerController::GunStopADS()
 {
     if (UNCEquipmentComponent* EC = GetGunComp()) EC->StopADS();
+
+    //헌호수정 - 조준 해제 → 원래 이동 방향 회전으로 복구
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+    {
+        PC->SetAimRotationMode(false);
+
+        //헌호수정 - 조준 해제 → 카메라 랙 다시 켬 (평소 부드러운 카메라)
+        if (USpringArmComponent* Boom = PC->GetCameraBoom())
+            Boom->bEnableCameraLag = true;
+    }
 }
 
 void ANCPlayerController::GunReload()

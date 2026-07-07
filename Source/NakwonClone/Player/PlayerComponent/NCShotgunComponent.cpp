@@ -5,6 +5,16 @@
 #include "Kismet/GameplayStatics.h"
 #include "Common/NCGameplayTags.h"
 
+void UNCShotgunComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ShellTimerHandle);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void UNCShotgunComponent::Reload()
 {
 	if (IsReloading() || !HasActiveGun()) return;

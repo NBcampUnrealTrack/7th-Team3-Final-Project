@@ -166,7 +166,7 @@ public:
 	float HitReactDelay = 0.f;
 	
 	// 피격 시 넉백 재생 확률
-	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
+	UPROPERTY()
 	float HitReactChance;
 
 	// 연속 피격 시 이전 몽타주 블렌드아웃 시간

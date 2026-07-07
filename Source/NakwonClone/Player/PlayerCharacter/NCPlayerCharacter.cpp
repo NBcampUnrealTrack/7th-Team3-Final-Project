@@ -93,14 +93,6 @@ void ANCPlayerCharacter::InitComponents()
     FlashlightLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
     FlashlightLight->SetCastShadows(false); //헌호수정 - 캐릭터 얼굴 통과 그림자 방지
 
-    // 헌호수정 - 렌즈 발광 느낌용 Point Light
-    FlashlightGlowLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("FlashlightGlowLight"));
-    FlashlightGlowLight->SetupAttachment(FlashlightMesh);
-    FlashlightGlowLight->SetIntensity(200.f);
-    FlashlightGlowLight->SetAttenuationRadius(50.f);
-    FlashlightGlowLight->SetLightColor(FLinearColor::White);
-    FlashlightGlowLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
-
     //헌호수정 - 디비전 스타일 백팩 체력바 (3D 위젯)
     // 애니메이션(뛰기/공격)에 안 흔들리도록 본이 아닌 캡슐(루트)에 부착 → 캐릭터 이동/회전만 따라감
     BackpackHPWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("BackpackHPWidget"));
@@ -774,10 +766,6 @@ void ANCPlayerCharacter::ApplyFlashlightState()
 {
     if (FlashlightLight)
         FlashlightLight->SetVisibility(bFlashlightOn);
-
-    // 헌호수정 - Glow Light도 같이 토글
-    if (FlashlightGlowLight)
-        FlashlightGlowLight->SetVisibility(bFlashlightOn);
 }
 
 void ANCPlayerCharacter::Tick(float DeltaTime)
