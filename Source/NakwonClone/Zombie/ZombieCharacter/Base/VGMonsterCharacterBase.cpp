@@ -123,7 +123,7 @@ void AVGMonsterCharacterBase::BeginPlay()
 	// H
 	if (HasAuthority())
 	{
-		StartHowlTimer();
+		//StartHowlTimer();
 		StartIdleTimer();
 	}
 }
@@ -355,7 +355,7 @@ void AVGMonsterCharacterBase::HandleHowl()
 
 	if (!bAwake)
 	{
-		Multicast_PlaySound(HowlSound, CombatAttenuation);
+		Multicast_PlaySound(HowlSound, SoundAttenuation);
 	}
 
 	StartHowlTimer();
@@ -374,7 +374,7 @@ void AVGMonsterCharacterBase::HandleIdle()
 {
 	if (bIsDead) return;   // 죽으면 멈춤 (재예약 안 함)
 
-	Multicast_PlaySound(IdleSound, CombatAttenuation);
+	Multicast_PlaySound(IdleSound, SoundAttenuation);
 	StartIdleTimer();      // 다음 주기 예약
 }
 
@@ -486,6 +486,9 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 
 	if (Row->HitSound)                  HitSound = Row->HitSound;
 	if (Row->HitSoundsByPart.Num() > 0) HitSoundsByPart = Row->HitSoundsByPart;
+
+	if (Row->IdleSound)                IdleSound = Row->IdleSound;
+	if (Row->IdleSoundCooldown > 0.f)  IdleSoundCooldown = Row->IdleSoundCooldown;
 
 	HitReactChance = Row->HitReactChance; 
 }
