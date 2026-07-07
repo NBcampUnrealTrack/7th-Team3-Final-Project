@@ -111,17 +111,7 @@ void UNCLocomotionComponent::StopStaminaDrain()
 
 void UNCLocomotionComponent::DrainStamina()
 {
-	if (!OwnerCharacter) return;
-
-	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
-	if (!ASC) return;
-
-	const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetStaminaAttribute());
-	const float NewValue = FMath::Max(Current - StaminaDrainRate * 0.1f, 0.f);
-	ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetStaminaAttribute(), NewValue);
-
-	if (NewValue <= 0.f)
-		OnStaminaEmpty();
+	//헌호수정 - 스태미나 무제한: 소모 안 함 (달리기 무한, 잠금 안 걸림)
 }
 
 void UNCLocomotionComponent::RegenStamina()
