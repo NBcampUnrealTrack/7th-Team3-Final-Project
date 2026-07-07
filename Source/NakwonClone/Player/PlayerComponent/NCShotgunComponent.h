@@ -17,6 +17,7 @@ public:
 
 protected:
 	virtual void OnBeforeFire() override { StopReload(); }
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	void OnShellInserted();

@@ -37,6 +37,16 @@ void UNCInteractionComponent::BeginPlay()
 	}
 }
 
+void UNCInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_UpdateInteractable);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void UNCInteractionComponent::Interact()
 {
 	if (!CurrentInteractableTarget)
