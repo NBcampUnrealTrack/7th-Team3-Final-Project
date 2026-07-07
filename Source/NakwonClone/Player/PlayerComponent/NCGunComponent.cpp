@@ -446,7 +446,6 @@ void UNCGunComponent::Reload()
 	if (CurrentAmmo >= Data->MagazineSize) return;
 
 	StopFire();
-	if (IsADS()) StopADS();
 	ActiveGunActions.AddTag(NCGun::Action_Reloading);
 
 	if (!Data->ReloadSound.IsNull())
