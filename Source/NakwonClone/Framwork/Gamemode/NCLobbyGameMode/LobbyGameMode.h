@@ -9,18 +9,14 @@ UCLASS()
 class NAKWONCLONE_API ALobbyGameMode : public AGameMode
 {
 	GENERATED_BODY()
-	
+
 protected:
 	ALobbyGameMode();
-	
-	virtual void BeginPlay() override;
-	
-	FTimerHandle NextMapReadyTimerHandle;
-	
+
 public:
 	UFUNCTION(BlueprintCallable)
-	void CheckMapReady();
+	void MoveToParkingLevel();
 	
 	UFUNCTION(BlueprintCallable)
-	void MoveToParkingLevel();
+	void MoveToTitle();
 };
