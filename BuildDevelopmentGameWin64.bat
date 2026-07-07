@@ -7,7 +7,7 @@ chcp 65001
 :: ============================
 set PROJECT_NAME=NakwonClone
 set ENGINE_PATH="C:\UE_5.6_Custom\Engine"
-set CONFIG=Development
+set CONFIG=Shipping
 
 set BUILD_PLATFORM=Win64
 set PROJECT_PATH=%~dp0%PROJECT_NAME%.uproject
