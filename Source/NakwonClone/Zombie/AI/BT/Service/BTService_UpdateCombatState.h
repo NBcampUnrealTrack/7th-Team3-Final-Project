@@ -21,4 +21,7 @@ protected:
 private:
 	UPROPERTY(EditAnywhere, Category = "Detection")
 	float DetectRadius = 1500.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Detection")
+	float SlotReleaseDistance = 200.f;
 };

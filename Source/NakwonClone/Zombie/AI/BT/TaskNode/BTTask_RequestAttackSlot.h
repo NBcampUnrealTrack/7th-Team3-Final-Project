@@ -14,5 +14,5 @@ protected:
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Detection")
-	float SlotRequestDistance = 400.f;
+	float SlotRequestDistance = 200.f;
 };

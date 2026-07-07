@@ -90,6 +90,11 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		{
 			BB->SetValueAsVector(AVGMonsterAIControllerBase::SlotLocationKey, SlotLoc);
 		}
+		
+		if (Monster && NearestDist > SlotReleaseDistance)
+		{
+			Monster->ReleaseAttackSlot();
+		}
 	}
 	else
 	{
