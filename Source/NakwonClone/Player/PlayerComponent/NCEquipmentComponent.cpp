@@ -428,6 +428,31 @@ void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector Dro
 	}
 }
 
+void UNCEquipmentComponent::RefillAllReserveAmmo()
+{
+	auto RefillSlot = [this](ENCGunSlot Slot, FNCGunSlotData& SlotData)
+	{
+		if (SlotData.GunID.IsNone()) return;
+
+		const FNCGunData* Data = FindGunData(SlotData.GunID);
+		if (!Data) return;
+
+		SlotData.ReserveAmmo = Data->MaxReserveAmmo;
+
+		if (Slot == ActiveSlot)
+		{
+			if (UNCGunComponent* Weapon = GetActiveWeapon())
+			{
+				Weapon->ReserveAmmo = Data->MaxReserveAmmo;
+				Weapon->OnAmmoChanged.Broadcast(Weapon->CurrentAmmo, Weapon->ReserveAmmo);
+			}
+		}
+	};
+
+	RefillSlot(ENCGunSlot::Primary, PrimarySlot);
+	RefillSlot(ENCGunSlot::Secondary, SecondarySlot);
+}
+
 void UNCEquipmentComponent::DeactivateCurrentWeapon()
 {
 	UNCGunComponent* Weapon = GetActiveWeapon();
