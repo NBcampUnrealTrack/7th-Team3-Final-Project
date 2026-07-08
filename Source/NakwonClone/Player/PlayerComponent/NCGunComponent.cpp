@@ -215,8 +215,6 @@ float UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 		return 0.f;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[GunUnequip] Play Unequip Montage"));
-
 	return PlayGunMontage(Data->UnequipMontage);
 }
 
@@ -297,13 +295,10 @@ void UNCGunComponent::FireOnce()
 
 	FVector CamLocation = SpawnLocation;
 	FVector CamForward  = Owner->GetActorForwardVector();
-	if (ACharacter* Char = Cast<ACharacter>(Owner))
+	if (UCameraComponent* Cam = FindCamera())
 	{
-		if (UCameraComponent* Cam = Char->FindComponentByClass<UCameraComponent>())
-		{
-			CamLocation = Cam->GetComponentLocation();
-			CamForward  = Cam->GetComponentRotation().Vector();
-		}
+		CamLocation = Cam->GetComponentLocation();
+		CamForward  = Cam->GetComponentRotation().Vector();
 	}
 
 	FVector AimPoint = CamLocation + CamForward * Data->MaxRange;
@@ -599,11 +594,19 @@ void UNCGunComponent::RestoreFOV()
 	SetComponentTickEnabled(true);
 }
 
-UCameraComponent* UNCGunComponent::FindCamera() const
+UCameraComponent* UNCGunComponent::FindCamera()
 {
+	if (CachedCamera)
+	{
+		return CachedCamera;
+	}
+
 	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
-		return Char->FindComponentByClass<UCameraComponent>();
-	return nullptr;
+	{
+		CachedCamera = Char->FindComponentByClass<UCameraComponent>();
+	}
+
+	return CachedCamera;
 }
 
 // ─────────────────────────────────────────────
@@ -651,11 +654,6 @@ float UNCGunComponent::PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& Montag
 	}
 
 	const float Length = Char->PlayAnimMontage(Montage);
-
-	UE_LOG(LogTemp, Warning, TEXT("[GunMontage] Played: %s / Length: %.2f"),
-		*Montage->GetName(),
-		Length
-	);
 
 	return Length;
 }

@@ -128,7 +128,10 @@ private:
 
 	void ApplyADSFOV();
 	void RestoreFOV();
-	UCameraComponent* FindCamera() const;
+	UCameraComponent* FindCamera();
+
+	UPROPERTY()
+	TObjectPtr<UCameraComponent> CachedCamera;
 
 	float PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& MontageSoft);
 
