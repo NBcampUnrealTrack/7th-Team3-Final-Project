@@ -116,6 +116,8 @@ private:
 	void FireOnce();
 	void OnReloadFinished();
 
+	bool bWantsADS = false;
+
 	float LastFireTime = -100.f;
 
 	FTimerHandle ShowMagazineTimerHandle;
