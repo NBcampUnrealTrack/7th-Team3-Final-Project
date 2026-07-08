@@ -19,8 +19,8 @@ UBTService_UpdateCombatState::UBTService_UpdateCombatState()
 {
 	NodeName = "UpdateCombatState";
 	
-	Interval = 0.2f;
-	RandomDeviation = 0.1f;
+	Interval = 0.1f;
+	RandomDeviation = 0.05f;
 	
 	bNotifyTick = true;
 	bNotifyBecomeRelevant = false;   // 서비스가 처음 활성화될 때 초기화x
@@ -37,7 +37,7 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	APawn* SelfPawn = AICon->GetPawn();
 	UBlackboardComponent* BB = OwnerComp.GetBlackboardComponent();
 	UAIPerceptionComponent* Perception = AICon->GetPerceptionComponent();
-	if (!SelfPawn || !BB || !Perception) return;
+	if (!SelfPawn || !BB) return; // perception 제거
 
 	AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(SelfPawn);
 
@@ -85,15 +85,28 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	{
 		BB->SetValueAsObject(AVGMonsterAIControllerBase::TargetActorKey, NearestPlayer);
 
-		FVector SlotLoc;
-		if (Monster && Monster->GetReservedSlotLocation(SlotLoc))
+		if (Monster)
 		{
-			BB->SetValueAsVector(AVGMonsterAIControllerBase::SlotLocationKey, SlotLoc);
-		}
-		
-		if (Monster && NearestDist > SlotReleaseDistance)
-		{
-			Monster->ReleaseAttackSlot();
+			FVector SlotLoc;
+			bool bReserved = false;
+
+			// ── 사거리 안 → Attack Slot 우선 시도 ──
+			if (NearestDist <= SlotReleaseDistance)
+			{
+				bReserved = Monster->ReserveAttackSlot(NearestPlayer, SlotLoc);
+			}
+
+			// ── 사거리 밖이거나 Attack Slot이 꽉 찼음 → Wait Slot ──
+			if (!bReserved)
+			{
+				bReserved = Monster->ReserveWaitSlot(NearestPlayer, SlotLoc);
+			}
+
+			// ── 매 틱 최신 슬롯 위치를 BB에 갱신 (MoveTo가 Observed Blackboard Value로 실시간 추적) ──
+			if (bReserved)
+			{
+				BB->SetValueAsVector(AVGMonsterAIControllerBase::SlotLocationKey, SlotLoc);
+			}
 		}
 	}
 	else

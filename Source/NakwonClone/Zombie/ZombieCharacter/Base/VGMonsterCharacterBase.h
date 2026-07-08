@@ -410,4 +410,9 @@ private:
 	bool bReservedIsWaitSlot = false;
 
 #pragma endregion
+	
+public:
+	// bRandomType이 true일 때, 비어있지 않으면 이 목록 안에서만 랜덤 선택
+	UPROPERTY(EditAnywhere, Category = "Monster|Type")
+	TArray<EVGMonsterType> AllowedRandomTypes;
 };

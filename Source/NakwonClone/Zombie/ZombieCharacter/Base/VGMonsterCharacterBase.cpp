@@ -31,6 +31,11 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	{
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
+		
+		GetCharacterMovement()->bUseRVOAvoidance = true;
+		GetCharacterMovement()->AvoidanceConsiderationRadius = 100.f;
+		GetCharacterMovement()->SetAvoidanceGroup(1);
+		GetCharacterMovement()->SetGroupsToAvoid(1);
 	}
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
@@ -92,9 +97,18 @@ void AVGMonsterCharacterBase::BeginPlay()
 
 	if (bRandomType)   // BP에서 켤 수 있는 플래그
 	{
-		const int32 Count = (int32)EVGMonsterType::MAX;  // 새 타입 추가해도 자동 반영
-		MonsterType = (EVGMonsterType)FMath::RandRange(0, Count - 1);
+		if (AllowedRandomTypes.Num() > 0)
+		{
+			const int32 Index = FMath::RandRange(0, AllowedRandomTypes.Num() - 1);
+			MonsterType = AllowedRandomTypes[Index];
+		}
+		else
+		{
+			const int32 Count = (int32)EVGMonsterType::MAX;
+			MonsterType = (EVGMonsterType)FMath::RandRange(0, Count - 1);
+		}
 	}
+	
 	// 타입 데이터로 외형/스탯/공격 세팅 (랜덤메시 대체)
 	AnimPlayRateScale = FMath::FRandRange(0.92f, 1.08f);   // ±8%
 	AnimStartPosition = FMath::FRandRange(0.f, 0.5f);       // 시작 위상(초) — 클립 길이에 맞춰 조정

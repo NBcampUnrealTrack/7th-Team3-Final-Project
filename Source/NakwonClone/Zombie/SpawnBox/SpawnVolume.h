@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterTypeData.h"
 #include "SpawnVolume.generated.h"
 
 struct FMonsterSpawnRow;
@@ -50,6 +51,10 @@ public:
 	// 시작하자마자 스폰할지
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	bool bAutoStart = true;
+	
+	// 비어있으면 해당 몬스터 BP의 기본 랜덤 범위 사용, 값이 있으면 이 타입들 중에서만 랜덤
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+	TArray<EVGMonsterType> AllowedMonsterTypes;
 
 	// 외부(문 등)에서 스폰 발동
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
