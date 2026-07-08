@@ -21,6 +21,9 @@ EBTNodeResult::Type UBTTask_StateMode::ExecuteTask(UBehaviorTreeComponent& Owner
 		{
 			if (SelfChar->GetCharacterMovement())
 				SelfChar->GetCharacterMovement()->MaxWalkSpeed = Mon->GetPatrolSpeed();
+
+			// 안전장치: 비전투 상태 진입 시 남아있는 슬롯 예약 강제 해제
+			Mon->ReleaseAttackSlot();
 		}
 	}
 

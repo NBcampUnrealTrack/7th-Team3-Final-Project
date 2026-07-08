@@ -31,14 +31,14 @@ public:
 protected:
 	// 동시 근접 공격 허용 인원 (= 슬롯 갯수)
 	UPROPERTY(EditAnywhere, Category = "AttackSlot")
-	int32 MaxSlots = 5;
+	int32 MaxSlots = 9;
 	
 	// 슬롯 반경
 	UPROPERTY(EditAnywhere, Category = "AttackSlot")
-	float SlotRadius = 50.f;
+	float SlotRadius = 30.f;
 	
 	UPROPERTY(EditAnywhere, Category = "AttackSlot|Wait")
-	int32 MaxWaitSlots = 16;
+	int32 MaxWaitSlots = 33;
 	UPROPERTY(EditAnywhere, Category = "AttackSlot|Wait")
 	float WaitSlotRadius = 200.f;
 	

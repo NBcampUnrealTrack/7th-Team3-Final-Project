@@ -2,6 +2,7 @@
 
 
 #include "VGAttackSlotComponent.h"
+#include "NavigationSystem.h"
 
 
 UVGAttackSlotComponent::UVGAttackSlotComponent()
@@ -55,7 +56,18 @@ FVector UVGAttackSlotComponent::GetSlotLocation(int32 SlotIndex) const
 	const float AngleStep = 360.f / FMath::Max(1, MaxSlots);
 	const float AngleDeg = AngleStep * SlotIndex;
 	const FVector Offset = FRotator(0.f, AngleDeg, 0.f).RotateVector(FVector(SlotRadius, 0.f, 0.f));
-	return Owner->GetActorLocation() + Offset;
+	const FVector RawLocation = Owner->GetActorLocation() + Offset;
+
+	if (const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+	{
+		FNavLocation NavLoc;
+		if (NavSys->ProjectPointToNavigation(RawLocation, NavLoc, FVector(100.f, 100.f, 200.f)))
+		{
+			return NavLoc.Location;
+		}
+	}
+
+	return RawLocation;
 }
 
 bool UVGAttackSlotComponent::RequestWaitSlot(AActor* Requester, int32& OutSlotIndex)
@@ -87,5 +99,16 @@ FVector UVGAttackSlotComponent::GetWaitSlotLocation(int32 SlotIndex) const
 	const float AngleStep = 360.f / FMath::Max(1, MaxWaitSlots);
 	const float AngleDeg = AngleStep * SlotIndex;
 	const FVector Offset = FRotator(0.f, AngleDeg, 0.f).RotateVector(FVector(WaitSlotRadius, 0.f, 0.f));
-	return Owner->GetActorLocation() + Offset;
+	const FVector RawLocation = Owner->GetActorLocation() + Offset;
+
+	if (const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+	{
+		FNavLocation NavLoc;
+		if (NavSys->ProjectPointToNavigation(RawLocation, NavLoc, FVector(100.f, 100.f, 200.f)))
+		{
+			return NavLoc.Location;
+		}
+	}
+
+	return RawLocation;
 }

@@ -2,13 +2,13 @@
 
 
 #include "SpawnVolume.h"
-
 #include "AIController.h"
 #include "Components/BoxComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "NakwonClone/Zombie/SpawnBox/MonsterSpawnRow.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
 ASpawnVolume::ASpawnVolume()
 {
@@ -119,43 +119,44 @@ void ASpawnVolume::SpawnMonster(TSubclassOf<AActor> MonsterClass)
 		return;
 	}
 
-	// 박스 범위 안 랜덤 위치
 	const FVector BoxOrigin = SpawnBox->GetComponentLocation();
 	const FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
 
 	FVector SpawnLocation = BoxOrigin + FVector(
 		FMath::FRandRange(-BoxExtent.X, BoxExtent.X),
 		FMath::FRandRange(-BoxExtent.Y, BoxExtent.Y),
-		0.f   // 바닥 높이 유지 (Z는 박스 중심)
+		0.f
 	);
 
 	FRotator SpawnRotation = FRotator::ZeroRotator;
+	FTransform SpawnTransform(SpawnRotation, SpawnLocation);
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-	SpawnParams.Instigator = GetInstigator();
+	AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(
+		MonsterClass, SpawnTransform, this, GetInstigator());
 
-	AActor* NewActor = GetWorld()->SpawnActor<AActor>(
-		MonsterClass,
-		SpawnLocation,
-		SpawnRotation,
-		SpawnParams
-	);
-
-	if (NewActor)
+	if (!NewActor)
 	{
-		APawn* MonsterPawn = Cast<APawn>(NewActor);
-		if (MonsterPawn)
-		{
-			AAIController* AIC = Cast<AAIController>(MonsterPawn->GetController());
-			if (AIC && AIC->GetBlackboardComponent())
-			{
-				// 상대 좌표(위젯)를 월드 좌표로 변환하여 전달
-				FVector WorldTarget = GetActorLocation() + TargetEndingLocation;
+		return;
+	}
 
-				// 블랙보드 키 이름 'EndingLocation'은 BT의 이름과 반드시 일치해야 함
-				AIC->GetBlackboardComponent()->SetValueAsVector(TEXT("EndingLocation"), WorldTarget);
-			}
+	if (AllowedMonsterTypes.Num() > 0)
+	{
+		if (AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(NewActor))
+		{
+			Monster->AllowedRandomTypes = AllowedMonsterTypes;
+		}
+	}
+
+	NewActor->FinishSpawning(SpawnTransform);
+
+	APawn* MonsterPawn = Cast<APawn>(NewActor);
+	if (MonsterPawn)
+	{
+		AAIController* AIC = Cast<AAIController>(MonsterPawn->GetController());
+		if (AIC && AIC->GetBlackboardComponent())
+		{
+			FVector WorldTarget = GetActorLocation() + TargetEndingLocation;
+			AIC->GetBlackboardComponent()->SetValueAsVector(TEXT("EndingLocation"), WorldTarget);
 		}
 	}
 }
