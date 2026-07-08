@@ -179,6 +179,8 @@ void UNCGunComponent::DeactivateGun()
 
 	StopFire();
 
+	bWantsADS = false;
+
 	if (IsADS())
 	{
 		StopADS();
@@ -212,8 +214,6 @@ float UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 		UE_LOG(LogTemp, Warning, TEXT("[GunUnequip] UnequipMontage NULL"));
 		return 0.f;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[GunUnequip] Play Unequip Montage"));
 
 	return PlayGunMontage(Data->UnequipMontage);
 }
@@ -295,13 +295,10 @@ void UNCGunComponent::FireOnce()
 
 	FVector CamLocation = SpawnLocation;
 	FVector CamForward  = Owner->GetActorForwardVector();
-	if (ACharacter* Char = Cast<ACharacter>(Owner))
+	if (UCameraComponent* Cam = FindCamera())
 	{
-		if (UCameraComponent* Cam = Char->FindComponentByClass<UCameraComponent>())
-		{
-			CamLocation = Cam->GetComponentLocation();
-			CamForward  = Cam->GetComponentRotation().Vector();
-		}
+		CamLocation = Cam->GetComponentLocation();
+		CamForward  = Cam->GetComponentRotation().Vector();
 	}
 
 	FVector AimPoint = CamLocation + CamForward * Data->MaxRange;
@@ -457,7 +454,8 @@ void UNCGunComponent::Reload()
 	}
 
 	// 캐릭터 장전 몽타주
-	PlayGunMontage(Data->ReloadMontage);
+	const float MontageLength = PlayGunMontage(Data->ReloadMontage);
+	const float ReloadDuration = MontageLength > 0.f ? MontageLength : Data->ReloadTime;
 
 	// 총기 탄창 숨김 + 떨어지는 탄창 생성
 	HideGunMagazine();
@@ -472,20 +470,20 @@ void UNCGunComponent::Reload()
 		}
 	}
 
-	// 장전 끝나면 탄창 다시 보이게
+	// 장전 끝나면 탄창 다시 보이게 (몽타주 실제 길이 기준)
 	GetWorld()->GetTimerManager().SetTimer(
 		ShowMagazineTimerHandle,
 		this,
 		&UNCGunComponent::ShowGunMagazine,
-		Data->ReloadTime,
+		ReloadDuration,
 		false);
 
-	// 장전 완료 처리
+	// 장전 완료 처리 (몽타주 실제 길이 기준)
 	GetWorld()->GetTimerManager().SetTimer(
 		ReloadTimerHandle,
 		this,
 		&UNCGunComponent::OnReloadFinished,
-		Data->ReloadTime,
+		ReloadDuration,
 		false);
 }
 
@@ -502,6 +500,11 @@ void UNCGunComponent::OnReloadFinished()
 	ReserveAmmo -= Take;
 
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
+
+	if (bWantsADS)
+	{
+		StartADS();
+	}
 }
 
 // ─────────────────────────────────────────────
@@ -510,6 +513,8 @@ void UNCGunComponent::OnReloadFinished()
 void UNCGunComponent::StartADS()
 {
 	if (!HasActiveGun()) return;
+
+	bWantsADS = true;
 	if (IsReloading()) return;
 
 	ActiveGunActions.AddTag(NCGun::Action_ADS);
@@ -517,6 +522,7 @@ void UNCGunComponent::StartADS()
 	if (ANCPlayerCharacter* PlayerChar = Cast<ANCPlayerCharacter>(GetOwner()))
 	{
 		PlayerChar->StopSprint();
+		PlayerChar->SetAimRotationMode(true);
 	}
 
 	if (AActor* Owner = GetOwner())
@@ -537,12 +543,19 @@ void UNCGunComponent::StartADS()
 
 void UNCGunComponent::StopADS()
 {
+	bWantsADS = false;
+
 	if (!IsADS())
 	{
 		return;
 	}
 
 	ActiveGunActions.RemoveTag(NCGun::Action_ADS);
+
+	if (ANCPlayerCharacter* PlayerChar = Cast<ANCPlayerCharacter>(GetOwner()))
+	{
+		PlayerChar->SetAimRotationMode(false);
+	}
 
 	if (AActor* Owner = GetOwner())
 	{
@@ -581,11 +594,19 @@ void UNCGunComponent::RestoreFOV()
 	SetComponentTickEnabled(true);
 }
 
-UCameraComponent* UNCGunComponent::FindCamera() const
+UCameraComponent* UNCGunComponent::FindCamera()
 {
+	if (CachedCamera)
+	{
+		return CachedCamera;
+	}
+
 	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
-		return Char->FindComponentByClass<UCameraComponent>();
-	return nullptr;
+	{
+		CachedCamera = Char->FindComponentByClass<UCameraComponent>();
+	}
+
+	return CachedCamera;
 }
 
 // ─────────────────────────────────────────────
@@ -633,11 +654,6 @@ float UNCGunComponent::PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& Montag
 	}
 
 	const float Length = Char->PlayAnimMontage(Montage);
-
-	UE_LOG(LogTemp, Warning, TEXT("[GunMontage] Played: %s / Length: %.2f"),
-		*Montage->GetName(),
-		Length
-	);
 
 	return Length;
 }

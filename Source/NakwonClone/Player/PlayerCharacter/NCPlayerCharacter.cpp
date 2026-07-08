@@ -785,11 +785,6 @@ void ANCPlayerCharacter::Tick(float DeltaTime)
         }
     }
 
-    if (!bAimRotationMode)
-    {
-        return;
-    }
-
     AController* OwnerController = GetController();
     if (!OwnerController)
     {
@@ -808,11 +803,16 @@ void ANCPlayerCharacter::SetAimRotationMode(bool bEnable)
 
     if (UCharacterMovementComponent* Move = GetCharacterMovement())
     {
-        Move->bOrientRotationToMovement = !bEnable;
+        Move->bOrientRotationToMovement = false;
         Move->bUseControllerDesiredRotation = false;
     }
 
     bUseControllerRotationYaw = false;
+
+    if (CameraBoom)
+    {
+        CameraBoom->bEnableCameraLag = !bEnable;
+    }
 }
 
 void ANCPlayerCharacter::Multicast_PlayHitReactMontage_Implementation(UAnimMontage* MontageToPlay)

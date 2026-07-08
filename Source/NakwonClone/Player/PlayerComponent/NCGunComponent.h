@@ -116,6 +116,8 @@ private:
 	void FireOnce();
 	void OnReloadFinished();
 
+	bool bWantsADS = false;
+
 	float LastFireTime = -100.f;
 
 	FTimerHandle ShowMagazineTimerHandle;
@@ -126,7 +128,10 @@ private:
 
 	void ApplyADSFOV();
 	void RestoreFOV();
-	UCameraComponent* FindCamera() const;
+	UCameraComponent* FindCamera();
+
+	UPROPERTY()
+	TObjectPtr<UCameraComponent> CachedCamera;
 
 	float PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& MontageSoft);
 
