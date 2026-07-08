@@ -189,6 +189,8 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 	GetWorld()->GetTimerManager().ClearTimer(MeleeEquipTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(MeleeUnequipTimerHandle);
 
+	++SwapGeneration;
+
 	// 기존 근접무기 액터가 남아있으면 먼저 제거
 	if (SpawnedWeaponActor)
 	{
@@ -244,8 +246,7 @@ void UNCCombatComponent::Internal_EquipWeapon(FNCWeaponInstance WeaponInstance)
 
 	GetWorld()->GetTimerManager().SetTimer(
 		MeleeEquipTimerHandle,
-		this,
-		&UNCCombatComponent::FinishEquipWeapon,
+		FTimerDelegate::CreateUObject(this, &UNCCombatComponent::FinishEquipWeapon, SwapGeneration),
 		MeleeEquipAttachDelay,
 		false
 	);
@@ -263,6 +264,8 @@ void UNCCombatComponent::Internal_UnEquipWeapon()
 	GetWorld()->GetTimerManager().ClearTimer(MeleeEquipTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(MeleeUnequipTimerHandle);
 
+	++SwapGeneration;
+
 	bIsSwappingWeapon = true;
 
 	if (ASC)
@@ -274,8 +277,7 @@ void UNCCombatComponent::Internal_UnEquipWeapon()
 
 	GetWorld()->GetTimerManager().SetTimer(
 		MeleeUnequipTimerHandle,
-		this,
-		&UNCCombatComponent::FinishUnEquipWeapon,
+		FTimerDelegate::CreateUObject(this, &UNCCombatComponent::FinishUnEquipWeapon, SwapGeneration),
 		MeleeUnequipDetachDelay,
 		false
 	);
@@ -459,8 +461,13 @@ void UNCCombatComponent::PlayEquipMontage()
 	Anim->Montage_Play(Montage);
 }
 
-void UNCCombatComponent::FinishEquipWeapon()
+void UNCCombatComponent::FinishEquipWeapon(uint32 Generation)
 {
+	if (Generation != SwapGeneration)
+	{
+		return;
+	}
+
 	FNCWeaponData* Data = GetEquippedWeaponData();
 
 	if (!Data || !OwnerCharacter)
@@ -510,8 +517,13 @@ void UNCCombatComponent::FinishEquipWeapon()
 	}
 }
 
-void UNCCombatComponent::FinishUnEquipWeapon()
+void UNCCombatComponent::FinishUnEquipWeapon(uint32 Generation)
 {
+	if (Generation != SwapGeneration)
+	{
+		return;
+	}
+
 	if (ASC)
 	{
 		FNCWeaponData* Data = GetEquippedWeaponData();

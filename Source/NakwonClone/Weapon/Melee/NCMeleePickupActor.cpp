@@ -22,11 +22,9 @@ void ANCMeleePickupActor::Interact_Implementation(AActor* Interactor)
 	const bool bMeleeSlotActive = NCGunComp && !NCGunComp->HasActiveGun();
 	const bool bWeaponInHand    = NCCombat->IsWeaponEquipped();
 
-	if (!NCPlayer->StoredMeleeWeaponID.IsNone())
+	if (bWeaponInHand)
 	{
-		// 손에 들고 있을 때만 해제
-		if (bWeaponInHand)
-			NCCombat->UnEquipWeapon();
+		NCCombat->UnEquipWeapon();
 	}
 
 	// 새 무기 저장

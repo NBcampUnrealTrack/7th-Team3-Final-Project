@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Weapon/Gun/GunType/NCGunType.h"
 #include "NCPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -106,6 +107,8 @@ private:
 	// 헌호수정 - 암살
 	void Assassinate();
 
+	bool IsWeaponSwapBusy() const;
+
 	// 헌호수정 - 공격 중 여부 체크
 	bool IsAttacking() const;
 
@@ -194,4 +197,6 @@ protected:
 	TObjectPtr<UInputAction> AssassinateAction;
 
 	FTimerHandle SwapTimerHandle;
+
+	ENCGunSlot PendingMeleeToGunTarget = ENCGunSlot::None;
 };

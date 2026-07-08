@@ -181,7 +181,8 @@ void UNCEquipmentComponent::UnequipGun(ENCGunSlot Slot)
 void UNCEquipmentComponent::SelectSlot(ENCGunSlot Slot)
 {
 	if (ActiveSlot == Slot) return;
-	if (bIsSwapping) return;
+
+	if (bIsSwapping && PendingEquipSlot == Slot) return;
 
 	if (Slot != ENCGunSlot::None)
 	{

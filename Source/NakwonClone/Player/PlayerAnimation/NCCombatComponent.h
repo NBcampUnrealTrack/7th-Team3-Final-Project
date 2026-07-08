@@ -134,8 +134,8 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> LastPlayedAttackMontage;
 
-	void FinishEquipWeapon();
-	void FinishUnEquipWeapon();
+	void FinishEquipWeapon(uint32 Generation);
+	void FinishUnEquipWeapon(uint32 Generation);
 	void PlayUnequipMontage();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Combat|Swap")
@@ -149,6 +149,7 @@ private:
 
 	bool bIsSwappingWeapon = false;
 
+	uint32 SwapGeneration = 0;
 	UFUNCTION()
 	void OnMeleeAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
