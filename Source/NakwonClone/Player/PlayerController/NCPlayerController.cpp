@@ -263,35 +263,58 @@ void ANCPlayerController::Attack()
     {
         return;
     }
-    if (IsUsingItem()) return; // 소모품 사용 중 공격 차단
+
+    if (IsUsingItem())
+    {
+        return;
+    }
 
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
-    if (!PC) return;
+    if (!PC)
+    {
+        return;
+    }
 
     if (UNCEquipmentComponent* EquipComp = PC->GetEquipmentComponent())
     {
-        if (EquipComp->HasActiveGun()) return;
+        if (EquipComp->HasActiveGun())
+        {
+            return;
+        }
+    }
+
+    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
+    if (!Combat)
+    {
+        return;
+    }
+
+    // 공격 몽타주가 이미 재생 중이면
+    // GAS를 다시 켜지 말고 콤보 입력 예약만 한다.
+    if (Combat->IsMeleeAttackMontagePlaying())
+    {
+        Combat->MeleeAttack();
+        return;
     }
 
     UAbilitySystemComponent* ASC = PC->GetAbilitySystemComponent();
-    if (!ASC) return;
+    if (!ASC)
+    {
+        return;
+    }
 
     const bool bActivated = ASC->TryActivateAbilityByClass(PC->AttackAbilityClass);
 
-
-    // 첫 입력은 GA_Attack 안에서 MeleeAttack 실행됨.
     if (bActivated)
     {
         return;
     }
 
-    // Ability가 이미 공격 중이라 FALSE인 경우에만 콤보 예약용으로 MeleeAttack 호출.
+    // 예외 처리:
+    // 태그는 남아 있는데 몽타주 상태 확인이 꼬인 경우
     if (ASC->HasMatchingGameplayTag(NCWeapon::Action_Attacking))
     {
-        if (UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>())
-        {
-            Combat->MeleeAttack();
-        }
+        Combat->MeleeAttack();
     }
 }
 

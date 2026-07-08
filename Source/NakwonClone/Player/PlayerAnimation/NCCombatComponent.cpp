@@ -89,42 +89,35 @@ void UNCCombatComponent::MeleeAttack()
 	UAnimMontage* Montage = CurrentWeaponCombo.ComboMontage;
 	const TArray<FName>& Sections = CurrentWeaponCombo.ComboSections;
 
-	if (!Anim)
-	{
-		return;
-	}
-
-	if (!Montage)
-	{
-		return;
-	}
-
-	if (Sections.Num() == 0)
+	if (!Anim || !Montage || Sections.Num() == 0)
 	{
 		return;
 	}
 
 	LastPlayedAttackMontage = Montage;
 
+	// 공격 몽타주가 재생 중이면 새 공격 시작이 아니라 콤보 입력 예약만 한다.
 	if (Anim->Montage_IsPlaying(Montage))
 	{
-		const FName CurrentSection = Anim->Montage_GetCurrentSection(Montage);
-		const int32 CurrentIndex = Sections.IndexOfByKey(CurrentSection);
+		bComboInputBuffered = true;
+		return;
+	}
 
-		if (CurrentIndex != INDEX_NONE && CurrentIndex + 1 < Sections.Num())
-		{
-			Anim->Montage_SetNextSection(
-				CurrentSection,
-				Sections[CurrentIndex + 1],
-				Montage
-			);
-		}
-	}
-	else
-	{
-		Anim->Montage_Play(Montage);
-		Anim->Montage_JumpToSection(Sections[0], Montage);
-	}
+	ResetComboState();
+
+	bIsMeleeComboPlaying = true;
+	CurrentComboIndex = 0;
+
+	Anim->OnMontageEnded.RemoveDynamic(
+		this,
+		&UNCCombatComponent::OnMeleeAttackMontageEnded);
+
+	Anim->OnMontageEnded.AddDynamic(
+		this,
+		&UNCCombatComponent::OnMeleeAttackMontageEnded);
+
+	Anim->Montage_Play(Montage);
+	Anim->Montage_JumpToSection(Sections[CurrentComboIndex], Montage);
 }
 
 void UNCCombatComponent::EquipWeapon(FNCWeaponInstance WeaponInstance)
@@ -599,4 +592,123 @@ void UNCCombatComponent::SetSpawnedWeaponVisible(bool bVisible)
 
 	SpawnedWeaponActor->SetActorHiddenInGame(!bVisible);
 	SpawnedWeaponActor->SetActorEnableCollision(bVisible);
+}
+
+void UNCCombatComponent::OpenComboInput()
+{
+	if (!bIsMeleeComboPlaying)
+	{
+		return;
+	}
+
+	bCanStartNextAttack = true;
+}
+
+void UNCCombatComponent::HandleComboBranch()
+{
+	if (!bIsMeleeComboPlaying)
+	{
+		return;
+	}
+
+	UAnimInstance* Anim = GetAnimInstance();
+	UAnimMontage* Montage = CurrentWeaponCombo.ComboMontage;
+	const TArray<FName>& Sections = CurrentWeaponCombo.ComboSections;
+
+	if (!Anim || !Montage || Sections.Num() == 0)
+	{
+		return;
+	}
+
+	if (!Anim->Montage_IsPlaying(Montage))
+	{
+		return;
+	}
+
+	bCanStartNextAttack = false;
+
+	// 입력 예약이 없으면 현재 공격 끝까지 재생
+	if (!bComboInputBuffered)
+	{
+		return;
+	}
+
+	bComboInputBuffered = false;
+
+	int32 NextComboIndex = CurrentComboIndex + 1;
+
+	// 3타 무기면 Attack3 다음 Attack1
+	// 4타 무기면 Attack4 다음 Attack1
+	if (!Sections.IsValidIndex(NextComboIndex))
+	{
+		NextComboIndex = 0;
+	}
+
+	if (!Sections.IsValidIndex(NextComboIndex))
+	{
+		return;
+	}
+
+	if (!Montage->IsValidSectionName(Sections[NextComboIndex]))
+	{
+		return;
+	}
+
+	CurrentComboIndex = NextComboIndex;
+
+	// 루프 점프 이후에도 콤보 상태 유지
+	bIsMeleeComboPlaying = true;
+	bCanStartNextAttack = false;
+	bComboInputBuffered = false;
+
+	Anim->Montage_JumpToSection(Sections[CurrentComboIndex], Montage);
+}
+
+void UNCCombatComponent::OnMeleeAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (Montage != CurrentWeaponCombo.ComboMontage)
+	{
+		return;
+	}
+
+	UAnimInstance* Anim = GetAnimInstance();
+
+	// 핵심:
+	// Attack3 → Attack1, Attack4 → Attack1처럼 섹션 루프 점프 직후
+	// MontageEnded가 늦게 들어오는 경우가 있음.
+	// 그런데 실제로 몽타주가 아직 재생 중이면 콤보 상태를 리셋하면 안 됨.
+	if (Anim && Anim->Montage_IsPlaying(Montage))
+	{
+		return;
+	}
+
+	if (Anim)
+	{
+		Anim->OnMontageEnded.RemoveDynamic(
+			this,
+			&UNCCombatComponent::OnMeleeAttackMontageEnded);
+	}
+
+	ResetComboState();
+}
+
+void UNCCombatComponent::ResetComboState()
+{
+	bCanStartNextAttack = false;
+	bComboInputBuffered = false;
+	bIsMeleeComboPlaying = false;
+	CurrentComboIndex = 0;
+}
+
+bool UNCCombatComponent::IsMeleeAttackMontagePlaying() const
+{
+	UAnimInstance* Anim = GetAnimInstance();
+	UAnimMontage* Montage = CurrentWeaponCombo.ComboMontage;
+
+	if (!Anim || !Montage)
+	{
+		return false;
+	}
+
+	return Anim->Montage_IsPlaying(Montage);
 }
