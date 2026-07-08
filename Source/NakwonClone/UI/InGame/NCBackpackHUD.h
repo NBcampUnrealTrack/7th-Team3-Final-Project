@@ -19,6 +19,8 @@ public:
 	void RefreshAll(ANCPlayerCharacter* Player);
 
 protected:
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	
 	// 위젯 이름과 정확히 일치해야 바인딩됨 (없어도 크래시 X)
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> HPProgressBar;

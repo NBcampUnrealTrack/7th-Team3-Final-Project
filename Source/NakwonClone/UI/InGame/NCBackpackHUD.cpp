@@ -10,6 +10,16 @@
 #include "NakwonClone/Weapon/Gun/GunType/NCGunType.h"
 #include "NakwonClone/Inventory/NCInventoryType.h"
 
+void UNCBackpackHUD::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	if (ANCPlayerCharacter* Player = Cast<ANCPlayerCharacter>(GetOwningPlayerPawn()))
+	{
+		RefreshAll(Player);
+	}
+}
+
 void UNCBackpackHUD::RefreshAll(ANCPlayerCharacter* Player)
 {
 	if (!Player)
