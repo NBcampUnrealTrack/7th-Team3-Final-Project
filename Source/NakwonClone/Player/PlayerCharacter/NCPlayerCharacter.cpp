@@ -67,6 +67,7 @@ void ANCPlayerCharacter::InitCamera()
     CameraBoom->bUsePawnControlRotation = true;
     CameraBoom->bEnableCameraLag = true;
     CameraBoom->CameraLagSpeed = 10.0f;
+    CameraBoom->ProbeSize = 5.0f;
 
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -783,6 +784,18 @@ void ANCPlayerCharacter::Tick(float DeltaTime)
         {
             FlashlightLight->SetWorldRotation(FlashCtrl->GetControlRotation());
         }
+    }
+    
+    // 시환 추가 - 카메라 접근 시, 플레이어 투명화
+    const FVector ArmOrigin = CameraBoom->GetComponentLocation();
+    const FVector CameraSocketLocation = CameraBoom->GetSocketLocation(USpringArmComponent::SocketName);
+    const float CurrentArmLength = FVector::Dist(ArmOrigin, CameraSocketLocation);
+    const bool bCameraTooClose = CurrentArmLength < 200.f;
+    GetMesh()->SetVisibility(!bCameraTooClose, true);
+    
+    if (FlashlightLight)
+    {
+        FlashlightLight->SetVisibility(bFlashlightOn);
     }
 
     AController* OwnerController = GetController();

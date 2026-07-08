@@ -98,6 +98,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Monster")
 	float GetAnimStartPosition() const { return AnimStartPosition; }
 
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	float LocomotionPlayRate = 1.f;
+
 protected:
 	// ── 몽타주 슬롯 (에디터에서 채움) ────────────────────────
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
@@ -410,4 +413,9 @@ private:
 	bool bReservedIsWaitSlot = false;
 
 #pragma endregion
+	
+public:
+	// bRandomType이 true일 때, 비어있지 않으면 이 목록 안에서만 랜덤 선택
+	UPROPERTY(EditAnywhere, Category = "Monster|Type")
+	TArray<EVGMonsterType> AllowedRandomTypes;
 };
