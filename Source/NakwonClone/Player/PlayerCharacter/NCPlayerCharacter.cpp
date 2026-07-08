@@ -808,6 +808,11 @@ void ANCPlayerCharacter::SetAimRotationMode(bool bEnable)
     }
 
     bUseControllerRotationYaw = false;
+
+    if (CameraBoom)
+    {
+        CameraBoom->bEnableCameraLag = !bEnable;
+    }
 }
 
 void ANCPlayerCharacter::Multicast_PlayHitReactMontage_Implementation(UAnimMontage* MontageToPlay)
