@@ -20,6 +20,9 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AmmoCrate")
+	TObjectPtr<USceneComponent> SceneRoot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AmmoCrate")
 	TObjectPtr<UStaticMeshComponent> CrateMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AmmoCrate")
