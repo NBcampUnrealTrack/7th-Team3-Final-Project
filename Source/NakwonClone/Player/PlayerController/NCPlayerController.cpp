@@ -282,6 +282,10 @@ void ANCPlayerController::Attack()
         }
     }
 
+    //헌호수정 - 근접 공격을 크로스헤어(카메라 조준) 방향으로 나가게 캐릭터 회전
+    const FRotator ControlRot = GetControlRotation();
+    PC->SetActorRotation(FRotator(0.f, ControlRot.Yaw, 0.f));
+
     UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
     if (!Combat)
     {
