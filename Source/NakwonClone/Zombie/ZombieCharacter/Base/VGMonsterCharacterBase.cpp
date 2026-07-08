@@ -138,7 +138,7 @@ void AVGMonsterCharacterBase::HandleDead()
 	
 	//H
 	GetWorldTimerManager().ClearTimer(HowlTimerHandle); // 죽으면 하울링 정지
-	Multicast_PlaySound(DeathSound, CombatAttenuation);
+	Multicast_PlaySound(DeathSound, nullptr);
 	
 	// 레그돌
 	OnStartRagdoll();
@@ -201,7 +201,7 @@ void AVGMonsterCharacterBase::HandleHit(const FVGHitData& HitData)
 	{
 		if (USoundBase* Sound = GetHitSoundByPart(BodyPart))
 		{
-			Multicast_PlaySound(Sound, CombatAttenuation);
+			Multicast_PlaySound(Sound, nullptr);
 			LastHitSoundTime = Now;
 		}
 	}
@@ -327,9 +327,7 @@ void AVGMonsterCharacterBase::OnDetectionOverlap(UPrimitiveComponent* Overlapped
 void AVGMonsterCharacterBase::Multicast_PlaySound_Implementation(USoundBase* Sound, USoundAttenuation* AttenuationOverride)
 {
 	if (!Sound) return;
-	USoundAttenuation* Atten = AttenuationOverride ? AttenuationOverride : SoundAttenuation.Get();
-	UGameplayStatics::PlaySoundAtLocation(
-		this, Sound, GetActorLocation(), 1.f, 1.f, 0.f, Atten);
+	UGameplayStatics::PlaySoundAtLocation(this, Sound, GetActorLocation(), 1.f, 1.f, 0.f, AttenuationOverride);
 }
 
 void AVGMonsterCharacterBase::StartHowlTimer()
@@ -355,7 +353,7 @@ void AVGMonsterCharacterBase::HandleHowl()
 
 	if (!bAwake)
 	{
-		Multicast_PlaySound(HowlSound, SoundAttenuation);
+		Multicast_PlaySound(HowlSound, nullptr);
 	}
 
 	StartHowlTimer();
@@ -374,7 +372,7 @@ void AVGMonsterCharacterBase::HandleIdle()
 {
 	if (bIsDead) return;   // 죽으면 멈춤 (재예약 안 함)
 
-	Multicast_PlaySound(IdleSound, SoundAttenuation);
+	Multicast_PlaySound(IdleSound, nullptr);
 	StartIdleTimer();      // 다음 주기 예약
 }
 
