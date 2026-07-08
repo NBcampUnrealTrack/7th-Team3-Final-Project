@@ -27,10 +27,6 @@ protected:
 	void OnStaminaChanged(const FOnAttributeChangeData& Data);
 
 protected:
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UNCHPBar> HPBarWidget;
-
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UNCStaminaBar> StaminaBarWidget;
 

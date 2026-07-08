@@ -37,10 +37,6 @@ void UNCHud::NativeConstruct()
 	ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &UNCHud::OnHPChanged);
 	ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &UNCHud::OnStaminaChanged);
 	
-	if (HPBarWidget)
-	{
-		HPBarWidget->UpdateHP(AttributeSet->GetHealth(), AttributeSet->GetMaxHealth());
-	}
 	if (StaminaBarWidget)
 	{
 		StaminaBarWidget->UpdateStaminaBar(AttributeSet->GetStamina(), AttributeSet->GetMaxStamina());
@@ -101,13 +97,6 @@ void UNCHud::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 void UNCHud::OnHPChanged(const FOnAttributeChangeData& Data)
 {
-	if (!HPBarWidget || !AttributeSet)
-	{
-		return;
-	}
-
-	HPBarWidget->UpdateHP(Data.NewValue, AttributeSet->GetMaxHealth());
-
 	//헌호수정 - 피격(체력 감소) 순간 피 오버레이 확 올림 → NativeTick에서 서서히 페이드
 	if (BloodOverlay && Data.NewValue < Data.OldValue)
 	{
