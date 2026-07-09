@@ -455,7 +455,7 @@ void UNCGunComponent::Reload()
 	const FNCGunData* Data = ActiveGunData;
 	if (!Data) return;
 
-	if (ReserveAmmo <= 0) return;
+	// if (ReserveAmmo <= 0) return;
 	if (CurrentAmmo >= Data->MagazineSize) return;
 
 	StopFire();
@@ -510,10 +510,12 @@ void UNCGunComponent::OnReloadFinished()
 	const FNCGunData* Data = ActiveGunData;
 	if (!Data) return;
 
-	const int32 Needed = Data->MagazineSize - CurrentAmmo;
+	/*const int32 Needed = Data->MagazineSize - CurrentAmmo;
 	const int32 Take   = FMath::Min(Needed, ReserveAmmo);
 	CurrentAmmo += Take;
-	ReserveAmmo -= Take;
+	ReserveAmmo -= Take;*/
+	
+	CurrentAmmo = Data->MagazineSize; // 항상 풀 재장전
 
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 
