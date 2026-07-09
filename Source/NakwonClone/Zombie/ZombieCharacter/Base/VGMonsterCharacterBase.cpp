@@ -14,6 +14,7 @@
 #include "NiagaraSystem.h"
 #include "BrainComponent.h"
 #include "TimerManager.h"
+#include "Framwork/Gamemode/NCGameMode.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 {
@@ -159,6 +160,15 @@ void AVGMonsterCharacterBase::HandleDead()
 	if (bIsDead) return;   // 사망 처리도 한 번만
 	bIsDead = true;
 
+	// 우정 추가
+	if (HasAuthority())
+	{
+		if (ANCGameMode* GM = GetWorld()->GetAuthGameMode<ANCGameMode>())
+		{
+			GM->AddPoints(CashedKillScore);
+		}
+	}
+	
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleDead 호출됨: %s"), *GetName());
 	
 	//H
@@ -514,6 +524,8 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	if (Row->IdleSoundCooldown > 0.f)  IdleSoundCooldown = Row->IdleSoundCooldown;
 
 	HitReactChance = Row->HitReactChance; 
+	// 우정 추가
+	CashedKillScore = Row->KillScore;
 }
 
 UAnimMontage* AVGMonsterCharacterBase::GetAttackMontageForAI()
