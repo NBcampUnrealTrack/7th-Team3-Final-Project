@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "NiagaraSystem.h"
 #include "Particles/ParticleSystem.h"
+#include "Camera/CameraShakeBase.h"
 
 #include "NCProjectile.generated.h"
 
@@ -45,6 +46,12 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "Projectile|Effect|Particle")
     TObjectPtr<UParticleSystem> ImpactSurfaceParticle;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile")
+    TSubclassOf<UCameraShakeBase> HitShakeClass;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile")
+    float HitShakeScale = 1.f;
 
 protected:
     UPROPERTY(VisibleAnywhere, Category = "Projectile")

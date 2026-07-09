@@ -63,6 +63,8 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recoil") float RecoilYaw           = 0.3f; // 발사당 좌우 랜덤 흔들림
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recoil") float RecoilRecoverySpeed = 5.f;  // 복귀 속도 (초당)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recoil") TSubclassOf<UCameraShakeBase> FireShakeClass; // 발사 시 카메라 쉐이크
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recoil") TSubclassOf<UCameraShakeBase> HitShakeClass;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recoil") float ADSShakeMultiplier = 0.5f;
 
     // ADS(정조준)
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float ADSFOVMultiplier    = 0.6f;
@@ -89,9 +91,12 @@ struct FNCGunData : public FTableRowBase
     bool bUseLeftHandIK = false;
 
     // 사운드
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
     TSoftObjectPtr<USoundBase> FireSound;
-    
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
+    float FirePitchVariance = 0.08f;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound") 
     TSoftObjectPtr<USoundBase> ReloadSound;
     
@@ -105,6 +110,9 @@ struct FNCGunData : public FTableRowBase
     // 이펙트 (나이아가라)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
     TSoftObjectPtr<UNiagaraSystem> MuzzleFlashEffect;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
+    float MuzzleFlashScale = 1.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NiagaraEffect")
     TSoftObjectPtr<UNiagaraSystem> ImpactFleshEffect;       // 좀비 피격
