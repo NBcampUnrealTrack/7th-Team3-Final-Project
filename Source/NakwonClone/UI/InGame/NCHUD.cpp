@@ -36,11 +36,6 @@ void UNCHud::NativeConstruct()
 
 	ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &UNCHud::OnHPChanged);
 	ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &UNCHud::OnStaminaChanged);
-	
-	if (StaminaBarWidget)
-	{
-		StaminaBarWidget->UpdateStaminaBar(AttributeSet->GetStamina(), AttributeSet->GetMaxStamina());
-	}
 
 	//헌호수정 - 시작 시 피 오버레이 숨김
 	if (BloodOverlay)
@@ -110,13 +105,6 @@ void UNCHud::OnStaminaChanged(const FOnAttributeChangeData& Data)
 	UE_LOG(LogTemp, Warning,
 		TEXT("Stamina Changed : %f"),
 		Data.NewValue);
-	
-	if (!StaminaBarWidget || !AttributeSet)
-	{
-		return;
-	}
-
-	StaminaBarWidget->UpdateStaminaBar(Data.NewValue, AttributeSet->GetMaxStamina());
 }
 
 //헌호수정 - 저체력 진입: 심장박동 루프 시작 + 숨소리 타이머 시작
