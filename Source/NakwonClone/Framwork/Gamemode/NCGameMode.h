@@ -29,10 +29,10 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Score")
-	int32 SpecialZombieScoreThreshold = 500;
+	int32 SpecialZombieScore = 500;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Score")
-	int32 EscapableScoreThreshold = 1000;
+	int32 EscapableScore = 1000;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Score")
 	TObjectPtr<USoundBase> HelicopterSound;

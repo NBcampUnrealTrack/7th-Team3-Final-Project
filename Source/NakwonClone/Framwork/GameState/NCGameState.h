@@ -10,7 +10,7 @@
 #include "NCGameState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRemainingMatchTimeUpdate, int32, RemainingMatchTime);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnScoreChanged, int32, NewTotalScore);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnScoreChanged, int32, NewTotalScore, int32, GainedScore);
 
 UCLASS()
 class NAKWONCLONE_API ANCGameState : public AGameState
@@ -43,9 +43,6 @@ public:
 	FOnScoreChanged OnScoreChanged;
 
 	UFUNCTION()
-	void OnRep_TotalScore();
-
-	UFUNCTION()
 	void OnRep_bEscapable(); // 클라이언트에서 헬기 사운드 재생용
 
 	UFUNCTION(NetMulticast, Unreliable)
@@ -62,4 +59,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	int32 GetTotalScore() const {return TotalScore;}
+	
+	UFUNCTION()
+    void OnRep_TotalScore(int32 OldTotalScore);
 };

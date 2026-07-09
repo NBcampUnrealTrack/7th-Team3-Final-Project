@@ -19,14 +19,14 @@ void ANCGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(ANCGameState, bEscapable);
 }
 
-void ANCGameState::OnRep_TotalScore()
+void ANCGameState::OnRep_TotalScore(int32 OldTotalScore)
 {
-	OnScoreChanged.Broadcast(TotalScore);
+	OnScoreChanged.Broadcast(TotalScore, TotalScore - OldTotalScore);
 }
 
 void ANCGameState::OnRep_bEscapable()
 {
-	// todo : 탈출 가능 안내 위젯 표시
+	// todo : 탈출 가능 안내 위젯 바인딩
 }
 
 void ANCGameState::Multicast_PlayHelicopterSound_Implementation(USoundBase* Sound)
