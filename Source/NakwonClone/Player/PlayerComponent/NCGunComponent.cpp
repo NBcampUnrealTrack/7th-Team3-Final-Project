@@ -40,8 +40,6 @@ void UNCGunComponent::BeginPlay()
 
 void UNCGunComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	ClearADSReturnTimer();
-
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(FullAutoTimerHandle);
@@ -176,7 +174,6 @@ void UNCGunComponent::ActivateGun(const FNCGunData* InGunData, int32 InCurrentAm
 
 void UNCGunComponent::DeactivateGun()
 {
-	ClearADSReturnTimer();
 	bWantsADS = false;
 	RestoreFOV();
 	GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
@@ -527,60 +524,14 @@ void UNCGunComponent::OnReloadFinished()
 
 void UNCGunComponent::StartADS()
 {
-	ClearADSReturnTimer();
-
-	if (!HasActiveGun())
-	{
-		return;
-	}
-
 	bWantsADS = true;
 	ApplyADSFOV();
 }
 
 void UNCGunComponent::StopADS()
 {
-	ClearADSReturnTimer();
-
-	if (!HasActiveGun())
-	{
-		bWantsADS = false;
-		return;
-	}
-
-	UWorld* World = GetWorld();
-
-	if (!IsValid(World) || World->bIsTearingDown || ADSReturnDelay <= 0.f)
-	{
-		FinishADSReturn();
-		return;
-	}
-
-	World->GetTimerManager().SetTimer(
-		ADSReturnTimerHandle,
-		this,
-		&UNCGunComponent::FinishADSReturn,
-		ADSReturnDelay,
-		false
-	);
-}
-
-void UNCGunComponent::FinishADSReturn()
-{
 	bWantsADS = false;
 	RestoreFOV();
-}
-
-void UNCGunComponent::ClearADSReturnTimer()
-{
-	UWorld* World = GetWorld();
-
-	if (IsValid(World) && !World->bIsTearingDown)
-	{
-		World->GetTimerManager().ClearTimer(ADSReturnTimerHandle);
-	}
-
-	ADSReturnTimerHandle.Invalidate();
 }
 
 void UNCGunComponent::ApplyADSFOV()
