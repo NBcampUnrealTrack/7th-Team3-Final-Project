@@ -40,11 +40,14 @@ void UNCGunComponent::BeginPlay()
 
 void UNCGunComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (GetWorld())
+	ClearADSReturnTimer();
+
+	if (UWorld* World = GetWorld())
 	{
-		GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
-		GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
-		GetWorld()->GetTimerManager().ClearTimer(ShowMagazineTimerHandle);
+		World->GetTimerManager().ClearTimer(FullAutoTimerHandle);
+		World->GetTimerManager().ClearTimer(ReloadTimerHandle);
+		World->GetTimerManager().ClearTimer(MuzzleFlashTimerHandle);
+		World->GetTimerManager().ClearTimer(ShowMagazineTimerHandle);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -173,6 +176,9 @@ void UNCGunComponent::ActivateGun(const FNCGunData* InGunData, int32 InCurrentAm
 
 void UNCGunComponent::DeactivateGun()
 {
+	ClearADSReturnTimer();
+	bWantsADS = false;
+	RestoreFOV();
 	GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(ShowMagazineTimerHandle);
@@ -521,65 +527,60 @@ void UNCGunComponent::OnReloadFinished()
 
 void UNCGunComponent::StartADS()
 {
-	if (!HasActiveGun()) return;
+	ClearADSReturnTimer();
 
-	bWantsADS = true;
-	if (IsReloading()) return;
-
-	ActiveGunActions.AddTag(NCGun::Action_ADS);
-
-	if (ANCPlayerCharacter* PlayerChar = Cast<ANCPlayerCharacter>(GetOwner()))
-	{
-		PlayerChar->StopSprint();
-		PlayerChar->SetAimRotationMode(true);
-	}
-
-	if (AActor* Owner = GetOwner())
-	{
-		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
-		{
-			ASC->AddLooseGameplayTag(NCWeapon::Action_Aiming);
-		}
-	}
-
-	ApplyADSFOV();
-
-	if (ActiveGunData)
-	{
-		PlayGunMontage(ActiveGunData->ADSInMontage);
-	}
-}
-
-void UNCGunComponent::StopADS()
-{
-	bWantsADS = false;
-
-	if (!IsADS())
+	if (!HasActiveGun())
 	{
 		return;
 	}
 
-	ActiveGunActions.RemoveTag(NCGun::Action_ADS);
+	bWantsADS = true;
+	ApplyADSFOV();
+}
 
-	if (ANCPlayerCharacter* PlayerChar = Cast<ANCPlayerCharacter>(GetOwner()))
+void UNCGunComponent::StopADS()
+{
+	ClearADSReturnTimer();
+
+	if (!HasActiveGun())
 	{
-		PlayerChar->SetAimRotationMode(false);
+		bWantsADS = false;
+		return;
 	}
 
-	if (AActor* Owner = GetOwner())
+	UWorld* World = GetWorld();
+
+	if (!IsValid(World) || World->bIsTearingDown || ADSReturnDelay <= 0.f)
 	{
-		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
-		{
-			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Aiming);
-		}
+		FinishADSReturn();
+		return;
 	}
 
+	World->GetTimerManager().SetTimer(
+		ADSReturnTimerHandle,
+		this,
+		&UNCGunComponent::FinishADSReturn,
+		ADSReturnDelay,
+		false
+	);
+}
+
+void UNCGunComponent::FinishADSReturn()
+{
+	bWantsADS = false;
 	RestoreFOV();
+}
 
-	if (ActiveGunData)
+void UNCGunComponent::ClearADSReturnTimer()
+{
+	UWorld* World = GetWorld();
+
+	if (IsValid(World) && !World->bIsTearingDown)
 	{
-		PlayGunMontage(ActiveGunData->ADSOutMontage);
+		World->GetTimerManager().ClearTimer(ADSReturnTimerHandle);
 	}
+
+	ADSReturnTimerHandle.Invalidate();
 }
 
 void UNCGunComponent::ApplyADSFOV()
