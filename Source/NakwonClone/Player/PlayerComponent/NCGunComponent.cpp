@@ -136,7 +136,10 @@ void UNCGunComponent::TickComponent(
 
 bool UNCGunComponent::IsFiring() const    { return ActiveGunActions.HasTag(NCGun::Action_Firing); }
 bool UNCGunComponent::IsReloading() const { return ActiveGunActions.HasTag(NCGun::Action_Reloading); }
-bool UNCGunComponent::IsADS() const       { return ActiveGunActions.HasTag(NCGun::Action_ADS); }
+bool UNCGunComponent::IsADS() const
+{
+	return ActiveGunActions.HasTag(NCGun::Action_ADS);
+}
 
 bool UNCGunComponent::CanFire() const
 {
@@ -174,21 +177,22 @@ void UNCGunComponent::ActivateGun(const FNCGunData* InGunData, int32 InCurrentAm
 
 void UNCGunComponent::DeactivateGun()
 {
-	bWantsADS = false;
-	RestoreFOV();
-	GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
-	GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
-	GetWorld()->GetTimerManager().ClearTimer(ShowMagazineTimerHandle);
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(FullAutoTimerHandle);
+		World->GetTimerManager().ClearTimer(ReloadTimerHandle);
+		World->GetTimerManager().ClearTimer(ShowMagazineTimerHandle);
+		World->GetTimerManager().ClearTimer(MuzzleFlashTimerHandle);
+	}
 
 	StopFire();
 
 	bWantsADS = false;
+	ActiveGunActions.RemoveTag(NCGun::Action_ADS);
+	ActiveGunActions.RemoveTag(NCGun::Action_Reloading);
+	ActiveGunActions.RemoveTag(NCGun::Action_Firing);
 
-	if (IsADS())
-	{
-		StopADS();
-	}
-	else if (AActor* Owner = GetOwner())
+	if (AActor* Owner = GetOwner())
 	{
 		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
 		{
@@ -524,13 +528,38 @@ void UNCGunComponent::OnReloadFinished()
 
 void UNCGunComponent::StartADS()
 {
+	if (!HasActiveGun())
+	{
+		return;
+	}
+
 	bWantsADS = true;
+	ActiveGunActions.AddTag(NCGun::Action_ADS);
+
+	if (AActor* Owner = GetOwner())
+	{
+		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
+		{
+			ASC->AddLooseGameplayTag(NCWeapon::Action_Aiming);
+		}
+	}
+
 	ApplyADSFOV();
 }
 
 void UNCGunComponent::StopADS()
 {
 	bWantsADS = false;
+	ActiveGunActions.RemoveTag(NCGun::Action_ADS);
+
+	if (AActor* Owner = GetOwner())
+	{
+		if (UAbilitySystemComponent* ASC = Owner->FindComponentByClass<UAbilitySystemComponent>())
+		{
+			ASC->RemoveLooseGameplayTag(NCWeapon::Action_Aiming);
+		}
+	}
+
 	RestoreFOV();
 }
 
