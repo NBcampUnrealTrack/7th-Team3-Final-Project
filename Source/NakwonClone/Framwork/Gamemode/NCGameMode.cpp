@@ -35,8 +35,9 @@ void ANCGameMode::AddPoints(int32 Points)
 	ANCGameState* GS = GetGameState<ANCGameState>();
 	if (!GS) return;
 
+	const int32 OldScore = GS->TotalScore;
 	GS->TotalScore += Points;
-	GS->OnRep_TotalScore();
+	GS->OnRep_TotalScore(OldScore);
 
 	CheckPoints();
 }
@@ -46,18 +47,23 @@ void ANCGameMode::CheckPoints()
 	ANCGameState* GS = GetGameState<ANCGameState>();
 	if (!GS) return;
 
-	if (!bSpecialZombieSpawned && GS->TotalScore >= SpecialZombieScoreThreshold && GS->TotalScore < EscapableScoreThreshold)
+	if (!bSpecialZombieSpawned && GS->TotalScore >= SpecialZombieScore && GS->TotalScore < EscapableScore)
 	{
 		bSpecialZombieSpawned = true;
 		
 		// todo : 특수 좀비 스폰
 	}
-	else if (!GS->bEscapable && GS->TotalScore >= EscapableScoreThreshold)
+	else if (!GS->bEscapable && GS->TotalScore >= EscapableScore)
 	{
 		GS->bEscapable = true;
+		UE_LOG(LogTemp, Error, TEXT("Escapable score checked"));
+		UE_LOG(LogTemp, Warning, TEXT("CheckPoints: TotalScore=%d, EscapableScore=%d, bEscapable=%d"),
+        	GS->TotalScore, EscapableScore, GS->bEscapable);
+
 		GS->Multicast_PlayHelicopterSound(HelicopterSound);
+		GS->OnRep_bEscapable();
 		
-		// todo : 탈출 위치 표시 위젯 / 안내 메세지
+		HandleMatchEnd(true);
 	}
 }
 
@@ -125,10 +131,6 @@ void ANCGameMode::HandleMatchEnd(bool bClear)
 	{
 		GS->CurrentGameStateTag = NCGameStateTags::GameOver;
 	}
-	
-	// PlayerController 작업 완료 후 추가 예정
-	// 모든 플레이어에게 게임오버/클리어 알림
-	// for (FConstPlayerControllerIterator It = ...) { PC->Client_OnGameEnd(bClear); }
 }
 
 void ANCGameMode::MoveToTitle()
