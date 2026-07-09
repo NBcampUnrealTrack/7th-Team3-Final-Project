@@ -28,38 +28,37 @@ void ANCGameMode::BeginPlay()
 
 	ANCGameState* GS = GetGameState<ANCGameState>();
 	GS->RemainingMatchTime = 900; // 15분
-	
-	// todo : 아이템, 좀비 스폰 포인트 추가 (배열, UGamePlayStatics::GetAllActorsOfClass(~~))
-	/* 월드의 SpawnPoint를 순회하면서 스폰 로직 활성화
-	TArray<AActor*> ItemFoundVolumes;
-	TArray<AActor*> ZombieFoundVolumes;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AItemSpawnPoint::StaticClass(), ItemFoundVolumes);
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AZombieSpawnPoint::StaticClass(), ZombieFoundVolumes);
-	
-	for (AActor* Actor : ItemFoundVolumes)
+}
+
+void ANCGameMode::AddPoints(int32 Points)
+{
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (!GS) return;
+
+	GS->TotalScore += Points;
+	GS->OnRep_TotalScore();
+
+	CheckPoints();
+}
+
+void ANCGameMode::CheckPoints()
+{
+	ANCGameState* GS = GetGameState<ANCGameState>();
+	if (!GS) return;
+
+	if (!bSpecialZombieSpawned && GS->TotalScore >= SpecialZombieScoreThreshold && GS->TotalScore < EscapableScoreThreshold)
 	{
-		AItemSpawnPoint* ItemSpawnVolume = Cast<AItemSpawnPoint>(Actor);
-		if (ItemSpawnVolume)
-		{
-			ItemSpawnVolume->SpawnItems();
-		}
+		bSpecialZombieSpawned = true;
+		
+		// todo : 특수 좀비 스폰
 	}
-	
-	for (AActor* Actor : ZombieFoundVolumes)
+	else if (!GS->bEscapable && GS->TotalScore >= EscapableScoreThreshold)
 	{
-		AZombieSpawnPoint* ZombieSpawnVolume = Cast<AZombieSpawnPoint>(Actor);
-		if (ZombieSpawnVolume)
-		{
-			ZombieSpawnVolume->SpawnZombie(5, 10, 4, 6, 1, 1);
-		}
+		GS->bEscapable = true;
+		GS->Multicast_PlayHelicopterSound(HelicopterSound);
+		
+		// todo : 탈출 위치 표시 위젯 / 안내 메세지
 	}
-	
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	{
-		ACH4PlayerController* PC = Cast<ACH4PlayerController>(It->Get());
-		PC->Client_EnablePlayerInput();
-	}
-	*/
 }
 
 void ANCGameMode::PostLogin(APlayerController* NewPlayer)
