@@ -7,6 +7,8 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "TimerManager.h" //헌호수정
+#include "EngineUtils.h" //헌호수정 - TActorIterator (좀비 수 세기)
 #include "NakwonClone/Zombie/SpawnBox/MonsterSpawnRow.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
@@ -20,7 +22,8 @@ ASpawnVolume::ASpawnVolume()
 	SpawnBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnBox"));
 	SpawnBox->SetupAttachment(Scene);
 	
-	SpawnInterval = 5.0f;
+	//헌호수정 - 추천 기본값: 3초마다 스폰, 초기 10마리, 웨이브 최대 9마리
+	SpawnInterval = 3.0f;
 	SpawnInit = 10.0f;
 	StopSpawnTime = 540.0f;
 	MaxSpawnCount = 9;
@@ -37,28 +40,11 @@ void ASpawnVolume::BeginPlay()
 	}
 }
 
+//헌호수정 - 웨이브 없이 무한 스폰: 3초마다 2~3마리 (상한 MaxAliveZombies는 SpawnMonsters에서 체크)
 void ASpawnVolume::UpdateWave(float CurrentTime)
 {
-	// 종류 시간 체크
-	if (CurrentTime >= StopSpawnTime)
-	{
-		return;
-	}
-	
-	// 현재 시간 / 15초 > 1 / 15 = 0.xxx이므로 0. 16 / 15 = 1.xxx이므로 1로 변환
-	// 이걸로 웨이브 주기 판단함
-	int32 CurrentIntervalIndex = FMath::FloorToInt(CurrentTime / SpawnInterval);
-	
-	if (CurrentIntervalIndex > LastSpawnCheckTime)
-	{
-		// 60초 이전까지는 1마리, 그 이후로 1분 주기마다 생성시 스폰되는 몬스터 1마리씩 추가
-		int32 Wave = FMath::FloorToInt(CurrentTime / 60.0f);
-		int32 SpawnCount = FMath::Clamp(Wave+1, 0, MaxSpawnCount);
-		
-		SpawnMonsters(SpawnCount);
-		
-		LastSpawnCheckTime = CurrentIntervalIndex;
-	}
+	const int32 SpawnCount = FMath::RandRange(2, 3); // 한 번에 2~3마리 랜덤
+	SpawnMonsters(SpawnCount);
 }
 
 void ASpawnVolume::SpawnRandomMonster()
@@ -106,10 +92,39 @@ FMonsterSpawnRow* ASpawnVolume::GetRandomMonster() const
 
 void ASpawnVolume::SpawnMonsters(int32 Count)
 {
+	//헌호수정 - 상한 체크: 살아있는 좀비가 최대치면 스폰 스킵 (성능/안정성)
+	int32 Alive = CountAliveZombies();
+
 	for (int i = 0; i < Count; i++)
 	{
+		if (Alive >= MaxAliveZombies)
+		{
+			break; // 최대치 도달 → 더 스폰 안 함
+		}
 		SpawnRandomMonster();
+		++Alive;
 	}
+}
+
+//헌호수정 - 월드의 살아있는 좀비 수 세기
+int32 ASpawnVolume::CountAliveZombies() const
+{
+	int32 Count = 0;
+	for (TActorIterator<AVGMonsterCharacterBase> It(GetWorld()); It; ++It)
+	{
+		if (IsValid(*It) && !It->IsDead())
+		{
+			++Count;
+		}
+	}
+	return Count;
+}
+
+//헌호수정 - 타이머가 주기적으로 호출 → 경과 시간으로 웨이브 스폰
+void ASpawnVolume::TickWave()
+{
+	const float Elapsed = GetWorld()->GetTimeSeconds() - SpawnStartTime;
+	UpdateWave(Elapsed);
 }
 
 void ASpawnVolume::SpawnMonster(TSubclassOf<AActor> MonsterClass)
@@ -169,8 +184,12 @@ void ASpawnVolume::ActivateSpawner()
 	}
 	bActivated = true;
 
-	for (int i = 0; i < SpawnInit; i++)
-	{
-		SpawnRandomMonster();
-	}
+	//헌호수정 - 초기 스폰 (상한 체크 포함)
+	SpawnMonsters(static_cast<int32>(SpawnInit));
+
+	//헌호수정 - 주기적 스폰 타이머 시작 (SpawnInterval마다 UpdateWave 호출)
+	SpawnStartTime = GetWorld()->GetTimeSeconds();
+	LastSpawnCheckTime = -1.0f;
+	GetWorldTimerManager().SetTimer(
+		WaveTimerHandle, this, &ASpawnVolume::TickWave, SpawnInterval, true);
 }
