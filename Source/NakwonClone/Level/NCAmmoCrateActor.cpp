@@ -8,8 +8,11 @@ ANCAmmoCrateActor::ANCAmmoCrateActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+	RootComponent = SceneRoot;
+
 	CrateMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CrateMesh"));
-	RootComponent = CrateMesh;
+	CrateMesh->SetupAttachment(SceneRoot);
 
 	InteractionWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
 	InteractionWidget->SetupAttachment(CrateMesh);

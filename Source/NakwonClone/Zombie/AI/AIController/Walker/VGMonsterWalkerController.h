@@ -12,7 +12,8 @@ class NAKWONCLONE_API AVGMonsterWalkerController : public AVGMonsterAIController
 	GENERATED_BODY()
 
 public:
-	AVGMonsterWalkerController();
+	//헌호수정 - 부모(Detour Crowd 생성자)에 FObjectInitializer 전달
+	AVGMonsterWalkerController(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	virtual void BeginPlay() override;

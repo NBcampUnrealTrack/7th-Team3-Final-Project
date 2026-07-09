@@ -397,6 +397,8 @@ void ANCPlayerCharacter::ToggleCrouch()
 
 void ANCPlayerCharacter::OnDead()
 {
+    ClearDeathRelatedTimers();
+
     if (PlayerInventoryRef)
     {
         PlayerInventoryRef->bHasPendingConsumable = false;
@@ -405,36 +407,75 @@ void ANCPlayerCharacter::OnDead()
         PlayerInventoryRef->bPendingReEquipMelee = false;
         PlayerInventoryRef->PendingReEquipMeleeInstance = FNCWeaponInstance();
         PlayerInventoryRef->PendingUseItemTag = FGameplayTag::EmptyTag;
+        PlayerInventoryRef->OnItemUsed.RemoveDynamic(this, &ANCPlayerCharacter::OnItemUsed);
     }
 
-    // 헌호수정 - 서버: 물리/GAS/컴포넌트 처리
+    if (UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+    {
+        AnimInst->OnMontageEnded.RemoveDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
+    }
+
     if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+    {
         ASC->AddLooseGameplayTag(NCCharacter::Dead);
+        ASC->RemoveLooseGameplayTag(NCWeapon::Action_Attacking);
+        ASC->RemoveLooseGameplayTag(NCWeapon::Action_UsingItem);
+    }
+
+    if (EquipmentComponent)
+    {
+        EquipmentComponent->StopFire();
+        EquipmentComponent->StopADS();
+    }
 
     if (InteractionComponent)
+    {
         InteractionComponent->StopInteraction();
-
-    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    GetCharacterMovement()->StopMovementImmediately();
-    GetCharacterMovement()->DisableMovement();
+    }
 
     if (LocomotionComponent)
+    {
         LocomotionComponent->ClearAllStaminaTimers();
+    }
 
-    // 헌호수정 - 모든 클라이언트에 사망 연출 전파
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        PC->SetIgnoreMoveInput(true);
+        PC->SetIgnoreLookInput(true);
+    }
+
+    bIsStunned = false;
+    bCameraShaking = false;
+
+    if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+    {
+        Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
+
+    if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+    {
+        MoveComp->StopMovementImmediately();
+        MoveComp->DisableMovement();
+    }
+
     Multicast_OnDead();
 
-    // 헌호수정 - 몽타지 길이 + 5초 뒤 제거 (서버 기준)
-    float MontageLength = DeathMontage ? DeathMontage->GetPlayLength() : 0.f;
-    FTimerHandle DeathTimerHandle;
-    GetWorld()->GetTimerManager().SetTimer(
-        DeathTimerHandle,
-        [this]() { Destroy(); },
-        MontageLength + 5.f,
-        false
-    );
-    
-    
+    const float MontageLength = DeathMontage ? DeathMontage->GetPlayLength() : 0.f;
+    const float DestroyDelay = MontageLength + 5.f;
+
+    if (HasAuthority())
+    {
+        if (UWorld* World = GetWorld())
+        {
+            World->GetTimerManager().SetTimer(
+                DeathTimerHandle,
+                this,
+                &ANCPlayerCharacter::CleanupBeforeDeathDestroy,
+                DestroyDelay,
+                false
+            );
+        }
+    }
 }
 
 void ANCPlayerCharacter::Multicast_OnDead_Implementation() //헌호수정
@@ -647,17 +688,32 @@ void ANCPlayerCharacter::HandleHitReact(AActor* Attacker)
 //헌호수정 - 스턴 적용: 하던 행동 취소 + 이동/시점 입력 잠금
 void ANCPlayerCharacter::ApplyStun()
 {
-    // 이미 스턴 중이면 타이머만 갱신 (입력 잠금 중복 방지)
+    if (StateTags.HasTagExact(NCCharacter::Dead))
+    {
+        return;
+    }
+
+    UWorld* World = GetWorld();
+    if (!IsValid(World))
+    {
+        return;
+    }
+
     if (bIsStunned)
     {
-        GetWorld()->GetTimerManager().SetTimer(
-            StunTimerHandle, this, &ANCPlayerCharacter::EndStun, StunDuration, false);
+        World->GetTimerManager().ClearTimer(StunTimerHandle);
+        World->GetTimerManager().SetTimer(
+            StunTimerHandle,
+            this,
+            &ANCPlayerCharacter::EndStun,
+            StunDuration,
+            false
+        );
         return;
     }
 
     bIsStunned = true;
 
-    // 진행 중인 근접 공격 몽타주 취소
     if (UNCCombatComponent* Combat = GetCombatComponent())
     {
         if (UAnimMontage* AtkMontage = Combat->GetLastPlayedAttackMontage())
@@ -666,27 +722,46 @@ void ANCPlayerCharacter::ApplyStun()
         }
     }
 
-    // 진행 중인 힐/아이템 몽타주 취소 (효과 적용은 OnConsumableMontageEnded의 중단 처리에서 스킵)
     if (HealItemMontage) StopAnimMontage(HealItemMontage);
     if (FoodItemMontage) StopAnimMontage(FoodItemMontage);
     if (UseItemMontage)  StopAnimMontage(UseItemMontage);
 
-    // 이동 + 시점 입력 잠금
+    if (EquipmentComponent)
+    {
+        EquipmentComponent->StopFire();
+    }
+
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         PC->SetIgnoreMoveInput(true);
         PC->SetIgnoreLookInput(true);
     }
 
-    // 스턴 해제 타이머
-    GetWorld()->GetTimerManager().SetTimer(
-        StunTimerHandle, this, &ANCPlayerCharacter::EndStun, StunDuration, false);
+    World->GetTimerManager().SetTimer(
+        StunTimerHandle,
+        this,
+        &ANCPlayerCharacter::EndStun,
+        StunDuration,
+        false
+    );
 }
 
 //헌호수정 - 스턴 해제: 입력 잠금 복구
 void ANCPlayerCharacter::EndStun()
 {
+    UWorld* World = GetWorld();
+    if (IsValid(World))
+    {
+        World->GetTimerManager().ClearTimer(StunTimerHandle);
+    }
+
+    StunTimerHandle.Invalidate();
     bIsStunned = false;
+
+    if (StateTags.HasTagExact(NCCharacter::Dead))
+    {
+        return;
+    }
 
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
@@ -835,3 +910,76 @@ void ANCPlayerCharacter::Multicast_PlayHitReactMontage_Implementation(UAnimMonta
         PlayAnimMontage(MontageToPlay);
     }
 }
+
+void ANCPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    ClearDeathRelatedTimers();
+
+    if (PlayerInventoryRef)
+    {
+        PlayerInventoryRef->OnItemUsed.RemoveDynamic(this, &ANCPlayerCharacter::OnItemUsed);
+    }
+
+    if (UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+    {
+        AnimInst->OnMontageEnded.RemoveDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
+    }
+
+    if (ADSHUDWidget)
+    {
+        ADSHUDWidget->RemoveFromParent();
+        ADSHUDWidget = nullptr;
+    }
+
+    Super::EndPlay(EndPlayReason);
+}
+
+void ANCPlayerCharacter::ClearDeathRelatedTimers()
+{
+    UWorld* World = GetWorld();
+    if (!IsValid(World))
+    {
+        DeathTimerHandle.Invalidate();
+        StunTimerHandle.Invalidate();
+        ShakeTimerHandle.Invalidate();
+        return;
+    }
+
+    World->GetTimerManager().ClearTimer(DeathTimerHandle);
+    World->GetTimerManager().ClearTimer(StunTimerHandle);
+    World->GetTimerManager().ClearTimer(ShakeTimerHandle);
+
+    DeathTimerHandle.Invalidate();
+    StunTimerHandle.Invalidate();
+    ShakeTimerHandle.Invalidate();
+}
+
+void ANCPlayerCharacter::CleanupBeforeDeathDestroy()
+{
+    ClearDeathRelatedTimers();
+
+    if (UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+    {
+        AnimInst->OnMontageEnded.RemoveDynamic(this, &ANCPlayerCharacter::OnConsumableMontageEnded);
+        AnimInst->StopAllMontages(0.1f);
+    }
+
+    if (EquipmentComponent)
+    {
+        EquipmentComponent->StopFire();
+        EquipmentComponent->StopADS();
+    }
+
+    if (LocomotionComponent)
+    {
+        LocomotionComponent->ClearAllStaminaTimers();
+    }
+
+    if (InteractionComponent)
+    {
+        InteractionComponent->StopInteraction();
+    }
+
+    Destroy();
+}
+

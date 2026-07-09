@@ -58,18 +58,19 @@ inline EVGHitBodyPart ClassifyBodyPart(FName BoneName)
     const bool bRight = Bone.EndsWith(TEXT("_r"));
 
     // 다리 / 발
-    if (Bone.Contains(TEXT("thigh")) || Bone.Contains(TEXT("calf")) ||
-        Bone.Contains(TEXT("foot")) || Bone.Contains(TEXT("ball")) ||
-        Bone.Contains(TEXT("toe")))
+    if (Bone.Contains(TEXT("pelvis")) || Bone.Contains(TEXT("thigh")) ||
+        Bone.Contains(TEXT("calf")) || Bone.Contains(TEXT("foot")) ||
+        Bone.Contains(TEXT("ball")) || Bone.Contains(TEXT("toe")))
     {
         return bRight ? EVGHitBodyPart::LegR : EVGHitBodyPart::LegL;
     }
 
     // 팔 (어깨~손, 손가락 포함)
-    if (Bone.Contains(TEXT("upperarm")) || Bone.Contains(TEXT("lowerarm")) ||
-        Bone.Contains(TEXT("hand")) || Bone.Contains(TEXT("index")) ||
-        Bone.Contains(TEXT("middle")) || Bone.Contains(TEXT("ring")) ||
-        Bone.Contains(TEXT("pinky")) || Bone.Contains(TEXT("thumb")))
+    if (Bone.Contains(TEXT("clavicle")) || Bone.Contains(TEXT("upperarm")) ||
+        Bone.Contains(TEXT("lowerarm")) || Bone.Contains(TEXT("hand")) ||
+        Bone.Contains(TEXT("index")) || Bone.Contains(TEXT("middle")) ||
+        Bone.Contains(TEXT("ring")) || Bone.Contains(TEXT("pinky")) ||
+        Bone.Contains(TEXT("thumb")))
     {
         return bRight ? EVGHitBodyPart::ArmR : EVGHitBodyPart::ArmL;
     }

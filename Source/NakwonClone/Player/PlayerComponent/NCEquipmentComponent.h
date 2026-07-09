@@ -51,10 +51,13 @@ public:
 	TMap<FGameplayTag, TObjectPtr<UNCGunComponent>> WeaponComponents;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment|State")
-	FNCGunSlotData PrimarySlot;
+	FNCGunSlotData ShotgunSlot;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment|State")
-	FNCGunSlotData SecondarySlot;
+	FNCGunSlotData RifleSlot;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Equipment|State")
+	FNCGunSlotData SidearmSlot;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment|State")
 	ENCGunSlot ActiveSlot = ENCGunSlot::None;
