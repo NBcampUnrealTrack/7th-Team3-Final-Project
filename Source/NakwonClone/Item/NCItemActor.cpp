@@ -228,6 +228,27 @@ void ANCItemActor::InitializeItemData(FName InItemID, FGameplayTag InTag, int32 
 		
 		ItemMeshAsset = InMesh;
 		OnRep_ItemMeshAsset();
+
+		if (!ItemID.IsNone())
+		{
+			UDataTable* LoadedItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/NakwonClone/Blueprints/Item/ItemData/DT_ItemTypeData.DT_ItemTypeData"));
+			if (LoadedItemDataTable)
+			{
+				FItemData* FoundData = LoadedItemDataTable->FindRow<FItemData>(ItemID, TEXT("InitializeItemData"));
+				if (FoundData)
+				{
+					PickupEffect   = FoundData->PickupEffect;
+					PickupSound    = FoundData->PickupSound;
+					IdleAuraEffect = FoundData->IdleAuraEffect;
+
+					if (IdleAuraEffect && IdleAuraComponent)
+					{
+						IdleAuraComponent->SetAsset(IdleAuraEffect);
+						IdleAuraComponent->Activate();
+					}
+				}
+			}
+		}
 	}
 }
 
