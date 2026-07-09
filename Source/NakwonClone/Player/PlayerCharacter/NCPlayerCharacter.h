@@ -119,6 +119,14 @@ public:
 
 	void SetAimRotationMode(bool bEnable);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat|Combo")
+	void AddKillCombo();
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Combo")
+	int32 GetCurrentComboCount() const { return CurrentComboCount; }
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Combo")
+	float GetCurrentComboMultiplier() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -244,6 +252,17 @@ private:
 	bool bIsStunned = false;
 	FTimerHandle StunTimerHandle;
 
+	void ResetKillCombo();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Combo",
+		meta = (AllowPrivateAccess = "true"))
+	int32 CurrentComboCount = 0;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Combo",
+		meta = (AllowPrivateAccess = "true"))
+	float ComboResetTime = 4.0f;
+
+	FTimerHandle ComboResetTimerHandle;
 protected:
 
 	void HandleHealthChanged(const struct FOnAttributeChangeData& Data);
