@@ -66,4 +66,7 @@ protected:
     void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
                UPrimitiveComponent* OtherComp, FVector NormalImpulse,
                const FHitResult& Hit);
+
+    void ProcessHit(AActor* OtherActor, const FHitResult& Hit);
+    bool CheckPointBlankOverlap();
 };
