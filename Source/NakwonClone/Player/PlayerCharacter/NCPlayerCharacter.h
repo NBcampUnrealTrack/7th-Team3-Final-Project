@@ -251,9 +251,13 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayHitReactMontage(UAnimMontage* MontageToPlay);
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 private:
 	void InitCamera();
 	void InitComponents();
+
+	void ClearDeathRelatedTimers();
+	void CleanupBeforeDeathDestroy();
 
 	UFUNCTION()
 	void OnItemUsed(FGameplayTag UsedItemTag);
@@ -269,6 +273,8 @@ private:
 
 	bool bAimRotationMode = false;
 	
+	FTimerHandle DeathTimerHandle;
+
 public:
 	// 유시환 추가 - 좀비 공격 슬롯 적용
 	UFUNCTION(BlueprintPure, Category = "Components|Combat")

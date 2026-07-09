@@ -4,7 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
 #include "Weapon/Gun/GunType/NCGunType.h"
-
+#include "TimerManager.h"
 #include "NCGunComponent.generated.h"
 
 class UDataTable;
@@ -104,6 +104,14 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gun|ADS", meta = (AllowPrivateAccess = "true"))
+	float ADSReturnDelay = 1.0f;
+
+	FTimerHandle ADSReturnTimerHandle;
+
+	void FinishADSReturn();
+	void ClearADSReturnTimer();
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|ADS")
