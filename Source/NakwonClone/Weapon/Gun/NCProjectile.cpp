@@ -102,6 +102,12 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
             UGameplayStatics::SpawnEmitterAtLocation(
                 this, ImpactFleshParticle, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
         }
+
+        if (HitShakeClass)
+        {
+            if (APlayerController* PC = Cast<APlayerController>(GetInstigatorController()))
+                PC->ClientStartCameraShake(HitShakeClass, HitShakeScale);
+        }
     }
     else if (SourceASC)
     {

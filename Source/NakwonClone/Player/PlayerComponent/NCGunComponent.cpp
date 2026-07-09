@@ -328,7 +328,12 @@ void UNCGunComponent::FireOnce()
 	PlayGunMontage(Data->FireMontage);
 	// 발사음 재생
 	if (!Data->FireSound.IsNull())
-		UGameplayStatics::PlaySoundAtLocation(this, Data->FireSound.LoadSynchronous(), SpawnLocation);
+	{
+		const float FirePitch = FMath::RandRange(1.f - Data->FirePitchVariance, 1.f + Data->FirePitchVariance);
+		UGameplayStatics::PlaySoundAtLocation(
+			this, Data->FireSound.LoadSynchronous(), SpawnLocation,
+			FRotator::ZeroRotator, 1.f, FirePitch);
+	}
 
 	if (MuzzleFlashComp)
 		MuzzleFlashComp->Activate(true);
@@ -368,11 +373,13 @@ void UNCGunComponent::FireOnce()
 
 	ApplyRecoil(Data);
 
+	const float ShakeScale = IsADS() ? Data->ADSShakeMultiplier : 1.f;
+
 	if (Data->FireShakeClass)
 	{
 		ACharacter* ShakeChar = Cast<ACharacter>(Owner);
 		if (APlayerController* PC = ShakeChar ? Cast<APlayerController>(ShakeChar->GetController()) : nullptr)
-			PC->ClientStartCameraShake(Data->FireShakeClass);
+			PC->ClientStartCameraShake(Data->FireShakeClass, ShakeScale);
 	}
 
 	const int32 PelletCount = FMath::Max(1, Data->NumPellets);
@@ -401,6 +408,8 @@ void UNCGunComponent::FireOnce()
 			NCProj->ImpactSurfaceEffect   = Data->ImpactSurfaceEffect.Get();
 			NCProj->ImpactFleshParticle   = Data->ImpactFleshParticle.Get();
 			NCProj->ImpactSurfaceParticle = Data->ImpactSurfaceParticle.Get();
+			NCProj->HitShakeClass         = Data->HitShakeClass;
+			NCProj->HitShakeScale         = ShakeScale;
 			if (!Data->TracerEffect.IsNull())
 				NCProj->TracerEffect = Data->TracerEffect.LoadSynchronous();
 			NCProj->FinishSpawning(FTransform(PelletRotation, SpawnLocation));
@@ -714,6 +723,7 @@ void UNCGunComponent::AttachGunMesh(const FNCGunData* Data)
 			AttachedMeshComp,
 			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 			Data->MuzzleSocketName);
+		MuzzleFlashComp->SetWorldScale3D(FVector(Data->MuzzleFlashScale));
 		MuzzleFlashComp->OnSystemFinished.AddDynamic(this, &UNCGunComponent::OnMuzzleFlashFinished);
 	}
 }
