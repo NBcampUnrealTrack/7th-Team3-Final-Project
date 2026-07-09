@@ -3,7 +3,9 @@
 
 #include "NCGameState.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+
 
 void ANCGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -13,6 +15,23 @@ void ANCGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(ANCGameState, AlivePlayerCount);
 	DOREPLIFETIME(ANCGameState, CurrentGameStateTag);
 	DOREPLIFETIME(ANCGameState, RemainingMatchTime);
+	DOREPLIFETIME(ANCGameState, TotalScore);
+	DOREPLIFETIME(ANCGameState, bEscapable);
+}
+
+void ANCGameState::OnRep_TotalScore()
+{
+	OnScoreChanged.Broadcast(TotalScore);
+}
+
+void ANCGameState::OnRep_bEscapable()
+{
+	// todo : 탈출 가능 안내 위젯 표시
+}
+
+void ANCGameState::Multicast_PlayHelicopterSound_Implementation(USoundBase* Sound)
+{
+	UGameplayStatics::PlaySound2D(this, Sound);
 }
 
 void ANCGameState::OnRep_CurrentGameStateTag()
