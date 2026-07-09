@@ -16,8 +16,9 @@ class UTexture2D;
 UENUM(BlueprintType)
 enum class ENCGunSlot : uint8
 {
-    Primary,    // 1번 — 라이플/샷건
-    Secondary,  // 2번 — 권총/리볼버
+    Shotgun,   // 1번
+    Rifle,     // 2번
+    Sidearm,   // 3번 - Pistol / Revolver
     None
 };
 
@@ -34,10 +35,17 @@ struct FNCGunData : public FTableRowBase
     GENERATED_BODY()
 
     // 슬롯 & 타입
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) ENCGunSlot   SlotType      = ENCGunSlot::Primary;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) ENCFireMode  DefaultFireMode = ENCFireMode::SemiAuto;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) bool         bCanToggleFireMode = false;  // 연사<->단발 전환 가능 여부
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) FGameplayTag GunTypeTag;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    ENCGunSlot SlotType = ENCGunSlot::Shotgun;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    ENCFireMode DefaultFireMode = ENCFireMode::SemiAuto;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    bool bCanToggleFireMode = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayTag GunTypeTag;
 
     // UI
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FText DisplayName;

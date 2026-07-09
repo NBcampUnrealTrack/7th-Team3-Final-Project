@@ -1,4 +1,4 @@
-// 헌호수정 - 백팩(등) 3D HUD 구현
+﻿// 헌호수정 - 백팩(등) 3D HUD 구현
 #include "NCBackpackHUD.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -68,44 +68,40 @@ void UNCBackpackHUD::RefreshAll(ANCPlayerCharacter* Player)
 		}
 	}
 
-	// ---------- 무기 슬롯 1/2/3 색상 (활성=초록, 장착=흰색, 빈칸=회색) ----------
-	const FLinearColor ColActive(0.2f, 1.f, 0.2f, 1.f);   // 밝은 초록 (지금 든 무기)
-	const FLinearColor ColEquipped(1.f, 1.f, 1.f, 1.f);   // 흰색 (무기 있지만 안 든 것)
-	const FLinearColor ColEmpty(0.35f, 0.35f, 0.35f, 1.f); // 어두운 회색 (빈 슬롯)
+	// ---------- 무기 슬롯 1/2/3 색상 ----------
+	const FLinearColor ColActive(0.2f, 1.f, 0.2f, 1.f);
+	const FLinearColor ColEquipped(1.f, 1.f, 1.f, 1.f);
+	const FLinearColor ColEmpty(0.35f, 0.35f, 0.35f, 1.f);
 
 	if (UNCEquipmentComponent* Equip = Player->GetEquipmentComponent())
 	{
 		const ENCGunSlot Active = Equip->ActiveSlot;
 
-		// 슬롯 1 (Primary)
+		// 슬롯 1 = 샷건
 		if (Weapon1Text)
 		{
-			const bool bEquipped = !Equip->PrimarySlot.GunID.IsNone();
-			const bool bActive = (Active == ENCGunSlot::Primary);
+			const bool bEquipped = !Equip->ShotgunSlot.GunID.IsNone();
+			const bool bActive = (Active == ENCGunSlot::Shotgun);
 			Weapon1Text->SetColorAndOpacity(FSlateColor(
 				!bEquipped ? ColEmpty : (bActive ? ColActive : ColEquipped)));
 		}
 
-		// 슬롯 2 (Secondary)
+		// 슬롯 2 = 라이플
 		if (Weapon2Text)
 		{
-			const bool bEquipped = !Equip->SecondarySlot.GunID.IsNone();
-			const bool bActive = (Active == ENCGunSlot::Secondary);
+			const bool bEquipped = !Equip->RifleSlot.GunID.IsNone();
+			const bool bActive = (Active == ENCGunSlot::Rifle);
 			Weapon2Text->SetColorAndOpacity(FSlateColor(
 				!bEquipped ? ColEmpty : (bActive ? ColActive : ColEquipped)));
 		}
-	}
 
-	// 슬롯 3 (근접무기) — 활성 조건: 총이 없을 때(None)
-	if (Weapon3Text)
-	{
-		const bool bEquipped = !Player->StoredMeleeWeaponID.IsNone();
-		bool bActive = false;
-		if (UNCEquipmentComponent* Equip = Player->GetEquipmentComponent())
+		// 슬롯 3 = 피스톨 / 리볼버
+		if (Weapon3Text)
 		{
-			bActive = (Equip->ActiveSlot == ENCGunSlot::None);
+			const bool bEquipped = !Equip->SidearmSlot.GunID.IsNone();
+			const bool bActive = (Active == ENCGunSlot::Sidearm);
+			Weapon3Text->SetColorAndOpacity(FSlateColor(
+				!bEquipped ? ColEmpty : (bActive ? ColActive : ColEquipped)));
 		}
-		Weapon3Text->SetColorAndOpacity(FSlateColor(
-			!bEquipped ? ColEmpty : (bActive ? ColActive : ColEquipped)));
 	}
 }

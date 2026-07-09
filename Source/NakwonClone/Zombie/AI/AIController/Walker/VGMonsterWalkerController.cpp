@@ -5,7 +5,9 @@
 #include "BehaviorTree/BlackboardComponent.h"
 
 
-AVGMonsterWalkerController::AVGMonsterWalkerController()
+//헌호수정 - 부모의 Detour Crowd 생성자에 FObjectInitializer 전달
+AVGMonsterWalkerController::AVGMonsterWalkerController(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bCanSleep = true;
