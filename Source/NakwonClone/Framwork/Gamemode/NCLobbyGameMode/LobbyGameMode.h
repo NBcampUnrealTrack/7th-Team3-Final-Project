@@ -18,5 +18,8 @@ public:
 	void MoveToParkingLevel();
 	
 	UFUNCTION(BlueprintCallable)
+	void MoveToShopLevel();
+
+	UFUNCTION(BlueprintCallable)
 	void MoveToTitle();
 };

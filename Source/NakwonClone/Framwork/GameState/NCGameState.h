@@ -39,7 +39,7 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_bEscapable, BlueprintReadOnly, Category = "Score")
 	bool bEscapable = false;
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintAssignable)
 	FOnScoreChanged OnScoreChanged;
 
 	UFUNCTION()
