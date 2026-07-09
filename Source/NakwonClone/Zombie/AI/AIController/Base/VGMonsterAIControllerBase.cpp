@@ -12,6 +12,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISenseConfig_Hearing.h"
+#include "Navigation/CrowdFollowingComponent.h" //헌호수정 - Detour Crowd
 #include "Zombie/ZombieCharacter/Walker/VGMonsterWalker.h"
 
 DEFINE_LOG_CATEGORY(LogMonster);
@@ -27,7 +28,9 @@ const FName AVGMonsterAIControllerBase::PatrolLocationKey    = "PatrolLocation";
 const FName AVGMonsterAIControllerBase::SlotLocationKey      = "SlotLocation";
 #pragma endregion
 
-AVGMonsterAIControllerBase::AVGMonsterAIControllerBase()
+//헌호수정 - PathFollowingComponent를 CrowdFollowingComponent로 교체 → Detour Crowd 사용 (100마리 최적화)
+AVGMonsterAIControllerBase::AVGMonsterAIControllerBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent>(TEXT("PathFollowingComponent")))
 {
 	PrimaryActorTick.bCanEverTick = false;
 
