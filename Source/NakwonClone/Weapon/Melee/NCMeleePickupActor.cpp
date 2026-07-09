@@ -1,4 +1,5 @@
 #include "NCMeleePickupActor.h"
+#include "Components/SphereComponent.h"
 #include "Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerData/NCWeaponData.h"
@@ -6,6 +7,7 @@
 
 ANCMeleePickupActor::ANCMeleePickupActor()
 {
+	bAutoPickupEnabled = false;
 }
 
 void ANCMeleePickupActor::Interact_Implementation(AActor* Interactor)
@@ -46,4 +48,9 @@ void ANCMeleePickupActor::Interact_Implementation(AActor* Interactor)
 	}
 
 	Destroy();
+}
+
+bool ANCMeleePickupActor::CanInteract_Implementation(AActor* Interactor)
+{
+	return true;
 }
