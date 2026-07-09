@@ -32,10 +32,22 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
 		
-		GetCharacterMovement()->bUseRVOAvoidance = true;
-		GetCharacterMovement()->AvoidanceConsiderationRadius = 100.f;
-		GetCharacterMovement()->SetAvoidanceGroup(1);
-		GetCharacterMovement()->SetGroupsToAvoid(1);
+		//헌호수정 - Detour Crowd가 겹침 처리하므로 RVO 끔 (중복 계산 제거, 100마리 최적화)
+		GetCharacterMovement()->bUseRVOAvoidance = false;
+	}
+
+	//헌호수정 - 애니메이션 URO(Update Rate Optimization): 멀거나 화면 밖 좀비는 애니 갱신률↓ (100마리 최적화 핵심)
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		MeshComp->bEnableUpdateRateOptimizations = true;
+		// 화면 밖일 때 포즈는 스킵하되 몽타주(공격 등)는 계속 틱 → 공격 판정 유지
+		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+
+		//헌호수정 - 좀비 동적 그림자 완전 끔 (100마리 그림자 = 렉 주범)
+		MeshComp->SetCastShadow(false);
+
+		//헌호수정 - 좀비를 레이트레이싱에서 제외 (애니 좀비 RT 지오메트리 매 프레임 갱신 = 비쌈, RT 메모리 초과 해결)
+		MeshComp->SetVisibleInRayTracing(false);
 	}
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
@@ -44,9 +56,8 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	DetectionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("DetectionCapsule"));
 	DetectionCapsule->SetupAttachment(RootComponent);
 	DetectionCapsule->SetCapsuleSize(40.f, 90.f);
-	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	DetectionCapsule->SetCollisionResponseToAllChannels(ECR_Ignore);
-	DetectionCapsule->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	//헌호수정 - 수면/감지 시스템 미사용: 오버랩 쿼리 끔 (매 프레임 비용 제거, 100마리 최적화)
+	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
@@ -132,7 +143,7 @@ void AVGMonsterCharacterBase::BeginPlay()
 
 	SelectedStopMontage = GetRandomStopMontage();
 
-	DetectionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AVGMonsterCharacterBase::OnDetectionOverlap);
+	//헌호수정 - 감지 오버랩 바인딩 제거 (수면 시스템 미사용, 오버랩 비용 제거)
 
 	// H
 	if (HasAuthority())

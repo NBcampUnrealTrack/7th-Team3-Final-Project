@@ -24,8 +24,9 @@ class NAKWONCLONE_API AVGMonsterAIControllerBase : public AAIController
 
 #pragma region 코어/라이프사이클
 public:
-	AVGMonsterAIControllerBase();
-	
+	//헌호수정 - Detour Crowd 사용 위해 FObjectInitializer 생성자로 변경
+	AVGMonsterAIControllerBase(const FObjectInitializer& ObjectInitializer);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
