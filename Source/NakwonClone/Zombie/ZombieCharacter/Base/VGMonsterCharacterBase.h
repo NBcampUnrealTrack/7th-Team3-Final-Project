@@ -200,6 +200,10 @@ public:
 	void OnStartDissolve();
 	bool IsDead() const { return bIsDead; }
 
+	//헌호수정 - 죽은 뒤 이 시간(초) 후 액터 삭제 (시체 쌓임 방지, 무한 스폰 성능)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Death")
+	float DeathLifeSpan = 3.0f;
+
 private:
 	bool bIsDead = false;
 #pragma endregion

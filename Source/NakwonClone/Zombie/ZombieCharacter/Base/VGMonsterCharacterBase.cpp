@@ -187,6 +187,9 @@ void AVGMonsterCharacterBase::HandleDead()
 		AIController->StopMovement();
 		AIController->UnPossess();
 	}
+
+	//헌호수정 - 죽고 DeathLifeSpan초 뒤 확실히 액터 삭제 (시체 쌓임 방지)
+	SetLifeSpan(DeathLifeSpan);
 }
 
 void AVGMonsterCharacterBase::OnStartRagdoll()
