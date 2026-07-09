@@ -59,4 +59,7 @@ public:
 	
 	UFUNCTION()
 	void OnRep_MatchTime();
+	
+	UFUNCTION(BlueprintCallable)
+	int32 GetTotalScore() const {return TotalScore;}
 };

@@ -70,4 +70,8 @@ struct FVGMonsterTypeRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, Category = "Sound")
     float IdleSoundCooldown = 5.f;   // 재생 종료 후 쉬는 시간
+    
+    // 좀비킬 시 획득 점수(우정 추가)
+    UPROPERTY(EditAnywhere, Category = "Score")
+    int32 KillScore = 20;
 };

@@ -377,6 +377,10 @@ private:
 	// Witch: 첫 공격 때 큰소리 1회
 	bool bScreamPhase = false;
 	bool bHasScreamed = false;
+	
+public: // 우정 추가
+	UPROPERTY(BlueprintReadWrite)
+	int32 CashedKillScore = 20;
 
 public:
 	// 큰소리(스페셜) 몽타주 재생 시도 — 접촉/피격 공용 진입점
@@ -418,4 +422,5 @@ public:
 	// bRandomType이 true일 때, 비어있지 않으면 이 목록 안에서만 랜덤 선택
 	UPROPERTY(EditAnywhere, Category = "Monster|Type")
 	TArray<EVGMonsterType> AllowedRandomTypes;
+	
 };
