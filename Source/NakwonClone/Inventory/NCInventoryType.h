@@ -31,12 +31,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
 	FGameplayTagContainer EquipTags; 
 	
+	// 습득 1회성 이펙트/사운드 + 상시 아우라 (아이템별로 다르므로 데이터테이블에서 관리)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data|Pickup")
+	class UNiagaraSystem* PickupEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data|Pickup")
+	class USoundBase* PickupSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data|Pickup")
+	class UNiagaraSystem* IdleAuraEffect;
+	
 	FItemData()
 		: ItemMesh(nullptr)
 		, ItemIcon(nullptr)
 		, LootBoxIcon(nullptr)
 		, ItemTypeTag(FGameplayTag::EmptyTag)
 		, MaxStackSize(1)
+		, PickupEffect(nullptr)
+		, PickupSound(nullptr)
+		, IdleAuraEffect(nullptr)
 	{}
 };
 

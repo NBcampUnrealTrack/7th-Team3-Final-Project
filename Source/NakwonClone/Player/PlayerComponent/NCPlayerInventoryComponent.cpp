@@ -1073,7 +1073,8 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
                 }
             }
         }
-        ItemToLoot->Destroy();
+        // ItemToLoot->Destroy();
+        ItemToLoot->ConsumeItem();
         return;
     }
 
@@ -1095,7 +1096,8 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
             Items[EmptySlot].ItemTypeTag = LootTag;
             Items[EmptySlot].Quantity = LootQuantity;
             OnInventoryUpdated.Broadcast();
-            ItemToLoot->Destroy();
+            // ItemToLoot->Destroy();
+            ItemToLoot->ConsumeItem();
         }
         return;
     }
@@ -1113,7 +1115,7 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
         if (!GetItemDataByTag(LootID, LootTag, ItemData)) return;
 
         // 슬롯에 다른 아이템이 이미 있으면 못 주움 
-        if (!Slot.IsEmpty() && (Slot.ItemID != LootID || Slot.ItemTypeTag != LootTag)) return;
+        // if (!Slot.IsEmpty() && (Slot.ItemID != LootID || Slot.ItemTypeTag != LootTag)) return;
 
         if (Slot.IsEmpty())
         {
@@ -1122,7 +1124,7 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
             Slot.Quantity = 0;
         }
 
-        const int32 Room  = ItemData.MaxStackSize - Slot.Quantity;
+        /*const int32 Room  = ItemData.MaxStackSize - Slot.Quantity;
         const int32 Taken = FMath::Min(LootQuantity, Room);
         if (Taken <= 0) return; // 이미 꽉 차서 하나도 못 주움
 
@@ -1137,7 +1139,11 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
         else
         {
             ItemToLoot->Quantity = Remaining; // 초과분은 바닥에 남김
-        }
+        }*/
+        Slot.Quantity = FMath::Min(Slot.Quantity + 1, ItemData.MaxStackSize);
+        OnPresetUpdated.Broadcast();
+
+        ItemToLoot->ConsumeItem();
         return;
     }
 
@@ -1159,7 +1165,8 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
                 {
                     Preset.TwoHand = NewSlot;
                     OnPresetUpdated.Broadcast();
-                    ItemToLoot->Destroy();
+                    // ItemToLoot->Destroy();
+                    ItemToLoot->ConsumeItem();
                     return;
                 }
             }
@@ -1167,7 +1174,8 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
             {
                 Preset.RightHand = NewSlot;
                 OnPresetUpdated.Broadcast();
-                ItemToLoot->Destroy();
+                // ItemToLoot->Destroy();
+                ItemToLoot->ConsumeItem();
                 return;
             }
         }
