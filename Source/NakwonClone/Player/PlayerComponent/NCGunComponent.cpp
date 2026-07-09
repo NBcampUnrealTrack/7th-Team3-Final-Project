@@ -324,7 +324,7 @@ void UNCGunComponent::FireOnce()
 	{
 		SpawnLocation = MuzzleMeshComp->GetSocketLocation(Data->MuzzleSocketName);
 		const FVector ToAim = AimPoint - SpawnLocation;
-		SpawnRotation = ToAim.SizeSquared() > (10.f * 10.f) ? ToAim.Rotation() : CamForward.Rotation();
+		SpawnRotation = ToAim.SizeSquared() > (1.f * 1.f) ? ToAim.Rotation() : CamForward.Rotation();
 	}
 	else
 	{

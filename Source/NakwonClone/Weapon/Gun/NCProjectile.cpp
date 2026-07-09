@@ -9,6 +9,7 @@
 #include "Common/NCGameplayTags.h"
 #include "GAS/Effect/GE_Damage.h"
 #include "GameplayEffectTypes.h" // FGameplayCueParameters
+#include "Engine/OverlapResult.h"
 
 ANCProjectile::ANCProjectile()
 {
@@ -45,6 +46,8 @@ void ANCProjectile::BeginPlay()
 
     if (AActor* OwnerActor = GetOwner()) CollisionComp->IgnoreActorWhenMoving(OwnerActor, true);
 
+    if (CheckPointBlankOverlap()) return;
+
     // ProjectileSpeed는 GunComponent가 SpawnActor 직후 설정
     MovementComp->InitialSpeed = ProjectileSpeed;
     MovementComp->MaxSpeed     = ProjectileSpeed;
@@ -67,6 +70,44 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
 {
     if (!OtherActor || OtherActor == GetOwner()) return;
 
+    ProcessHit(OtherActor, Hit);
+    Destroy();
+}
+
+bool ANCProjectile::CheckPointBlankOverlap()
+{
+    AActor* OwnerActor = GetOwner();
+
+    TArray<FOverlapResult> Overlaps;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);
+    if (OwnerActor) Params.AddIgnoredActor(OwnerActor);
+
+    const float Radius = CollisionComp->GetScaledSphereRadius();
+    GetWorld()->OverlapMultiByChannel(
+        Overlaps, GetActorLocation(), FQuat::Identity,
+        ECC_Pawn, FCollisionShape::MakeSphere(Radius), Params);
+
+    for (const FOverlapResult& Overlap : Overlaps)
+    {
+        AActor* OtherActor = Overlap.GetActor();
+        if (!OtherActor || OtherActor == OwnerActor) continue;
+
+        FHitResult Hit;
+        Hit.ImpactPoint = GetActorLocation();
+        Hit.ImpactNormal = -GetActorForwardVector();
+        Hit.Component = Overlap.GetComponent();
+
+        ProcessHit(OtherActor, Hit);
+        Destroy();
+        return true;
+    }
+
+    return false;
+}
+
+void ANCProjectile::ProcessHit(AActor* OtherActor, const FHitResult& Hit)
+{
     // GAS 데미지 적용
     UAbilitySystemComponent* SourceASC =
         UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetInstigator());
@@ -123,6 +164,4 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
 
         SourceASC->ExecuteGameplayCue(SurfaceTag, CueParams);
     }
-
-    Destroy();
 }
