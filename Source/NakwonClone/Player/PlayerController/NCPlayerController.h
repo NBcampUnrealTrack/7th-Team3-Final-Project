@@ -101,9 +101,10 @@ private:
 	void GunStopADS();
 	void GunReload();
 	void GunToggleFireMode();
-	void GunSelectPrimary();
-	void GunSelectSecondary();
-	void GunSelectMelee();
+	void GunSelectShotgun();
+	void GunSelectRifle();
+	void GunSelectSidearm();
+	void GunSelectSlot(ENCGunSlot Slot);
 	// 헌호수정 - 암살
 	void Assassinate();
 
@@ -198,5 +199,4 @@ protected:
 
 	FTimerHandle SwapTimerHandle;
 
-	ENCGunSlot PendingMeleeToGunTarget = ENCGunSlot::None;
 };

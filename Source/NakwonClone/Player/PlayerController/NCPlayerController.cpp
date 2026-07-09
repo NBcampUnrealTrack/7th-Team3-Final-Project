@@ -132,11 +132,13 @@ void ANCPlayerController::SetupInputComponent()
         if (GunToggleFireModeAction)
             EIC->BindAction(GunToggleFireModeAction, ETriggerEvent::Started, this, &ANCPlayerController::GunToggleFireMode);
         if (GunSlot1Action)
-            EIC->BindAction(GunSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectPrimary);
+            EIC->BindAction(GunSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectShotgun);
+
         if (GunSlot2Action)
-            EIC->BindAction(GunSlot2Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectSecondary);
+            EIC->BindAction(GunSlot2Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectRifle);
+
         if (GunSlot3Action)
-            EIC->BindAction(GunSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectMelee);
+            EIC->BindAction(GunSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectSidearm);
         // 헌호수정 - 암살 Q키 바인딩
         if (AssassinateAction)
             EIC->BindAction(AssassinateAction, ETriggerEvent::Started, this, &ANCPlayerController::Assassinate);
@@ -450,39 +452,19 @@ void ANCPlayerController::UnArm()
 {
     if (IsMenuBlockingInput()) return;
     if (IsAttacking()) return;
-    if (IsUsingItem()) return; // 소모품 사용 중 무기 해제 차단
+    if (IsUsingItem()) return;
 
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
 
     UNCEquipmentComponent* EquipComp = PC->GetEquipmentComponent();
-    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
+    if (!EquipComp) return;
 
-    if (EquipComp && EquipComp->IsSwapping()) return;
-    if (Combat && Combat->IsSwappingWeapon()) return;
+    if (EquipComp->IsSwapping()) return;
 
-    // 총기 들고 있으면 총기 해제만
-    if (EquipComp && EquipComp->HasActiveGun())
+    if (EquipComp->HasActiveGun())
     {
-        bUnArmPending = true;
         EquipComp->SelectSlot(ENCGunSlot::None);
-        return;
-    }
-
-    // 근접무기 들고 있으면 UnequipMontage 끝나게 둠
-    if (Combat && Combat->IsWeaponEquipped())
-    {
-        Combat->UnEquipWeapon();
-        return;
-    }
-
-    // 이미 맨손일 때만 ForceUnArm
-    if (APlayerState* PS = GetPlayerState<APlayerState>())
-    {
-        if (UNCPlayerInventoryComponent* Inv = PS->FindComponentByClass<UNCPlayerInventoryComponent>())
-        {
-            Inv->ForceUnArm();
-        }
     }
 }
 
@@ -575,58 +557,26 @@ bool ANCPlayerController::IsWeaponSwapBusy() const
     return InteractionComp && InteractionComp->IsPickingUp();
 }
 
-void ANCPlayerController::GunSelectPrimary()
+void ANCPlayerController::GunSelectShotgun()
 {
-    if (IsMenuBlockingInput()) return;
-    if (IsAttacking()) return;
-    if (IsUsingItem()) return; // 소모품 사용 중 무기 전환 차단
-
-    ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
-    if (!PC) return;
-
-    UNCEquipmentComponent* EC = PC->GetEquipmentComponent();
-    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
-
-    if (!EC) return;
-    if (IsWeaponSwapBusy()) return;
-
-    if (EC->PrimarySlot.GunID.IsNone())
-    {
-        return;
-    }
-
-    if (Combat && Combat->IsWeaponEquipped())
-    {
-        if (PendingMeleeToGunTarget == ENCGunSlot::Primary) return;
-
-        PendingMeleeToGunTarget = ENCGunSlot::Primary;
-        Combat->UnEquipWeapon();
-
-        GetWorld()->GetTimerManager().SetTimer(
-            SwapTimerHandle,
-            FTimerDelegate::CreateLambda([this]()
-                {
-                    PendingMeleeToGunTarget = ENCGunSlot::None;
-                    if (UNCEquipmentComponent* EC2 = GetGunComp())
-                    {
-                        EC2->SelectSlot(ENCGunSlot::Primary);
-                    }
-                }),
-            0.6f,
-            false
-        );
-
-        return;
-    }
-
-    EC->SelectSlot(ENCGunSlot::Primary);
+    GunSelectSlot(ENCGunSlot::Shotgun);
 }
 
-void ANCPlayerController::GunSelectSecondary()
+void ANCPlayerController::GunSelectRifle()
+{
+    GunSelectSlot(ENCGunSlot::Rifle);
+}
+
+void ANCPlayerController::GunSelectSidearm()
+{
+    GunSelectSlot(ENCGunSlot::Sidearm);
+}
+
+void ANCPlayerController::GunSelectSlot(ENCGunSlot Slot)
 {
     if (IsMenuBlockingInput()) return;
     if (IsAttacking()) return;
-    if (IsUsingItem()) return; // 소모품 사용 중 무기 전환 차단
+    if (IsUsingItem()) return;
 
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
@@ -637,85 +587,21 @@ void ANCPlayerController::GunSelectSecondary()
     }
 
     UNCEquipmentComponent* EC = PC->GetEquipmentComponent();
-    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
-
     if (!EC) return;
-    if (IsWeaponSwapBusy()) return;
-
-    if (EC->SecondarySlot.GunID.IsNone())
-    {
-        return;
-    }
-
-    if (Combat && Combat->IsWeaponEquipped())
-    {
-        if (PendingMeleeToGunTarget == ENCGunSlot::Secondary) return;
-
-        PendingMeleeToGunTarget = ENCGunSlot::Secondary;
-        Combat->UnEquipWeapon();
-
-        GetWorld()->GetTimerManager().SetTimer(
-            SwapTimerHandle,
-            FTimerDelegate::CreateLambda([this]()
-                {
-                    PendingMeleeToGunTarget = ENCGunSlot::None;
-                    if (UNCEquipmentComponent* EC2 = GetGunComp())
-                    {
-                        EC2->SelectSlot(ENCGunSlot::Secondary);
-                    }
-                }),
-            0.6f,
-            false
-        );
-
-        return;
-    }
-
-    EC->SelectSlot(ENCGunSlot::Secondary);
-}
-
-void ANCPlayerController::GunSelectMelee()
-{
-    if (IsMenuBlockingInput()) return;
-    if (IsAttacking()) return;
-    if (IsUsingItem()) return; // 소모품 사용 중 무기 전환 차단
-
-    ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
-    if (!PC) return;
-
-    if (UNCAssassinationComponent* AC = PC->FindComponentByClass<UNCAssassinationComponent>())
-    {
-        if (AC->bIsAssassinating) return;
-    }
-
-    UNCEquipmentComponent* GunComp = GetGunComp();
-    if (!GunComp) return;
-
-    UNCCombatComponent* Combat = PC->FindComponentByClass<UNCCombatComponent>();
 
     if (IsWeaponSwapBusy()) return;
 
-    // 3번 근접무기가 없으면 총기에서 3번으로 전환 금지
-    if (PC->StoredMeleeWeaponID.IsNone())
+    const FNCGunSlotData& SlotData =
+        (Slot == ENCGunSlot::Shotgun) ? EC->ShotgunSlot :
+        (Slot == ENCGunSlot::Rifle) ? EC->RifleSlot :
+        EC->SidearmSlot;
+
+    if (SlotData.GunID.IsNone())
     {
         return;
     }
 
-    if (GunComp->HasActiveGun())
-    {
-        GunComp->SelectSlot(ENCGunSlot::None);
-        return;
-    }
-
-    if (!Combat) return;
-    if (Combat->IsWeaponEquipped()) return;
-
-    FNCWeaponInstance Instance;
-    Instance.WeaponID = PC->StoredMeleeWeaponID;
-    Instance.UniqueID = FGuid::NewGuid();
-    Instance.CurrentDurability = 100.f;
-
-    Combat->EquipWeapon(Instance);
+    EC->SelectSlot(Slot);
 }
 
 void ANCPlayerController::Assassinate() //헌호수정 - 암살
@@ -739,33 +625,7 @@ void ANCPlayerController::Assassinate() //헌호수정 - 암살
 
 void ANCPlayerController::OnGunSwapCompleted(ENCGunSlot NewSlot)
 {
-    if (bUnArmPending)
-    {
-        bUnArmPending = false;
-        return;
-    }
-
-    ANCPlayerCharacter* NCPC = Cast<ANCPlayerCharacter>(GetPawn());
-    if (!NCPC) return;
-
-    UNCCombatComponent* NCCombat = NCPC->FindComponentByClass<UNCCombatComponent>();
-    if (!NCCombat) return;
-
-    if (NewSlot == ENCGunSlot::None)
-    {
-        if (!NCPC->StoredMeleeWeaponID.IsNone())
-        {
-            FNCWeaponInstance Instance;
-            Instance.WeaponID = NCPC->StoredMeleeWeaponID;
-            Instance.UniqueID = FGuid::NewGuid();
-            Instance.CurrentDurability = 100.f;
-
-            NCCombat->EquipWeapon(Instance);
-        }
-    }
-
-    // NewSlot이 Primary/Secondary일 때는 아무것도 하지 않는다.
-    // 총기 Equip 직후 근접 UnEquip을 다시 호출하면 Equip 몽타주가 끊김.
+    bUnArmPending = false;
 }
 
 void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)

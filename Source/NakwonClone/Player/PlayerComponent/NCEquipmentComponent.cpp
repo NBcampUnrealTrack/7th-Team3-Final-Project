@@ -74,17 +74,41 @@ int32 UNCEquipmentComponent::GetReserveAmmo() const
 
 FName UNCEquipmentComponent::GetActiveGunID() const
 {
-	if (ActiveSlot == ENCGunSlot::Primary)   return PrimarySlot.GunID;
-	if (ActiveSlot == ENCGunSlot::Secondary) return SecondarySlot.GunID;
-	return NAME_None;
+	switch (ActiveSlot)
+	{
+	case ENCGunSlot::Shotgun:
+		return ShotgunSlot.GunID;
+	case ENCGunSlot::Rifle:
+		return RifleSlot.GunID;
+	case ENCGunSlot::Sidearm:
+		return SidearmSlot.GunID;
+	default:
+		return NAME_None;
+	}
 }
 
 UTexture2D* UNCEquipmentComponent::GetGunIcon(ENCGunSlot Slot) const
 {
-	const FNCGunSlotData& SlotData = (Slot == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
-	if (SlotData.GunID.IsNone()) return nullptr;
+	const FNCGunSlotData* SlotData = nullptr;
 
-	const FNCGunData* Data = FindGunData(SlotData.GunID);
+	switch (Slot)
+	{
+	case ENCGunSlot::Shotgun:
+		SlotData = &ShotgunSlot;
+		break;
+	case ENCGunSlot::Rifle:
+		SlotData = &RifleSlot;
+		break;
+	case ENCGunSlot::Sidearm:
+		SlotData = &SidearmSlot;
+		break;
+	default:
+		return nullptr;
+	}
+
+	if (!SlotData || SlotData->GunID.IsNone()) return nullptr;
+
+	const FNCGunData* Data = FindGunData(SlotData->GunID);
 	return Data ? Data->Icon : nullptr;
 }
 
@@ -93,10 +117,17 @@ FName UNCEquipmentComponent::GetOccupantGunID(FName ForGunID) const
 	const FNCGunData* Data = FindGunData(ForGunID);
 	if (!Data) return NAME_None;
 
-	if (Data->SlotType == ENCGunSlot::Primary)   return PrimarySlot.GunID;
-	if (Data->SlotType == ENCGunSlot::Secondary) return SecondarySlot.GunID;
-
-	return NAME_None;
+	switch (Data->SlotType)
+	{
+	case ENCGunSlot::Shotgun:
+		return ShotgunSlot.GunID;
+	case ENCGunSlot::Rifle:
+		return RifleSlot.GunID;
+	case ENCGunSlot::Sidearm:
+		return SidearmSlot.GunID;
+	default:
+		return NAME_None;
+	}
 }
 
 // ─────────────────────────────────────────────
@@ -351,15 +382,29 @@ UNCGunComponent* UNCEquipmentComponent::GetActiveWeapon() const
 		return nullptr;
 	}
 
-	const FNCGunSlotData& Slot =
-		(ActiveSlot == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
+	const FNCGunSlotData* Slot = nullptr;
 
-	if (!Slot.GunTypeTag.IsValid())
+	switch (ActiveSlot)
+	{
+	case ENCGunSlot::Shotgun:
+		Slot = &ShotgunSlot;
+		break;
+	case ENCGunSlot::Rifle:
+		Slot = &RifleSlot;
+		break;
+	case ENCGunSlot::Sidearm:
+		Slot = &SidearmSlot;
+		break;
+	default:
+		return nullptr;
+	}
+
+	if (!Slot || !Slot->GunTypeTag.IsValid())
 	{
 		return nullptr;
 	}
 
-	if (const TObjectPtr<UNCGunComponent>* Found = WeaponComponents.Find(Slot.GunTypeTag))
+	if (const TObjectPtr<UNCGunComponent>* Found = WeaponComponents.Find(Slot->GunTypeTag))
 	{
 		return *Found;
 	}
@@ -421,8 +466,7 @@ void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector Dro
 
 	if (DroppedGun)
 	{
-		const FNCGunSlotData& OldSlot = (OldData->SlotType == ENCGunSlot::Primary)
-			? PrimarySlot : SecondarySlot;
+		const FNCGunSlotData& OldSlot = GetSlotData(OldData->SlotType);
 		DroppedGun->SavedCurrentAmmo = OldSlot.CurrentAmmo;
 		DroppedGun->SavedReserveAmmo = OldSlot.ReserveAmmo;
 	}
@@ -431,26 +475,27 @@ void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector Dro
 void UNCEquipmentComponent::RefillAllReserveAmmo()
 {
 	auto RefillSlot = [this](ENCGunSlot Slot, FNCGunSlotData& SlotData)
-	{
-		if (SlotData.GunID.IsNone()) return;
-
-		const FNCGunData* Data = FindGunData(SlotData.GunID);
-		if (!Data) return;
-
-		SlotData.ReserveAmmo = Data->MaxReserveAmmo;
-
-		if (Slot == ActiveSlot)
 		{
-			if (UNCGunComponent* Weapon = GetActiveWeapon())
-			{
-				Weapon->ReserveAmmo = Data->MaxReserveAmmo;
-				Weapon->OnAmmoChanged.Broadcast(Weapon->CurrentAmmo, Weapon->ReserveAmmo);
-			}
-		}
-	};
+			if (SlotData.GunID.IsNone()) return;
 
-	RefillSlot(ENCGunSlot::Primary, PrimarySlot);
-	RefillSlot(ENCGunSlot::Secondary, SecondarySlot);
+			const FNCGunData* Data = FindGunData(SlotData.GunID);
+			if (!Data) return;
+
+			SlotData.ReserveAmmo = Data->MaxReserveAmmo;
+
+			if (Slot == ActiveSlot)
+			{
+				if (UNCGunComponent* Weapon = GetActiveWeapon())
+				{
+					Weapon->ReserveAmmo = Data->MaxReserveAmmo;
+					Weapon->OnAmmoChanged.Broadcast(Weapon->CurrentAmmo, Weapon->ReserveAmmo);
+				}
+			}
+		};
+
+	RefillSlot(ENCGunSlot::Shotgun, ShotgunSlot);
+	RefillSlot(ENCGunSlot::Rifle, RifleSlot);
+	RefillSlot(ENCGunSlot::Sidearm, SidearmSlot);
 }
 
 void UNCEquipmentComponent::DeactivateCurrentWeapon()
@@ -478,7 +523,17 @@ const FNCGunData* UNCEquipmentComponent::FindGunData(FName GunID) const
 
 FNCGunSlotData& UNCEquipmentComponent::GetSlotData(ENCGunSlot Slot)
 {
-	return (Slot == ENCGunSlot::Primary) ? PrimarySlot : SecondarySlot;
+	switch (Slot)
+	{
+	case ENCGunSlot::Shotgun:
+		return ShotgunSlot;
+	case ENCGunSlot::Rifle:
+		return RifleSlot;
+	case ENCGunSlot::Sidearm:
+		return SidearmSlot;
+	default:
+		return SidearmSlot;
+	}
 }
 
 void UNCEquipmentComponent::OnActiveWeaponAmmoChanged(int32 CurrentAmmo, int32 ReserveAmmo)

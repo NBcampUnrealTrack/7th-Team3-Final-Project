@@ -1054,12 +1054,18 @@ bool UNCPlayerInventoryComponent::LootItem(class ANCItemActor* ItemToLoot)
 
 void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemActor* ItemToLoot)
 {
-    if (!GetOwner()->HasAuthority() || !ItemToLoot) return;
+    if (!GetOwner()->HasAuthority() || !ItemToLoot)
+    {
+        return;
+    }
 
     FName LootID = ItemToLoot->ItemID;
     FGameplayTag LootTag = ItemToLoot->ItemTypeTag;
     int32 LootQuantity = ItemToLoot->Quantity;
 
+    // ─────────────────────────────────────
+    // Credit
+    // ─────────────────────────────────────
     if (LootTag.MatchesTag(NCItemTag::Credit))
     {
         if (CreditDataTable)
@@ -1067,6 +1073,7 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
             if (FCreditItemData* Data = CreditDataTable->FindRow<FCreditItemData>(LootID, TEXT("LootCredit")))
             {
                 int32 RandomCredits = FMath::RandRange(Data->MinValue, Data->MaxValue);
+
                 if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
                 {
                     NCPS->AddCredits(RandomCredits);
@@ -1078,9 +1085,13 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
         return;
     }
 
+    // ─────────────────────────────────────
+    // Quest Item
+    // ─────────────────────────────────────
     if (LootTag.MatchesTag(NCItemTag::Quest))
     {
         int32 EmptySlot = -1;
+
         for (int32 i = 0; i < Items.Num(); ++i)
         {
             if (Items[i].IsEmpty())
@@ -1095,24 +1106,36 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
             Items[EmptySlot].ItemID = LootID;
             Items[EmptySlot].ItemTypeTag = LootTag;
             Items[EmptySlot].Quantity = LootQuantity;
+
             OnInventoryUpdated.Broadcast();
             // ItemToLoot->Destroy();
             ItemToLoot->ConsumeItem();
         }
+
         return;
     }
 
-    // 힐/음식 아이템 가방 거치지 않고 고정 슬롯에 직접 채움
-    // 최대 스택까지만 가져오고, 초과분은 바닥에 그대로 남김
+    // ─────────────────────────────────────
+    // Heal / Food
+    // ─────────────────────────────────────
     if (LootTag.MatchesTag(NCItemTag::Heal) || LootTag.MatchesTag(NCItemTag::Food))
     {
-        if (!EquipmentPresets.IsValidIndex(0)) return;
+        if (!EquipmentPresets.IsValidIndex(0))
+        {
+            return;
+        }
 
         const bool bIsHeal = LootTag.MatchesTag(NCItemTag::Heal);
-        FInventorySlot& Slot = bIsHeal ? EquipmentPresets[0].ConsumableHeal : EquipmentPresets[0].ConsumableFood;
+
+        FInventorySlot& Slot = bIsHeal
+            ? EquipmentPresets[0].ConsumableHeal
+            : EquipmentPresets[0].ConsumableFood;
 
         FItemData ItemData;
-        if (!GetItemDataByTag(LootID, LootTag, ItemData)) return;
+        if (!GetItemDataByTag(LootID, LootTag, ItemData))
+        {
+            return;
+        }
 
         // 슬롯에 다른 아이템이 이미 있으면 못 주움 
         // if (!Slot.IsEmpty() && (Slot.ItemID != LootID || Slot.ItemTypeTag != LootTag)) return;
@@ -1126,12 +1149,18 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 
         /*const int32 Room  = ItemData.MaxStackSize - Slot.Quantity;
         const int32 Taken = FMath::Min(LootQuantity, Room);
-        if (Taken <= 0) return; // 이미 꽉 차서 하나도 못 주움
+
+        if (Taken <= 0)
+        {
+            return;
+        }
 
         Slot.Quantity += Taken;
+
         OnPresetUpdated.Broadcast();
 
         const int32 Remaining = LootQuantity - Taken;
+
         if (Remaining <= 0)
         {
             ItemToLoot->Destroy();
@@ -1147,8 +1176,76 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
         return;
     }
 
+    // ─────────────────────────────────────
+    // Weapon
+    // 총기 슬롯 구조:
+    // 1번 = Shotgun
+    // 2번 = Rifle
+    // 3번 = Sidearm(Pistol / Revolver)
+    // H = None
+    // ─────────────────────────────────────
     if (LootTag.MatchesTag(NCItemTag::Weapon))
     {
+        ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner());
+        APawn* Pawn = PS ? PS->GetPawn() : nullptr;
+        ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(Pawn);
+
+        if (!PlayerCharacter)
+        {
+            return;
+        }
+
+        UNCEquipmentComponent* EquipComp = PlayerCharacter->GetEquipmentComponent();
+
+        if (!EquipComp)
+        {
+            return;
+        }
+
+        const FNCGunData* GunData = EquipComp->GetGunData(LootID);
+
+        // ─────────────────────────────────
+        // 총기
+        // GunDataTable에 존재하면 총기로 판단
+        // ─────────────────────────────────
+        if (GunData)
+        {
+            FVector DropLocation =
+                PlayerCharacter->GetActorLocation()
+                + (PlayerCharacter->GetActorForwardVector() * 100.0f);
+
+            DropLocation.Z -= 20.0f;
+
+            const FRotator DropRotation = PlayerCharacter->GetActorRotation();
+
+            // 같은 슬롯에 기존 총이 있으면 바닥에 드랍
+            EquipComp->DropOccupantGunForNewGun(
+                LootID,
+                DropLocation,
+                DropRotation
+            );
+
+            // 새 총 슬롯 저장
+            EquipComp->EquipGun(LootID);
+
+            // 현재 총을 들고 있지 않으면 방금 먹은 총 바로 선택
+            if (!EquipComp->HasActiveGun())
+            {
+                EquipComp->SelectSlot(GunData->SlotType);
+            }
+
+            OnQuickSlotUpdated.Broadcast();
+            OnInventoryUpdated.Broadcast();
+            OnPresetUpdated.Broadcast();
+
+            ItemToLoot->Destroy();
+            return;
+        }
+
+        // ─────────────────────────────────
+        // 근접무기 기존 프리셋 처리
+        // GunDataTable에 없으면 근접무기로 판단
+        // ─────────────────────────────────
         const FGameplayTag WeaponType = GetWeaponTypeTag(LootID);
         const bool bTwoHanded = WeaponType.MatchesTagExact(NCWeapon::Type_TwoHanded);
 
@@ -1164,13 +1261,14 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
                 if (Preset.TwoHand.IsEmpty() && Preset.RightHand.IsEmpty() && Preset.LeftHand.IsEmpty())
                 {
                     Preset.TwoHand = NewSlot;
+
                     OnPresetUpdated.Broadcast();
                     // ItemToLoot->Destroy();
                     ItemToLoot->ConsumeItem();
                     return;
                 }
             }
-            else if (Preset.RightHand.IsEmpty() && Preset.TwoHand.IsEmpty())
+            else
             {
                 Preset.RightHand = NewSlot;
                 OnPresetUpdated.Broadcast();
@@ -1179,9 +1277,9 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
                 return;
             }
         }
-        return; 
-    }
 
+        return;
+    }
 }
 
 void UNCPlayerInventoryComponent::TakeItemFromLootBox(AANCLootBoxActor* LootBox, int32 BoxSlotIndex, int32 PlayerSlotIndex)
