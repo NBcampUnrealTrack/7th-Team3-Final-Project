@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Animation/AnimInstance.h"
 #include "NiagaraFunctionLibrary.h"
+#include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "NiagaraSystem.h"
 #include "BrainComponent.h"
 #include "TimerManager.h"
@@ -166,6 +167,11 @@ void AVGMonsterCharacterBase::HandleDead()
 	// 우정 추가
 	if (HasAuthority())
 	{
+		if (ANCPlayerCharacter* Player = Cast<ANCPlayerCharacter>(LastDamageCauser))
+		{
+			Player->AddKillCombo();
+		}
+
 		if (ANCGameMode* GM = GetWorld()->GetAuthGameMode<ANCGameMode>())
 		{
 			GM->AddPoints(CashedKillScore);

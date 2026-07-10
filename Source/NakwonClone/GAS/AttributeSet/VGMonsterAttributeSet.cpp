@@ -2,6 +2,7 @@
 
 
 #include "VGMonsterAttributeSet.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 #include "GameplayEffectExtension.h"
 
 UVGMonsterAttributeSet::UVGMonsterAttributeSet()
@@ -17,9 +18,20 @@ void UVGMonsterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	// Health 어트리뷰트가 변경됐을 때만 처리
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
+		if (AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(GetOwningActor()))
+		{
+			AActor* Causer = Data.EffectSpec.GetContext().GetEffectCauser();
+
+			if (!Causer)
+			{
+				Causer = Data.EffectSpec.GetContext().GetInstigator();
+			}
+
+			Monster->SetLastDamageCauser(Causer);
+		}
+
 		FVGHitData HitData;
 		if (const FHitResult* Hit = Data.EffectSpec.GetContext().GetHitResult())
 		{

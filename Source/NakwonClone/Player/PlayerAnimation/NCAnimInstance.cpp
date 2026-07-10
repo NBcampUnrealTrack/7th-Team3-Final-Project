@@ -103,7 +103,7 @@ void UNCAnimInstance::UpdateLocomotion()
         UKismetMathLibrary::NormalizedDeltaRotator(ControlRotation, ActorRotation);
 
     AimYaw = FMath::Clamp(AimDeltaRotation.Yaw, -70.f, 70.f);
-    AimPitch = FMath::Clamp(AimDeltaRotation.Pitch, -60.f, 90.f);
+    AimPitch = FMath::Clamp(AimDeltaRotation.Pitch, -80.f, 90.f);
 
     bIsInAir = MovementComponent->IsFalling();
     bIsCrouching = MovementComponent->IsCrouching();
