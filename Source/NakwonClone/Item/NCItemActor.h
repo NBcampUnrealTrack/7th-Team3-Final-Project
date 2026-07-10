@@ -92,6 +92,29 @@ protected:
 	FTimerHandle RespawnTimerHandle;
 
 	void RespawnItem();
+	
+protected:
+	virtual void Tick(float DeltaTime) override;   // 추가
+
+	// 습득 시 아우라 확대/축소 펄스
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Pickup", meta = (ClampMin = "1.0"))
+	float AuraPulseScaleMultiplier = 4.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Pickup", meta = (ClampMin = "0.01"))
+	float AuraPulseGrowTime = 0.2f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Pickup", meta = (ClampMin = "0.01"))
+	float AuraPulseShrinkTime = 0.15f;
+
+	void PlayAuraPulse();
+	void FinishConsume();
+
+private:
+	FVector AuraBaseScale = FVector::OneVector;
+	float AuraPulseElapsed = 0.f;
+	bool bAuraPulsing = false;
+
+	FTimerHandle ConsumeTimerHandle;
 #pragma endregion
 	
 	
