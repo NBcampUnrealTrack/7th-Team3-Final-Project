@@ -362,6 +362,7 @@ void UNCInteractionComponent::AttachLootMeshToHand(ANCItemActor* Item)
 
 			if (Dropped)
 			{
+				Dropped->bRespawnEnabled = false;
 				Dropped->WeaponID = PlayerCharacter->StoredMeleeWeaponID;
 			}
 

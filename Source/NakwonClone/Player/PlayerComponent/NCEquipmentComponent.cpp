@@ -466,6 +466,7 @@ void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector Dro
 
 	if (DroppedGun)
 	{
+		DroppedGun->bRespawnEnabled = false;
 		const FNCGunSlotData& OldSlot = GetSlotData(OldData->SlotType);
 		DroppedGun->SavedCurrentAmmo = OldSlot.CurrentAmmo;
 		DroppedGun->SavedReserveAmmo = OldSlot.ReserveAmmo;
