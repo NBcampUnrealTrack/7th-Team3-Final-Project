@@ -10,6 +10,7 @@ class UAnimInstance;
 class UAnimMontage;
 class UGameplayEffect;
 class USoundBase;
+class UNiagaraSystem;
 
 UENUM(BlueprintType)
 enum class EVGMonsterType : uint8
@@ -18,6 +19,7 @@ enum class EVGMonsterType : uint8
     Witch     UMETA(DisplayName = "Witch"),    // 자극→큰소리→강공격
     Tank      UMETA(DisplayName = "Tank"),     // 맷집(HP 큼)
     Runner    UMETA(DisplayName = "Runner"),   // 이동 속도 빠름
+    Spitter   UMETA(DisplayName = "Spitter"),  // 원거리 — 혀/침 분출
     MAX       UMETA(Hidden)
 };
 
@@ -50,6 +52,21 @@ struct FVGMonsterTypeRow : public FTableRowBase
     UPROPERTY(EditAnywhere, Category = "Combat")
     float HitReactChance = 0.7f;
 
+    UPROPERTY(EditAnywhere, Category = "Ranged")
+    bool bIsRanged = false;
+
+    UPROPERTY(EditAnywhere, Category = "Ranged")
+    TSubclassOf<AActor> ProjectileClass = nullptr;      // 침 발사체 액터
+
+    UPROPERTY(EditAnywhere, Category = "Ranged")
+    FName ProjectileSocket = TEXT("tongue_tip");        // 발사 위치 소켓(혀 끝)
+
+    UPROPERTY(EditAnywhere, Category = "Ranged")
+    float AttackRange = 200.f;                          // BT가 공격 진입 거리로 사용
+
+    UPROPERTY(EditAnywhere, Category = "Ranged")
+    TObjectPtr<UNiagaraSystem> SpitVFX = nullptr;   // 혀 끝 분비물 터지는 연출
+
     UPROPERTY(EditAnywhere, Category = "Stat")
     float MaxHealth = 100.f;
 
@@ -70,6 +87,9 @@ struct FVGMonsterTypeRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, Category = "Sound")
     float IdleSoundCooldown = 5.f;   // 재생 종료 후 쉬는 시간
+
+    UPROPERTY(EditAnywhere, Category = "Sound")
+    TObjectPtr<USoundBase> DeathSound = nullptr;
     
     // 좀비킬 시 획득 점수(우정 추가)
     UPROPERTY(EditAnywhere, Category = "Score")
