@@ -937,21 +937,25 @@ void ANCPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ANCPlayerCharacter::ClearDeathRelatedTimers()
 {
     UWorld* World = GetWorld();
+
     if (!IsValid(World))
     {
         DeathTimerHandle.Invalidate();
         StunTimerHandle.Invalidate();
         ShakeTimerHandle.Invalidate();
+        ComboResetTimerHandle.Invalidate();
         return;
     }
 
     World->GetTimerManager().ClearTimer(DeathTimerHandle);
     World->GetTimerManager().ClearTimer(StunTimerHandle);
     World->GetTimerManager().ClearTimer(ShakeTimerHandle);
+    World->GetTimerManager().ClearTimer(ComboResetTimerHandle);
 
     DeathTimerHandle.Invalidate();
     StunTimerHandle.Invalidate();
     ShakeTimerHandle.Invalidate();
+    ComboResetTimerHandle.Invalidate();
 }
 
 void ANCPlayerCharacter::CleanupBeforeDeathDestroy()
@@ -983,3 +987,116 @@ void ANCPlayerCharacter::CleanupBeforeDeathDestroy()
     Destroy();
 }
 
+void ANCPlayerCharacter::AddKillCombo()
+{
+    // 연속 처치 횟수 증가
+    CurrentComboCount++;
+
+    // 현재 콤보 배율
+    const float ComboMultiplier = GetCurrentComboMultiplier();
+
+    // 콤보 이름
+    FString ComboText;
+
+    switch (CurrentComboCount)
+    {
+    case 1:
+        ComboText = TEXT("KILL");
+        break;
+
+    case 2:
+        ComboText = TEXT("DOUBLE KILL");
+        break;
+
+    case 3:
+        ComboText = TEXT("TRIPLE KILL");
+        break;
+
+    case 4:
+        ComboText = TEXT("QUAD KILL");
+        break;
+
+    default:
+        ComboText = TEXT("MASSACRE");
+        break;
+    }
+
+    // 화면 디버그 출력
+    if (GEngine && IsLocallyControlled())
+    {
+        GEngine->AddOnScreenDebugMessage(
+            2001,
+            2.0f,
+            FColor::Red,
+            FString::Printf(
+                TEXT("%s | %d COMBO | x%.1f"),
+                *ComboText,
+                CurrentComboCount,
+                ComboMultiplier
+            )
+        );
+    }
+
+    // 기존 콤보 종료 타이머 초기화
+    GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
+
+    // 마지막 처치 이후 ComboResetTime이 지나면 콤보 종료
+    if (ComboResetTime > 0.0f)
+    {
+        GetWorldTimerManager().SetTimer(
+            ComboResetTimerHandle,
+            this,
+            &ANCPlayerCharacter::ResetKillCombo,
+            ComboResetTime,
+            false
+        );
+    }
+
+    // 출력 로그
+    UE_LOG(
+        LogTemp,
+        Warning,
+        TEXT("%s | Kill Combo: %d | Multiplier: x%.1f"),
+        *ComboText,
+        CurrentComboCount,
+        ComboMultiplier
+    );
+}
+
+void ANCPlayerCharacter::ResetKillCombo()
+{
+    UE_LOG(
+        LogTemp,
+        Warning,
+        TEXT("Kill Combo End: %d Combo"),
+        CurrentComboCount
+    );
+
+    CurrentComboCount = 0;
+}
+
+float ANCPlayerCharacter::GetCurrentComboMultiplier() const
+{
+    if (CurrentComboCount <= 1)
+    {
+        return 1.0f;
+    }
+
+    if (CurrentComboCount == 2)
+    {
+        return 1.1f;
+    }
+
+    if (CurrentComboCount == 3)
+    {
+        return 1.2f;
+    }
+
+    if (CurrentComboCount == 4)
+    {
+        return 1.35f;
+    }
+
+    // 5킬 이상
+    return 1.5f;
+}

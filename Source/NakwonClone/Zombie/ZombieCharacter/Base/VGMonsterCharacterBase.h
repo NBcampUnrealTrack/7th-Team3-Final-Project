@@ -19,6 +19,7 @@ class USoundBase;
 class USoundAttenuation;
 class UNiagaraSystem;
 class UGameplayEffect;
+class ANCItemActor;
 
 DECLARE_DELEGATE(FOnMonsterAttackFinished);
 
@@ -194,18 +195,29 @@ public:
 	UFUNCTION()
 	void HandleDead();
 
+	void SetLastDamageCauser(AActor* InCauser);
+
 	void OnStartRagdoll();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Monster|Death")
 	void OnStartDissolve();
+
 	bool IsDead() const { return bIsDead; }
 
-	//헌호수정 - 죽은 뒤 이 시간(초) 후 액터 삭제 (시체 쌓임 방지, 무한 스폰 성능)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Death")
 	float DeathLifeSpan = 3.0f;
+	
+	// 사망 시 드랍할 소모품 테이블 (FNCLootDropData 행, 총기 제외)
+	UPROPERTY(EditAnywhere, Category = "Monster|Loot")
+	TObjectPtr<UDataTable> LootDropTable = nullptr;
 
 private:
 	bool bIsDead = false;
+
+	UPROPERTY()
+	TObjectPtr<AActor> LastDamageCauser = nullptr;
+	
+	void DropLoot();
 #pragma endregion
 
 #pragma region 충돌 감지

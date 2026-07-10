@@ -38,7 +38,7 @@ protected:
 	float SlotRadius = 30.f;
 	
 	UPROPERTY(EditAnywhere, Category = "AttackSlot|Wait")
-	int32 MaxWaitSlots = 33;
+	int32 MaxWaitSlots = 250;
 	UPROPERTY(EditAnywhere, Category = "AttackSlot|Wait")
 	float WaitSlotRadius = 200.f;
 	

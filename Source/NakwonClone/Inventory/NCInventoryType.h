@@ -4,7 +4,7 @@
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
 #include "Player/PlayerData/NCWeaponData.h"
-
+#include "Weapon/Gun/GunType/NCGunType.h"
 #include "NCInventoryType.generated.h"
 
 class ANCItemActor;
@@ -119,4 +119,18 @@ struct FEquipmentPreset
 
 	bool IsTwoHandActive() const { return !TwoHand.IsEmpty(); }
 	bool IsEmpty() const { return RightHand.IsEmpty() && LeftHand.IsEmpty() && TwoHand.IsEmpty(); }
+};
+
+USTRUCT(BlueprintType)
+struct FAmmoItemData : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	// 이 총알이 채워줄 슬롯 (Shotgun/Rifle/Sidearm)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ammo")
+	ENCGunSlot AmmoSlotType = ENCGunSlot::Rifle;
+
+	// 1개 습득 시 채워지는 탄약 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ammo")
+	int32 AmmoAmount = 100;
 };

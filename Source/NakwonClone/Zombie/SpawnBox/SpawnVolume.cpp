@@ -27,6 +27,12 @@ ASpawnVolume::ASpawnVolume()
 	SpawnInit = 10.0f;
 	StopSpawnTime = 540.0f;
 	MaxSpawnCount = 9;
+
+	//헌호수정 - 기본 타입 가중치 (Walker 60 / Runner 25 / Tank 10 / Witch 5) — 에디터에서 조정 가능
+	TypeWeights.Add(EVGMonsterType::Walker, 60.f);
+	TypeWeights.Add(EVGMonsterType::Runner, 25.f);
+	TypeWeights.Add(EVGMonsterType::Tank, 10.f);
+	TypeWeights.Add(EVGMonsterType::Witch, 5.f);
 }
 
 
@@ -120,6 +126,31 @@ int32 ASpawnVolume::CountAliveZombies() const
 	return Count;
 }
 
+//헌호수정 - 가중치 기반으로 좀비 타입 하나 선택
+EVGMonsterType ASpawnVolume::PickWeightedType() const
+{
+	float Total = 0.f;
+	for (const TPair<EVGMonsterType, float>& Pair : TypeWeights)
+	{
+		Total += Pair.Value;
+	}
+	if (Total <= 0.f)
+	{
+		return EVGMonsterType::Walker; // 안전장치: 가중치 없으면 Walker
+	}
+
+	float Rand = FMath::FRandRange(0.f, Total);
+	for (const TPair<EVGMonsterType, float>& Pair : TypeWeights)
+	{
+		Rand -= Pair.Value;
+		if (Rand <= 0.f)
+		{
+			return Pair.Key;
+		}
+	}
+	return EVGMonsterType::Walker;
+}
+
 //헌호수정 - 타이머가 주기적으로 호출 → 경과 시간으로 웨이브 스폰
 void ASpawnVolume::TickWave()
 {
@@ -154,12 +185,10 @@ void ASpawnVolume::SpawnMonster(TSubclassOf<AActor> MonsterClass)
 		return;
 	}
 
-	if (AllowedMonsterTypes.Num() > 0)
+	//헌호수정 - 가중치로 타입 하나 뽑아서 단일 타입으로 지정 (기존 균등랜덤 → 가중치)
+	if (AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(NewActor))
 	{
-		if (AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(NewActor))
-		{
-			Monster->AllowedRandomTypes = AllowedMonsterTypes;
-		}
+		Monster->AllowedRandomTypes = { PickWeightedType() };
 	}
 
 	NewActor->FinishSpawning(SpawnTransform);
