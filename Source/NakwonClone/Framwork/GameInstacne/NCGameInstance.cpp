@@ -36,7 +36,7 @@ void UNCGameInstance::RegisterLoadingScreenHandlers()
 
 void UNCGameInstance::BeginLoadingScreen(const FString& MapName)
 {
-	if (!MapName.Contains(TEXT("L_ShoppingMall")) && !MapName.Contains(TEXT("L_TitleAndLobby")) && !MapName.Contains(TEXT("L_Lobby")) && !MapName.Contains(TEXT("L_Parking")))
+	if (!MapName.Contains(TEXT("L_ShoppingMall")) && !MapName.Contains(TEXT("L_TitleAndLobby")) && !MapName.Contains(TEXT("L_Lobby")))
 		return;
 
 	if (MapName.Contains(TEXT("L_TitleAndLobby")) && !bHasLoadedOnce)

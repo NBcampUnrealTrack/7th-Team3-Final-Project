@@ -14,8 +14,6 @@ protected:
 	ALobbyGameMode();
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void MoveToParkingLevel();
 	
 	UFUNCTION(BlueprintCallable)
 	void MoveToShopLevel();
