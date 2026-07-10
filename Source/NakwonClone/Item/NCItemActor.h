@@ -63,6 +63,13 @@ public:
 	// 습득 성공 시 이펙트/사운드 재생 후 파괴
 	UFUNCTION(BlueprintCallable, Category = "Item|Pickup")
 	void ConsumeItem();
+
+	// true면 습득 시 파괴하지 않고 RespawnTime 후 같은 자리에 다시 등장 (레벨 배치 아이템용)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Respawn")
+	bool bRespawnEnabled = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Respawn", meta = (EditCondition = "bRespawnEnabled", ClampMin = "0.1", Units = "s"))
+	float RespawnTime = 30.f;
 	
 protected:
 	UFUNCTION()
@@ -81,6 +88,10 @@ protected:
 	FTimerHandle PickupGraceTimerHandle;
 
 	void EnablePickupSphere();
+
+	FTimerHandle RespawnTimerHandle;
+
+	void RespawnItem();
 #pragma endregion
 	
 	

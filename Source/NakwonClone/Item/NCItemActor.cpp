@@ -129,7 +129,41 @@ void ANCItemActor::Multicast_PlayPickupFX_Implementation()
 void ANCItemActor::ConsumeItem()
 {
 	Multicast_PlayPickupFX();
-	Destroy();
+
+	if (bRespawnEnabled && HasAuthority())
+	{
+		// 파괴 대신 숨김 + 콜리전 끄기
+		SetActorHiddenInGame(true);
+		SetActorEnableCollision(false);
+
+		GetWorld()->GetTimerManager().SetTimer(
+			RespawnTimerHandle,
+			this, &ANCItemActor::RespawnItem,
+			RespawnTime,
+			false);
+	}
+	else
+	{
+		Destroy();
+	}
+}
+
+void ANCItemActor::RespawnItem()
+{
+	SetActorHiddenInGame(false);
+
+	// 리스폰 지점에 플레이어가 서 있을 때 등장 즉시 재습득되는 것 방지
+	if (PickupSphere)
+	{
+		PickupSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	SetActorEnableCollision(true);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		PickupGraceTimerHandle,
+		this, &ANCItemActor::EnablePickupSphere,
+		PickupGraceDelay,
+		false);
 }
 
 void ANCItemActor::Interact_Implementation(AActor* Interactor)
