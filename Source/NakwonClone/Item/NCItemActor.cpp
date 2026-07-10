@@ -14,7 +14,8 @@
 
 ANCItemActor::ANCItemActor()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled  = false;
 	bReplicates = true;
 	SetReplicateMovement(false);
 	
@@ -56,6 +57,7 @@ ANCItemActor::ANCItemActor()
 	// 상시 아우라 파티클 (에셋 미지정 시 자동 활성화 안 함)
 	IdleAuraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("IdleAuraComponent"));
 	IdleAuraComponent->SetupAttachment(ItemMesh);
+	IdleAuraComponent->SetUsingAbsoluteRotation(true);
 	IdleAuraComponent->bAutoActivate = false;
 }
 
@@ -113,6 +115,54 @@ void ANCItemActor::HandlePickupOverlap(UPrimitiveComponent* OverlappedComp, AAct
 	Execute_Interact(this, Player);
 }
 
+void ANCItemActor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!bAuraPulsing || !IdleAuraComponent)
+	{
+		return;
+	}
+
+	AuraPulseElapsed += DeltaTime;
+	const float TotalTime = AuraPulseGrowTime + AuraPulseShrinkTime;
+
+	if (AuraPulseElapsed <= AuraPulseGrowTime)
+	{
+		const float Alpha = FMath::Clamp(AuraPulseElapsed / AuraPulseGrowTime, 0.f, 1.f);
+		IdleAuraComponent->SetRelativeScale3D(FMath::Lerp(AuraBaseScale, AuraBaseScale * AuraPulseScaleMultiplier, Alpha));
+	}
+	else if (AuraPulseElapsed <= TotalTime)
+	{
+		const float Alpha = FMath::Clamp((AuraPulseElapsed - AuraPulseGrowTime) / AuraPulseShrinkTime, 0.f, 1.f);
+		IdleAuraComponent->SetRelativeScale3D(FMath::Lerp(AuraBaseScale * AuraPulseScaleMultiplier, AuraBaseScale, Alpha));
+	}
+	else
+	{
+		IdleAuraComponent->SetRelativeScale3D(AuraBaseScale);
+		bAuraPulsing = false;
+		SetActorTickEnabled(false);
+	}
+}
+
+void ANCItemActor::PlayAuraPulse()
+{
+	if (!IdleAuraComponent)
+	{
+		return;
+	}
+
+	AuraBaseScale = IdleAuraComponent->GetRelativeScale3D();
+	if (AuraBaseScale.IsNearlyZero())
+	{
+		AuraBaseScale = FVector::OneVector;
+	}
+
+	AuraPulseElapsed = 0.f;
+	bAuraPulsing = true;
+	SetActorTickEnabled(true);
+}
+
 void ANCItemActor::Multicast_PlayPickupFX_Implementation()
 {
 	if (PickupEffect)
@@ -124,15 +174,35 @@ void ANCItemActor::Multicast_PlayPickupFX_Implementation()
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, GetActorLocation());
 	}
+	
+	PlayAuraPulse();
 }
 
 void ANCItemActor::ConsumeItem()
 {
 	Multicast_PlayPickupFX();
 
-	if (bRespawnEnabled && HasAuthority())
+	if (HasAuthority())
 	{
-		// 파괴 대신 숨김 + 콜리전 끄기
+		// 중복 습득 방지: 상호작용은 즉시 차단, 시각 효과(펄스)만 유지
+		if (PickupSphere)
+		{
+			PickupSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		SetActorEnableCollision(false);
+
+		GetWorld()->GetTimerManager().SetTimer(
+			ConsumeTimerHandle,
+			this, &ANCItemActor::FinishConsume,
+			AuraPulseGrowTime + AuraPulseShrinkTime,
+			false);
+	}
+}
+
+void ANCItemActor::FinishConsume()
+{
+	if (bRespawnEnabled)
+	{
 		SetActorHiddenInGame(true);
 		SetActorEnableCollision(false);
 
@@ -293,3 +363,4 @@ void ANCItemActor::EnablePickupSphere()
 		PickupSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	}
 }
+
