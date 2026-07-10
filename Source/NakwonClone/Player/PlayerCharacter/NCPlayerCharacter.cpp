@@ -1072,6 +1072,7 @@ void ANCPlayerCharacter::ResetKillCombo()
         CurrentComboCount
     );
 
+    OnComboReset.Broadcast();
     CurrentComboCount = 0;
 }
 

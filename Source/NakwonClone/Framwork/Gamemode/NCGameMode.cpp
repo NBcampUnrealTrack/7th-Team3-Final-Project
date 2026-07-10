@@ -2,6 +2,8 @@
 
 
 #include "NCGameMode.h"
+
+#include "Blueprint/UserWidget.h"
 #include "NakwonClone/Framwork/PlayerState/NCPlayerState.h"
 #include "NakwonClone/Player/PlayerController/NCPlayerController.h"
 
@@ -62,7 +64,7 @@ void ANCGameMode::CheckPoints()
 		UE_LOG(LogTemp, Error, TEXT("Escapable score checked"));
 		UE_LOG(LogTemp, Error, TEXT("CheckPoints: TotalScore=%d, EscapableScore=%d, bEscapable=%d"),
         	GS->TotalScore, EscapableScore, GS->bEscapable);
-
+		
 		GS->Multicast_PlayHelicopterSound(HelicopterSound);
 		GS->OnRep_bEscapable();
 		

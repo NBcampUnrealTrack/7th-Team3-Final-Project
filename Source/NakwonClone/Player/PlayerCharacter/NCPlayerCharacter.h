@@ -26,6 +26,7 @@ class UTexture2D;
 // 핫바 UI용: 보관 중인 근접무기(StoredMeleeWeaponID)가 바뀔 때 브로드캐스트 (줍기/교체 시)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMeleeStoredChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnComboKillChanged, int32, NewComboCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnComboReset);
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
@@ -258,6 +259,9 @@ private:
 	FTimerHandle StunTimerHandle;
 
 	void ResetKillCombo();
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnComboReset OnComboReset;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Combo",
 		meta = (AllowPrivateAccess = "true"))

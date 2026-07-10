@@ -5,6 +5,7 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Player/PlayerController/NCPlayerController.h"
 
 ANCGameState::ANCGameState()
 {
@@ -33,6 +34,19 @@ void ANCGameState::OnRep_TotalScore(int32 OldTotalScore)
 
 void ANCGameState::OnRep_bEscapable()
 {
+	if (!bEscapable || !ClearWidgetClass)
+	{
+		return;
+	}
+	
+	ANCPlayerController* PC = Cast<ANCPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (PC)
+	{
+		if (UUserWidget* ClearWidget = CreateWidget<UUserWidget>(PC, ClearWidgetClass))
+		{
+			ClearWidget->AddToViewport();
+		}
+	}
 	// todo : 탈출 가능 안내 위젯 바인딩
 }
 
