@@ -53,6 +53,12 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Projectile")
     float HitShakeScale = 1.f;
 
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile")
+    int32 PenetrationsRemaining = 0;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile")
+    float PenetrationDamageFalloff = 0.3f;
+
 protected:
     UPROPERTY(VisibleAnywhere, Category = "Projectile")
     TObjectPtr<USphereComponent> CollisionComp;
@@ -69,4 +75,6 @@ protected:
 
     void ProcessHit(AActor* OtherActor, const FHitResult& Hit);
     bool CheckPointBlankOverlap();
+
+    bool TryPenetrate(AActor* OtherActor);
 };

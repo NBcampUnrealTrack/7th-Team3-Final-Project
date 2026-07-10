@@ -411,6 +411,8 @@ void UNCGunComponent::FireOnce()
 			NCProj->ImpactSurfaceParticle = Data->ImpactSurfaceParticle.Get();
 			NCProj->HitShakeClass         = Data->HitShakeClass;
 			NCProj->HitShakeScale         = ShakeScale;
+			NCProj->PenetrationsRemaining = Data->PenetrationCount;
+			NCProj->PenetrationDamageFalloff = Data->PenetrationDamageFalloff;
 			if (!Data->TracerEffect.IsNull())
 				NCProj->TracerEffect = Data->TracerEffect.LoadSynchronous();
 			NCProj->FinishSpawning(FTransform(PelletRotation, PelletSpawnLocation));
