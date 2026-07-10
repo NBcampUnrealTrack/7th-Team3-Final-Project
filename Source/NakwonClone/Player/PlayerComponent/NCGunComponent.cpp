@@ -146,6 +146,7 @@ bool UNCGunComponent::CanFire() const
 	if (!HasActiveGun())  return false;
 	if (IsReloading())    return false;
 	if (CurrentAmmo <= 0) return false;
+	if (!IsADS())         return false;
 
 	if (CurrentFireMode == ENCFireMode::SemiAuto && ActiveGunData->FireRate > 0.f && GetWorld())
 	{
@@ -230,6 +231,8 @@ float UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 
 void UNCGunComponent::StartFire()
 {
+	if (!IsADS()) return;
+
 	OnBeforeFire();
 
 	// 탄약 없을 때 빈 총 클릭음
