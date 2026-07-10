@@ -1084,6 +1084,28 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
         ItemToLoot->ConsumeItem();
         return;
     }
+    
+    // ─────────────────────────────────────
+    // Ammo
+    // ─────────────────────────────────────
+    if (LootTag.MatchesTag(NCItemTag::Ammo))
+    {
+        ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner());
+        APawn* Pawn = PS ? PS->GetPawn() : nullptr;
+        ANCPlayerCharacter* PlayerCharacter = Cast<ANCPlayerCharacter>(Pawn);
+        UNCEquipmentComponent* EquipComp = PlayerCharacter ? PlayerCharacter->GetEquipmentComponent() : nullptr;
+
+        if (EquipComp && AmmoDataTable)
+        {
+            if (FAmmoItemData* AmmoData = AmmoDataTable->FindRow<FAmmoItemData>(LootID, TEXT("LootAmmo")))
+            {
+                EquipComp->AddReserveAmmo(AmmoData->AmmoSlotType, AmmoData->AmmoAmount * LootQuantity);
+            }
+        }
+
+        ItemToLoot->ConsumeItem();
+        return;
+    }
 
     // ─────────────────────────────────────
     // Quest Item

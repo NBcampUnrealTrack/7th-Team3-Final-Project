@@ -16,6 +16,9 @@
 #include "BrainComponent.h"
 #include "TimerManager.h"
 #include "Framwork/Gamemode/NCGameMode.h"
+#include "Item/Data/NCLootDropData.h"
+#include "Item/NCItemActor.h"
+#include "Inventory/NCInventoryType.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 {
@@ -173,6 +176,8 @@ void AVGMonsterCharacterBase::HandleDead()
 		{
 			GM->AddPoints(CashedKillScore);
 		}
+		
+		DropLoot();
 	}
 	
 	UE_LOG(LogMonster, Warning, TEXT("[MonsterBase] HandleDead 호출됨: %s"), *GetName());
@@ -708,7 +713,51 @@ bool AVGMonsterCharacterBase::ReserveWaitSlot(AActor* Target, FVector& OutSlotLo
 	return true;
 }
 
-void AVGMonsterCharacterBase::SetLastDamageCauser(AActor* InCauser)
+void AVGMonsterCharacterBase::DropLoot()
 {
-	LastDamageCauser = InCauser;
+	if (!LootDropTable) return;
+
+	TArray<FNCLootDropData*> Rows;
+	LootDropTable->GetAllRows<FNCLootDropData>(TEXT("DropLoot"), Rows);
+	if (Rows.Num() == 0) return;
+
+	float TotalWeight = 0.f;
+	for (const FNCLootDropData* Row : Rows)
+	{
+		TotalWeight += Row->DropWeight;
+	}
+	if (TotalWeight <= 0.f) return;
+
+	float Roll = FMath::FRandRange(0.f, TotalWeight);
+	const FNCLootDropData* Picked = nullptr;
+	for (const FNCLootDropData* Row : Rows)
+	{
+		Roll -= Row->DropWeight;
+		if (Roll <= 0.f)
+		{
+			Picked = Row;
+			break;
+		}
+	}
+	if (!Picked || Picked->ItemID.IsNone()) return;
+
+	UDataTable* ItemTypeTable = LoadObject<UDataTable>(nullptr,
+		TEXT("/Game/NakwonClone/Blueprints/Item/ItemData/DT_ItemTypeData.DT_ItemTypeData"));
+	if (!ItemTypeTable) return;
+
+	FItemData* FoundData = ItemTypeTable->FindRow<FItemData>(Picked->ItemID, TEXT("MonsterDropLoot"));
+	if (!FoundData || !FoundData->ItemActorClass) return;
+
+	const int32 Quantity = FMath::RandRange(Picked->MinQuantity, Picked->MaxQuantity);
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(
+		FoundData->ItemActorClass, GetActorLocation(), FRotator::ZeroRotator, Params);
+
+	if (ANCItemActor* SpawnedItem = Cast<ANCItemActor>(SpawnedActor))
+	{
+		SpawnedItem->InitializeItemData(Picked->ItemID, FoundData->ItemTypeTag, Quantity, FoundData->ItemMesh);
+	}
 }

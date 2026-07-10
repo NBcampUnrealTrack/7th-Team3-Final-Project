@@ -19,6 +19,7 @@ class USoundBase;
 class USoundAttenuation;
 class UNiagaraSystem;
 class UGameplayEffect;
+class ANCItemActor;
 
 DECLARE_DELEGATE(FOnMonsterAttackFinished);
 
@@ -205,12 +206,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Death")
 	float DeathLifeSpan = 3.0f;
+	
+	// 사망 시 드랍할 소모품 테이블 (FNCLootDropData 행, 총기 제외)
+	UPROPERTY(EditAnywhere, Category = "Monster|Loot")
+	TObjectPtr<UDataTable> LootDropTable = nullptr;
 
 private:
 	bool bIsDead = false;
-
-	UPROPERTY()
-	TObjectPtr<AActor> LastDamageCauser;
+	
+	void DropLoot();
 #pragma endregion
 
 #pragma region 충돌 감지

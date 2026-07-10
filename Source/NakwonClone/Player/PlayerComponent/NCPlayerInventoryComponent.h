@@ -241,6 +241,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
 	TObjectPtr<UDataTable> CreditDataTable;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|DataTable")
+	TObjectPtr<UDataTable> AmmoDataTable;
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Pickup")
 	void DropStoredMeleeForPickupReplace();
