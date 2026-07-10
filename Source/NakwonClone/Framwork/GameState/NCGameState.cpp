@@ -6,6 +6,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
+ANCGameState::ANCGameState()
+{
+	WalkerKillCount = 0;
+	RunnerKillCount = 0;
+	WitchKillCount = 0;
+	TankKillCount = 0;
+}
 
 void ANCGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

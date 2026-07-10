@@ -17,7 +17,10 @@ class NAKWONCLONE_API ANCGameState : public AGameState
 {
 	GENERATED_BODY()
 	
-public:
+private:
+	ANCGameState();
+	
+public:	
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	int32 ConnectedPlayerCount;
 	
@@ -62,4 +65,30 @@ public:
 	
 	UFUNCTION()
     void OnRep_TotalScore(int32 OldTotalScore);
+	
+	UFUNCTION(BlueprintCallable)
+	void AddWalkerKillCount() {  WalkerKillCount++ ;}
+	
+	UFUNCTION(BlueprintCallable)
+	void AddRunnerKillCount() {  RunnerKillCount++ ;}
+		
+	UFUNCTION(BlueprintCallable)
+	void AddWitchKillCount() {  WitchKillCount++ ;}
+	
+	UFUNCTION(BlueprintCallable)
+	void AddTankKillCount() {  TankKillCount++ ;}
+	
+private:
+		
+	UPROPERTY(EditDefaultsOnly, Category = "Score")
+	int32 WalkerKillCount;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Score")
+	int32 RunnerKillCount;
+		
+	UPROPERTY(EditDefaultsOnly, Category = "Score")
+	int32 WitchKillCount;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Score")
+	int32 TankKillCount;
 };

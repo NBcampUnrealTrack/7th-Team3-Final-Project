@@ -14,7 +14,6 @@ ANCGameMode::ANCGameMode()
 	PlayerStateClass = ANCPlayerState::StaticClass();
 	PlayerControllerClass = ANCPlayerController::StaticClass();
 	
-	// todo : 플레이어 기본 캐릭터 지정
 }
 
 void ANCGameMode::BeginPlay()
@@ -57,7 +56,7 @@ void ANCGameMode::CheckPoints()
 	{
 		GS->bEscapable = true;
 		UE_LOG(LogTemp, Error, TEXT("Escapable score checked"));
-		UE_LOG(LogTemp, Warning, TEXT("CheckPoints: TotalScore=%d, EscapableScore=%d, bEscapable=%d"),
+		UE_LOG(LogTemp, Error, TEXT("CheckPoints: TotalScore=%d, EscapableScore=%d, bEscapable=%d"),
         	GS->TotalScore, EscapableScore, GS->bEscapable);
 
 		GS->Multicast_PlayHelicopterSound(HelicopterSound);
@@ -158,10 +157,6 @@ void ANCGameMode::HandlePlayerDowned(ANCPlayerState* PlayerState)
 	{
 		GS->AlivePlayerCount--;
 	}
-
-	// todo : PlayerController 작업 완료 후 추가 예정
-	// ANCPlayerController* PC = Cast<ANCPlayerController>(PlayerState->GetOwner());
-	// if (PC) PC->Client_OnPlayerDowned();
 	
 	CheckAllPlayersDead();
 }
