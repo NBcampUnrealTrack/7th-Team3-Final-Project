@@ -138,6 +138,9 @@ public:
 	void DropOccupantGunForNewGun(FName NewGunID, FVector DropLocation, FRotator DropRotation);
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment|Manage")
+	void AddReserveAmmo(ENCGunSlot Slot, int32 Amount);
+	
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Manage")
 	void RefillAllReserveAmmo();
 
 	UNCGunComponent* GetActiveWeapon() const;

@@ -149,7 +149,7 @@ bool UNCEquipmentComponent::EquipGun(FName GunID)
 	Slot.GunID = GunID;
 	Slot.GunTypeTag = Data->GunTypeTag;
 	Slot.CurrentAmmo = Data->MagazineSize;
-	Slot.ReserveAmmo = Data->MaxReserveAmmo;
+	// Slot.ReserveAmmo = Data->MaxReserveAmmo;
 
 	if (ActiveSlot == Data->SlotType)
 	{
@@ -177,7 +177,7 @@ bool UNCEquipmentComponent::EquipGunWithAmmo(FName GunID, int32 CurrentAmmo, int
 	Slot.GunID = GunID;
 	Slot.GunTypeTag = Data->GunTypeTag;
 	Slot.CurrentAmmo = FMath::Clamp(CurrentAmmo, 0, Data->MagazineSize);
-	Slot.ReserveAmmo = FMath::Clamp(ReserveAmmo, 0, Data->MaxReserveAmmo);
+	// Slot.ReserveAmmo = FMath::Clamp(ReserveAmmo, 0, Data->MaxReserveAmmo);
 
 	if (ActiveSlot == Data->SlotType)
 	{
@@ -468,7 +468,7 @@ void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector Dro
 	{
 		const FNCGunSlotData& OldSlot = GetSlotData(OldData->SlotType);
 		DroppedGun->SavedCurrentAmmo = OldSlot.CurrentAmmo;
-		DroppedGun->SavedReserveAmmo = OldSlot.ReserveAmmo;
+		// DroppedGun->SavedReserveAmmo = OldSlot.ReserveAmmo;
 	}
 }
 
@@ -552,4 +552,23 @@ void UNCEquipmentComponent::OnActiveWeaponAmmoChanged(int32 CurrentAmmo, int32 R
 void UNCEquipmentComponent::OnActiveWeaponFireModeChanged(ENCFireMode NewFireMode)
 {
 	OnFireModeChanged.Broadcast(NewFireMode);
+}
+
+void UNCEquipmentComponent::AddReserveAmmo(ENCGunSlot Slot, int32 Amount)
+{
+	if (Slot == ENCGunSlot::None || Amount <= 0) return;
+
+	FNCGunSlotData& SlotData = GetSlotData(Slot);
+	SlotData.ReserveAmmo += Amount;   // 총 미보유 시에도 무제한 축적
+
+	if (Slot == ActiveSlot)
+	{
+		if (UNCGunComponent* Weapon = GetActiveWeapon())
+		{
+			Weapon->ReserveAmmo = SlotData.ReserveAmmo;
+			Weapon->OnAmmoChanged.Broadcast(Weapon->CurrentAmmo, Weapon->ReserveAmmo);
+		}
+	}
+
+	OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
 }

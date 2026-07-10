@@ -208,5 +208,5 @@ struct FNCGunSlotData
     UPROPERTY(BlueprintReadOnly) int32 ReserveAmmo  = 0;
 
     bool IsEmpty() const { return GunID.IsNone(); }
-    void Clear() { GunID = NAME_None; GunTypeTag = FGameplayTag(); CurrentAmmo = 0; ReserveAmmo = 0; }
+    void Clear() { GunID = NAME_None; GunTypeTag = FGameplayTag(); CurrentAmmo = 0; }
 };
