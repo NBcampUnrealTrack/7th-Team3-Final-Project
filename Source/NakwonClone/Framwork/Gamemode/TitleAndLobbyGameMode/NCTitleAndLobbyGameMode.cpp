@@ -9,6 +9,7 @@
 ANCTitleAndLobbyGameMode::ANCTitleAndLobbyGameMode()
 {
 	DefaultPawnClass = nullptr;
+	bUseSeamlessTravel = true;
 }
 
 void ANCTitleAndLobbyGameMode::BeginPlay()
