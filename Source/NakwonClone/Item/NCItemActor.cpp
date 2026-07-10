@@ -130,7 +130,7 @@ void ANCItemActor::ConsumeItem()
 {
 	Multicast_PlayPickupFX();
 
-	if (bRespawnEnabled && HasAuthority())
+	if (bRespawnEnabled && HasAuthority() && HasAnyFlags(RF_WasLoaded))
 	{
 		// 파괴 대신 숨김 + 콜리전 끄기
 		SetActorHiddenInGame(true);
