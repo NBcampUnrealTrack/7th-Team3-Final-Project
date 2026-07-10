@@ -10,6 +10,7 @@
 #include "TimerManager.h" //헌호수정
 #include "EngineUtils.h" //헌호수정 - TActorIterator (좀비 수 세기)
 #include "NavigationSystem.h" //헌호수정 - 스폰 위치 navmesh 투영
+#include "NakwonClone/Framwork/GameState/NCGameState.h" //헌호수정 - 점수(TotalScore) 읽기
 #include "NakwonClone/Zombie/SpawnBox/MonsterSpawnRow.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
@@ -127,13 +128,29 @@ int32 ASpawnVolume::CountAliveZombies() const
 	return Count;
 }
 
-//헌호수정 - 가중치 기반으로 좀비 타입 하나 선택
+//헌호수정 - 가중치 기반으로 좀비 타입 하나 선택 (점수 오를수록 특수 확률↑ / Walker↓)
 EVGMonsterType ASpawnVolume::PickWeightedType() const
 {
+	//헌호수정 - 현재 점수 읽기 (팀원 구현 TotalScore, 읽기만 함)
+	int32 Score = 0;
+	if (const ANCGameState* GS = GetWorld() ? GetWorld()->GetGameState<ANCGameState>() : nullptr)
+	{
+		Score = GS->TotalScore;
+	}
+
+	//헌호수정 - 점수 구간별 배율: Walker는 줄이고(WalkerScale) 특수는 키움(SpecialScale)
+	float WalkerScale = 1.0f;
+	float SpecialScale = 1.0f;
+	if (Score >= DifficultyScore3)      { WalkerScale = 0.22f; SpecialScale = 2.8f; } // 2000+
+	else if (Score >= DifficultyScore2) { WalkerScale = 0.45f; SpecialScale = 2.0f; } // 1000~
+	else if (Score >= DifficultyScore1) { WalkerScale = 0.70f; SpecialScale = 1.4f; } // 500~
+
+	//헌호수정 - 배율 적용한 가중치 합
 	float Total = 0.f;
 	for (const TPair<EVGMonsterType, float>& Pair : TypeWeights)
 	{
-		Total += Pair.Value;
+		const float Scale = (Pair.Key == EVGMonsterType::Walker) ? WalkerScale : SpecialScale;
+		Total += Pair.Value * Scale;
 	}
 	if (Total <= 0.f)
 	{
@@ -143,7 +160,8 @@ EVGMonsterType ASpawnVolume::PickWeightedType() const
 	float Rand = FMath::FRandRange(0.f, Total);
 	for (const TPair<EVGMonsterType, float>& Pair : TypeWeights)
 	{
-		Rand -= Pair.Value;
+		const float Scale = (Pair.Key == EVGMonsterType::Walker) ? WalkerScale : SpecialScale;
+		Rand -= Pair.Value * Scale;
 		if (Rand <= 0.f)
 		{
 			return Pair.Key;

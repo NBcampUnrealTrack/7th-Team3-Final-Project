@@ -16,6 +16,7 @@
 #include "BrainComponent.h"
 #include "TimerManager.h"
 #include "Framwork/Gamemode/NCGameMode.h"
+#include "Framwork/GameState/NCGameState.h" //헌호수정 - 타입별 킬 카운트 증가
 #include "Item/Data/NCLootDropData.h"
 #include "Item/NCItemActor.h"
 #include "Inventory/NCInventoryType.h"
@@ -181,7 +182,20 @@ void AVGMonsterCharacterBase::HandleDead()
 		{
 			GM->AddPoints(CashedKillScore);
 		}
-		
+
+		//헌호수정 - 게임 종료 점수판용: 죽은 좀비 타입별 킬 카운트 증가
+		if (ANCGameState* GS = GetWorld()->GetGameState<ANCGameState>())
+		{
+			switch (MonsterType)
+			{
+			case EVGMonsterType::Walker: GS->AddWalkerKillCount(); break;
+			case EVGMonsterType::Runner: GS->AddRunnerKillCount(); break;
+			case EVGMonsterType::Tank:   GS->AddTankKillCount();   break;
+			case EVGMonsterType::Witch:  GS->AddWitchKillCount();  break;
+			default: break;
+			}
+		}
+
 		DropLoot();
 	}
 	

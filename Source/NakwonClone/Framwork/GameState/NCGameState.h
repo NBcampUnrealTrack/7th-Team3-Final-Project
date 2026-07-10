@@ -81,18 +81,36 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void AddTankKillCount() {  TankKillCount++ ;}
-	
+
+	//헌호수정 - 게임 종료 점수판용 타입별 킬 카운트 getter
+	UFUNCTION(BlueprintCallable)
+	int32 GetWalkerKillCount() const { return WalkerKillCount; }
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetRunnerKillCount() const { return RunnerKillCount; }
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetWitchKillCount() const { return WitchKillCount; }
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetTankKillCount() const { return TankKillCount; }
+
+	//헌호수정 - 전체 좀비 처치 수 (타입 합계)
+	UFUNCTION(BlueprintCallable)
+	int32 GetTotalKillCount() const { return WalkerKillCount + RunnerKillCount + WitchKillCount + TankKillCount; }
+
 private:
-		
-	UPROPERTY(EditDefaultsOnly, Category = "Score")
+
+	//헌호수정 - Replicated로 변경: 멀티에서 모든 클라 점수판에 킬 수 정상 표시 (서버에서만 세지므로 복제 필요)
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Score", meta = (AllowPrivateAccess = "true"))
 	int32 WalkerKillCount;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Score")
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Score", meta = (AllowPrivateAccess = "true"))
 	int32 RunnerKillCount;
-		
-	UPROPERTY(EditDefaultsOnly, Category = "Score")
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Score", meta = (AllowPrivateAccess = "true"))
 	int32 WitchKillCount;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Score")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Score", meta = (AllowPrivateAccess = "true"))
 	int32 TankKillCount;
 };
