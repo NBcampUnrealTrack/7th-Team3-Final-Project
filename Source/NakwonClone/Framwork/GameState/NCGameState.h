@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+#include "Blueprint/UserWidget.h"
 
 #include "NakwonClone/Common/NCGameplayTags.h"
 
@@ -50,6 +51,9 @@ public:
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_PlayHelicopterSound(USoundBase* Sound);
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Escape")
+	TSubclassOf<UUserWidget> ClearWidgetClass;
 	
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
