@@ -75,4 +75,15 @@ private:
 	void DrainStamina();
 	void RegenStamina();
 	void OnStaminaEmpty();
+	
+#pragma region 시환 추가
+	
+public:
+	void ActivateSpeedBoost(float Multiplier, float Duration);
+
+private:
+	float SpeedBoostMultiplier = 1.f;
+	FTimerHandle SpeedBoostTimerHandle;
+	void EndSpeedBoost();
+#pragma endregion
 };

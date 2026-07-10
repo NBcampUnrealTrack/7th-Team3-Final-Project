@@ -145,7 +145,7 @@ bool UNCGunComponent::CanFire() const
 {
 	if (!HasActiveGun())  return false;
 	if (IsReloading())    return false;
-	if (CurrentAmmo <= 0) return false;
+	if (!bInfiniteAmmoActive && CurrentAmmo <= 0) return false;
 	if (!IsADS())         return false;
 
 	if (CurrentFireMode == ENCFireMode::SemiAuto && ActiveGunData->FireRate > 0.f && GetWorld())
@@ -284,7 +284,12 @@ void UNCGunComponent::FireOnce()
 
 	LastFireTime = GetWorld() ? GetWorld()->GetTimeSeconds() : LastFireTime;
 
-	--CurrentAmmo;
+	if (!bInfiniteAmmoActive)
+	{
+		--CurrentAmmo;
+	}
+	
+	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 
 	AActor* Owner = GetOwner();
@@ -800,4 +805,17 @@ void UNCGunComponent::ShowGunMagazine()
 
 	EquippedGunSkelMeshComp->UnHideBoneByName(TEXT("Magazine_joint"));
 	EquippedGunSkelMeshComp->UnHideBoneByName(TEXT("Bullets_joint"));
+}
+
+void UNCGunComponent::ActivateInfiniteAmmo(float Duration)
+{
+	bInfiniteAmmoActive = true;
+
+	GetWorld()->GetTimerManager().SetTimer(
+		InfiniteAmmoTimerHandle, this, &UNCGunComponent::EndInfiniteAmmo, Duration, false);
+}
+
+void UNCGunComponent::EndInfiniteAmmo()
+{
+	bInfiniteAmmoActive = false;
 }

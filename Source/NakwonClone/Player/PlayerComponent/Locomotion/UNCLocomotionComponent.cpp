@@ -70,7 +70,7 @@ void UNCLocomotionComponent::ApplyMovementSpeed()
 
 	if (Data)
 	{
-		MovementComponent->MaxWalkSpeed = Data->MovementSpeed;
+		MovementComponent->MaxWalkSpeed = Data->MovementSpeed * SpeedBoostMultiplier;
 		MovementComponent->MaxAcceleration = Data->MaxAcceleration;
 		// 헌호수정 - 자연스러운 이동감을 위한 감속/마찰/회전 적용
 		MovementComponent->BrakingDecelerationWalking = Data->BrakingDeceleration;
@@ -78,7 +78,7 @@ void UNCLocomotionComponent::ApplyMovementSpeed()
 		MovementComponent->RotationRate = FRotator(0.f, Data->RotationRate, 0.f);
 		// 헌호수정 - 크라우치 전용 속도도 같이 적용
 		if (CurrentStanceTag == NCCharacter::Crouch)
-			MovementComponent->MaxWalkSpeedCrouched = Data->MovementSpeed;
+			MovementComponent->MaxWalkSpeedCrouched = Data->MovementSpeed * SpeedBoostMultiplier;
 
 	}
 }
@@ -149,4 +149,19 @@ void UNCLocomotionComponent::OnStaminaEmpty()
 	SetGaitTag(NCCharacter::Jog);
 	if (OwnerCharacter)
 		OwnerCharacter->CurrentGaitTag = NCCharacter::Jog;
+}
+
+void UNCLocomotionComponent::ActivateSpeedBoost(float Multiplier, float Duration)
+{
+	SpeedBoostMultiplier = Multiplier;
+	ApplyMovementSpeed();
+
+	GetWorld()->GetTimerManager().SetTimer(
+		SpeedBoostTimerHandle, this, &UNCLocomotionComponent::EndSpeedBoost, Duration, false);
+}
+
+void UNCLocomotionComponent::EndSpeedBoost()
+{
+	SpeedBoostMultiplier = 1.f;
+	ApplyMovementSpeed();
 }

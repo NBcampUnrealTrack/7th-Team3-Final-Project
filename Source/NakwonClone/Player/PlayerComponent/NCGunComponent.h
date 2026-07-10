@@ -169,4 +169,13 @@ private:
 	//헌호수정 - RE4 스타일 어깨 너머 정조준 (가까이+오른쪽 → 캐릭터 상반신 왼쪽에 꽉) — 모든 총기 공통
 	UPROPERTY(EditAnywhere, Category = "Camera|ADS")
 	FVector ADSCameraLocation = FVector(0.f, 50.f, 6.f);
+	
+	// 시환 추가
+public:
+	void ActivateInfiniteAmmo(float Duration);
+
+private:
+	bool bInfiniteAmmoActive = false;
+	FTimerHandle InfiniteAmmoTimerHandle;
+	void EndInfiniteAmmo();
 };

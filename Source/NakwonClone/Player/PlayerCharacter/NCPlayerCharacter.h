@@ -49,6 +49,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Components|Equipment")
 	UNCEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
 
+	// 시환 추가
+	UFUNCTION(BlueprintPure, Category = "Components|Locomotion")
+	UNCLocomotionComponent* GetLocomotionComponent() const { return LocomotionComponent; }
+	
 	// 현재 활성 무기 컴포넌트 반환 (NCAnimInstance 등 하위호환)
 	UFUNCTION(BlueprintPure, Category = "Components|Gun")
 	UNCGunComponent* GetGunComponent() const;
