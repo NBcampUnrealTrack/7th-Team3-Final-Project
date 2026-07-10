@@ -84,14 +84,14 @@ bool ANCProjectile::CheckPointBlankOverlap()
     if (OwnerActor) Params.AddIgnoredActor(OwnerActor);
 
     const float Radius = CollisionComp->GetScaledSphereRadius();
-    GetWorld()->OverlapMultiByChannel(
+    GetWorld()->OverlapMultiByObjectType(
         Overlaps, GetActorLocation(), FQuat::Identity,
-        ECC_Pawn, FCollisionShape::MakeSphere(Radius), Params);
+        FCollisionObjectQueryParams(ECC_Pawn), FCollisionShape::MakeSphere(Radius), Params);
 
     for (const FOverlapResult& Overlap : Overlaps)
     {
         AActor* OtherActor = Overlap.GetActor();
-        if (!OtherActor || OtherActor == OwnerActor) continue;
+        if (!OtherActor || OtherActor == OwnerActor || OtherActor->IsA<ANCProjectile>()) continue;
 
         FHitResult Hit;
         Hit.ImpactPoint = GetActorLocation();

@@ -296,11 +296,7 @@ void UNCGunComponent::FireOnce()
 			Owner->SetActorRotation(FRotator(0.f, ControlRot.Yaw, 0.f));
 		}
 	}
-	// 기본 발사 방향: 카메라 전방 (조준 기준)
-	FVector  SpawnLocation = Owner->GetActorLocation();
-	FRotator SpawnRotation = Owner->GetActorRotation();
-
-	FVector CamLocation = SpawnLocation;
+	FVector CamLocation = Owner->GetActorLocation();
 	FVector CamForward  = Owner->GetActorForwardVector();
 	if (UCameraComponent* Cam = FindCamera())
 	{
@@ -308,29 +304,8 @@ void UNCGunComponent::FireOnce()
 		CamForward  = Cam->GetComponentRotation().Vector();
 	}
 
-	FVector AimPoint = CamLocation + CamForward * Data->MaxRange;
-	FHitResult AimHit;
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(Owner);
-	if (GetWorld()->LineTraceSingleByChannel(AimHit, CamLocation, AimPoint, ECC_Visibility, Params))
-		AimPoint = AimHit.ImpactPoint;
-
-	UMeshComponent* MuzzleMeshComp = EquippedGunSkelMeshComp
-		? static_cast<UMeshComponent*>(EquippedGunSkelMeshComp)
-		: static_cast<UMeshComponent*>(EquippedGunMeshComp);
-
-	if (MuzzleMeshComp && !Data->MuzzleSocketName.IsNone()
-		&& MuzzleMeshComp->DoesSocketExist(Data->MuzzleSocketName))
-	{
-		SpawnLocation = MuzzleMeshComp->GetSocketLocation(Data->MuzzleSocketName);
-		const FVector ToAim = AimPoint - SpawnLocation;
-		SpawnRotation = ToAim.SizeSquared() > (1.f * 1.f) ? ToAim.Rotation() : CamForward.Rotation();
-	}
-	else
-	{
-		SpawnLocation = CamLocation;
-		SpawnRotation = CamForward.Rotation();
-	}
+	const FVector  SpawnLocation = CamLocation;
+	const FRotator SpawnRotation = CamForward.Rotation();
 
 	PlayGunMontage(Data->FireMontage);
 	// 발사음 재생
@@ -389,6 +364,20 @@ void UNCGunComponent::FireOnce()
 			PC->ClientStartCameraShake(Data->FireShakeClass, ShakeScale);
 	}
 
+	float MuzzleDistance = 0.f;
+	{
+		UMeshComponent* MuzzleMeshComp = EquippedGunSkelMeshComp
+			? static_cast<UMeshComponent*>(EquippedGunSkelMeshComp)
+			: static_cast<UMeshComponent*>(EquippedGunMeshComp);
+
+		if (MuzzleMeshComp && !Data->MuzzleSocketName.IsNone()
+			&& MuzzleMeshComp->DoesSocketExist(Data->MuzzleSocketName))
+		{
+			MuzzleDistance = (MuzzleMeshComp->GetSocketLocation(Data->MuzzleSocketName) - CamLocation).Size();
+		}
+	}
+	const FVector SpreadOrigin = CamLocation + CamForward * MuzzleDistance;
+
 	const int32 PelletCount = FMath::Max(1, Data->NumPellets);
 	for (int32 i = 0; i < PelletCount; ++i)
 	{
@@ -400,9 +389,11 @@ void UNCGunComponent::FireOnce()
 			PelletRotation.Pitch += FMath::RandRange(-Spread, Spread);
 		}
 
+		const FVector PelletSpawnLocation = SpreadOrigin;
+
 		ANCProjectile* NCProj = GetWorld()->SpawnActorDeferred<ANCProjectile>(
 			Data->ProjectileClass,
-			FTransform(PelletRotation, SpawnLocation),
+			FTransform(PelletRotation, PelletSpawnLocation),
 			Owner, Cast<APawn>(Owner),
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
@@ -419,7 +410,7 @@ void UNCGunComponent::FireOnce()
 			NCProj->HitShakeScale         = ShakeScale;
 			if (!Data->TracerEffect.IsNull())
 				NCProj->TracerEffect = Data->TracerEffect.LoadSynchronous();
-			NCProj->FinishSpawning(FTransform(PelletRotation, SpawnLocation));
+			NCProj->FinishSpawning(FTransform(PelletRotation, PelletSpawnLocation));
 		}
 	}
 }
