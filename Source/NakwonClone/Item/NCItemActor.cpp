@@ -182,9 +182,8 @@ void ANCItemActor::ConsumeItem()
 {
 	Multicast_PlayPickupFX();
 
-	if (bRespawnEnabled && HasAuthority() && HasAnyFlags(RF_WasLoaded))
+	if (HasAuthority())
 	{
-		// 중복 습득 방지: 상호작용은 즉시 차단, 시각 효과(펄스)만 유지
 		if (PickupSphere)
 		{
 			PickupSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
