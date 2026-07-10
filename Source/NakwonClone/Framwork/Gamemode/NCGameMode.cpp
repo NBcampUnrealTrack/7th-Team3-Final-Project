@@ -147,7 +147,7 @@ void ANCGameMode::MoveToTitle()
 
 void ANCGameMode::MoveToLobby()
 {
-	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
+	GetWorldTimerManager().ClearAllTimersForObject(this);
 	
 	GetWorld()->ServerTravel("/Game/Maps/Lobby/L_Lobby?listen");
 }
