@@ -56,9 +56,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	int32 MaxAliveZombies = 50;
 
-	//헌호수정 - 타입별 스폰 가중치 (에디터에서 조정 가능. 합이 100 아니어도 비율로 계산)
+	//헌호수정 - 타입별 스폰 가중치 (에디터에서 조정 가능. 합이 100 아니어도 비율로 계산). 이게 0~499점 기본값
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|TypeWeight")
 	TMap<EVGMonsterType, float> TypeWeights;
+
+	//헌호수정 - 점수 구간: 이 점수 넘으면 특수 좀비 확률↑ / Walker↓ (난이도 상승)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|TypeWeight")
+	int32 DifficultyScore1 = 500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|TypeWeight")
+	int32 DifficultyScore2 = 1000;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|TypeWeight")
+	int32 DifficultyScore3 = 2000;
 	
 	// 비어있으면 해당 몬스터 BP의 기본 랜덤 범위 사용, 값이 있으면 이 타입들 중에서만 랜덤
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
