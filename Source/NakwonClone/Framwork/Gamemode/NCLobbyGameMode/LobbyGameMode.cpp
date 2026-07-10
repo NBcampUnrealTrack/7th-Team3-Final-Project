@@ -5,26 +5,26 @@
 ALobbyGameMode::ALobbyGameMode()
 {
 	DefaultPawnClass = nullptr;
-	bUseSeamlessTravel = true;
 }
 
-void ALobbyGameMode::MoveToParkingLevel()
-{
-	GetWorld()->ServerTravel("/Game/Maps/L_Parking");	
-	UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] 지하주차장 프리로딩 실패로 서버트레블 실행"));
-}
+// void ALobbyGameMode::MoveToParkingLevel()
+// {
+// 	GetWorld()->ServerTravel("/Game/Maps/L_Parking");	
+// 	UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] 지하주차장 프리로딩 실패로 서버트레블 실행"));
+// }
 
 void ALobbyGameMode::MoveToShopLevel()
 {
-	if (GetWorld()->IsMapChangeReady())
-	{
-		GEngine->CommitMapChange(GetWorld());
-	}
-	else
-	{
-		GetWorld()->ServerTravel("/Game/Maps/L_ShoppingMall");
-		UE_LOG(LogTemp, Warning, TEXT("[NCParkinglotGameMode] 쇼핑몰 프리로딩 실패로 서버트레블 실행"));
-	}
+	
+	GetWorld()->ServerTravel("/Game/Maps/L_ShoppingMall");
+	// if (GetWorld()->IsMapChangeReady())
+	// {
+	// 	GEngine->CommitMapChange(GetWorld());
+	// }
+	// else
+	// {
+
+	// }
 }
 
 void ALobbyGameMode::MoveToTitle()
