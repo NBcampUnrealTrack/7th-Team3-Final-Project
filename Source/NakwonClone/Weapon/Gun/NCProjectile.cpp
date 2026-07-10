@@ -71,7 +71,24 @@ void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
     if (!OtherActor || OtherActor == GetOwner()) return;
 
     ProcessHit(OtherActor, Hit);
+
+    if (OtherActor->IsA<ACharacter>() && TryPenetrate(OtherActor))
+        return;
+
     Destroy();
+}
+
+bool ANCProjectile::TryPenetrate(AActor* OtherActor)
+{
+    if (PenetrationsRemaining <= 0) return false;
+
+    --PenetrationsRemaining;
+    Damage = FMath::RoundToFloat(Damage * (1.f - PenetrationDamageFalloff));
+
+    CollisionComp->IgnoreActorWhenMoving(OtherActor, true);
+    MovementComp->Velocity = GetActorForwardVector() * ProjectileSpeed;
+
+    return true;
 }
 
 bool ANCProjectile::CheckPointBlankOverlap()
@@ -99,6 +116,10 @@ bool ANCProjectile::CheckPointBlankOverlap()
         Hit.Component = Overlap.GetComponent();
 
         ProcessHit(OtherActor, Hit);
+
+        if (OtherActor->IsA<ACharacter>() && TryPenetrate(OtherActor))
+            return false;
+
         Destroy();
         return true;
     }
