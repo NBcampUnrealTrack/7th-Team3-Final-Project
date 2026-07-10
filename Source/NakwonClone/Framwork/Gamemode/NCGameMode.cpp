@@ -7,6 +7,7 @@
 
 #include "NakwonClone/Framwork/GameState/NCGameState.h"
 #include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
+#include "Player/PlayerCharacter/NCPlayerCharacter.h"
 
 ANCGameMode::ANCGameMode()
 {
@@ -32,10 +33,13 @@ void ANCGameMode::BeginPlay()
 void ANCGameMode::AddPoints(int32 Points)
 {
 	ANCGameState* GS = GetGameState<ANCGameState>();
+	ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	if (!GS) return;
+	if (!PC) return;
 
 	const int32 OldScore = GS->TotalScore;
-	GS->TotalScore += Points;
+	int32 ComboPoints = Points * PC->GetCurrentComboMultiplier();
+	GS->TotalScore += ComboPoints;
 	GS->OnRep_TotalScore(OldScore);
 
 	CheckPoints();
