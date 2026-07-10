@@ -63,6 +63,9 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 NumPellets   = 1;    // 샷건 펠릿 수량 조절용
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float SpreadAngle  = 0.f;  // 탄퍼짐
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 PenetrationCount = 0;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float PenetrationDamageFalloff = 0.3f; 
+
     // 재장전
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float ReloadTime = 2.f;
 

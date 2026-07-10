@@ -25,6 +25,12 @@ void ANCGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(ANCGameState, RemainingMatchTime);
 	DOREPLIFETIME(ANCGameState, TotalScore);
 	DOREPLIFETIME(ANCGameState, bEscapable);
+
+	//헌호수정 - 타입별 킬 카운트 복제 (게임 종료 점수판, 멀티 클라 표시용)
+	DOREPLIFETIME(ANCGameState, WalkerKillCount);
+	DOREPLIFETIME(ANCGameState, RunnerKillCount);
+	DOREPLIFETIME(ANCGameState, WitchKillCount);
+	DOREPLIFETIME(ANCGameState, TankKillCount);
 }
 
 void ANCGameState::OnRep_TotalScore(int32 OldTotalScore)
