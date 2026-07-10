@@ -55,6 +55,10 @@ public:
 	//헌호수정 - 동시에 살아있을 수 있는 최대 좀비 수 (이 수 넘으면 스폰 스킵, 성능/안정성)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	int32 MaxAliveZombies = 50;
+
+	//헌호수정 - 타입별 스폰 가중치 (에디터에서 조정 가능. 합이 100 아니어도 비율로 계산)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|TypeWeight")
+	TMap<EVGMonsterType, float> TypeWeights;
 	
 	// 비어있으면 해당 몬스터 BP의 기본 랜덤 범위 사용, 값이 있으면 이 타입들 중에서만 랜덤
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
@@ -86,4 +90,7 @@ private:
 
 	//헌호수정 - 현재 살아있는 좀비 수 세기 (상한 체크용)
 	int32 CountAliveZombies() const;
+
+	//헌호수정 - 가중치로 좀비 타입 하나 뽑기
+	EVGMonsterType PickWeightedType() const;
 };
