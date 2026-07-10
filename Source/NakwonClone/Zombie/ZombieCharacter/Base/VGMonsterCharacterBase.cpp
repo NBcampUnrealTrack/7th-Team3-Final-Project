@@ -531,7 +531,8 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 
 	if (GetCharacterMovement())
 	{
-		GetCharacterMovement()->MaxWalkSpeed = Row->PatrolSpeed * AnimPlayRateScale;
+		//헌호수정 - 항상 추격이므로 순찰속도(PatrolSpeed) 대신 이동속도(MoveSpeed) 적용 → 좀비가 안 움직이던 버그 해결
+		GetCharacterMovement()->MaxWalkSpeed = Row->MoveSpeed * AnimPlayRateScale;
 	}
 
 	CachedAttackEffectClass = Row->AttackEffectClass;

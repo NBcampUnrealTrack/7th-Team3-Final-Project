@@ -9,6 +9,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "TimerManager.h" //헌호수정
 #include "EngineUtils.h" //헌호수정 - TActorIterator (좀비 수 세기)
+#include "NavigationSystem.h" //헌호수정 - 스폰 위치 navmesh 투영
 #include "NakwonClone/Zombie/SpawnBox/MonsterSpawnRow.h"
 #include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h"
 
@@ -173,6 +174,16 @@ void ASpawnVolume::SpawnMonster(TSubclassOf<AActor> MonsterClass)
 		FMath::FRandRange(-BoxExtent.Y, BoxExtent.Y),
 		0.f
 	);
+
+	//헌호수정 - 스폰 위치를 navmesh(걷는 면)에 투영 → 박스가 떠있어도 좀비가 바닥에 스폰되어 바로 추격 (안 움직임 버그 방지)
+	if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+	{
+		FNavLocation NavLoc;
+		if (NavSys->ProjectPointToNavigation(SpawnLocation, NavLoc, FVector(200.f, 200.f, 500.f)))
+		{
+			SpawnLocation = NavLoc.Location;
+		}
+	}
 
 	FRotator SpawnRotation = FRotator::ZeroRotator;
 	FTransform SpawnTransform(SpawnRotation, SpawnLocation);
