@@ -32,7 +32,7 @@ protected:
 	int32 SpecialZombieScore = 500;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Score")
-	int32 EscapableScore = 100;
+	int32 EscapableScore = 3000;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Score")
 	TObjectPtr<USoundBase> HelicopterSound;
