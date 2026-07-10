@@ -25,6 +25,7 @@ class UTexture2D;
 
 // 핫바 UI용: 보관 중인 근접무기(StoredMeleeWeaponID)가 바뀔 때 브로드캐스트 (줍기/교체 시)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMeleeStoredChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnComboKillChanged, int32, NewComboCount);
 
 UCLASS()
 class NAKWONCLONE_API ANCPlayerCharacter : public ANCBaseCharacter
@@ -244,6 +245,10 @@ public:
 	//헌호수정 - 스턴 중 여부 (공격/발사 게이트용)
 	bool IsStunned() const { return bIsStunned; }
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Combo",
+	meta = (AllowPrivateAccess = "true"))
+	int32 CurrentComboCount = 0;
+	
 private:
 	//헌호수정 - 피격 시 스턴 적용 / 해제
 	void ApplyStun();
@@ -253,10 +258,6 @@ private:
 	FTimerHandle StunTimerHandle;
 
 	void ResetKillCombo();
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Combo",
-		meta = (AllowPrivateAccess = "true"))
-	int32 CurrentComboCount = 0;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Combo",
 		meta = (AllowPrivateAccess = "true"))
