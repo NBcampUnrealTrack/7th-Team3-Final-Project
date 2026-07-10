@@ -213,6 +213,9 @@ public:
 
 private:
 	bool bIsDead = false;
+
+	UPROPERTY()
+	TObjectPtr<AActor> LastDamageCauser = nullptr;
 	
 	void DropLoot();
 #pragma endregion

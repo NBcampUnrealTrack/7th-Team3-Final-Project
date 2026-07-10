@@ -158,6 +158,11 @@ void AVGMonsterCharacterBase::BeginPlay()
 	}
 }
 
+void AVGMonsterCharacterBase::SetLastDamageCauser(AActor* InCauser)
+{
+	LastDamageCauser = InCauser;
+}
+
 // HandleDead()
 void AVGMonsterCharacterBase::HandleDead()
 {
