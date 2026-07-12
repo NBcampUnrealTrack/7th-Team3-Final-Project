@@ -100,6 +100,9 @@ FMonsterSpawnRow* ASpawnVolume::GetRandomMonster() const
 
 void ASpawnVolume::SpawnMonsters(int32 Count)
 {
+	//헌호수정 - 이번 배치의 겹침 방지 기록 초기화 (같은 배치 내 좀비끼리 안 겹치게)
+	RecentSpawnLocations.Reset();
+
 	//헌호수정 - 상한 체크: 살아있는 좀비가 최대치면 스폰 스킵 (성능/안정성)
 	int32 Alive = CountAliveZombies();
 
@@ -187,27 +190,62 @@ void ASpawnVolume::SpawnMonster(TSubclassOf<AActor> MonsterClass)
 	const FVector BoxOrigin = SpawnBox->GetComponentLocation();
 	const FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
 
-	FVector SpawnLocation = BoxOrigin + FVector(
-		FMath::FRandRange(-BoxExtent.X, BoxExtent.X),
-		FMath::FRandRange(-BoxExtent.Y, BoxExtent.Y),
-		0.f
-	);
+	//헌호수정 - 박스 크기 기반 반경 (navmesh 위 랜덤 점 뽑을 범위)
+	const float SearchRadius = FMath::Max(BoxExtent.X, BoxExtent.Y);
+	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 
-	//헌호수정 - 스폰 위치를 navmesh(걷는 면)에 투영 → 박스가 떠있어도 좀비가 바닥에 스폰되어 바로 추격 (안 움직임 버그 방지)
-	if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+	//헌호수정 - navmesh 위 + 기존 스폰과 안 겹치는 위치를 최대 8회까지 시도해서 뽑기
+	// → ① 무조건 걸을 수 있는 바닥 위 스폰(idle 버그 방지) ② 겹침 방지(크라우드 데드락 방지)
+	FVector SpawnLocation = BoxOrigin;
+	for (int32 Try = 0; Try < 8; ++Try)
 	{
-		FNavLocation NavLoc;
-		if (NavSys->ProjectPointToNavigation(SpawnLocation, NavLoc, FVector(200.f, 200.f, 500.f)))
+		FVector Candidate;
+
+		// navmesh 위 도달 가능한 랜덤 점 (실패 시 박스 랜덤으로 폴백)
+		FNavLocation NavPt;
+		if (NavSys && NavSys->GetRandomReachablePointInRadius(BoxOrigin, SearchRadius, NavPt))
 		{
-			SpawnLocation = NavLoc.Location;
+			Candidate = NavPt.Location;
+		}
+		else
+		{
+			Candidate = BoxOrigin + FVector(
+				FMath::FRandRange(-BoxExtent.X, BoxExtent.X),
+				FMath::FRandRange(-BoxExtent.Y, BoxExtent.Y),
+				0.f);
+		}
+
+		// 최근 스폰 위치들과 너무 가까우면 다시 뽑기 (겹침 방지)
+		bool bTooClose = false;
+		for (const FVector& Prev : RecentSpawnLocations)
+		{
+			if (FVector::DistSquared2D(Candidate, Prev) < MinSpawnSeparation * MinSpawnSeparation)
+			{
+				bTooClose = true;
+				break;
+			}
+		}
+
+		SpawnLocation = Candidate; // 마지막 후보라도 일단 채택
+		if (!bTooClose)
+		{
+			break; // 안 겹치는 위치 찾음 → 확정
 		}
 	}
+
+	//헌호수정 - 이번에 뽑은 위치 기록 (다음 스폰이 이 근처 피하도록)
+	RecentSpawnLocations.Add(SpawnLocation);
+
+	//헌호수정 - 바닥에서 살짝 위로 올려 스폰 (캡슐이 땅에 파묻혀 충돌로 스폰 실패하는 것 방지)
+	SpawnLocation.Z += 100.f;
 
 	FRotator SpawnRotation = FRotator::ZeroRotator;
 	FTransform SpawnTransform(SpawnRotation, SpawnLocation);
 
+	//헌호수정 - 충돌나도 위치 조정해서 무조건 스폰 (좀비가 벽/바닥 겹침으로 스폰 취소되던 버그 해결)
 	AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(
-		MonsterClass, SpawnTransform, this, GetInstigator());
+		MonsterClass, SpawnTransform, this, GetInstigator(),
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
 
 	if (!NewActor)
 	{
