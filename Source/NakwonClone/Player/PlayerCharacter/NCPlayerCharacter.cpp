@@ -1101,3 +1101,8 @@ float ANCPlayerCharacter::GetCurrentComboMultiplier() const
     // 5킬 이상
     return 1.5f;
 }
+
+void ANCPlayerCharacter::Client_ShowNotification_Implementation(const FText& Message, FLinearColor Color)
+{
+    OnShowNotification(Message, Color);
+}

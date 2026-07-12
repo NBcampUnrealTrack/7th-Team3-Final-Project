@@ -450,7 +450,7 @@ void UNCEquipmentComponent::ShowActiveWeaponVisualAgain()
 	}
 }
 
-void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector DropLocation, FRotator DropRotation)
+void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector DropLocation, FRotator DropRotation, float LifeSpanSeconds)
 {
 	const FName OldGunID = GetOccupantGunID(NewGunID);
 	if (OldGunID.IsNone()) return;
@@ -469,7 +469,11 @@ void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector Dro
 		DroppedGun->bRespawnEnabled = false;
 		const FNCGunSlotData& OldSlot = GetSlotData(OldData->SlotType);
 		DroppedGun->SavedCurrentAmmo = OldSlot.CurrentAmmo;
-		// DroppedGun->SavedReserveAmmo = OldSlot.ReserveAmmo;
+
+		if (LifeSpanSeconds > 0.f)
+		{
+			DroppedGun->SetLifeSpan(LifeSpanSeconds);
+		}
 	}
 }
 
