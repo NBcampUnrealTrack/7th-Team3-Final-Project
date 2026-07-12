@@ -148,7 +148,7 @@ bool UNCGunComponent::CanFire() const
 	if (!bInfiniteAmmoActive && CurrentAmmo <= 0) return false;
 	if (!IsADS())         return false;
 
-	if (CurrentFireMode == ENCFireMode::SemiAuto && ActiveGunData->FireRate > 0.f && GetWorld())
+	if (ActiveGunData->FireRate > 0.f && GetWorld())
 	{
 		const float MinInterval = 1.f / ActiveGunData->FireRate;
 		if (GetWorld()->GetTimeSeconds() - LastFireTime < MinInterval)
@@ -289,7 +289,6 @@ void UNCGunComponent::FireOnce()
 		--CurrentAmmo;
 	}
 	
-	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 
 	AActor* Owner = GetOwner();
