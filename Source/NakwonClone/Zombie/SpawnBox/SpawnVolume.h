@@ -56,6 +56,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	int32 MaxAliveZombies = 50;
 
+	//헌호수정 - 스폰 시 좀비끼리 최소 간격(cm). 이보다 가까우면 다시 뽑음 (겹침→크라우드 데드락 방지)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+	float MinSpawnSeparation = 150.f;
+
 	//헌호수정 - 타입별 스폰 가중치 (에디터에서 조정 가능. 합이 100 아니어도 비율로 계산). 이게 0~499점 기본값
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|TypeWeight")
 	TMap<EVGMonsterType, float> TypeWeights;
@@ -94,6 +98,9 @@ private:
 	//헌호수정 - 주기적 스폰용 타이머 + 시작 시각
 	FTimerHandle WaveTimerHandle;
 	float SpawnStartTime = 0.f;
+
+	//헌호수정 - 이번 스폰 배치에서 이미 뽑은 위치들 (겹침 방지용, 배치마다 초기화)
+	TArray<FVector> RecentSpawnLocations;
 
 	//헌호수정 - 타이머가 호출: 경과 시간 계산해서 UpdateWave 실행
 	void TickWave();
