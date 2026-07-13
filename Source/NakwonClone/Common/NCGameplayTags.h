@@ -65,26 +65,23 @@ namespace NCLootBox
 // 무기 관련 태그
 namespace NCWeapon
 {
-	// 무기 타입
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Unarmed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_OneHanded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_TwoHanded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Pistol);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Shotgun);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Rifle);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Sniper);
 
-	// 무기 무게
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weight_Light);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weight_Medium);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weight_Heavy);
 
-	// 무기 액션
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Attacking);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_SwingDelay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Swapping);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_UsingItem);
 
-	// 총기 / 조준 액션
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Aiming);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Firing);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Reloading);
@@ -92,7 +89,6 @@ namespace NCWeapon
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Chambering);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_PumpAction);
 
-	// 무기 상태
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Equipped);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Broken);
 }
@@ -120,24 +116,21 @@ namespace NCGameStateTags
 // 총기 관련 태그
 namespace NCGun
 {
-	// 총기 슬롯
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Slot_Primary);    // 주무기 (라이플/샷건)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Slot_Secondary);  // 보조무기 (권총/리볼버)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Slot_Primary);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Slot_Secondary);
 
-	// 총기 타입
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Rifle);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Sniper);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Shotgun);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Pistol);  // 권총/리볼버 통합
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Type_Pistol);
 
-	// 발사 모드
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(FireMode_Semi);   // 단발
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(FireMode_Auto);   // 연사
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(FireMode_Semi);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(FireMode_Auto);
 
-	// 총기 액션
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Firing);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Reloading);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_ADS);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Swapping); // 무기 교체 중 (입력 차단용)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Swapping);
 }
 
 namespace NCGunEffect
