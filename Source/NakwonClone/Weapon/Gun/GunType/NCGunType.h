@@ -45,6 +45,9 @@ struct FNCGunData : public FTableRowBase
     bool bCanToggleFireMode = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    bool bAutoReloadOnEmpty = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayTag GunTypeTag;
 
     // UI
