@@ -132,10 +132,10 @@ void ANCPlayerController::SetupInputComponent()
         if (GunToggleFireModeAction)
             EIC->BindAction(GunToggleFireModeAction, ETriggerEvent::Started, this, &ANCPlayerController::GunToggleFireMode);
         if (GunSlot1Action)
-            EIC->BindAction(GunSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectShotgun);
+            EIC->BindAction(GunSlot1Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectRifle);
 
         if (GunSlot2Action)
-            EIC->BindAction(GunSlot2Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectRifle);
+            EIC->BindAction(GunSlot2Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectShotgun);
 
         if (GunSlot3Action)
             EIC->BindAction(GunSlot3Action, ETriggerEvent::Started, this, &ANCPlayerController::GunSelectSidearm);
