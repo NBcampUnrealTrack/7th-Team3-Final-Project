@@ -69,6 +69,7 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	HeldObjectComp->SetupAttachment(GetMesh(), TEXT("hand_r"));
 	HeldObjectComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HeldObjectComp->SetVisibility(false);
+	HeldObjectComp->SetRelativeScale3D(FVector(0.5f));
 }
 
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
@@ -573,7 +574,7 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 
 	HeldThrowMesh = Row->HeldThrowMesh; 
 	if (HeldObjectComp && HeldThrowMesh)
-		HeldObjectComp->SetStaticMesh(HeldThrowMesh);
+		HeldObjectComp->SetVisibility(true);
 
 	// 우정 추가
 	CashedKillScore = Row->KillScore;
