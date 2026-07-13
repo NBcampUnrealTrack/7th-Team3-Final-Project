@@ -60,6 +60,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	float MinSpawnSeparation = 150.f;
 
+	//헌호수정 - 초반 시작 시 동시 좀비 상한 (여기서 시작해 MaxAliveZombies까지 서서히 증가)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|Ramp")
+	int32 StartMaxAlive = 15;
+
+	//헌호수정 - 상한이 StartMaxAlive → MaxAliveZombies로 오르는 데 걸리는 시간(초). 0이면 램프 없음(즉시 최대)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|Ramp")
+	float MaxAliveRampTime = 240.f;
+
 	//헌호수정 - 타입별 스폰 가중치 (에디터에서 조정 가능. 합이 100 아니어도 비율로 계산). 이게 0~499점 기본값
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|TypeWeight")
 	TMap<EVGMonsterType, float> TypeWeights;
@@ -107,6 +115,9 @@ private:
 
 	//헌호수정 - 현재 살아있는 좀비 수 세기 (상한 체크용)
 	int32 CountAliveZombies() const;
+
+	//헌호수정 - 시간에 따라 서서히 오르는 현재 좀비 상한 계산
+	int32 GetCurrentMaxAlive() const;
 
 	//헌호수정 - 가중치로 좀비 타입 하나 뽑기
 	EVGMonsterType PickWeightedType() const;
