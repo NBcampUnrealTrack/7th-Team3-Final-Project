@@ -372,10 +372,4 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Combat")
 	TObjectPtr<UVGAttackSlotComponent> AttackSlotComponent;
-	
-	UFUNCTION(Client, Reliable)
-	void Client_ShowNotification(const FText& Message, FLinearColor Color);
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "UI")
-	void OnShowNotification(const FText& Message, FLinearColor Color);
 };

@@ -57,6 +57,12 @@ public:
 	bool bIsInventoryOpen = false;
 
 	void SetUnArmPending(bool bPending) { bUnArmPending = bPending; }
+	
+	UFUNCTION(Client, Reliable)
+	void Client_ShowNotification(const FText& Message, FLinearColor Color);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "UI")
+	void OnShowNotification(const FText& Message, FLinearColor Color);
 
 protected:
 	virtual void BeginPlay() override;

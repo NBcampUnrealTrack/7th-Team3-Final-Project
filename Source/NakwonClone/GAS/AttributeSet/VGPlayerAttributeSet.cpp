@@ -113,3 +113,14 @@ void UVGPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		UE_LOG(LogTemp, Log, TEXT("[Credits] 현재 크레딧: %.0f"), GetCredits());
 	}
 }
+
+bool UVGPlayerAttributeSet::PreGameplayEffectExecute(FGameplayEffectModCallbackData& Data)
+{
+	if (bIsInvincible && Data.EvaluatedData.Attribute == GetHealthAttribute()
+		&& Data.EvaluatedData.Magnitude < 0.f)
+	{
+		return false; // 무적 - 데미지 GE 자체를 취소
+	}
+
+	return Super::PreGameplayEffectExecute(Data);
+}

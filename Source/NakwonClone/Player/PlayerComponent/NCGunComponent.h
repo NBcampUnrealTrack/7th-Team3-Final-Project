@@ -173,9 +173,18 @@ private:
 	// 시환 추가
 public:
 	void ActivateInfiniteAmmo(float Duration);
+	void EndInfiniteAmmo();
 
 private:
 	bool bInfiniteAmmoActive = false;
 	FTimerHandle InfiniteAmmoTimerHandle;
-	void EndInfiniteAmmo();
+
+public:
+	void ActivateDamageBoost(float Multiplier, float Duration);
+	void EndDamageBoost();
+	float GetDamageMultiplier() const { return DamageMultiplier; }
+
+private:
+	float DamageMultiplier = 1.f;
+	FTimerHandle DamageBoostTimerHandle;
 };

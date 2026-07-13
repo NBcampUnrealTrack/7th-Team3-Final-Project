@@ -61,4 +61,13 @@ public:
 	
 	// 스탯 변경 후
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
+	// 무적 관련
+public:
+	void SetInvincible(bool bNewInvincible) { bIsInvincible = bNewInvincible; }
+
+	virtual bool PreGameplayEffectExecute(FGameplayEffectModCallbackData& Data) override;
+
+private:
+	bool bIsInvincible = false;
 };
