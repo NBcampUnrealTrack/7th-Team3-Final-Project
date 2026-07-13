@@ -30,11 +30,12 @@ ASpawnVolume::ASpawnVolume()
 	StopSpawnTime = 540.0f;
 	MaxSpawnCount = 9;
 
-	//헌호수정 - 기본 타입 가중치 (Walker 60 / Runner 25 / Tank 10 / Witch 5) — 에디터에서 조정 가능
+	//헌호수정 - 기본 타입 가중치 (Walker 60 / Runner 25 / Tank 10 / Witch 5 / Thrower 6) — 에디터에서 조정 가능
 	TypeWeights.Add(EVGMonsterType::Walker, 60.f);
 	TypeWeights.Add(EVGMonsterType::Runner, 25.f);
 	TypeWeights.Add(EVGMonsterType::Tank, 10.f);
 	TypeWeights.Add(EVGMonsterType::Witch, 5.f);
+	TypeWeights.Add(EVGMonsterType::Thrower, 6.f); //헌호수정 - 원거리 좀비 (특수, 후반 점수 오르면 증가)
 }
 
 
