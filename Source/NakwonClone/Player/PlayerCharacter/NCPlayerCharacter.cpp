@@ -28,6 +28,7 @@
 #include "Player/PlayerComponent/NCPistolComponent.h"
 #include "Player/PlayerComponent/NCRifleComponent.h"
 #include "Player/PlayerComponent/NCShotgunComponent.h"
+#include "Player/PlayerComponent/NCSniperComponent.h"
 #include "Player/PlayerData/NCWeaponData.h"
 #include "UI/InGame/NCADSHUD.h"
 #include "UI/InGame/NCBackpackHUD.h"
@@ -113,36 +114,103 @@ void ANCPlayerCharacter::InitCamera()
 
 void ANCPlayerCharacter::InitComponents()
 {
-    InteractionComponent = CreateDefaultSubobject<UNCInteractionComponent>(TEXT("InteractionComponent"));
-    LocomotionComponent = CreateDefaultSubobject<UNCLocomotionComponent>(TEXT("LocomotionComponent"));
-    CombatComponent = CreateDefaultSubobject<UNCCombatComponent>(TEXT("CombatComponent"));
-    AssassinationComponent = CreateDefaultSubobject<UNCAssassinationComponent>(TEXT("AssassinationComponent")); //헌호수정
-    EquipmentComponent = CreateDefaultSubobject<UNCEquipmentComponent>(TEXT("EquipmentComponent"));
-    RifleComponent     = CreateDefaultSubobject<UNCRifleComponent>(TEXT("RifleComponent"));
-    ShotgunComponent   = CreateDefaultSubobject<UNCShotgunComponent>(TEXT("ShotgunComponent"));
-    PistolComponent    = CreateDefaultSubobject<UNCPistolComponent>(TEXT("PistolComponent"));
+    InteractionComponent =
+        CreateDefaultSubobject<UNCInteractionComponent>(
+            TEXT("InteractionComponent")
+        );
 
-    // 헌호수정 - 플래시라이트 컴포넌트 생성 및 소켓에 부착
-    FlashlightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FlashlightMesh"));
-    FlashlightMesh->SetupAttachment(GetMesh(), TEXT("Flashlight_Socket"));
+    LocomotionComponent =
+        CreateDefaultSubobject<UNCLocomotionComponent>(
+            TEXT("LocomotionComponent")
+        );
 
-    FlashlightLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashlightLight"));
+    CombatComponent =
+        CreateDefaultSubobject<UNCCombatComponent>(
+            TEXT("CombatComponent")
+        );
+
+    AssassinationComponent =
+        CreateDefaultSubobject<UNCAssassinationComponent>(
+            TEXT("AssassinationComponent")
+        );
+
+    EquipmentComponent =
+        CreateDefaultSubobject<UNCEquipmentComponent>(
+            TEXT("EquipmentComponent")
+        );
+
+    RifleComponent =
+        CreateDefaultSubobject<UNCRifleComponent>(
+            TEXT("RifleComponent")
+        );
+
+    ShotgunComponent =
+        CreateDefaultSubobject<UNCShotgunComponent>(
+            TEXT("ShotgunComponent")
+        );
+
+    PistolComponent =
+        CreateDefaultSubobject<UNCPistolComponent>(
+            TEXT("PistolComponent")
+        );
+
+    SniperComponent =
+        CreateDefaultSubobject<UNCSniperComponent>(
+            TEXT("SniperComponent")
+        );
+
+    FlashlightMesh =
+        CreateDefaultSubobject<UStaticMeshComponent>(
+            TEXT("FlashlightMesh")
+        );
+
+    FlashlightMesh->SetupAttachment(
+        GetMesh(),
+        TEXT("Flashlight_Socket")
+    );
+
+    FlashlightLight =
+        CreateDefaultSubobject<USpotLightComponent>(
+            TEXT("FlashlightLight")
+        );
+
     FlashlightLight->SetupAttachment(FlashlightMesh);
-    FlashlightLight->SetVisibility(false); //헌호수정 - 기본 꺼짐
-    FlashlightLight->SetCastShadows(false); //헌호수정 - 캐릭터 얼굴 통과 그림자 방지
+    FlashlightLight->SetVisibility(false);
+    FlashlightLight->SetCastShadows(false);
 
-    //헌호수정 - 디비전 스타일 백팩 체력바 (3D 위젯)
-    // 애니메이션(뛰기/공격)에 안 흔들리도록 본이 아닌 캡슐(루트)에 부착 → 캐릭터 이동/회전만 따라감
-    BackpackHPWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("BackpackHPWidget"));
-    BackpackHPWidget->SetupAttachment(GetCapsuleComponent());        // 루트에 부착 (흔들림 방지)
-    BackpackHPWidget->SetRelativeLocation(FVector(-30.f, 0.f, 40.f)); // 등 뒤 위쪽 (BP에서 조정)
-    BackpackHPWidget->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));  // 등 뒤 방향 (BP에서 조정)
-    BackpackHPWidget->SetWidgetSpace(EWidgetSpace::World);           // 3D 월드 공간
-    BackpackHPWidget->SetDrawSize(FVector2D(120.f, 20.f));           // 심플 게이지 크기
-    BackpackHPWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    
-    // 시환 추가 - 좀비 공격 슬롯 추가
-    AttackSlotComponent = CreateDefaultSubobject<UVGAttackSlotComponent>(TEXT("AttackSlotComponent"));
+    BackpackHPWidget =
+        CreateDefaultSubobject<UWidgetComponent>(
+            TEXT("BackpackHPWidget")
+        );
+
+    BackpackHPWidget->SetupAttachment(
+        GetCapsuleComponent()
+    );
+
+    BackpackHPWidget->SetRelativeLocation(
+        FVector(-30.f, 0.f, 40.f)
+    );
+
+    BackpackHPWidget->SetRelativeRotation(
+        FRotator(0.f, 90.f, 0.f)
+    );
+
+    BackpackHPWidget->SetWidgetSpace(
+        EWidgetSpace::World
+    );
+
+    BackpackHPWidget->SetDrawSize(
+        FVector2D(120.f, 20.f)
+    );
+
+    BackpackHPWidget->SetCollisionEnabled(
+        ECollisionEnabled::NoCollision
+    );
+
+    AttackSlotComponent =
+        CreateDefaultSubobject<UVGAttackSlotComponent>(
+            TEXT("AttackSlotComponent")
+        );
 }
 
 void ANCPlayerCharacter::BeginPlay()
@@ -161,59 +229,83 @@ void ANCPlayerCharacter::BeginPlay()
         FirstPersonCamera->SetActive(false);
     }
 
-    // EquipmentComponent에 총기 타입별 컴포넌트 등록
     if (EquipmentComponent)
     {
-        EquipmentComponent->WeaponComponents.Add(NCGun::Type_Rifle,   RifleComponent);
-        EquipmentComponent->WeaponComponents.Add(NCGun::Type_Shotgun, ShotgunComponent);
-        EquipmentComponent->WeaponComponents.Add(NCGun::Type_Pistol,  PistolComponent);
+        EquipmentComponent->WeaponComponents.Add(
+            NCGun::Type_Rifle,
+            RifleComponent
+        );
+
+        EquipmentComponent->WeaponComponents.Add(
+            NCGun::Type_Shotgun,
+            ShotgunComponent
+        );
+
+        EquipmentComponent->WeaponComponents.Add(
+            NCGun::Type_Pistol,
+            PistolComponent
+        );
+
+        EquipmentComponent->WeaponComponents.Add(
+            NCGun::Type_Sniper,
+            SniperComponent
+        );
     }
 
     if (AbilitySystemComponent)
     {
-        AbilitySystemComponent->InitAbilityActorInfo(this, this);
-        
-        // 플레이어 태그 부여
-        AbilitySystemComponent->AddLooseGameplayTag(NCCharacter::Player);
-        
+        AbilitySystemComponent->InitAbilityActorInfo(
+            this,
+            this
+        );
+
+        AbilitySystemComponent->AddLooseGameplayTag(
+            NCCharacter::Player
+        );
+
         if (HasAuthority() && AttackAbilityClass)
         {
             AbilitySystemComponent->GiveAbility(
-                FGameplayAbilitySpec(AttackAbilityClass, 1));
+                FGameplayAbilitySpec(
+                    AttackAbilityClass,
+                    1
+                )
+            );
         }
-        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-            UVGPlayerAttributeSet::GetHealthAttribute())
-            .AddUObject(this, &ANCPlayerCharacter::HandleHealthChanged);
+
+        AbilitySystemComponent
+            ->GetGameplayAttributeValueChangeDelegate(
+                UVGPlayerAttributeSet::GetHealthAttribute()
+            )
+            .AddUObject(
+                this,
+                &ANCPlayerCharacter::HandleHealthChanged
+            );
     }
 
-    //헌호수정 - 백팩 체력바 초기값 표시 (풀피)
     UpdateBackpackHP();
 
-    //헌호수정 - 정조준 HUD 위젯 한 번 생성 후 숨김 (로컬 플레이어만)
     if (IsLocallyControlled() && ADSHUDWidgetClass)
     {
-        if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        if (APlayerController* PC =
+            Cast<APlayerController>(GetController()))
         {
-            ADSHUDWidget = CreateWidget<UNCADSHUD>(PC, ADSHUDWidgetClass);
+            ADSHUDWidget =
+                CreateWidget<UNCADSHUD>(
+                    PC,
+                    ADSHUDWidgetClass
+                );
+
             if (ADSHUDWidget)
             {
                 ADSHUDWidget->AddToViewport();
-                ADSHUDWidget->SetVisibility(ESlateVisibility::Collapsed); // 기본 숨김
+
+                ADSHUDWidget->SetVisibility(
+                    ESlateVisibility::Collapsed
+                );
             }
         }
     }
-
-
-    //// TODO: 테스트용 임시 크로우바 장착 - 아이템 픽업 시스템 완성 후 제거
-    // if (HasAuthority() && CombatComponent)
-    // {
-    //     FNCWeaponInstance TestWeapon;
-    //     TestWeapon.UniqueID = FGuid::NewGuid();
-    //     TestWeapon.WeaponID = FName("Crowbar");
-    //     TestWeapon.CurrentDurability = 100.f;
-    //     TestWeapon.bIsBroken = false;
-    //     CombatComponent->EquipWeapon(TestWeapon);
-    // }
 }
 
 void ANCPlayerCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)
