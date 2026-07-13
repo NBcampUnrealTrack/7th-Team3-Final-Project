@@ -16,7 +16,7 @@
 void UNCAnimInstance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
-
+    bIsSniperWeapon = false;
     UpdateReferences();
 }
 
@@ -220,6 +220,9 @@ void UNCAnimInstance::UpdateWeaponAndBlendSpace()
 
     bIsRifleWeapon =
         CurrentWeaponTypeTag.MatchesTagExact(NCGun::Type_Rifle);
+
+    bIsSniperWeapon =
+        CurrentWeaponTypeTag.MatchesTagExact(NCGun::Type_Sniper);
 
     CurrentLocomotionBlendSpace = nullptr;
 }

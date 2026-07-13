@@ -54,6 +54,7 @@ UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_TwoHanded, "Weapon.Type.TwoHanded");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_Pistol, "Weapon.Type.Pistol");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_Shotgun, "Weapon.Type.Shotgun");
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_Rifle, "Weapon.Type.Rifle");
+UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Type_Sniper, "Weapon.Type.Sniper");
 
 // 무기 무게
 UE_DEFINE_GAMEPLAY_TAG(NCWeapon::Weight_Light, "Weapon.Weight.Light");
@@ -90,17 +91,17 @@ UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::GameClear, "GameState.State.Clear");
 
 // 싱글, 멀티 여부
 UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::SinglePlay, "GameState.State.SinglePlay");
-UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::MultiPlay, "GameState.State.MultiPlay")
+UE_DEFINE_GAMEPLAY_TAG(NCGameStateTags::MultiPlay, "GameState.State.MultiPlay");
 
 // 총기 장착 슬롯
 UE_DEFINE_GAMEPLAY_TAG(NCGun::Slot_Primary,   "Gun.Slot.Primary");
 UE_DEFINE_GAMEPLAY_TAG(NCGun::Slot_Secondary, "Gun.Slot.Secondary");
 
 // 총기 타입
-UE_DEFINE_GAMEPLAY_TAG(NCGun::Type_Rifle,   "Gun.Type.Rifle");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Type_Rifle, "Gun.Type.Rifle");
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Type_Sniper, "Gun.Type.Sniper");
 UE_DEFINE_GAMEPLAY_TAG(NCGun::Type_Shotgun, "Gun.Type.Shotgun");
-UE_DEFINE_GAMEPLAY_TAG(NCGun::Type_Pistol,  "Gun.Type.Pistol");
-
+UE_DEFINE_GAMEPLAY_TAG(NCGun::Type_Pistol, "Gun.Type.Pistol");
 // 발사 모드
 UE_DEFINE_GAMEPLAY_TAG(NCGun::FireMode_Semi, "Gun.FireMode.Semi");
 UE_DEFINE_GAMEPLAY_TAG(NCGun::FireMode_Auto, "Gun.FireMode.Auto");
