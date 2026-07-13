@@ -11,9 +11,8 @@ class NAKWONCLONE_API ANCAmmoItemActor : public ANCItemActor
 	GENERATED_BODY()
 
 public:
-	// 이 총알이 채워줄 슬롯 (Shotgun / Rifle / Sidearm)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Ammo")
-	ENCGunSlot AmmoSlotType = ENCGunSlot::Rifle;
+	UPROPERTY(EditAnywhere, Category = "Ammo")
+	FName AmmoType = NAME_None;
 
 	// 습득 시 채워지는 탄약 수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Ammo")

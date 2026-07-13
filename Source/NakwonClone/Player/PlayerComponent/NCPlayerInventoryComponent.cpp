@@ -1099,7 +1099,7 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
         {
             if (FAmmoItemData* AmmoData = AmmoDataTable->FindRow<FAmmoItemData>(LootID, TEXT("LootAmmo")))
             {
-                EquipComp->AddReserveAmmo(AmmoData->AmmoSlotType, AmmoData->AmmoAmount * LootQuantity);
+                EquipComp->AddReserveAmmo(AmmoData->AmmoType, AmmoData->AmmoAmount * LootQuantity);
             }
         }
 
