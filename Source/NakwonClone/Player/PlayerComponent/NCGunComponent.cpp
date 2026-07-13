@@ -148,13 +148,6 @@ bool UNCGunComponent::CanFire() const
 	if (!bInfiniteAmmoActive && CurrentAmmo <= 0) return false;
 	if (!IsADS())         return false;
 
-	if (ActiveGunData->FireRate > 0.f && GetWorld())
-	{
-		const float MinInterval = 1.f / ActiveGunData->FireRate;
-		if (GetWorld()->GetTimeSeconds() - LastFireTime < MinInterval)
-			return false;
-	}
-
 	return true;
 }
 
@@ -244,6 +237,13 @@ void UNCGunComponent::StartFire()
 	}
 
 	if (!CanFire()) return;
+
+	if (ActiveGunData->FireRate > 0.f && GetWorld())
+	{
+		const float MinInterval = 1.f / ActiveGunData->FireRate;
+		if (GetWorld()->GetTimeSeconds() - LastFireTime < MinInterval)
+			return;
+	}
 
 	ActiveGunActions.AddTag(NCGun::Action_Firing);
 	FireOnce();
