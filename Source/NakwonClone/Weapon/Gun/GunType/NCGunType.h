@@ -201,6 +201,10 @@ struct FNCGunData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Socket")
     FName MagazineSocketName = TEXT("Magazine");
+    
+    // 예비 탄약 풀 구분용 (SlotType은 키 포지션일 뿐, 탄약 종류는 이걸로 별도 관리)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FName AmmoType = NAME_None;
 };
 
 USTRUCT(BlueprintType)

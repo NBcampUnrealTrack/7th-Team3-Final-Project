@@ -126,9 +126,9 @@ struct FAmmoItemData : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	// 이 총알이 채워줄 슬롯 (Shotgun/Rifle/Sidearm)
+	// 이 총알이 채워줄 탄약 종류 (실제 총 구분, SlotType 아님)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ammo")
-	ENCGunSlot AmmoSlotType = ENCGunSlot::Rifle;
+	FName AmmoType = NAME_None;
 
 	// 1개 습득 시 채워지는 탄약 수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ammo")

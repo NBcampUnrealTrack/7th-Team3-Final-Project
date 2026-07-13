@@ -10,7 +10,7 @@ void ANCAmmoItemActor::Interact_Implementation(AActor* Interactor)
 	UNCEquipmentComponent* EquipComp = Player->GetEquipmentComponent();
 	if (!EquipComp) return;
 
-	EquipComp->AddReserveAmmo(AmmoSlotType, AmmoAmount * Quantity);
+	EquipComp->AddReserveAmmo(AmmoType, AmmoAmount * Quantity);
 
 	ConsumeItem();
 }
