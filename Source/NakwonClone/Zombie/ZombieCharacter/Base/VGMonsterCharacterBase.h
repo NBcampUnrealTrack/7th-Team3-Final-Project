@@ -120,6 +120,18 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SpawnThrowVFX(const FVector& Location);
 
+	// 손에 붙는 물체 비주얼 (평소 숨김, 던질 때만 보임)
+	UPROPERTY(VisibleAnywhere, Category = "Monster|Ranged")
+	TObjectPtr<UStaticMeshComponent> HeldObjectComp = nullptr;
+
+	UPROPERTY() TObjectPtr<UStaticMesh> HeldThrowMesh = nullptr;
+
+	UFUNCTION(BlueprintCallable, Category = "Monster|Ranged")
+	void ShowHeldThrowObject();   // 손에 물체 보이기
+
+	UFUNCTION(BlueprintCallable, Category = "Monster|Ranged")
+	void HideHeldThrowObject();   // 손에서 물체 숨기기
+
 protected:
 	// ── 몽타주 슬롯 (에디터에서 채움) ────────────────────────
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")

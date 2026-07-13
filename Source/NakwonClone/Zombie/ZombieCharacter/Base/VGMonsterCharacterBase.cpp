@@ -64,6 +64,11 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	DetectionCapsule->SetCapsuleSize(40.f, 90.f);
 	//헌호수정 - 수면/감지 시스템 미사용: 오버랩 쿼리 끔 (매 프레임 비용 제거, 100마리 최적화)
 	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	HeldObjectComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldObjectComp"));
+	HeldObjectComp->SetupAttachment(GetMesh(), TEXT("hand_r"));
+	HeldObjectComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HeldObjectComp->SetVisibility(false);
 }
 
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
@@ -565,6 +570,11 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	CachedProjectileSocket = Row->ProjectileSocket;
 	CachedAttackRange = Row->AttackRange;
 	ThrowVFX = Row->ThrowVFX;
+
+	HeldThrowMesh = Row->HeldThrowMesh; 
+	if (HeldObjectComp && HeldThrowMesh)
+		HeldObjectComp->SetStaticMesh(HeldThrowMesh);
+
 	// 우정 추가
 	CashedKillScore = Row->KillScore;
 }
@@ -821,5 +831,21 @@ void AVGMonsterCharacterBase::Multicast_SpawnThrowVFX_Implementation(const FVect
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			GetWorld(), ThrowVFX, Location, GetActorForwardVector().Rotation());
+	}
+}
+
+void AVGMonsterCharacterBase::ShowHeldThrowObject()
+{
+	if (HeldObjectComp && HeldThrowMesh)
+	{
+		HeldObjectComp->SetVisibility(true);
+	}
+}
+
+void AVGMonsterCharacterBase::HideHeldThrowObject()
+{
+	if (HeldObjectComp)
+	{
+		HeldObjectComp->SetVisibility(false);
 	}
 }

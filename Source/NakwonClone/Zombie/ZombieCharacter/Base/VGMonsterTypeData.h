@@ -11,6 +11,7 @@ class UAnimMontage;
 class UGameplayEffect;
 class USoundBase;
 class UNiagaraSystem;
+class UStaticMesh;
 
 UENUM(BlueprintType)
 enum class EVGMonsterType : uint8
@@ -65,7 +66,10 @@ struct FVGMonsterTypeRow : public FTableRowBase
     float AttackRange = 200.f;                          // BT가 공격 진입 거리로 사용
 
     UPROPERTY(EditAnywhere, Category = "Ranged")
-    TObjectPtr<UNiagaraSystem> ThrowVFX = nullptr;   // 혀 끝 분비물 터지는 연출
+    TObjectPtr<UNiagaraSystem> ThrowVFX = nullptr;   // 
+
+    UPROPERTY(EditAnywhere, Category = "Ranged")
+    TObjectPtr<UStaticMesh> HeldThrowMesh = nullptr;   // 던지기 전 손에 쥐는 물체
 
     UPROPERTY(EditAnywhere, Category = "Stat")
     float MaxHealth = 100.f;
@@ -90,6 +94,7 @@ struct FVGMonsterTypeRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, Category = "Sound")
     TObjectPtr<USoundBase> DeathSound = nullptr;
+
     
     // 좀비킬 시 획득 점수(우정 추가)
     UPROPERTY(EditAnywhere, Category = "Score")
