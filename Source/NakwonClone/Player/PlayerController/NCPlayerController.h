@@ -186,13 +186,13 @@ protected:
 	TObjectPtr<UInputAction> GunToggleFireModeAction; // B
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
-	TObjectPtr<UInputAction> GunSlot1Action;      // 1 — 주무기
+	TObjectPtr<UInputAction> GunSlot1Action;      // 1 — 라이플
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
-	TObjectPtr<UInputAction> GunSlot2Action;      // 2 — 보조무기
+	TObjectPtr<UInputAction> GunSlot2Action;      // 2 — 샷건
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")
-	TObjectPtr<UInputAction> GunSlot3Action;      // 3 — 근접무기
+	TObjectPtr<UInputAction> GunSlot3Action;      // 3 — 권총
 	// 헌호수정 - 암살 액션
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> AssassinateAction;
