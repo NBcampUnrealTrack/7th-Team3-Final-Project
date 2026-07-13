@@ -102,6 +102,24 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	float LocomotionPlayRate = 1.f;
 
+	// 원거리 캐시
+	UPROPERTY() bool bIsRanged = false;
+	UPROPERTY() TSubclassOf<AActor> ProjectileClass = nullptr;
+	FName CachedProjectileSocket = NAME_None;
+	float CachedAttackRange = 200.f;
+
+	UFUNCTION(BlueprintCallable, Category = "Monster|Ranged")
+	float GetAttackRange() const { return CachedAttackRange; }
+
+	// 침 발사 (공격 몽타주의 AnimNotify에서 호출)
+	UFUNCTION(BlueprintCallable, Category = "Monster|Ranged")
+	void SpawnProjectile();
+
+	UPROPERTY() TObjectPtr<UNiagaraSystem> SpitVFX = nullptr;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SpawnSpitVFX(const FVector& Location);
+
 protected:
 	// ── 몽타주 슬롯 (에디터에서 채움) ────────────────────────
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")

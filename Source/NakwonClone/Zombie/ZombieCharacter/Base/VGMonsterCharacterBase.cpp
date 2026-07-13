@@ -527,6 +527,7 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	CachedAttackMontages = Row->AttackMontages;
 	CachedSpecialMontage = Row->SpecialMontage;
 
+
 	CachedLocomotionBS = Row->LocomotionBS;
 
 	// 외형
@@ -557,7 +558,13 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	if (Row->IdleSound)                IdleSound = Row->IdleSound;
 	if (Row->IdleSoundCooldown > 0.f)  IdleSoundCooldown = Row->IdleSoundCooldown;
 
+	if (Row->DeathSound)               DeathSound = Row->DeathSound;
 	HitReactChance = Row->HitReactChance; 
+	bIsRanged = Row->bIsRanged;
+	ProjectileClass = Row->ProjectileClass;
+	CachedProjectileSocket = Row->ProjectileSocket;
+	CachedAttackRange = Row->AttackRange;
+	SpitVFX = Row->SpitVFX;
 	// 우정 추가
 	CashedKillScore = Row->KillScore;
 }
@@ -779,5 +786,40 @@ void AVGMonsterCharacterBase::DropLoot()
 	if (ANCItemActor* SpawnedItem = Cast<ANCItemActor>(SpawnedActor))
 	{
 		SpawnedItem->InitializeItemData(Picked->ItemID, FoundData->ItemTypeTag, Quantity, FoundData->ItemMesh);
+	}
+}
+
+void AVGMonsterCharacterBase::SpawnProjectile()
+{
+	if (!bIsRanged) return;
+
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	const FVector SpawnLoc =
+		(MeshComp && CachedProjectileSocket != NAME_None)
+		? MeshComp->GetSocketLocation(CachedProjectileSocket)
+		: GetActorLocation();
+	const FRotator SpawnRot = GetActorForwardVector().Rotation();
+
+	// 1) 분비물 터지는 연출 (모든 클라에서 보여야 하니 멀티캐스트로)
+	Multicast_SpawnSpitVFX(SpawnLoc);
+
+	// 2) 실제 투사체 (서버에서만 — 데미지 판정)
+	if (HasAuthority() && ProjectileClass)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+		Params.SpawnCollisionHandlingOverride =
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnLoc, SpawnRot, Params);
+	}
+}
+
+void AVGMonsterCharacterBase::Multicast_SpawnSpitVFX_Implementation(const FVector& Location)
+{
+	if (SpitVFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(), SpitVFX, Location, GetActorForwardVector().Rotation());
 	}
 }
