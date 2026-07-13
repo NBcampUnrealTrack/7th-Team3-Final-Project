@@ -329,7 +329,7 @@ void UNCGunComponent::StartFire()
 	OnBeforeFire();
 
 	// 탄약 없을 때 빈 총 클릭음
-	if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0)
+	if (HasActiveGun() && !IsReloading() && !bInfiniteAmmoActive && CurrentAmmo <= 0)
 	{
 		if (!ActiveGunData->EmptyClickSound.IsNull())
 			UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
@@ -506,7 +506,7 @@ void UNCGunComponent::FireOnce()
 
 		if (NCProj)
 		{
-			NCProj->Damage                = Data->Damage;
+			NCProj->Damage                = Data->Damage * DamageMultiplier;
 			NCProj->MaxRange              = Data->MaxRange;
 			NCProj->ProjectileSpeed       = Data->ProjectileSpeed;
 			NCProj->ImpactFleshEffect     = Data->ImpactFleshEffect.Get();
@@ -1003,5 +1003,20 @@ void UNCGunComponent::ActivateInfiniteAmmo(float Duration)
 
 void UNCGunComponent::EndInfiniteAmmo()
 {
+	GetWorld()->GetTimerManager().ClearTimer(InfiniteAmmoTimerHandle);
 	bInfiniteAmmoActive = false;
+}
+
+void UNCGunComponent::ActivateDamageBoost(float Multiplier, float Duration)
+{
+	DamageMultiplier = Multiplier;
+
+	GetWorld()->GetTimerManager().SetTimer(
+		DamageBoostTimerHandle, this, &UNCGunComponent::EndDamageBoost, Duration, false);
+}
+
+void UNCGunComponent::EndDamageBoost()
+{
+	GetWorld()->GetTimerManager().ClearTimer(DamageBoostTimerHandle);
+	DamageMultiplier = 1.f;
 }

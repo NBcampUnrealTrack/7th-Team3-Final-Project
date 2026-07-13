@@ -1,4 +1,6 @@
-﻿#include "NCInfiniteAmmoItemActor.h"
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+#include "NCInfiniteAmmoItemActor.h"
 #include "Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Player/PlayerComponent/NCEquipmentComponent.h"
 #include "Player/PlayerComponent/NCGunComponent.h"

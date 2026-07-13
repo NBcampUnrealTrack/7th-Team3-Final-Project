@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -99,6 +99,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Gun|Getter")
 	bool IsADS() const;
 
+	const FNCGunData* GetActiveGunData() const
+	{
+		return ActiveGunData;
+	}
+
+	float GetDamageMultiplier() const
+	{
+		return DamageMultiplier;
+	}
+
 	void ActivateGun(
 		const FNCGunData* InGunData,
 		int32 InCurrentAmmo,
@@ -125,14 +135,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Gun|Action")
 	void ToggleFireMode();
 
-	const FNCGunData* GetActiveGunData() const
-	{
-		return ActiveGunData;
-	}
-
 	float PlayUnequipMontage(const FNCGunData* Data);
 
 	void ActivateInfiniteAmmo(float Duration);
+	void EndInfiniteAmmo();
+
+	void ActivateDamageBoost(float Multiplier, float Duration);
+	void EndDamageBoost();
 
 protected:
 	virtual void OnBeforeFire()
@@ -157,11 +166,6 @@ private:
 	void FireOnce();
 	void OnReloadFinished();
 
-	bool bWantsADS = false;
-	float LastFireTime = -100.f;
-
-	FTimerHandle ShowMagazineTimerHandle;
-
 	void HideGunMagazine();
 	void ShowGunMagazine();
 	void DropMagazineMesh();
@@ -170,9 +174,6 @@ private:
 	void RestoreFOV();
 
 	UCameraComponent* FindCamera();
-
-	UPROPERTY()
-	TObjectPtr<UCameraComponent> CachedCamera = nullptr;
 
 	float PlayGunMontage(
 		const TSoftObjectPtr<UAnimMontage>& MontageSoft
@@ -186,6 +187,11 @@ private:
 	void AttachGunMesh(const FNCGunData* Data);
 	void DetachGunMesh();
 
+	void ApplyRecoil(const FNCGunData* Data);
+
+	UPROPERTY()
+	TObjectPtr<UCameraComponent> CachedCamera = nullptr;
+
 	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> EquippedGunMeshComp = nullptr;
 
@@ -195,9 +201,10 @@ private:
 	UPROPERTY()
 	TObjectPtr<UNiagaraComponent> MuzzleFlashComp = nullptr;
 
-	FTimerHandle FullAutoTimerHandle;
-	FTimerHandle ReloadTimerHandle;
-	FTimerHandle MuzzleFlashTimerHandle;
+	bool bWantsADS = false;
+	bool bInfiniteAmmoActive = false;
+
+	float LastFireTime = -100.f;
 
 	float DefaultFOV = 90.f;
 	float TargetFOV = 90.f;
@@ -205,7 +212,14 @@ private:
 	float CurrentRecoilPitch = 0.f;
 	float CurrentRecoilYaw = 0.f;
 
-	void ApplyRecoil(const FNCGunData* Data);
+	float DamageMultiplier = 1.f;
+
+	FTimerHandle ShowMagazineTimerHandle;
+	FTimerHandle FullAutoTimerHandle;
+	FTimerHandle ReloadTimerHandle;
+	FTimerHandle MuzzleFlashTimerHandle;
+	FTimerHandle InfiniteAmmoTimerHandle;
+	FTimerHandle DamageBoostTimerHandle;
 
 	FVector DefaultCameraLocation = FVector::ZeroVector;
 	FVector TargetCameraLocation = FVector::ZeroVector;
@@ -222,7 +236,7 @@ private:
 			ClampMin = "0.0",
 			UIMin = "0.0",
 			UIMax = "30.0"
-			)
+		)
 	)
 	float ADSInterpSpeed = 10.f;
 
@@ -233,7 +247,7 @@ private:
 		meta = (
 			AllowPrivateAccess = "true",
 			MakeEditWidget = "true"
-			)
+		)
 	)
 	FVector ADSCameraLocation = FVector(0.f, 50.f, 6.f);
 
@@ -241,7 +255,9 @@ private:
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category = "Camera|ADS|Location",
-		meta = (AllowPrivateAccess = "true")
+		meta = (
+			AllowPrivateAccess = "true"
+		)
 	)
 	bool bUseRelativeADSCameraLocation = false;
 
@@ -249,7 +265,9 @@ private:
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category = "Camera|ADS|Rotation",
-		meta = (AllowPrivateAccess = "true")
+		meta = (
+			AllowPrivateAccess = "true"
+		)
 	)
 	FRotator ADSCameraRotation = FRotator::ZeroRotator;
 
@@ -257,7 +275,9 @@ private:
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category = "Camera|ADS|Rotation",
-		meta = (AllowPrivateAccess = "true")
+		meta = (
+			AllowPrivateAccess = "true"
+		)
 	)
 	bool bUseRelativeADSCameraRotation = true;
 
@@ -268,7 +288,7 @@ private:
 		meta = (
 			AllowPrivateAccess = "true",
 			MakeEditWidget = "true"
-			)
+		)
 	)
 	FVector ADSCameraPivotOffset = FVector::ZeroVector;
 
@@ -276,7 +296,9 @@ private:
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category = "Camera|ADS|Pivot",
-		meta = (AllowPrivateAccess = "true")
+		meta = (
+			AllowPrivateAccess = "true"
+		)
 	)
 	FRotator ADSCameraPivotRotation = FRotator::ZeroRotator;
 
@@ -284,7 +306,9 @@ private:
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category = "Camera|ADS|FOV",
-		meta = (AllowPrivateAccess = "true")
+		meta = (
+			AllowPrivateAccess = "true"
+		)
 	)
 	bool bOverrideADSFOV = false;
 
@@ -299,13 +323,7 @@ private:
 			ClampMax = "170.0",
 			UIMin = "20.0",
 			UIMax = "120.0"
-			)
+		)
 	)
 	float ADSFOV = 70.f;
-
-	bool bInfiniteAmmoActive = false;
-
-	FTimerHandle InfiniteAmmoTimerHandle;
-
-	void EndInfiniteAmmo();
 };

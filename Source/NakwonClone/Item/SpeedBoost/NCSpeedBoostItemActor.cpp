@@ -1,4 +1,6 @@
-﻿#include "NCSpeedBoostItemActor.h"
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+#include "NCSpeedBoostItemActor.h"
 #include "Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
 

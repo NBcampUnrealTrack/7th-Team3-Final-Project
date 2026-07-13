@@ -669,3 +669,8 @@ void ANCPlayerController::ToggleView()
         PC->ToggleView();
     }
 }
+
+void ANCPlayerController::Client_ShowNotification_Implementation(const FText& Message, FLinearColor Color)
+{
+    OnShowNotification(Message, Color);
+}
