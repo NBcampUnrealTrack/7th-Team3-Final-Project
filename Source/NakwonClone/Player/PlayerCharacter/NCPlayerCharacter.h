@@ -4,6 +4,7 @@
 #include "NCBaseCharacter.h"
 #include "NakwonClone/GAS/Ability/GA_Attack.h"
 #include "Components/PointLightComponent.h"
+#include "Weapon/Gun/GunType/NCGunType.h"
 #include "NCPlayerCharacter.generated.h"
 
 class USpringArmComponent;
@@ -115,6 +116,13 @@ public:
 
 	void ToggleFlashlight();
 
+	void ToggleView();
+
+	void ApplyFirstPersonWeaponCameraOffset(ENCGunSlot WeaponSlot);
+
+	UFUNCTION(BlueprintPure, Category = "Camera")
+	bool IsFirstPerson() const { return bIsFirstPerson; }
+
 	// 헌호수정 - 암살 기능
 	void TryAssassinate();
 
@@ -166,6 +174,57 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera",
+		meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCameraComponent> FirstPersonCamera;
+
+	// 기본 카메라
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FVector FirstPersonDefaultCameraOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FRotator FirstPersonDefaultCameraRotation = FRotator::ZeroRotator;
+
+
+	// 샷건
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FVector FirstPersonShotgunCameraOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FRotator FirstPersonShotgunCameraRotation = FRotator::ZeroRotator;
+
+
+	// 라이플
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FVector FirstPersonRifleCameraOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FRotator FirstPersonRifleCameraRotation = FRotator::ZeroRotator;
+
+
+	// 권총
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FVector FirstPersonSidearmCameraOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FRotator FirstPersonSidearmCameraRotation = FRotator::ZeroRotator;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Inventory")
 	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventoryRef;
@@ -283,6 +342,9 @@ protected:
 private:
 	void InitCamera();
 	void InitComponents();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	bool bIsFirstPerson = false;
 
 	void ClearDeathRelatedTimers();
 	void CleanupBeforeDeathDestroy();

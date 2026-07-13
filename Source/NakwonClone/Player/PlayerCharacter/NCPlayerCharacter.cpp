@@ -1,38 +1,37 @@
 ﻿#include "NCPlayerCharacter.h"
 #include "AbilitySystemComponent.h"
-#include "GameFramework/SpringArmComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Common/NCGameplayTags.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/SpotLightComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Net/UnrealNetwork.h"
+#include "Components/WidgetComponent.h"
+#include "Engine/Texture2D.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "Item/NCItemActor.h"
-#include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
-#include "Player/PlayerComponent/NCInteractionComponent.h"
-#include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
+#include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
+#include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
+#include "NakwonClone/Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
+#include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
+#include "NakwonClone/Zombie/AI/AttackSlot/VGAttackSlotComponent.h"
+#include "Player/PlayerComponent/NCEquipmentComponent.h"
 #include "Player/PlayerComponent/NCGunComponent.h"
+#include "Player/PlayerComponent/NCInteractionComponent.h"
+#include "Player/PlayerComponent/NCPistolComponent.h"
 #include "Player/PlayerComponent/NCRifleComponent.h"
 #include "Player/PlayerComponent/NCShotgunComponent.h"
-#include "Player/PlayerComponent/NCPistolComponent.h"
-#include "Player/PlayerComponent/NCEquipmentComponent.h"
-#include "Common/NCGameplayTags.h"
-#include "Blueprint/UserWidget.h"
-#include "Components/WidgetComponent.h" //헌호수정
-#include "UI/InGame/NCHPBar.h" //헌호수정
-#include "UI/InGame/NCBackpackHUD.h" //헌호수정
-#include "UI/InGame/NCADSHUD.h" //헌호수정
-#include "GameFramework/PlayerController.h"
-#include "NakwonClone/Player/Assassination/NCAssassinationComponent.h"
-#include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
-#include "NakwonClone/Zombie/AI/AttackSlot/VGAttackSlotComponent.h"
 #include "Player/PlayerData/NCWeaponData.h"
-#include "Engine/Texture2D.h"
+#include "UI/InGame/NCADSHUD.h"
+#include "UI/InGame/NCBackpackHUD.h"
+#include "UI/InGame/NCHPBar.h"
 
 ANCPlayerCharacter::ANCPlayerCharacter()
 {
@@ -61,7 +60,13 @@ UTexture2D* ANCPlayerCharacter::GetMeleeIcon() const
 
 void ANCPlayerCharacter::InitCamera()
 {
-    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+    // ─────────────────────────────────────────────
+    // 3인칭 카메라
+
+    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(
+        TEXT("CameraBoom")
+    );
+
     CameraBoom->SetupAttachment(RootComponent);
     CameraBoom->TargetArmLength = 400.0f;
     CameraBoom->bUsePawnControlRotation = true;
@@ -69,9 +74,41 @@ void ANCPlayerCharacter::InitCamera()
     CameraBoom->CameraLagSpeed = 10.0f;
     CameraBoom->ProbeSize = 5.0f;
 
-    FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+    FollowCamera = CreateDefaultSubobject<UCameraComponent>(
+        TEXT("FollowCamera")
+    );
+
+    FollowCamera->SetupAttachment(
+        CameraBoom,
+        USpringArmComponent::SocketName
+    );
+
     FollowCamera->bUsePawnControlRotation = false;
+    FollowCamera->SetAutoActivate(true);
+    FollowCamera->SetActive(true);
+
+    // ─────────────────────────────────────────────
+    // 1인칭 카메라
+
+    FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(
+        TEXT("FirstPersonCamera")
+    );
+
+    // 스켈레톤의 head 본에 만든 CameraSocket에 부착
+    FirstPersonCamera->SetupAttachment(
+        GetMesh(),
+        TEXT("CameraSocket")
+    );
+
+    // 위치와 회전은 CameraSocket이 담당
+    FirstPersonCamera->SetRelativeLocation(FVector::ZeroVector);
+    FirstPersonCamera->SetRelativeRotation(FRotator::ZeroRotator);
+
+    FirstPersonCamera->bUsePawnControlRotation = true;
+
+    // 기본 시작은 3인칭
+    FirstPersonCamera->SetAutoActivate(false);
+    FirstPersonCamera->SetActive(false);
 }
 
 void ANCPlayerCharacter::InitComponents()
@@ -111,6 +148,18 @@ void ANCPlayerCharacter::InitComponents()
 void ANCPlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    bIsFirstPerson = false;
+
+    if (FollowCamera)
+    {
+        FollowCamera->SetActive(true);
+    }
+
+    if (FirstPersonCamera)
+    {
+        FirstPersonCamera->SetActive(false);
+    }
 
     // EquipmentComponent에 총기 타입별 컴포넌트 등록
     if (EquipmentComponent)
@@ -824,6 +873,90 @@ void ANCPlayerCharacter::ToggleFlashlight()
     Server_ToggleFlashlight();
 }
 
+void ANCPlayerCharacter::ApplyFirstPersonWeaponCameraOffset(
+    ENCGunSlot WeaponSlot)
+{
+    if (!FirstPersonCamera)
+    {
+        return;
+    }
+
+    FVector TargetOffset = FirstPersonDefaultCameraOffset;
+    FRotator TargetRotation = FirstPersonDefaultCameraRotation;
+
+    switch (WeaponSlot)
+    {
+    case ENCGunSlot::Shotgun:
+        TargetOffset += FirstPersonShotgunCameraOffset;
+        TargetRotation += FirstPersonShotgunCameraRotation;
+        break;
+
+    case ENCGunSlot::Rifle:
+        TargetOffset += FirstPersonRifleCameraOffset;
+        TargetRotation += FirstPersonRifleCameraRotation;
+        break;
+
+    case ENCGunSlot::Sidearm:
+        TargetOffset += FirstPersonSidearmCameraOffset;
+        TargetRotation += FirstPersonSidearmCameraRotation;
+        break;
+
+    case ENCGunSlot::None:
+    default:
+        break;
+    }
+
+    FirstPersonCamera->SetRelativeLocation(TargetOffset);
+    FirstPersonCamera->SetRelativeRotation(TargetRotation);
+
+    UE_LOG(
+        LogTemp,
+        Warning,
+        TEXT("First Person Camera Applied - Slot: %d, Offset: %s, Rotation: %s"),
+        static_cast<int32>(WeaponSlot),
+        *TargetOffset.ToString(),
+        *TargetRotation.ToString()
+    );
+}
+
+void ANCPlayerCharacter::ToggleView()
+{
+    if (!IsLocallyControlled())
+    {
+        return;
+    }
+
+    if (!FollowCamera || !FirstPersonCamera)
+    {
+        return;
+    }
+
+    bIsFirstPerson = !bIsFirstPerson;
+
+    if (bIsFirstPerson)
+    {
+        FollowCamera->Deactivate();
+        FirstPersonCamera->Activate();
+
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("Camera View Changed: First Person")
+        );
+    }
+    else
+    {
+        FirstPersonCamera->Deactivate();
+        FollowCamera->Activate();
+
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("Camera View Changed: Third Person")
+        );
+    }
+}
+
 // 헌호수정 - 서버에서 상태 토글
 void ANCPlayerCharacter::Server_ToggleFlashlight_Implementation()
 {
@@ -862,11 +995,11 @@ void ANCPlayerCharacter::Tick(float DeltaTime)
     }
     
     // 시환 추가 - 카메라 접근 시, 플레이어 투명화
-    const FVector ArmOrigin = CameraBoom->GetComponentLocation();
-    const FVector CameraSocketLocation = CameraBoom->GetSocketLocation(USpringArmComponent::SocketName);
-    const float CurrentArmLength = FVector::Dist(ArmOrigin, CameraSocketLocation);
-    const bool bCameraTooClose = CurrentArmLength < 200.f;
-    GetMesh()->SetVisibility(!bCameraTooClose, true);
+    //const FVector ArmOrigin = CameraBoom->GetComponentLocation();
+    //const FVector CameraSocketLocation = CameraBoom->GetSocketLocation(USpringArmComponent::SocketName);
+    //const float CurrentArmLength = FVector::Dist(ArmOrigin, CameraSocketLocation);
+    //const bool bCameraTooClose = CurrentArmLength < 200.f;
+    //GetMesh()->SetVisibility(!bCameraTooClose, true);
     
     if (FlashlightLight)
     {

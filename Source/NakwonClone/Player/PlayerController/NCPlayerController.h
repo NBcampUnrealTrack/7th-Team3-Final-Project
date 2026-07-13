@@ -105,6 +105,7 @@ private:
 	void GunSelectRifle();
 	void GunSelectSidearm();
 	void GunSelectSlot(ENCGunSlot Slot);
+	void ToggleView();
 	// 헌호수정 - 암살
 	void Assassinate();
 
@@ -171,6 +172,9 @@ protected:
 	//헌호수정 - 정조준(ADS) 시 마우스 감도 배율 (정밀 조준)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	float ADSLookSensitivity = 0.5f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> ViewChangeAction;
 
 	// 하상빈 추가 - 총기 입력 액션
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Gun")

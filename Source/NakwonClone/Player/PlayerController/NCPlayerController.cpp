@@ -142,6 +142,14 @@ void ANCPlayerController::SetupInputComponent()
         // 헌호수정 - 암살 Q키 바인딩
         if (AssassinateAction)
             EIC->BindAction(AssassinateAction, ETriggerEvent::Started, this, &ANCPlayerController::Assassinate);
+        if (ViewChangeAction)
+        {
+            EIC->BindAction(
+                ViewChangeAction,
+                ETriggerEvent::Started,
+                this,
+                &ANCPlayerController::ToggleView);
+        }
     }
 }
 
@@ -626,6 +634,12 @@ void ANCPlayerController::Assassinate() //헌호수정 - 암살
 void ANCPlayerController::OnGunSwapCompleted(ENCGunSlot NewSlot)
 {
     bUnArmPending = false;
+
+    if (ANCPlayerCharacter* PC =
+        Cast<ANCPlayerCharacter>(GetPawn()))
+    {
+        PC->ApplyFirstPersonWeaponCameraOffset(NewSlot);
+    }
 }
 
 void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* TargetBox)
@@ -645,5 +659,13 @@ void ANCPlayerController::Client_OpenLootBoxUI_Implementation(AANCLootBoxActor* 
     {
         LootBoxWidget->InitWithLootBox(TargetBox, nullptr);
         LootBoxWidget->AddToViewport();
+    }
+}
+
+void ANCPlayerController::ToggleView()
+{
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+    {
+        PC->ToggleView();
     }
 }
