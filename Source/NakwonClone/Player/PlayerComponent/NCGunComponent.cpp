@@ -324,17 +324,23 @@ float UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 
 void UNCGunComponent::StartFire()
 {
-	if (!IsADS()) return;
-
-	OnBeforeFire();
-
-	// 탄약 없을 때 빈 총 클릭음
+	// 탄약 없을 때는 조준 여부와 상관없이 자동 재장전/빈 총 클릭음 처리
 	if (HasActiveGun() && !IsReloading() && !bInfiniteAmmoActive && CurrentAmmo <= 0)
 	{
+		if (ActiveGunData->bAutoReloadOnEmpty && ReserveAmmo > 0)
+		{
+			Reload();
+			return;
+		}
+
 		if (!ActiveGunData->EmptyClickSound.IsNull())
 			UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
 		return;
 	}
+
+	if (!IsADS()) return;
+
+	OnBeforeFire();
 
 	if (!CanFire()) return;
 
@@ -372,8 +378,20 @@ void UNCGunComponent::FireOnce()
 {
 	if (!CanFire())
 	{
-		if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0 && !ActiveGunData->EmptyClickSound.IsNull())
-			UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
+		if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0)
+		{
+			StopFire();
+
+			if (ActiveGunData->bAutoReloadOnEmpty && ReserveAmmo > 0)
+			{
+				Reload();
+				return;
+			}
+
+			if (!ActiveGunData->EmptyClickSound.IsNull())
+				UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
+			return;
+		}
 
 		StopFire();
 		return;

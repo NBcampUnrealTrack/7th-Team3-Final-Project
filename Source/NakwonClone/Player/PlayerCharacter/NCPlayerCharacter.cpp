@@ -1190,6 +1190,24 @@ void ANCPlayerCharacter::ClearDeathRelatedTimers()
     StunTimerHandle.Invalidate();
     ShakeTimerHandle.Invalidate();
     ComboResetTimerHandle.Invalidate();
+    
+    // 시환 추가 - 사망 시 특수 아이템 버프 정리
+    if (LocomotionComponent)
+    {
+        LocomotionComponent->EndSpeedBoost();
+    }
+
+    if (EquipmentComponent)
+    {
+        for (const TPair<FGameplayTag, TObjectPtr<UNCGunComponent>>& Pair : EquipmentComponent->WeaponComponents)
+        {
+            if (UNCGunComponent* Gun = Pair.Value)
+            {
+                Gun->EndInfiniteAmmo();
+                Gun->EndDamageBoost();
+            }
+        }
+    }
 }
 
 void ANCPlayerCharacter::CleanupBeforeDeathDestroy()

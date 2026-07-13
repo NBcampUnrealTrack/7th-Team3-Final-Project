@@ -426,7 +426,8 @@ void UNCEquipmentComponent::ActivateWeaponForSlot(ENCGunSlot Slot)
 
 	UNCGunComponent* Weapon = *Found;
 
-	Weapon->ActivateGun(Data, SlotData.CurrentAmmo, SlotData.ReserveAmmo);
+	const int32 PoolAmmo = ReserveAmmoPool.FindOrAdd(Data->AmmoType, 0);
+	Weapon->ActivateGun(Data, SlotData.CurrentAmmo, PoolAmmo);
 
 	Weapon->OnAmmoChanged.RemoveDynamic(this, &UNCEquipmentComponent::OnActiveWeaponAmmoChanged);
 	Weapon->OnAmmoChanged.AddDynamic(this, &UNCEquipmentComponent::OnActiveWeaponAmmoChanged);
@@ -434,7 +435,7 @@ void UNCEquipmentComponent::ActivateWeaponForSlot(ENCGunSlot Slot)
 	Weapon->OnFireModeChanged.RemoveDynamic(this, &UNCEquipmentComponent::OnActiveWeaponFireModeChanged);
 	Weapon->OnFireModeChanged.AddDynamic(this, &UNCEquipmentComponent::OnActiveWeaponFireModeChanged);
 
-	OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
+	OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, PoolAmmo);
 }
 
 void UNCEquipmentComponent::HideActiveWeaponVisualOnly()
@@ -480,23 +481,24 @@ void UNCEquipmentComponent::DropOccupantGunForNewGun(FName NewGunID, FVector Dro
 void UNCEquipmentComponent::RefillAllReserveAmmo()
 {
 	auto RefillSlot = [this](ENCGunSlot Slot, FNCGunSlotData& SlotData)
+	{
+		if (SlotData.GunID.IsNone()) return;
+
+		const FNCGunData* Data = FindGunData(SlotData.GunID);
+		if (!Data) return;
+
+		ReserveAmmoPool.FindOrAdd(Data->AmmoType) = Data->MaxReserveAmmo;
+		SlotData.ReserveAmmo = Data->MaxReserveAmmo;
+
+		if (Slot == ActiveSlot)
 		{
-			if (SlotData.GunID.IsNone()) return;
-
-			const FNCGunData* Data = FindGunData(SlotData.GunID);
-			if (!Data) return;
-
-			SlotData.ReserveAmmo = Data->MaxReserveAmmo;
-
-			if (Slot == ActiveSlot)
+			if (UNCGunComponent* Weapon = GetActiveWeapon())
 			{
-				if (UNCGunComponent* Weapon = GetActiveWeapon())
-				{
-					Weapon->ReserveAmmo = Data->MaxReserveAmmo;
-					Weapon->OnAmmoChanged.Broadcast(Weapon->CurrentAmmo, Weapon->ReserveAmmo);
-				}
+				Weapon->ReserveAmmo = Data->MaxReserveAmmo;
+				Weapon->OnAmmoChanged.Broadcast(Weapon->CurrentAmmo, Weapon->ReserveAmmo);
 			}
-		};
+		}
+	};
 
 	RefillSlot(ENCGunSlot::Shotgun, ShotgunSlot);
 	RefillSlot(ENCGunSlot::Rifle, RifleSlot);
@@ -509,13 +511,16 @@ void UNCEquipmentComponent::DeactivateCurrentWeapon()
 	if (!Weapon) return;
 
 	FNCGunSlotData& SlotData = GetSlotData(ActiveSlot);
-
 	SlotData.CurrentAmmo = Weapon->CurrentAmmo;
-	SlotData.ReserveAmmo = Weapon->ReserveAmmo;
+	SlotData.ReserveAmmo = Weapon->ReserveAmmo; // HUD 표시용 미러
+
+	if (const FNCGunData* Data = FindGunData(SlotData.GunID))
+	{
+		ReserveAmmoPool.FindOrAdd(Data->AmmoType) = Weapon->ReserveAmmo;
+	}
 
 	Weapon->OnAmmoChanged.RemoveDynamic(this, &UNCEquipmentComponent::OnActiveWeaponAmmoChanged);
 	Weapon->OnFireModeChanged.RemoveDynamic(this, &UNCEquipmentComponent::OnActiveWeaponFireModeChanged);
-
 	Weapon->DeactivateGun();
 }
 
@@ -543,12 +548,16 @@ FNCGunSlotData& UNCEquipmentComponent::GetSlotData(ENCGunSlot Slot)
 
 void UNCEquipmentComponent::OnActiveWeaponAmmoChanged(int32 CurrentAmmo, int32 ReserveAmmo)
 {
-	// 실시간으로 줄어드는 탄약을 SlotData에도 반영
 	if (ActiveSlot != ENCGunSlot::None)
 	{
 		FNCGunSlotData& SlotData = GetSlotData(ActiveSlot);
 		SlotData.CurrentAmmo = CurrentAmmo;
 		SlotData.ReserveAmmo = ReserveAmmo;
+
+		if (const FNCGunData* Data = FindGunData(SlotData.GunID))
+		{
+			ReserveAmmoPool.FindOrAdd(Data->AmmoType) = ReserveAmmo;
+		}
 	}
 
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
@@ -559,21 +568,24 @@ void UNCEquipmentComponent::OnActiveWeaponFireModeChanged(ENCFireMode NewFireMod
 	OnFireModeChanged.Broadcast(NewFireMode);
 }
 
-void UNCEquipmentComponent::AddReserveAmmo(ENCGunSlot Slot, int32 Amount)
+void UNCEquipmentComponent::AddReserveAmmo(FName AmmoType, int32 Amount)
 {
-	if (Slot == ENCGunSlot::None || Amount <= 0) return;
+	if (AmmoType.IsNone() || Amount <= 0) return;
 
-	FNCGunSlotData& SlotData = GetSlotData(Slot);
-	SlotData.ReserveAmmo += Amount;   // 총 미보유 시에도 무제한 축적
+	int32& PoolAmmo = ReserveAmmoPool.FindOrAdd(AmmoType, 0);
+	PoolAmmo += Amount;
 
-	if (Slot == ActiveSlot)
+	if (UNCGunComponent* Weapon = GetActiveWeapon())
 	{
-		if (UNCGunComponent* Weapon = GetActiveWeapon())
+		const FNCGunData* Data = Weapon->GetActiveGunData();
+		if (Data && Data->AmmoType == AmmoType)
 		{
-			Weapon->ReserveAmmo = SlotData.ReserveAmmo;
+			Weapon->ReserveAmmo = PoolAmmo;
+
+			FNCGunSlotData& SlotData = GetSlotData(ActiveSlot);
+			SlotData.ReserveAmmo = PoolAmmo;
+
 			Weapon->OnAmmoChanged.Broadcast(Weapon->CurrentAmmo, Weapon->ReserveAmmo);
 		}
 	}
-
-	OnAmmoChanged.Broadcast(SlotData.CurrentAmmo, SlotData.ReserveAmmo);
 }
