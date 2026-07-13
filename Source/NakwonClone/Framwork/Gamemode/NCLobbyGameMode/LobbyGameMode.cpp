@@ -31,3 +31,4 @@ void ALobbyGameMode::MoveToTitle()
 {
 	GetWorld()->ServerTravel("/Game/Maps/L_TitleAndLobby");
 }
+
