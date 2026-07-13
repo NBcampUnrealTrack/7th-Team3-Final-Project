@@ -132,6 +132,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Monster|Ranged")
 	void HideHeldThrowObject();   // 손에서 물체 숨기기
 
+	UPROPERTY() FVector CachedThrowTarget = FVector::ZeroVector;
+
+	UFUNCTION(BlueprintCallable, Category = "Monster|Ranged")
+	void SetThrowTarget(const FVector& TargetLoc);  // BT/공격 시작 때 호출
+
 protected:
 	// ── 몽타주 슬롯 (에디터에서 채움) ────────────────────────
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
