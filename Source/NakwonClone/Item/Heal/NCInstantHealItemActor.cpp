@@ -2,25 +2,27 @@
 
 
 #include "NCInstantHealItemActor.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
+#include "GAS/AttributeSet/VGPlayerAttributeSet.h"
 
-
-// Sets default values
 ANCInstantHealItemActor::ANCInstantHealItemActor()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	HealAmount = 30.f;
 }
 
-// Called when the game starts or when spawned
-void ANCInstantHealItemActor::BeginPlay()
+void ANCInstantHealItemActor::Interact_Implementation(AActor* Interactor)
 {
-	Super::BeginPlay();
-	
-}
+	IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(Interactor);
+	if (!ASCInterface) return;
 
-// Called every frame
-void ANCInstantHealItemActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
+	UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent();
+	if (!ASC) return;
 
+	const float Current = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetHealthAttribute());
+	const float Max     = ASC->GetNumericAttribute(UVGPlayerAttributeSet::GetMaxHealthAttribute());
+	ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetHealthAttribute(),
+		FMath::Clamp(Current + HealAmount, 0.f, Max));
+
+	ConsumeItem();
+}

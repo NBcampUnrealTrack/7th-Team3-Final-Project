@@ -2,25 +2,18 @@
 
 
 #include "NCDamageBoostItemActor.h"
+#include "Player/PlayerCharacter/NCPlayerCharacter.h"
+#include "Player/PlayerComponent/NCGunComponent.h"
 
-
-// Sets default values
-ANCDamageBoostItemActor::ANCDamageBoostItemActor()
+void ANCDamageBoostItemActor::Interact_Implementation(AActor* Interactor)
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-}
+	ANCPlayerCharacter* Player = Cast<ANCPlayerCharacter>(Interactor);
+	if (!Player) return;
 
-// Called when the game starts or when spawned
-void ANCDamageBoostItemActor::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
+	if (UNCGunComponent* GunComp = Player->FindComponentByClass<UNCGunComponent>())
+	{
+		GunComp->ActivateDamageBoost(Multiplier, Duration);
+	}
 
-// Called every frame
-void ANCDamageBoostItemActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+	ConsumeItem();
 }
-

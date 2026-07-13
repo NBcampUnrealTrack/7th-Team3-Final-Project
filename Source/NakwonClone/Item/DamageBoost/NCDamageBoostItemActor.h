@@ -12,14 +12,11 @@ class NAKWONCLONE_API ANCDamageBoostItemActor : public ANCItemActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
-	ANCDamageBoostItemActor();
+	UPROPERTY(EditAnywhere, Category = "Item|DamageBoost")
+	float Multiplier = 1.5f;
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	UPROPERTY(EditAnywhere, Category = "Item|DamageBoost")
+	float Duration = 5.f;
 
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Interact_Implementation(AActor* Interactor) override;
 };

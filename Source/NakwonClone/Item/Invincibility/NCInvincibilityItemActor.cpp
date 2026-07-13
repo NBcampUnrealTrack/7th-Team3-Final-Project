@@ -2,25 +2,20 @@
 
 
 #include "NCInvincibilityItemActor.h"
+#include "Player/PlayerCharacter/NCPlayerCharacter.h"
 
 
-// Sets default values
 ANCInvincibilityItemActor::ANCInvincibilityItemActor()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
-void ANCInvincibilityItemActor::BeginPlay()
+void ANCInvincibilityItemActor::Interact_Implementation(AActor* Interactor)
 {
-	Super::BeginPlay();
-	
-}
+	ANCPlayerCharacter* Player = Cast<ANCPlayerCharacter>(Interactor);
+	if (!Player) return;
 
-// Called every frame
-void ANCInvincibilityItemActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
+	Player->ActivateInvincibility(Duration);
 
+	ConsumeItem();
+}

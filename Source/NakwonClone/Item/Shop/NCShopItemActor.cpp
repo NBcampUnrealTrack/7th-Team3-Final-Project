@@ -4,6 +4,7 @@
 #include "NCShopItemActor.h"
 #include "Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Framwork/GameState/NCGameState.h"
+#include "Player/PlayerController/NCPlayerController.h"
 
 void ANCShopItemActor::Interact_Implementation(AActor* Interactor)
 {
@@ -13,10 +14,13 @@ void ANCShopItemActor::Interact_Implementation(AActor* Interactor)
 	ANCGameState* GS = GetWorld()->GetGameState<ANCGameState>();
 	if (!GS) return;
 	
+	ANCPlayerController* NCPC = Cast<ANCPlayerController>(Player->GetController());
+	if (!NCPC) return;
+	
 	// 점수 부족
 	if (GS->TotalScore < RequiredScore)
 	{
-		Player->Client_ShowNotification(FText::FromString(TEXT("요구 점수가 부족합니다")), FLinearColor::Red);
+		NCPC->Client_ShowNotification(FText::FromString(TEXT("요구 점수가 부족합니다")), FLinearColor::Red);
 		return;
 	}
 
