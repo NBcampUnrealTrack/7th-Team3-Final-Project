@@ -162,6 +162,7 @@ void UNCLocomotionComponent::ActivateSpeedBoost(float Multiplier, float Duration
 
 void UNCLocomotionComponent::EndSpeedBoost()
 {
+	GetWorld()->GetTimerManager().ClearTimer(SpeedBoostTimerHandle);
 	SpeedBoostMultiplier = 1.f;
 	ApplyMovementSpeed();
 }

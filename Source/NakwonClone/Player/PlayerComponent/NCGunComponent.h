@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -7,22 +7,55 @@
 #include "TimerManager.h"
 #include "NCGunComponent.generated.h"
 
-class UDataTable;
 class UCameraComponent;
 class UAnimMontage;
 class UNiagaraComponent;
+class UStaticMeshComponent;
+class USkeletalMeshComponent;
 
-// 무기 컴포넌트 레벨 이벤트 (NCEquipmentComponent에서 재구독)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChanged, int32, CurrentAmmo, int32, ReserveAmmo);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunEquipped, FName, GunID);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGunUnequipped);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFireModeChanged, ENCFireMode, NewFireMode);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSwapCompleted, ENCGunSlot, NewSlot);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnAmmoChanged,
+	int32,
+	CurrentAmmo,
+	int32,
+	ReserveAmmo
+);
 
-// 슬롯 단위 장착 상태 변경
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGunSlotChanged, ENCGunSlot, Slot, FName, GunID);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+	FOnGunEquipped,
+	FName,
+	GunID
+);
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(
+	FOnGunUnequipped
+);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+	FOnFireModeChanged,
+	ENCFireMode,
+	NewFireMode
+);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+	FOnSwapCompleted,
+	ENCGunSlot,
+	NewSlot
+);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnGunSlotChanged,
+	ENCGunSlot,
+	Slot,
+	FName,
+	GunID
+);
+
+UCLASS(
+	ClassGroup = (Custom),
+	Blueprintable,
+	meta = (BlueprintSpawnableComponent)
+)
 class NAKWONCLONE_API UNCGunComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -30,30 +63,29 @@ class NAKWONCLONE_API UNCGunComponent : public UActorComponent
 public:
 	UNCGunComponent();
 
-	// ----- 무기 레벨 이벤트 (EquipmentComponent가 구독) -----
 	UPROPERTY(BlueprintAssignable, Category = "Gun|Events")
 	FOnAmmoChanged OnAmmoChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gun|Events")
 	FOnFireModeChanged OnFireModeChanged;
 
-	// ----- 현재 탄약 상태 (EquipmentComponent가 Activate 시 설정) -----
 	UPROPERTY(BlueprintReadOnly, Category = "Gun|State")
 	int32 CurrentAmmo = 0;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Gun|State")
 	int32 ReserveAmmo = 0;
 
-	// ----- 현재 진행 중인 총기 액션 -----
 	UPROPERTY(BlueprintReadOnly, Category = "Gun|State")
 	FGameplayTagContainer ActiveGunActions;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Gun|State")
 	ENCFireMode CurrentFireMode = ENCFireMode::SemiAuto;
 
-	// ----- 상태 조회 -----
 	UFUNCTION(BlueprintCallable, Category = "Gun|Getter")
-	bool HasActiveGun() const { return ActiveGunData != nullptr; }
+	bool HasActiveGun() const
+	{
+		return ActiveGunData != nullptr;
+	}
 
 	UFUNCTION(BlueprintCallable, Category = "Gun|Getter")
 	bool CanFire() const;
@@ -67,60 +99,72 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Gun|Getter")
 	bool IsADS() const;
 
-	// ----- 활성화 / 비활성화 (EquipmentComponent에서 호출) -----
-	void ActivateGun(const FNCGunData* InGunData, int32 InCurrentAmmo, int32 InReserveAmmo);
+	const FNCGunData* GetActiveGunData() const
+	{
+		return ActiveGunData;
+	}
+
+	float GetDamageMultiplier() const
+	{
+		return DamageMultiplier;
+	}
+
+	void ActivateGun(
+		const FNCGunData* InGunData,
+		int32 InCurrentAmmo,
+		int32 InReserveAmmo
+	);
+
 	void DeactivateGun();
 
-	// ----- 사격 -----
 	UFUNCTION(BlueprintCallable, Category = "Gun|Action")
 	void StartFire();
 
 	UFUNCTION(BlueprintCallable, Category = "Gun|Action")
 	void StopFire();
 
-	// ----- 재장전 -----
 	UFUNCTION(BlueprintCallable, Category = "Gun|Action")
 	virtual void Reload();
 
-	// ----- ADS -----
 	UFUNCTION(BlueprintCallable, Category = "Gun|Action")
 	void StartADS();
 
 	UFUNCTION(BlueprintCallable, Category = "Gun|Action")
 	void StopADS();
 
-	// ----- 발사 모드 전환 -----
 	UFUNCTION(BlueprintCallable, Category = "Gun|Action")
 	void ToggleFireMode();
 
-	const FNCGunData* GetActiveGunData() const { return ActiveGunData; }
-
-	// 언이퀍 몽타주 재생 (EquipmentComponent의 SelectSlot에서 호출)
 	float PlayUnequipMontage(const FNCGunData* Data);
 
+	void ActivateInfiniteAmmo(float Duration);
+	void EndInfiniteAmmo();
+
+	void ActivateDamageBoost(float Multiplier, float Duration);
+	void EndDamageBoost();
+
 protected:
-	virtual void OnBeforeFire() {}
+	virtual void OnBeforeFire()
+	{
+	}
 
 	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-public:
-	UPROPERTY(EditDefaultsOnly, Category = "Gun|ADS")
-	float ADSInterpSpeed = 10.f;
+	virtual void EndPlay(
+		const EEndPlayReason::Type EndPlayReason
+	) override;
+
+	virtual void TickComponent(
+		float DeltaTime,
+		ELevelTick TickType,
+		FActorComponentTickFunction* ThisTickFunction
+	) override;
 
 private:
-	// 현재 활성화된 총기 데이터 (EquipmentComponent가 Activate 시 설정, 원시 포인터)
 	const FNCGunData* ActiveGunData = nullptr;
 
 	void FireOnce();
 	void OnReloadFinished();
-
-	bool bWantsADS = false;
-
-	float LastFireTime = -100.f;
-
-	FTimerHandle ShowMagazineTimerHandle;
 
 	void HideGunMagazine();
 	void ShowGunMagazine();
@@ -128,54 +172,158 @@ private:
 
 	void ApplyADSFOV();
 	void RestoreFOV();
+
 	UCameraComponent* FindCamera();
 
-	UPROPERTY()
-	TObjectPtr<UCameraComponent> CachedCamera;
-
-	float PlayGunMontage(const TSoftObjectPtr<UAnimMontage>& MontageSoft);
+	float PlayGunMontage(
+		const TSoftObjectPtr<UAnimMontage>& MontageSoft
+	);
 
 	UFUNCTION()
-	void OnMuzzleFlashFinished(UNiagaraComponent* PSystem);
+	void OnMuzzleFlashFinished(
+		UNiagaraComponent* PSystem
+	);
 
 	void AttachGunMesh(const FNCGunData* Data);
 	void DetachGunMesh();
 
-	UPROPERTY()
-	TObjectPtr<UStaticMeshComponent> EquippedGunMeshComp;
+	void ApplyRecoil(const FNCGunData* Data);
 
 	UPROPERTY()
-	TObjectPtr<USkeletalMeshComponent> EquippedGunSkelMeshComp;
+	TObjectPtr<UCameraComponent> CachedCamera = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<UNiagaraComponent> MuzzleFlashComp;
+	TObjectPtr<UStaticMeshComponent> EquippedGunMeshComp = nullptr;
 
+	UPROPERTY()
+	TObjectPtr<USkeletalMeshComponent> EquippedGunSkelMeshComp = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UNiagaraComponent> MuzzleFlashComp = nullptr;
+
+	bool bWantsADS = false;
+	bool bInfiniteAmmoActive = false;
+
+	float LastFireTime = -100.f;
+
+	float DefaultFOV = 90.f;
+	float TargetFOV = 90.f;
+
+	float CurrentRecoilPitch = 0.f;
+	float CurrentRecoilYaw = 0.f;
+
+	float DamageMultiplier = 1.f;
+
+	FTimerHandle ShowMagazineTimerHandle;
 	FTimerHandle FullAutoTimerHandle;
 	FTimerHandle ReloadTimerHandle;
 	FTimerHandle MuzzleFlashTimerHandle;
-
-	float DefaultFOV  = 90.f;
-	float TargetFOV   = 90.f;
-
-	// 헌호수정 - 반동 누적 상태
-	float CurrentRecoilPitch = 0.f;
-	float CurrentRecoilYaw   = 0.f;
-
-	void ApplyRecoil(const FNCGunData* Data);
+	FTimerHandle InfiniteAmmoTimerHandle;
+	FTimerHandle DamageBoostTimerHandle;
 
 	FVector DefaultCameraLocation = FVector::ZeroVector;
 	FVector TargetCameraLocation = FVector::ZeroVector;
 
-	//헌호수정 - RE4 스타일 어깨 너머 정조준 (가까이+오른쪽 → 캐릭터 상반신 왼쪽에 꽉) — 모든 총기 공통
-	UPROPERTY(EditAnywhere, Category = "Camera|ADS")
-	FVector ADSCameraLocation = FVector(0.f, 50.f, 6.f);
-	
-	// 시환 추가
-public:
-	void ActivateInfiniteAmmo(float Duration);
+	FRotator DefaultCameraRotation = FRotator::ZeroRotator;
+	FRotator TargetCameraRotation = FRotator::ZeroRotator;
 
-private:
-	bool bInfiniteAmmoActive = false;
-	FTimerHandle InfiniteAmmoTimerHandle;
-	void EndInfiniteAmmo();
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Camera|ADS",
+		meta = (
+			AllowPrivateAccess = "true",
+			ClampMin = "0.0",
+			UIMin = "0.0",
+			UIMax = "30.0"
+		)
+	)
+	float ADSInterpSpeed = 10.f;
+
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Camera|ADS|Location",
+		meta = (
+			AllowPrivateAccess = "true",
+			MakeEditWidget = "true"
+		)
+	)
+	FVector ADSCameraLocation = FVector(0.f, 50.f, 6.f);
+
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Camera|ADS|Location",
+		meta = (
+			AllowPrivateAccess = "true"
+		)
+	)
+	bool bUseRelativeADSCameraLocation = false;
+
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Camera|ADS|Rotation",
+		meta = (
+			AllowPrivateAccess = "true"
+		)
+	)
+	FRotator ADSCameraRotation = FRotator::ZeroRotator;
+
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Camera|ADS|Rotation",
+		meta = (
+			AllowPrivateAccess = "true"
+		)
+	)
+	bool bUseRelativeADSCameraRotation = true;
+
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Camera|ADS|Pivot",
+		meta = (
+			AllowPrivateAccess = "true",
+			MakeEditWidget = "true"
+		)
+	)
+	FVector ADSCameraPivotOffset = FVector::ZeroVector;
+
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Camera|ADS|Pivot",
+		meta = (
+			AllowPrivateAccess = "true"
+		)
+	)
+	FRotator ADSCameraPivotRotation = FRotator::ZeroRotator;
+
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Camera|ADS|FOV",
+		meta = (
+			AllowPrivateAccess = "true"
+		)
+	)
+	bool bOverrideADSFOV = false;
+
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Camera|ADS|FOV",
+		meta = (
+			AllowPrivateAccess = "true",
+			EditCondition = "bOverrideADSFOV",
+			ClampMin = "5.0",
+			ClampMax = "170.0",
+			UIMin = "20.0",
+			UIMax = "120.0"
+		)
+	)
+	float ADSFOV = 70.f;
 };

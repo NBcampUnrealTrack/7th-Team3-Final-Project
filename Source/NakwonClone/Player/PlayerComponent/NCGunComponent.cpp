@@ -31,10 +31,20 @@ void UNCGunComponent::BeginPlay()
 
 	if (UCameraComponent* Cam = FindCamera())
 	{
-		DefaultFOV = TargetFOV = Cam->FieldOfView;
+		DefaultFOV = Cam->FieldOfView;
+		TargetFOV = DefaultFOV;
 
-		DefaultCameraLocation = Cam->GetRelativeLocation();
-		TargetCameraLocation = DefaultCameraLocation;
+		DefaultCameraLocation =
+			Cam->GetRelativeLocation();
+
+		TargetCameraLocation =
+			DefaultCameraLocation;
+
+		DefaultCameraRotation =
+			Cam->GetRelativeRotation();
+
+		TargetCameraRotation =
+			DefaultCameraRotation;
 	}
 }
 
@@ -54,79 +64,169 @@ void UNCGunComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void UNCGunComponent::TickComponent(
 	float DeltaTime,
 	ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+	FActorComponentTickFunction* ThisTickFunction
+)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Super::TickComponent(
+		DeltaTime,
+		TickType,
+		ThisTickFunction
+	);
 
 	UCameraComponent* Cam = FindCamera();
-	if (!Cam) return;
 
-	const float NewFOV = FMath::FInterpTo(
-		Cam->FieldOfView,
-		TargetFOV,
-		DeltaTime,
-		ADSInterpSpeed);
+	if (!Cam)
+	{
+		return;
+	}
+
+	const float NewFOV =
+		FMath::FInterpTo(
+			Cam->FieldOfView,
+			TargetFOV,
+			DeltaTime,
+			ADSInterpSpeed
+		);
 
 	Cam->SetFieldOfView(NewFOV);
 
-	const FVector NewLocation = FMath::VInterpTo(
-		Cam->GetRelativeLocation(),
-		TargetCameraLocation,
-		DeltaTime,
-		ADSInterpSpeed);
+	const FVector NewLocation =
+		FMath::VInterpTo(
+			Cam->GetRelativeLocation(),
+			TargetCameraLocation,
+			DeltaTime,
+			ADSInterpSpeed
+		);
 
 	Cam->SetRelativeLocation(NewLocation);
 
-	if (!FMath::IsNearlyZero(CurrentRecoilPitch) ||
-		!FMath::IsNearlyZero(CurrentRecoilYaw))
+	const FRotator NewRotation =
+		FMath::RInterpTo(
+			Cam->GetRelativeRotation(),
+			TargetCameraRotation,
+			DeltaTime,
+			ADSInterpSpeed
+		);
+
+	Cam->SetRelativeRotation(NewRotation);
+
+	if (
+		!FMath::IsNearlyZero(CurrentRecoilPitch) ||
+		!FMath::IsNearlyZero(CurrentRecoilYaw)
+		)
 	{
 		const float RecoverySpeed =
-			ActiveGunData ? ActiveGunData->RecoilRecoverySpeed : 5.f;
+			ActiveGunData
+			? ActiveGunData->RecoilRecoverySpeed
+			: 5.f;
 
-		ACharacter* Char = Cast<ACharacter>(GetOwner());
+		ACharacter* Char =
+			Cast<ACharacter>(GetOwner());
+
 		APlayerController* PC =
-			Char ? Cast<APlayerController>(Char->GetController()) : nullptr;
+			Char
+			? Cast<APlayerController>(
+				Char->GetController()
+			)
+			: nullptr;
 
 		if (PC && Char->IsLocallyControlled())
 		{
 			const float PitchStep =
-				FMath::Min(FMath::Abs(CurrentRecoilPitch),
-					RecoverySpeed * DeltaTime);
+				FMath::Min(
+					FMath::Abs(CurrentRecoilPitch),
+					RecoverySpeed * DeltaTime
+				);
 
 			const float YawStep =
-				FMath::Min(FMath::Abs(CurrentRecoilYaw),
-					RecoverySpeed * DeltaTime);
+				FMath::Min(
+					FMath::Abs(CurrentRecoilYaw),
+					RecoverySpeed * DeltaTime
+				);
 
 			PC->AddPitchInput(PitchStep);
-			PC->AddYawInput(-FMath::Sign(CurrentRecoilYaw) * YawStep);
+
+			PC->AddYawInput(
+				-FMath::Sign(CurrentRecoilYaw) *
+				YawStep
+			);
 
 			CurrentRecoilPitch =
 				FMath::Sign(CurrentRecoilPitch) *
-				(FMath::Abs(CurrentRecoilPitch) - PitchStep);
+				(
+					FMath::Abs(CurrentRecoilPitch) -
+					PitchStep
+					);
 
 			CurrentRecoilYaw =
 				FMath::Sign(CurrentRecoilYaw) *
-				(FMath::Abs(CurrentRecoilYaw) - YawStep);
+				(
+					FMath::Abs(CurrentRecoilYaw) -
+					YawStep
+					);
 
-			if (FMath::IsNearlyZero(CurrentRecoilPitch, 0.01f))
+			if (
+				FMath::IsNearlyZero(
+					CurrentRecoilPitch,
+					0.01f
+				)
+				)
+			{
 				CurrentRecoilPitch = 0.f;
+			}
 
-			if (FMath::IsNearlyZero(CurrentRecoilYaw, 0.01f))
+			if (
+				FMath::IsNearlyZero(
+					CurrentRecoilYaw,
+					0.01f
+				)
+				)
+			{
 				CurrentRecoilYaw = 0.f;
+			}
 		}
 	}
 
 	const bool bFOVFinished =
-		FMath::IsNearlyEqual(Cam->FieldOfView, TargetFOV, 0.1f);
+		FMath::IsNearlyEqual(
+			Cam->FieldOfView,
+			TargetFOV,
+			0.1f
+		);
 
 	const bool bLocationFinished =
-		Cam->GetRelativeLocation().Equals(TargetCameraLocation, 0.1f);
+		Cam->GetRelativeLocation().Equals(
+			TargetCameraLocation,
+			0.1f
+		);
 
-	if (bFOVFinished &&
-		bLocationFinished &&
+	const bool bRotationFinished =
+		Cam->GetRelativeRotation().Equals(
+			TargetCameraRotation,
+			0.1f
+		);
+
+	const bool bRecoilFinished =
 		FMath::IsNearlyZero(CurrentRecoilPitch) &&
-		FMath::IsNearlyZero(CurrentRecoilYaw))
+		FMath::IsNearlyZero(CurrentRecoilYaw);
+
+	if (
+		bFOVFinished &&
+		bLocationFinished &&
+		bRotationFinished &&
+		bRecoilFinished
+		)
 	{
+		Cam->SetFieldOfView(TargetFOV);
+
+		Cam->SetRelativeLocation(
+			TargetCameraLocation
+		);
+
+		Cam->SetRelativeRotation(
+			TargetCameraRotation
+		);
+
 		SetComponentTickEnabled(false);
 	}
 }
@@ -224,17 +324,23 @@ float UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 
 void UNCGunComponent::StartFire()
 {
-	if (!IsADS()) return;
-
-	OnBeforeFire();
-
-	// 탄약 없을 때 빈 총 클릭음
-	if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0)
+	// 탄약 없을 때는 조준 여부와 상관없이 자동 재장전/빈 총 클릭음 처리
+	if (HasActiveGun() && !IsReloading() && !bInfiniteAmmoActive && CurrentAmmo <= 0)
 	{
+		if (ActiveGunData->bAutoReloadOnEmpty && ReserveAmmo > 0)
+		{
+			Reload();
+			return;
+		}
+
 		if (!ActiveGunData->EmptyClickSound.IsNull())
 			UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
 		return;
 	}
+
+	if (!IsADS()) return;
+
+	OnBeforeFire();
 
 	if (!CanFire()) return;
 
@@ -272,8 +378,20 @@ void UNCGunComponent::FireOnce()
 {
 	if (!CanFire())
 	{
-		if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0 && !ActiveGunData->EmptyClickSound.IsNull())
-			UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
+		if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0)
+		{
+			StopFire();
+
+			if (ActiveGunData->bAutoReloadOnEmpty && ReserveAmmo > 0)
+			{
+				Reload();
+				return;
+			}
+
+			if (!ActiveGunData->EmptyClickSound.IsNull())
+				UGameplayStatics::PlaySound2D(this, ActiveGunData->EmptyClickSound.LoadSynchronous());
+			return;
+		}
 
 		StopFire();
 		return;
@@ -406,7 +524,7 @@ void UNCGunComponent::FireOnce()
 
 		if (NCProj)
 		{
-			NCProj->Damage                = Data->Damage;
+			NCProj->Damage                = Data->Damage * DamageMultiplier;
 			NCProj->MaxRange              = Data->MaxRange;
 			NCProj->ProjectileSpeed       = Data->ProjectileSpeed;
 			NCProj->ImpactFleshEffect     = Data->ImpactFleshEffect.Get();
@@ -568,11 +686,54 @@ void UNCGunComponent::StopADS()
 void UNCGunComponent::ApplyADSFOV()
 {
 	if (!ActiveGunData)
+	{
 		return;
+	}
 
-	TargetFOV = DefaultFOV * ActiveGunData->ADSFOVMultiplier;
+	if (bOverrideADSFOV)
+	{
+		TargetFOV = ADSFOV;
+	}
+	else
+	{
+		TargetFOV =
+			DefaultFOV *
+			ActiveGunData->ADSFOVMultiplier;
+	}
 
-	TargetCameraLocation = ADSCameraLocation;
+	const FVector BaseCameraLocation =
+		bUseRelativeADSCameraLocation
+		? DefaultCameraLocation + ADSCameraLocation
+		: ADSCameraLocation;
+
+	const FVector PivotLocation =
+		DefaultCameraLocation +
+		ADSCameraPivotOffset;
+
+	const FVector CameraToPivotOffset =
+		BaseCameraLocation -
+		PivotLocation;
+
+	const FVector RotatedCameraOffset =
+		ADSCameraPivotRotation.RotateVector(
+			CameraToPivotOffset
+		);
+
+	TargetCameraLocation =
+		PivotLocation +
+		RotatedCameraOffset;
+
+	const FRotator BaseCameraRotation =
+		bUseRelativeADSCameraRotation
+		? DefaultCameraRotation
+		: FRotator::ZeroRotator;
+
+	TargetCameraRotation =
+		(
+			BaseCameraRotation +
+			ADSCameraPivotRotation +
+			ADSCameraRotation
+			).GetNormalized();
 
 	SetComponentTickEnabled(true);
 }
@@ -581,11 +742,14 @@ void UNCGunComponent::RestoreFOV()
 {
 	TargetFOV = DefaultFOV;
 
-	TargetCameraLocation = DefaultCameraLocation;
+	TargetCameraLocation =
+		DefaultCameraLocation;
+
+	TargetCameraRotation =
+		DefaultCameraRotation;
 
 	SetComponentTickEnabled(true);
 }
-
 UCameraComponent* UNCGunComponent::FindCamera()
 {
 	if (CachedCamera)
@@ -857,5 +1021,20 @@ void UNCGunComponent::ActivateInfiniteAmmo(float Duration)
 
 void UNCGunComponent::EndInfiniteAmmo()
 {
+	GetWorld()->GetTimerManager().ClearTimer(InfiniteAmmoTimerHandle);
 	bInfiniteAmmoActive = false;
+}
+
+void UNCGunComponent::ActivateDamageBoost(float Multiplier, float Duration)
+{
+	DamageMultiplier = Multiplier;
+
+	GetWorld()->GetTimerManager().SetTimer(
+		DamageBoostTimerHandle, this, &UNCGunComponent::EndDamageBoost, Duration, false);
+}
+
+void UNCGunComponent::EndDamageBoost()
+{
+	GetWorld()->GetTimerManager().ClearTimer(DamageBoostTimerHandle);
+	DamageMultiplier = 1.f;
 }

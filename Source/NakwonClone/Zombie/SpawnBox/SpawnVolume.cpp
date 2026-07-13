@@ -30,11 +30,12 @@ ASpawnVolume::ASpawnVolume()
 	StopSpawnTime = 540.0f;
 	MaxSpawnCount = 9;
 
-	//헌호수정 - 기본 타입 가중치 (Walker 60 / Runner 25 / Tank 10 / Witch 5) — 에디터에서 조정 가능
+	//헌호수정 - 기본 타입 가중치 (Walker 60 / Runner 25 / Tank 10 / Witch 5 / Thrower 6) — 에디터에서 조정 가능
 	TypeWeights.Add(EVGMonsterType::Walker, 60.f);
 	TypeWeights.Add(EVGMonsterType::Runner, 25.f);
 	TypeWeights.Add(EVGMonsterType::Tank, 10.f);
 	TypeWeights.Add(EVGMonsterType::Witch, 5.f);
+	TypeWeights.Add(EVGMonsterType::Thrower, 6.f); //헌호수정 - 원거리 좀비 (특수, 후반 점수 오르면 증가)
 }
 
 
@@ -103,18 +104,32 @@ void ASpawnVolume::SpawnMonsters(int32 Count)
 	//헌호수정 - 이번 배치의 겹침 방지 기록 초기화 (같은 배치 내 좀비끼리 안 겹치게)
 	RecentSpawnLocations.Reset();
 
-	//헌호수정 - 상한 체크: 살아있는 좀비가 최대치면 스폰 스킵 (성능/안정성)
+	//헌호수정 - 상한 체크: 살아있는 좀비가 (시간에 따라 서서히 오르는) 상한이면 스폰 스킵
 	int32 Alive = CountAliveZombies();
+	const int32 CurrentMax = GetCurrentMaxAlive(); // 초반엔 낮고 시간 지나며 MaxAliveZombies까지 증가
 
 	for (int i = 0; i < Count; i++)
 	{
-		if (Alive >= MaxAliveZombies)
+		if (Alive >= CurrentMax)
 		{
-			break; // 최대치 도달 → 더 스폰 안 함
+			break; // 현재 상한 도달 → 더 스폰 안 함
 		}
 		SpawnRandomMonster();
 		++Alive;
 	}
+}
+
+//헌호수정 - 시간에 따라 서서히 오르는 현재 좀비 상한 (초반 완만 → RampTime 후 MaxAliveZombies)
+int32 ASpawnVolume::GetCurrentMaxAlive() const
+{
+	if (MaxAliveRampTime <= 0.f || !GetWorld())
+	{
+		return MaxAliveZombies; // 램프 끔 → 항상 최대치
+	}
+
+	const float Elapsed = GetWorld()->GetTimeSeconds() - SpawnStartTime;
+	const float Alpha = FMath::Clamp(Elapsed / MaxAliveRampTime, 0.f, 1.f);
+	return FMath::RoundToInt(FMath::Lerp(static_cast<float>(StartMaxAlive), static_cast<float>(MaxAliveZombies), Alpha));
 }
 
 //헌호수정 - 월드의 살아있는 좀비 수 세기
@@ -280,11 +295,13 @@ void ASpawnVolume::ActivateSpawner()
 	}
 	bActivated = true;
 
-	//헌호수정 - 초기 스폰 (상한 체크 포함)
+	//헌호수정 - 시작 시각을 초기 스폰 "전"에 기록 → 초기 스폰도 시간 램프 상한을 적용받아 초반 폭탄 방지
+	SpawnStartTime = GetWorld()->GetTimeSeconds();
+
+	//헌호수정 - 초기 스폰 (상한 체크 포함, 초반이라 낮은 상한만큼만 나옴)
 	SpawnMonsters(static_cast<int32>(SpawnInit));
 
 	//헌호수정 - 주기적 스폰 타이머 시작 (SpawnInterval마다 UpdateWave 호출)
-	SpawnStartTime = GetWorld()->GetTimeSeconds();
 	LastSpawnCheckTime = -1.0f;
 	GetWorldTimerManager().SetTimer(
 		WaveTimerHandle, this, &ASpawnVolume::TickWave, SpawnInterval, true);

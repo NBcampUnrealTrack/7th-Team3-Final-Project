@@ -87,3 +87,24 @@ void ANCBaseCharacter::OnDead()
     // 헌호수정 - 사망 시 착지 타이머 정리 (파괴된 액터 접근 방지)
     GetWorldTimerManager().ClearTimer(LandingTimerHandle);
 }
+
+void ANCBaseCharacter::ActivateInvincibility(float Duration)
+{
+    if (UVGPlayerAttributeSet* AttrSet = GetPlayerAttributeSet())
+    {
+        AttrSet->SetInvincible(true);
+    }
+
+    GetWorldTimerManager().SetTimer(
+        InvincibilityTimerHandle, this, &ANCBaseCharacter::EndInvincibility, Duration, false);
+}
+
+void ANCBaseCharacter::EndInvincibility()
+{
+    GetWorld()->GetTimerManager().ClearTimer(InvincibilityTimerHandle);
+
+    if (UVGPlayerAttributeSet* AttrSet = GetPlayerAttributeSet())
+    {
+        AttrSet->SetInvincible(false);
+    }
+}

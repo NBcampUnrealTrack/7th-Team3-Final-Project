@@ -475,6 +475,12 @@ void ANCPlayerCharacter::OnDead()
     {
         EquipmentComponent->StopFire();
         EquipmentComponent->StopADS();
+        
+        if (UNCGunComponent* ActiveWeapon = EquipmentComponent->GetActiveWeapon())
+        {
+            ActiveWeapon->EndInfiniteAmmo();
+            ActiveWeapon->EndDamageBoost();
+        }
     }
 
     if (InteractionComponent)
@@ -485,7 +491,10 @@ void ANCPlayerCharacter::OnDead()
     if (LocomotionComponent)
     {
         LocomotionComponent->ClearAllStaminaTimers();
+        LocomotionComponent->EndSpeedBoost();
     }
+    
+    EndInvincibility();
 
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
@@ -1233,9 +1242,4 @@ float ANCPlayerCharacter::GetCurrentComboMultiplier() const
 
     // 5킬 이상
     return 1.5f;
-}
-
-void ANCPlayerCharacter::Client_ShowNotification_Implementation(const FText& Message, FLinearColor Color)
-{
-    OnShowNotification(Message, Color);
 }

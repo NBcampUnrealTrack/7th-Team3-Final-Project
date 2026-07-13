@@ -84,6 +84,8 @@ public:
 private:
 	float SpeedBoostMultiplier = 1.f;
 	FTimerHandle SpeedBoostTimerHandle;
+	
+public:
 	void EndSpeedBoost();
 #pragma endregion
 };

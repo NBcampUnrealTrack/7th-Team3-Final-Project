@@ -59,4 +59,12 @@ protected:
 protected:
 	FTimerHandle LandingTimerHandle;
 	void ResetLandingState();
+	
+	// 시환 추가
+public:
+	void ActivateInvincibility(float Duration);
+	void EndInvincibility();
+
+private:
+	FTimerHandle InvincibilityTimerHandle;
 };

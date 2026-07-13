@@ -64,6 +64,11 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	DetectionCapsule->SetCapsuleSize(40.f, 90.f);
 	//헌호수정 - 수면/감지 시스템 미사용: 오버랩 쿼리 끔 (매 프레임 비용 제거, 100마리 최적화)
 	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	HeldObjectComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldObjectComp"));
+	HeldObjectComp->SetupAttachment(GetMesh(), TEXT("hand_r"));
+	HeldObjectComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HeldObjectComp->SetVisibility(false);
 }
 
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
@@ -564,7 +569,12 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	ProjectileClass = Row->ProjectileClass;
 	CachedProjectileSocket = Row->ProjectileSocket;
 	CachedAttackRange = Row->AttackRange;
-	SpitVFX = Row->SpitVFX;
+	ThrowVFX = Row->ThrowVFX;
+
+	HeldThrowMesh = Row->HeldThrowMesh; 
+	if (HeldObjectComp && HeldThrowMesh)
+		HeldObjectComp->SetStaticMesh(HeldThrowMesh);
+
 	// 우정 추가
 	CashedKillScore = Row->KillScore;
 }
@@ -801,7 +811,7 @@ void AVGMonsterCharacterBase::SpawnProjectile()
 	const FRotator SpawnRot = GetActorForwardVector().Rotation();
 
 	// 1) 분비물 터지는 연출 (모든 클라에서 보여야 하니 멀티캐스트로)
-	Multicast_SpawnSpitVFX(SpawnLoc);
+	Multicast_SpawnThrowVFX(SpawnLoc);
 
 	// 2) 실제 투사체 (서버에서만 — 데미지 판정)
 	if (HasAuthority() && ProjectileClass)
@@ -815,11 +825,27 @@ void AVGMonsterCharacterBase::SpawnProjectile()
 	}
 }
 
-void AVGMonsterCharacterBase::Multicast_SpawnSpitVFX_Implementation(const FVector& Location)
+void AVGMonsterCharacterBase::Multicast_SpawnThrowVFX_Implementation(const FVector& Location)
 {
-	if (SpitVFX)
+	if (ThrowVFX)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(), SpitVFX, Location, GetActorForwardVector().Rotation());
+			GetWorld(), ThrowVFX, Location, GetActorForwardVector().Rotation());
+	}
+}
+
+void AVGMonsterCharacterBase::ShowHeldThrowObject()
+{
+	if (HeldObjectComp && HeldThrowMesh)
+	{
+		HeldObjectComp->SetVisibility(true);
+	}
+}
+
+void AVGMonsterCharacterBase::HideHeldThrowObject()
+{
+	if (HeldObjectComp)
+	{
+		HeldObjectComp->SetVisibility(false);
 	}
 }
