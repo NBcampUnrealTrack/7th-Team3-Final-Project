@@ -135,7 +135,7 @@ public:
 	void ShowActiveWeaponVisualAgain();
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment|Manage")
-	void DropOccupantGunForNewGun(FName NewGunID, FVector DropLocation, FRotator DropRotation);
+	void DropOccupantGunForNewGun(FName NewGunID, FVector DropLocation, FRotator DropRotation, float LifeSpanSeconds = 0.f);
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment|Manage")
 	void AddReserveAmmo(ENCGunSlot Slot, int32 Amount);
