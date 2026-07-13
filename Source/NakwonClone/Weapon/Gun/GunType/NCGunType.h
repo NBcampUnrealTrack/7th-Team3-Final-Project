@@ -16,8 +16,8 @@ class UTexture2D;
 UENUM(BlueprintType)
 enum class ENCGunSlot : uint8
 {
-    Shotgun,   // 1번
-    Rifle,     // 2번
+    Rifle,     // 1번
+    Shotgun,   // 2번
     Sidearm,   // 3번 - Pistol / Revolver
     None
 };
