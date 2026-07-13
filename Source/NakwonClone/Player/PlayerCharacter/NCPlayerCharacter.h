@@ -17,6 +17,7 @@ class UNCGunComponent;
 class UNCRifleComponent;
 class UNCShotgunComponent;
 class UNCPistolComponent;
+class UNCSniperComponent;
 class UNCEquipmentComponent;
 class USpotLightComponent;
 class UStaticMeshComponent;
@@ -226,6 +227,17 @@ protected:
 		meta = (AllowPrivateAccess = "true"))
 	FRotator FirstPersonSidearmCameraRotation = FRotator::ZeroRotator;
 
+	//스나이퍼
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FVector FirstPersonSniperCameraOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Camera|FirstPerson",
+		meta = (AllowPrivateAccess = "true"))
+	FRotator FirstPersonSniperCameraRotation = FRotator::ZeroRotator;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Inventory")
 	TObjectPtr<UNCPlayerInventoryComponent> PlayerInventoryRef;
 
@@ -255,6 +267,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")
 	TObjectPtr<UNCPistolComponent> PistolComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")
+	TObjectPtr<UNCSniperComponent> SniperComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flashlight")
 	TObjectPtr<UStaticMeshComponent> FlashlightMesh;
