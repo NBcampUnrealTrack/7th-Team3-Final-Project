@@ -739,53 +739,94 @@ void UNCGunComponent::DetachGunMesh()
 void UNCGunComponent::DropMagazineMesh()
 {
 	if (!ActiveGunData || ActiveGunData->MagazineDropMesh.IsNull())
+	{
 		return;
+	}
 
 	if (!EquippedGunSkelMeshComp)
+	{
 		return;
+	}
 
-	UStaticMesh* MagMesh = ActiveGunData->MagazineDropMesh.LoadSynchronous();
+	UStaticMesh* MagMesh =
+		ActiveGunData->MagazineDropMesh.LoadSynchronous();
+
 	if (!MagMesh)
+	{
 		return;
+	}
 
-	FVector SpawnLocation = EquippedGunSkelMeshComp->GetComponentLocation();
-	FRotator SpawnRotation = EquippedGunSkelMeshComp->GetComponentRotation();
+	FVector SpawnLocation =
+		EquippedGunSkelMeshComp->GetComponentLocation();
+
+	FRotator SpawnRotation =
+		EquippedGunSkelMeshComp->GetComponentRotation();
 
 	const FName MagazineBoneName = TEXT("Magazine_joint");
 
 	if (EquippedGunSkelMeshComp->GetBoneIndex(MagazineBoneName) != INDEX_NONE)
 	{
-		SpawnLocation = EquippedGunSkelMeshComp->GetBoneLocation(MagazineBoneName);
-		SpawnRotation = EquippedGunSkelMeshComp->GetBoneQuaternion(MagazineBoneName).Rotator();
+		SpawnLocation =
+			EquippedGunSkelMeshComp->GetBoneLocation(MagazineBoneName);
+
+		SpawnRotation =
+			EquippedGunSkelMeshComp
+			->GetBoneQuaternion(MagazineBoneName)
+			.Rotator();
 	}
 
-	UStaticMeshComponent* MagComp = NewObject<UStaticMeshComponent>(GetOwner());
-	if (!MagComp)
+	AActor* OwnerActor = GetOwner();
+
+	if (!IsValid(OwnerActor))
+	{
 		return;
+	}
+
+	UStaticMeshComponent* MagComp =
+		NewObject<UStaticMeshComponent>(OwnerActor);
+
+	if (!IsValid(MagComp))
+	{
+		return;
+	}
 
 	MagComp->SetStaticMesh(MagMesh);
-	MagComp->RegisterComponent();
-	MagComp->SetWorldLocationAndRotation(SpawnLocation, SpawnRotation);
 	MagComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	MagComp->RegisterComponent();
+
+	MagComp->SetWorldLocationAndRotation(
+		SpawnLocation,
+		SpawnRotation
+	);
+
 	MagComp->SetSimulatePhysics(true);
 
 	MagComp->AddImpulse(
 		FVector(0.f, 0.f, -80.f),
 		NAME_None,
-		true);
+		true
+	);
 
-	FTimerHandle DestroyTimer;
-	GetWorld()->GetTimerManager().SetTimer(
-		DestroyTimer,
-		[MagComp]()
-		{
-			if (MagComp)
+	// raw pointer 대신 WeakObjectPtr로 보관
+	TWeakObjectPtr<UStaticMeshComponent> WeakMagComp = MagComp;
+
+	FTimerHandle DestroyTimerHandle;
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(
+			DestroyTimerHandle,
+			[WeakMagComp]()
 			{
-				MagComp->DestroyComponent();
-			}
-		},
-		5.f,
-		false);
+				if (WeakMagComp.IsValid())
+				{
+					WeakMagComp->DestroyComponent();
+				}
+			},
+			5.f,
+			false
+		);
+	}
 }
 
 void UNCGunComponent::HideGunMagazine()
