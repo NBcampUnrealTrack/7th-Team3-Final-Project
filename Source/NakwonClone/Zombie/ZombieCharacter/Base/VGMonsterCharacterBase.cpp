@@ -564,7 +564,7 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	ProjectileClass = Row->ProjectileClass;
 	CachedProjectileSocket = Row->ProjectileSocket;
 	CachedAttackRange = Row->AttackRange;
-	SpitVFX = Row->SpitVFX;
+	ThrowVFX = Row->ThrowVFX;
 	// 우정 추가
 	CashedKillScore = Row->KillScore;
 }
@@ -801,7 +801,7 @@ void AVGMonsterCharacterBase::SpawnProjectile()
 	const FRotator SpawnRot = GetActorForwardVector().Rotation();
 
 	// 1) 분비물 터지는 연출 (모든 클라에서 보여야 하니 멀티캐스트로)
-	Multicast_SpawnSpitVFX(SpawnLoc);
+	Multicast_SpawnThrowVFX(SpawnLoc);
 
 	// 2) 실제 투사체 (서버에서만 — 데미지 판정)
 	if (HasAuthority() && ProjectileClass)
@@ -815,11 +815,11 @@ void AVGMonsterCharacterBase::SpawnProjectile()
 	}
 }
 
-void AVGMonsterCharacterBase::Multicast_SpawnSpitVFX_Implementation(const FVector& Location)
+void AVGMonsterCharacterBase::Multicast_SpawnThrowVFX_Implementation(const FVector& Location)
 {
-	if (SpitVFX)
+	if (ThrowVFX)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(), SpitVFX, Location, GetActorForwardVector().Rotation());
+			GetWorld(), ThrowVFX, Location, GetActorForwardVector().Rotation());
 	}
 }

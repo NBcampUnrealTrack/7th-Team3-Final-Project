@@ -19,7 +19,7 @@ enum class EVGMonsterType : uint8
     Witch     UMETA(DisplayName = "Witch"),    // 자극→큰소리→강공격
     Tank      UMETA(DisplayName = "Tank"),     // 맷집(HP 큼)
     Runner    UMETA(DisplayName = "Runner"),   // 이동 속도 빠름
-    Spitter   UMETA(DisplayName = "Spitter"),  // 원거리 — 혀/침 분출
+    Thrower   UMETA(DisplayName = "Thrower"),  // 원거리
     MAX       UMETA(Hidden)
 };
 
@@ -59,13 +59,13 @@ struct FVGMonsterTypeRow : public FTableRowBase
     TSubclassOf<AActor> ProjectileClass = nullptr;      // 침 발사체 액터
 
     UPROPERTY(EditAnywhere, Category = "Ranged")
-    FName ProjectileSocket = TEXT("tongue_tip");        // 발사 위치 소켓(혀 끝)
+    FName ProjectileSocket = TEXT("hand_r");        // 발사 위치 소켓(혀 끝)
 
     UPROPERTY(EditAnywhere, Category = "Ranged")
     float AttackRange = 200.f;                          // BT가 공격 진입 거리로 사용
 
     UPROPERTY(EditAnywhere, Category = "Ranged")
-    TObjectPtr<UNiagaraSystem> SpitVFX = nullptr;   // 혀 끝 분비물 터지는 연출
+    TObjectPtr<UNiagaraSystem> ThrowVFX = nullptr;   // 혀 끝 분비물 터지는 연출
 
     UPROPERTY(EditAnywhere, Category = "Stat")
     float MaxHealth = 100.f;
