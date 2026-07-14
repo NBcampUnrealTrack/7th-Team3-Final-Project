@@ -21,6 +21,7 @@
 #include "Item/NCItemActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Inventory/NCInventoryType.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
@@ -856,13 +857,22 @@ void AVGMonsterCharacterBase::SpawnProjectile()
 		AActor* Proj = GetWorld()->SpawnActor<AActor>(
 			ProjectileClass, SpawnLoc, SpawnRot, Params);
 
-		// 계산된 포물선 속도를 투사체에 주입
-		if (Proj && bHaveArc)
+		if (Proj)
 		{
-			if (UProjectileMovementComponent* PMC =
-				Proj->FindComponentByClass<UProjectileMovementComponent>())
+			// 던진 좀비(this)를 충돌에서 무시 — 근접 시 자기 몸에 부딪혀 멈추는 것 방지
+			if (UPrimitiveComponent* ProjRoot = Cast<UPrimitiveComponent>(Proj->GetRootComponent()))
 			{
-				PMC->Velocity = TossVelocity;
+				ProjRoot->IgnoreActorWhenMoving(this, true);
+			}
+
+			// 계산된 포물선 속도를 투사체에 주입
+			if (bHaveArc)
+			{
+				if (UProjectileMovementComponent* PMC =
+					Proj->FindComponentByClass<UProjectileMovementComponent>())
+				{
+					PMC->Velocity = TossVelocity;
+				}
 			}
 		}
 	}
