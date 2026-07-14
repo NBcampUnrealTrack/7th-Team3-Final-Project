@@ -19,6 +19,8 @@
 #include "Framwork/GameState/NCGameState.h" //헌호수정 - 타입별 킬 카운트 증가
 #include "Item/Data/NCLootDropData.h"
 #include "Item/NCItemActor.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Inventory/NCInventoryType.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
@@ -572,9 +574,12 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	CachedAttackRange = Row->AttackRange;
 	ThrowVFX = Row->ThrowVFX;
 
-	HeldThrowMesh = Row->HeldThrowMesh; 
+	HeldThrowMesh = Row->HeldThrowMesh;
 	if (HeldObjectComp && HeldThrowMesh)
-		HeldObjectComp->SetVisibility(true);
+	{
+		HeldObjectComp->SetStaticMesh(HeldThrowMesh);
+		HeldObjectComp->SetVisibility(true);   // 스폰 때부터 손에 들고 있음
+	}
 
 	// 우정 추가
 	CashedKillScore = Row->KillScore;
@@ -809,20 +814,57 @@ void AVGMonsterCharacterBase::SpawnProjectile()
 		(MeshComp && CachedProjectileSocket != NAME_None)
 		? MeshComp->GetSocketLocation(CachedProjectileSocket)
 		: GetActorLocation();
-	const FRotator SpawnRot = GetActorForwardVector().Rotation();
 
-	// 1) 분비물 터지는 연출 (모든 클라에서 보여야 하니 멀티캐스트로)
+	// 타겟 위치 결정
+	FVector TargetLoc = CachedThrowTarget;
+
+	// 타겟이 안 정해졌으면 플레이어를 직접 찾아 조준 (싱글플레이)
+	if (TargetLoc.IsNearlyZero())
+	{
+		if (APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0))
+		{
+			TargetLoc = Player->GetActorLocation() + FVector(0.f, 0.f, 50.f); // 몸통 조준
+		}
+	}
+
+	// 포물선 속도 역산 (SpawnLoc → TargetLoc)
+	FVector TossVelocity = FVector::ZeroVector;
+	const bool bHaveArc = UGameplayStatics::SuggestProjectileVelocity_CustomArc(
+		this,
+		TossVelocity,
+		SpawnLoc,
+		TargetLoc,
+		0.f,     // 중력: 0이면 월드 기본 중력 사용
+		0.5f     // 아치 높이: 0=직선, 0.5=자연스러운 포물선, 1=높이 뜸
+	);
+
+	// VFX는 항상 (모든 클라)
 	Multicast_SpawnThrowVFX(SpawnLoc);
 
-	// 2) 실제 투사체 (서버에서만 — 데미지 판정)
+	// 실제 투사체는 서버에서만
 	if (HasAuthority() && ProjectileClass)
 	{
+		const FRotator SpawnRot =
+			bHaveArc ? TossVelocity.Rotation() : GetActorForwardVector().Rotation();
+
 		FActorSpawnParameters Params;
 		Params.Owner = this;
 		Params.Instigator = this;
 		Params.SpawnCollisionHandlingOverride =
 			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnLoc, SpawnRot, Params);
+
+		AActor* Proj = GetWorld()->SpawnActor<AActor>(
+			ProjectileClass, SpawnLoc, SpawnRot, Params);
+
+		// 계산된 포물선 속도를 투사체에 주입
+		if (Proj && bHaveArc)
+		{
+			if (UProjectileMovementComponent* PMC =
+				Proj->FindComponentByClass<UProjectileMovementComponent>())
+			{
+				PMC->Velocity = TossVelocity;
+			}
+		}
 	}
 }
 
@@ -849,4 +891,9 @@ void AVGMonsterCharacterBase::HideHeldThrowObject()
 	{
 		HeldObjectComp->SetVisibility(false);
 	}
+}
+
+void AVGMonsterCharacterBase::SetThrowTarget(const FVector& TargetLoc)
+{
+	CachedThrowTarget = TargetLoc;
 }
