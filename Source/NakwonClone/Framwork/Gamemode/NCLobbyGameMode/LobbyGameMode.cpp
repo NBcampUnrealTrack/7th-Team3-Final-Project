@@ -27,6 +27,11 @@ void ALobbyGameMode::MoveToShopLevel()
 	// }
 }
 
+void ALobbyGameMode::MoveToElderboomVillage()
+{
+	GetWorld()->ServerTravel("/Game/Maps/L_ElderboomVillage");
+}
+
 void ALobbyGameMode::MoveToTitle()
 {
 	GetWorld()->ServerTravel("/Game/Maps/L_TitleAndLobby");

@@ -17,6 +17,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void MoveToShopLevel();
+	
+	UFUNCTION(BlueprintCallable)
+	void MoveToElderboomVillage();
 
 	UFUNCTION(BlueprintCallable)
 	void MoveToTitle();
