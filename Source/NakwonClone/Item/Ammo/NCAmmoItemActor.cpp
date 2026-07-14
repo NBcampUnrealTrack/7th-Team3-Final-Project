@@ -12,5 +12,5 @@ void ANCAmmoItemActor::Interact_Implementation(AActor* Interactor)
 
 	EquipComp->AddReserveAmmo(AmmoType, AmmoAmount * Quantity);
 
-	ConsumeItem();
+	ConsumeItem(Interactor);
 }

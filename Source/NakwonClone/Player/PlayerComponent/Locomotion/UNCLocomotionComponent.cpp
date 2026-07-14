@@ -3,6 +3,7 @@
 #include "NakwonClone/Common/NCGameplayTags.h"
 #include "NakwonClone/Player/PlayerCharacter/NCBaseCharacter.h"
 #include "NakwonClone/Player/PlayerData/NCPlayerMovementData.h"
+#include "Player/PlayerController/NCPlayerController.h"
 //헌호수정
 #include "AbilitySystemComponent.h"
 #include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"
@@ -165,4 +166,12 @@ void UNCLocomotionComponent::EndSpeedBoost()
 	GetWorld()->GetTimerManager().ClearTimer(SpeedBoostTimerHandle);
 	SpeedBoostMultiplier = 1.f;
 	ApplyMovementSpeed();
+
+	if (OwnerCharacter)
+	{
+		if (ANCPlayerController* PC = Cast<ANCPlayerController>(OwnerCharacter->GetController()))
+		{
+			PC->Client_ShowNotification(FText::FromString(TEXT("이동 속도 증가가 종료되었습니다")), FLinearColor::White);
+		}
+	}
 }

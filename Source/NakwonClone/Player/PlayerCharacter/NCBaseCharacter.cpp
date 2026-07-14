@@ -5,6 +5,7 @@
 #include "NakwonClone/GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Player/PlayerController/NCPlayerController.h"
 
 ANCBaseCharacter::ANCBaseCharacter()
 {
@@ -109,5 +110,10 @@ void ANCBaseCharacter::EndInvincibility()
     if (UVGPlayerAttributeSet* AttrSet = GetPlayerAttributeSet())
     {
         AttrSet->SetInvincible(false);
+    }
+
+    if (ANCPlayerController* PC = Cast<ANCPlayerController>(GetController()))
+    {
+        PC->Client_ShowNotification(FText::FromString(TEXT("무적 상태가 종료되었습니다")), FLinearColor::White);
     }
 }

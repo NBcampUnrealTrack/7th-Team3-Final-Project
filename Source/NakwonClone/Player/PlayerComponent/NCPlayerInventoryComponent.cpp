@@ -1068,20 +1068,22 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
     // ─────────────────────────────────────
     if (LootTag.MatchesTag(NCItemTag::Credit))
     {
+        ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner());
+
         if (CreditDataTable)
         {
             if (FCreditItemData* Data = CreditDataTable->FindRow<FCreditItemData>(LootID, TEXT("LootCredit")))
             {
                 int32 RandomCredits = FMath::RandRange(Data->MinValue, Data->MaxValue);
 
-                if (ANCPlayerState* NCPS = Cast<ANCPlayerState>(GetOwner()))
+                if (NCPS)
                 {
                     NCPS->AddCredits(RandomCredits);
                 }
             }
         }
         // ItemToLoot->Destroy();
-        ItemToLoot->ConsumeItem();
+        ItemToLoot->ConsumeItem(NCPS ? NCPS->GetPawn() : nullptr);
         return;
     }
     
@@ -1103,7 +1105,7 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
             }
         }
 
-        ItemToLoot->ConsumeItem();
+        ItemToLoot->ConsumeItem(Pawn);
         return;
     }
 
@@ -1131,7 +1133,8 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 
             OnInventoryUpdated.Broadcast();
             // ItemToLoot->Destroy();
-            ItemToLoot->ConsumeItem();
+            ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner());
+            ItemToLoot->ConsumeItem(PS ? PS->GetPawn() : nullptr);
         }
 
         return;
@@ -1194,7 +1197,8 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
         Slot.Quantity = FMath::Min(Slot.Quantity + 1, ItemData.MaxStackSize);
         OnPresetUpdated.Broadcast();
 
-        ItemToLoot->ConsumeItem();
+        ANCPlayerState* PS = Cast<ANCPlayerState>(GetOwner());
+        ItemToLoot->ConsumeItem(PS ? PS->GetPawn() : nullptr);
         return;
     }
 
@@ -1286,7 +1290,7 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
 
                     OnPresetUpdated.Broadcast();
                     // ItemToLoot->Destroy();
-                    ItemToLoot->ConsumeItem();
+                    ItemToLoot->ConsumeItem(Pawn);
                     return;
                 }
             }
@@ -1295,7 +1299,7 @@ void UNCPlayerInventoryComponent::Server_LootItem_Implementation(class ANCItemAc
                 Preset.RightHand = NewSlot;
                 OnPresetUpdated.Broadcast();
                 // ItemToLoot->Destroy();
-                ItemToLoot->ConsumeItem();
+                ItemToLoot->ConsumeItem(Pawn);
                 return;
             }
         }

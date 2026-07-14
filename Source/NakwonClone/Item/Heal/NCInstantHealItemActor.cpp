@@ -5,6 +5,8 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GAS/AttributeSet/VGPlayerAttributeSet.h"
+#include "Player/PlayerCharacter/NCPlayerCharacter.h"
+#include "Player/PlayerController/NCPlayerController.h"
 
 ANCInstantHealItemActor::ANCInstantHealItemActor()
 {
@@ -24,5 +26,13 @@ void ANCInstantHealItemActor::Interact_Implementation(AActor* Interactor)
 	ASC->SetNumericAttributeBase(UVGPlayerAttributeSet::GetHealthAttribute(),
 		FMath::Clamp(Current + HealAmount, 0.f, Max));
 
-	ConsumeItem();
+	if (ANCPlayerCharacter* Player = Cast<ANCPlayerCharacter>(Interactor))
+	{
+		if (ANCPlayerController* NCPC = Cast<ANCPlayerController>(Player->GetController()))
+		{
+			NCPC->Client_ShowNotification(FText::FromString(TEXT("체력이 회복되었습니다")), FLinearColor::Green);
+		}
+	}
+
+	ConsumeItem(Interactor);
 }

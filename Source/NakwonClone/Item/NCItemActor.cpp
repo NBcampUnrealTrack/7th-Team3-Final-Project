@@ -163,24 +163,39 @@ void ANCItemActor::PlayAuraPulse()
 	SetActorTickEnabled(true);
 }
 
-void ANCItemActor::Multicast_PlayPickupFX_Implementation()
+void ANCItemActor::Multicast_PlayPickupFX_Implementation(AActor* Interactor)
 {
+	const bool bAtInteractor = bPickupEffectAtInteractor && Interactor;
+
 	if (PickupEffect)
 	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PickupEffect, GetActorLocation());
+		if (bAtInteractor)
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAttached(
+				PickupEffect,
+				Interactor->GetRootComponent(),
+				NAME_None,
+				FVector::ZeroVector, FRotator::ZeroRotator,
+				EAttachLocation::SnapToTarget, true);
+		}
+		else
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PickupEffect, GetActorLocation());
+		}
 	}
 
+	const FVector SoundLocation = bAtInteractor ? Interactor->GetActorLocation() : GetActorLocation();
 	if (PickupSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, SoundLocation);
 	}
 	
 	PlayAuraPulse();
 }
 
-void ANCItemActor::ConsumeItem()
+void ANCItemActor::ConsumeItem(AActor* Interactor)
 {
-	Multicast_PlayPickupFX();
+	Multicast_PlayPickupFX(Interactor);
 
 	if (HasAuthority())
 	{
@@ -197,6 +212,7 @@ void ANCItemActor::ConsumeItem()
 			false);
 	}
 }
+
 
 void ANCItemActor::FinishConsume()
 {

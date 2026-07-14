@@ -18,6 +18,7 @@
 #include "NakwonClone/Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"
+#include "Player/PlayerController/NCPlayerController.h"
 
 UNCGunComponent::UNCGunComponent()
 {
@@ -344,9 +345,11 @@ void UNCGunComponent::StartFire()
 
 	if (!CanFire()) return;
 
-	if (ActiveGunData->FireRate > 0.f && GetWorld())
+	const float EffectiveFireRate = ActiveGunData->FireRate * FireRateMultiplier;
+
+	if (EffectiveFireRate > 0.f && GetWorld())
 	{
-		const float MinInterval = 1.f / ActiveGunData->FireRate;
+		const float MinInterval = 1.f / EffectiveFireRate;
 		if (GetWorld()->GetTimeSeconds() - LastFireTime < MinInterval)
 			return;
 	}
@@ -356,7 +359,7 @@ void UNCGunComponent::StartFire()
 
 	if (CurrentFireMode == ENCFireMode::FullAuto)
 	{
-		const float Interval = (ActiveGunData->FireRate > 0.f) ? (1.f / ActiveGunData->FireRate) : 0.1f;
+		const float Interval = (EffectiveFireRate > 0.f) ? (1.f / EffectiveFireRate) : 0.1f;
 		GetWorld()->GetTimerManager().SetTimer(
 			FullAutoTimerHandle,
 			this, &UNCGunComponent::FireOnce,
@@ -1021,9 +1024,10 @@ void UNCGunComponent::ShowGunMagazine()
 	EquippedGunSkelMeshComp->UnHideBoneByName(TEXT("Bullets_joint"));
 }
 
-void UNCGunComponent::ActivateInfiniteAmmo(float Duration)
+void UNCGunComponent::ActivateInfiniteAmmo(float Duration, float InFireRateMultiplier)
 {
 	bInfiniteAmmoActive = true;
+	FireRateMultiplier = InFireRateMultiplier;
 
 	GetWorld()->GetTimerManager().SetTimer(
 		InfiniteAmmoTimerHandle, this, &UNCGunComponent::EndInfiniteAmmo, Duration, false);
@@ -1033,6 +1037,15 @@ void UNCGunComponent::EndInfiniteAmmo()
 {
 	GetWorld()->GetTimerManager().ClearTimer(InfiniteAmmoTimerHandle);
 	bInfiniteAmmoActive = false;
+	FireRateMultiplier = 1.f;
+
+	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
+	{
+		if (ANCPlayerController* PC = Cast<ANCPlayerController>(Char->GetController()))
+		{
+			PC->Client_ShowNotification(FText::FromString(TEXT("무한 탄약이 종료되었습니다")), FLinearColor::White);
+		}
+	}
 }
 
 void UNCGunComponent::ActivateDamageBoost(float Multiplier, float Duration)
@@ -1047,4 +1060,12 @@ void UNCGunComponent::EndDamageBoost()
 {
 	GetWorld()->GetTimerManager().ClearTimer(DamageBoostTimerHandle);
 	DamageMultiplier = 1.f;
+
+	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
+	{
+		if (ANCPlayerController* PC = Cast<ANCPlayerController>(Char->GetController()))
+		{
+			PC->Client_ShowNotification(FText::FromString(TEXT("공격력 강화가 종료되었습니다")), FLinearColor::White);
+		}
+	}
 }
