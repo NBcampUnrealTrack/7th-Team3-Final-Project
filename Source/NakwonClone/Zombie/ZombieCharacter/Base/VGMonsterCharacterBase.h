@@ -137,6 +137,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Monster|Ranged")
 	void SetThrowTarget(const FVector& TargetLoc);  // BT/공격 시작 때 호출
 
+	//원래 있던 것에 UFUNCTION 추가
+	UFUNCTION(BlueprintPure, Category = "Monster|Ranged")
+	TSubclassOf<UGameplayEffect> GetAttackEffectClass() const { return CachedAttackEffectClass; }
+
 protected:
 	// ── 몽타주 슬롯 (에디터에서 채움) ────────────────────────
 	UPROPERTY(EditAnywhere, Category = "Monster|Animation")
@@ -370,7 +374,6 @@ public:
 	FOnMonsterAttackFinished OnAttackFinished;
 
 	// ── 공격 트레이스/GE (AnimNotify_AttackTrace가 사용) ──────────
-	TSubclassOf<UGameplayEffect> GetAttackEffectClass() const { return CachedAttackEffectClass; }
 	const TArray<FName>& GetAttackSocketNames() const { return AttackSocketNames; }
 	float GetAttackTraceDistance() const { return AttackTraceDistance; }
 
