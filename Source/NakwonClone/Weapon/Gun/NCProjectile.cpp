@@ -10,6 +10,8 @@
 #include "GAS/Effect/GE_Damage.h"
 #include "GameplayEffectTypes.h" // FGameplayCueParameters
 #include "Engine/OverlapResult.h"
+#include "TimerManager.h"
+#include "Item/NCItemActor.h"
 
 ANCProjectile::ANCProjectile()
 {
@@ -46,7 +48,15 @@ void ANCProjectile::BeginPlay()
 
     if (AActor* OwnerActor = GetOwner()) CollisionComp->IgnoreActorWhenMoving(OwnerActor, true);
 
-    if (CheckPointBlankOverlap()) return;
+    if (bTracePenetration)
+    {
+        ResolveTracePenetration(MaxRange);
+        CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
+    else if (CheckPointBlankOverlap())
+    {
+        return;
+    }
 
     // ProjectileSpeed는 GunComponent가 SpawnActor 직후 설정
     MovementComp->InitialSpeed = ProjectileSpeed;
@@ -64,13 +74,13 @@ void ANCProjectile::BeginPlay()
     }
 }
 
-void ANCProjectile::OnHit(UPrimitiveComponent* /*HitComp*/, AActor* OtherActor,
-                           UPrimitiveComponent* /*OtherComp*/, FVector /*NormalImpulse*/,
+void ANCProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+                           UPrimitiveComponent* OtherComp, FVector /*NormalImpulse*/,
                            const FHitResult& Hit)
 {
     if (!OtherActor || OtherActor == GetOwner()) return;
 
-    ProcessHit(OtherActor, Hit);
+    ProcessHit(OtherActor, Hit, Damage);
 
     if (OtherActor->IsA<ACharacter>() && TryPenetrate(OtherActor))
         return;
@@ -89,6 +99,81 @@ bool ANCProjectile::TryPenetrate(AActor* OtherActor)
     MovementComp->Velocity = GetActorForwardVector() * ProjectileSpeed;
 
     return true;
+}
+
+void ANCProjectile::ResolveTracePenetration(float InMaxRange)
+{
+    AActor* OwnerActor = GetOwner();
+    const FVector Start = GetActorLocation();
+    const FVector End   = Start + GetActorForwardVector() * InMaxRange;
+    const float Radius  = CollisionComp->GetScaledSphereRadius();
+
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);
+    if (OwnerActor) Params.AddIgnoredActor(OwnerActor);
+    Params.bTraceComplex = false;
+
+    float BlockDistance = InMaxRange;
+    {
+        FCollisionQueryParams WallParams = Params;
+        FCollisionObjectQueryParams WallObjParams;
+        WallObjParams.AddObjectTypesToQuery(ECC_WorldStatic);
+        WallObjParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+
+        constexpr int32 MaxIgnoreIterations = 8;
+        for (int32 i = 0; i < MaxIgnoreIterations; ++i)
+        {
+            FHitResult WallHit;
+            if (!GetWorld()->LineTraceSingleByObjectType(WallHit, Start, End, WallObjParams, WallParams))
+                break;
+
+            AActor* WallActor = WallHit.GetActor();
+            if (WallActor && WallActor->IsA<ANCItemActor>())
+            {
+                WallParams.AddIgnoredActor(WallActor);
+                continue;
+            }
+
+            BlockDistance = WallHit.Distance;
+            break;
+        }
+    }
+
+    const FVector PawnEnd = Start + GetActorForwardVector() * BlockDistance;
+    FCollisionObjectQueryParams PawnObjParams;
+    PawnObjParams.AddObjectTypesToQuery(ECC_Pawn);
+
+    TArray<FHitResult> Hits;
+    GetWorld()->SweepMultiByObjectType(
+        Hits, Start, PawnEnd, FQuat::Identity, PawnObjParams, FCollisionShape::MakeSphere(Radius), Params);
+
+    Hits.Sort([](const FHitResult& A, const FHitResult& B) { return A.Distance < B.Distance; });
+
+    for (const FHitResult& Hit : Hits)
+    {
+        AActor* OtherActor = Hit.GetActor();
+        if (!OtherActor || OtherActor == OwnerActor || OtherActor->IsA<ANCProjectile>()) continue;
+
+        if (!OtherActor->IsA<ACharacter>())
+            continue;
+
+        const float DamageSnapshot = Damage;
+        const float DelaySec = ProjectileSpeed > 0.f ? FMath::Max(Hit.Distance / ProjectileSpeed, 0.001f) : 0.001f;
+        const FHitResult HitCopy = Hit;
+        TWeakObjectPtr<ANCProjectile> WeakThis(this);
+        TWeakObjectPtr<AActor> WeakOther(OtherActor);
+
+        FTimerHandle Handle;
+        GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda(
+            [WeakThis, WeakOther, HitCopy, DamageSnapshot]()
+            {
+                if (WeakThis.IsValid() && WeakOther.IsValid())
+                    WeakThis->ProcessHit(WeakOther.Get(), HitCopy, DamageSnapshot);
+            }), DelaySec, false);
+
+        if (!TryPenetrate(OtherActor))
+            break;
+    }
 }
 
 bool ANCProjectile::CheckPointBlankOverlap()
@@ -115,7 +200,7 @@ bool ANCProjectile::CheckPointBlankOverlap()
         Hit.ImpactNormal = -GetActorForwardVector();
         Hit.Component = Overlap.GetComponent();
 
-        ProcessHit(OtherActor, Hit);
+        ProcessHit(OtherActor, Hit, Damage);
 
         if (OtherActor->IsA<ACharacter>() && TryPenetrate(OtherActor))
             return false;
@@ -127,7 +212,7 @@ bool ANCProjectile::CheckPointBlankOverlap()
     return false;
 }
 
-void ANCProjectile::ProcessHit(AActor* OtherActor, const FHitResult& Hit)
+void ANCProjectile::ProcessHit(AActor* OtherActor, const FHitResult& Hit, float InDamage)
 {
     // GAS 데미지 적용
     UAbilitySystemComponent* SourceASC =
@@ -144,7 +229,7 @@ void ANCProjectile::ProcessHit(AActor* OtherActor, const FHitResult& Hit)
 
         if (Spec.IsValid())
         {
-            Spec.Data->SetSetByCallerMagnitude(NCData::Damage, -Damage);
+            Spec.Data->SetSetByCallerMagnitude(NCData::Damage, -InDamage);
             SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
         }
     }

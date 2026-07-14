@@ -498,7 +498,13 @@ void UNCGunComponent::FireOnce()
 		if (MuzzleMeshComp && !Data->MuzzleSocketName.IsNone()
 			&& MuzzleMeshComp->DoesSocketExist(Data->MuzzleSocketName))
 		{
-			MuzzleDistance = (MuzzleMeshComp->GetSocketLocation(Data->MuzzleSocketName) - CamLocation).Size();
+			const float RawMuzzleDistance = (MuzzleMeshComp->GetSocketLocation(Data->MuzzleSocketName) - CamLocation).Size();
+
+			constexpr float MaxReasonableMuzzleDistance = 200.f;
+			if (RawMuzzleDistance <= MaxReasonableMuzzleDistance)
+			{
+				MuzzleDistance = RawMuzzleDistance;
+			}
 		}
 	}
 	const FVector SpreadOrigin = CamLocation + CamForward * MuzzleDistance;
@@ -516,9 +522,12 @@ void UNCGunComponent::FireOnce()
 
 		const FVector PelletSpawnLocation = SpreadOrigin;
 
+		const FVector ProjectileScaleVec = FVector(Data->ProjectileScale != 0.f ? Data->ProjectileScale : 1.f);
+		const FTransform SpawnXform(PelletRotation, PelletSpawnLocation, ProjectileScaleVec);
+
 		ANCProjectile* NCProj = GetWorld()->SpawnActorDeferred<ANCProjectile>(
 			Data->ProjectileClass,
-			FTransform(PelletRotation, PelletSpawnLocation),
+			SpawnXform,
 			Owner, Cast<APawn>(Owner),
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
@@ -535,9 +544,10 @@ void UNCGunComponent::FireOnce()
 			NCProj->HitShakeScale         = ShakeScale;
 			NCProj->PenetrationsRemaining = Data->PenetrationCount;
 			NCProj->PenetrationDamageFalloff = Data->PenetrationDamageFalloff;
+			NCProj->bTracePenetration     = Data->bTracePenetration;
 			if (!Data->TracerEffect.IsNull())
 				NCProj->TracerEffect = Data->TracerEffect.LoadSynchronous();
-			NCProj->FinishSpawning(FTransform(PelletRotation, PelletSpawnLocation));
+			NCProj->FinishSpawning(SpawnXform);
 		}
 	}
 }

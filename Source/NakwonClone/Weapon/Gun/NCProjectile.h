@@ -59,6 +59,9 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Projectile")
     float PenetrationDamageFalloff = 0.3f;
 
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile")
+    bool bTracePenetration = false;
+
 protected:
     UPROPERTY(VisibleAnywhere, Category = "Projectile")
     TObjectPtr<USphereComponent> CollisionComp;
@@ -73,8 +76,9 @@ protected:
                UPrimitiveComponent* OtherComp, FVector NormalImpulse,
                const FHitResult& Hit);
 
-    void ProcessHit(AActor* OtherActor, const FHitResult& Hit);
+    void ProcessHit(AActor* OtherActor, const FHitResult& Hit, float InDamage);
     bool CheckPointBlankOverlap();
 
     bool TryPenetrate(AActor* OtherActor);
+    void ResolveTracePenetration(float InMaxRange);
 };

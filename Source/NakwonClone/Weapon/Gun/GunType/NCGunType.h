@@ -48,6 +48,9 @@ struct FNCGunData : public FTableRowBase
     bool bAutoReloadOnEmpty = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    bool bTracePenetration = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayTag GunTypeTag;
 
     // UI
@@ -59,6 +62,7 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float FireRate        = 10.f;   // 연사 시 초당 발사 수
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float ProjectileSpeed = 10000.f;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float MaxRange        = 5000.f; // 발사체 최대 사거리
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float ProjectileScale = 1.f;    // 발사체 크기 배율 (콜리전 포함)
     UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 MagazineSize    = 30;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 MaxReserveAmmo  = 90;
 
@@ -67,7 +71,7 @@ struct FNCGunData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float SpreadAngle  = 0.f;  // 탄퍼짐
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 PenetrationCount = 0;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) float PenetrationDamageFalloff = 0.3f; 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) float PenetrationDamageFalloff = 0.3f;
 
     // 재장전
     UPROPERTY(EditAnywhere, BlueprintReadOnly) float ReloadTime = 2.f;
