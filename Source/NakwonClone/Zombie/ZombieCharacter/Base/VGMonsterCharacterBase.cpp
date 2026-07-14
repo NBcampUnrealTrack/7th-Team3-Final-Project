@@ -69,10 +69,10 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	HeldObjectComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldObjectComp"));
-	HeldObjectComp->SetupAttachment(GetMesh(), TEXT("hand_r"));
+	HeldObjectComp->SetupAttachment(GetMesh(), TEXT("ThrowSocket"));  
 	HeldObjectComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HeldObjectComp->SetVisibility(false);
-	HeldObjectComp->SetRelativeScale3D(FVector(0.5f));
+	HeldObjectComp->SetRelativeScale3D(FVector(1.2f));
 }
 
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
