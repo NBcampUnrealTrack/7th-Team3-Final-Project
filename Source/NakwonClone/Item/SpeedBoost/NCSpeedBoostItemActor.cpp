@@ -3,6 +3,7 @@
 #include "NCSpeedBoostItemActor.h"
 #include "Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Player/PlayerComponent/Locomotion/UNCLocomotionComponent.h"
+#include "Player/PlayerController/NCPlayerController.h"
 
 void ANCSpeedBoostItemActor::Interact_Implementation(AActor* Interactor)
 {
@@ -14,5 +15,10 @@ void ANCSpeedBoostItemActor::Interact_Implementation(AActor* Interactor)
 
 	LocomotionComp->ActivateSpeedBoost(SpeedMultiplier, Duration);
 
-	ConsumeItem();
+	if (ANCPlayerController* NCPC = Cast<ANCPlayerController>(Player->GetController()))
+	{
+		NCPC->Client_ShowNotification(FText::FromString(TEXT("이동 속도가 증가했습니다")), FLinearColor::Green);
+	}
+
+	ConsumeItem(Interactor);
 }
