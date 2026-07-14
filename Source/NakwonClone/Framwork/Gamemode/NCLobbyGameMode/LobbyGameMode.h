@@ -20,6 +20,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void MoveToElderboomVillage();
+	
+	UFUNCTION(BlueprintCallable)
+	void MoveToHeungnyemun();
 
 	UFUNCTION(BlueprintCallable)
 	void MoveToTitle();

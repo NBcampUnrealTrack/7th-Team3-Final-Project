@@ -32,6 +32,11 @@ void ALobbyGameMode::MoveToElderboomVillage()
 	GetWorld()->ServerTravel("/Game/Maps/L_ElderboomVillage");
 }
 
+void ALobbyGameMode::MoveToHeungnyemun()
+{
+	GetWorld()->ServerTravel("/Game/Maps/L_Heungnyemun");
+}
+
 void ALobbyGameMode::MoveToTitle()
 {
 	GetWorld()->ServerTravel("/Game/Maps/L_TitleAndLobby");
