@@ -31,6 +31,6 @@ void ANCGunActor::Interact_Implementation(AActor* Interactor)
 	if (bEquipped)
 	{
 		//Destroy();
-		ConsumeItem();
+		ConsumeItem(Interactor);
 	}
 }

@@ -15,5 +15,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|InfiniteAmmo")
 	float Duration = 5.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|InfiniteAmmo")
+	float FireRateMultiplier = 2.f;
+
 	virtual void Interact_Implementation(AActor* Interactor) override;
 };

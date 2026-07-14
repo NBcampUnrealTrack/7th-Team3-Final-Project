@@ -60,9 +60,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Pickup")
 	USoundBase* PickupSound;
 	
+	// 습득 이펙트/사운드를 아이템 자리(false)가 아닌 습득한 액터(플레이어) 위치(true)에서 재생
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Pickup")
+	bool bPickupEffectAtInteractor = false;
+
 	// 습득 성공 시 이펙트/사운드 재생 후 파괴
 	UFUNCTION(BlueprintCallable, Category = "Item|Pickup")
-	void ConsumeItem();
+	void ConsumeItem(AActor* Interactor = nullptr);
 
 	// true면 습득 시 파괴하지 않고 RespawnTime 후 같은 자리에 다시 등장 (레벨 배치 아이템용)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Respawn")
@@ -77,7 +81,7 @@ protected:
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlayPickupFX();
+	void Multicast_PlayPickupFX(AActor* Interactor);
 	
 	bool bAutoPickupEnabled = true;
 	

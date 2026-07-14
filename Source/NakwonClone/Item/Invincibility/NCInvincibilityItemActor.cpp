@@ -3,7 +3,7 @@
 
 #include "NCInvincibilityItemActor.h"
 #include "Player/PlayerCharacter/NCPlayerCharacter.h"
-
+#include "Player/PlayerController/NCPlayerController.h"
 
 ANCInvincibilityItemActor::ANCInvincibilityItemActor()
 {
@@ -17,5 +17,10 @@ void ANCInvincibilityItemActor::Interact_Implementation(AActor* Interactor)
 
 	Player->ActivateInvincibility(Duration);
 
-	ConsumeItem();
+	if (ANCPlayerController* NCPC = Cast<ANCPlayerController>(Player->GetController()))
+	{
+		NCPC->Client_ShowNotification(FText::FromString(TEXT("무적 상태가 되었습니다")), FLinearColor::Yellow);
+	}
+
+	ConsumeItem(Interactor);
 }

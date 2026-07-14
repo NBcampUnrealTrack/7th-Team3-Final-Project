@@ -30,5 +30,5 @@ void ANCShopItemActor::Interact_Implementation(AActor* Interactor)
 
 	OnPurchased(Player);
 
-	ConsumeItem();
+	ConsumeItem(Interactor);
 }

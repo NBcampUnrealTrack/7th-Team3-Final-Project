@@ -137,7 +137,7 @@ public:
 
 	float PlayUnequipMontage(const FNCGunData* Data);
 
-	void ActivateInfiniteAmmo(float Duration);
+	void ActivateInfiniteAmmo(float Duration, float InFireRateMultiplier = 1.f);
 	void EndInfiniteAmmo();
 
 	void ActivateDamageBoost(float Multiplier, float Duration);
@@ -203,6 +203,7 @@ private:
 
 	bool bWantsADS = false;
 	bool bInfiniteAmmoActive = false;
+	float FireRateMultiplier = 1.f;
 
 	float LastFireTime = -100.f;
 
