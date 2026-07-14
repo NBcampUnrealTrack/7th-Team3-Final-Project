@@ -23,6 +23,7 @@
 #include "NakwonClone/Player/PlayerComponent/NCPlayerInventoryComponent.h"
 #include "NakwonClone/Zombie/AI/AttackSlot/VGAttackSlotComponent.h"
 #include "Player/PlayerComponent/NCEquipmentComponent.h"
+#include "Player/PlayerComponent/NCFlamethrowerComponent.h"
 #include "Player/PlayerComponent/NCGunComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "Player/PlayerComponent/NCPistolComponent.h"
@@ -137,6 +138,11 @@ void ANCPlayerCharacter::InitComponents()
     EquipmentComponent =
         CreateDefaultSubobject<UNCEquipmentComponent>(
             TEXT("EquipmentComponent")
+        );
+
+    FlamethrowerComponent =
+        CreateDefaultSubobject<UNCFlamethrowerComponent>(
+            TEXT("FlamethrowerComponent")
         );
 
     RifleComponent =
