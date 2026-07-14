@@ -19,6 +19,9 @@
 #include "Framwork/GameState/NCGameState.h" //헌호수정 - 타입별 킬 카운트 증가
 #include "Item/Data/NCLootDropData.h"
 #include "Item/NCItemActor.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Inventory/NCInventoryType.h"
 
 AVGMonsterCharacterBase::AVGMonsterCharacterBase()
@@ -64,6 +67,12 @@ AVGMonsterCharacterBase::AVGMonsterCharacterBase()
 	DetectionCapsule->SetCapsuleSize(40.f, 90.f);
 	//헌호수정 - 수면/감지 시스템 미사용: 오버랩 쿼리 끔 (매 프레임 비용 제거, 100마리 최적화)
 	DetectionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	HeldObjectComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldObjectComp"));
+	HeldObjectComp->SetupAttachment(GetMesh(), TEXT("hand_r"));
+	HeldObjectComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HeldObjectComp->SetVisibility(false);
+	HeldObjectComp->SetRelativeScale3D(FVector(0.5f));
 }
 
 UAbilitySystemComponent* AVGMonsterCharacterBase::GetAbilitySystemComponent() const
@@ -564,7 +573,15 @@ void AVGMonsterCharacterBase::ApplyMonsterType()
 	ProjectileClass = Row->ProjectileClass;
 	CachedProjectileSocket = Row->ProjectileSocket;
 	CachedAttackRange = Row->AttackRange;
-	SpitVFX = Row->SpitVFX;
+	ThrowVFX = Row->ThrowVFX;
+
+	HeldThrowMesh = Row->HeldThrowMesh;
+	if (HeldObjectComp && HeldThrowMesh)
+	{
+		HeldObjectComp->SetStaticMesh(HeldThrowMesh);
+		HeldObjectComp->SetVisibility(true);   // 스폰 때부터 손에 들고 있음
+	}
+
 	// 우정 추가
 	CashedKillScore = Row->KillScore;
 }
@@ -798,28 +815,95 @@ void AVGMonsterCharacterBase::SpawnProjectile()
 		(MeshComp && CachedProjectileSocket != NAME_None)
 		? MeshComp->GetSocketLocation(CachedProjectileSocket)
 		: GetActorLocation();
-	const FRotator SpawnRot = GetActorForwardVector().Rotation();
 
-	// 1) 분비물 터지는 연출 (모든 클라에서 보여야 하니 멀티캐스트로)
-	Multicast_SpawnSpitVFX(SpawnLoc);
+	// 타겟 위치 결정
+	FVector TargetLoc = CachedThrowTarget;
 
-	// 2) 실제 투사체 (서버에서만 — 데미지 판정)
+	// 타겟이 안 정해졌으면 플레이어를 직접 찾아 조준 (싱글플레이)
+	if (TargetLoc.IsNearlyZero())
+	{
+		if (APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0))
+		{
+			TargetLoc = Player->GetActorLocation() + FVector(0.f, 0.f, 50.f); // 몸통 조준
+		}
+	}
+
+	// 포물선 속도 역산 (SpawnLoc → TargetLoc)
+	FVector TossVelocity = FVector::ZeroVector;
+	const bool bHaveArc = UGameplayStatics::SuggestProjectileVelocity_CustomArc(
+		this,
+		TossVelocity,
+		SpawnLoc,
+		TargetLoc,
+		0.f,     // 중력: 0이면 월드 기본 중력 사용
+		0.5f     // 아치 높이: 0=직선, 0.5=자연스러운 포물선, 1=높이 뜸
+	);
+
+	// VFX는 항상 (모든 클라)
+	Multicast_SpawnThrowVFX(SpawnLoc);
+
+	// 실제 투사체는 서버에서만
 	if (HasAuthority() && ProjectileClass)
 	{
+		const FRotator SpawnRot =
+			bHaveArc ? TossVelocity.Rotation() : GetActorForwardVector().Rotation();
+
 		FActorSpawnParameters Params;
 		Params.Owner = this;
 		Params.Instigator = this;
 		Params.SpawnCollisionHandlingOverride =
 			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnLoc, SpawnRot, Params);
+
+		AActor* Proj = GetWorld()->SpawnActor<AActor>(
+			ProjectileClass, SpawnLoc, SpawnRot, Params);
+
+		if (Proj)
+		{
+			// 던진 좀비(this)를 충돌에서 무시 — 근접 시 자기 몸에 부딪혀 멈추는 것 방지
+			if (UPrimitiveComponent* ProjRoot = Cast<UPrimitiveComponent>(Proj->GetRootComponent()))
+			{
+				ProjRoot->IgnoreActorWhenMoving(this, true);
+			}
+
+			// 계산된 포물선 속도를 투사체에 주입
+			if (bHaveArc)
+			{
+				if (UProjectileMovementComponent* PMC =
+					Proj->FindComponentByClass<UProjectileMovementComponent>())
+				{
+					PMC->Velocity = TossVelocity;
+				}
+			}
+		}
 	}
 }
 
-void AVGMonsterCharacterBase::Multicast_SpawnSpitVFX_Implementation(const FVector& Location)
+void AVGMonsterCharacterBase::Multicast_SpawnThrowVFX_Implementation(const FVector& Location)
 {
-	if (SpitVFX)
+	if (ThrowVFX)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(), SpitVFX, Location, GetActorForwardVector().Rotation());
+			GetWorld(), ThrowVFX, Location, GetActorForwardVector().Rotation());
 	}
+}
+
+void AVGMonsterCharacterBase::ShowHeldThrowObject()
+{
+	if (HeldObjectComp && HeldThrowMesh)
+	{
+		HeldObjectComp->SetVisibility(true);
+	}
+}
+
+void AVGMonsterCharacterBase::HideHeldThrowObject()
+{
+	if (HeldObjectComp)
+	{
+		HeldObjectComp->SetVisibility(false);
+	}
+}
+
+void AVGMonsterCharacterBase::SetThrowTarget(const FVector& TargetLoc)
+{
+	CachedThrowTarget = TargetLoc;
 }

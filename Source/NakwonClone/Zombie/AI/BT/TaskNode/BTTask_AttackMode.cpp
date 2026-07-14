@@ -4,6 +4,7 @@
 #include "AIController.h" //헌호수정 - 거리 직접 계산
 #include "BehaviorTree/BlackboardComponent.h"
 #include "NakwonClone/Zombie/AI/AIController/Base/VGMonsterAIControllerBase.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h" //헌호수정 - 타입별 사거리(원거리 좀비)
 
 UBTTask_AttackMode::UBTTask_AttackMode()
 {
@@ -28,7 +29,17 @@ EBTNodeResult::Type UBTTask_AttackMode::ExecuteTask(UBehaviorTreeComponent& Owne
 
 	const float Distance = FVector::Dist(Self->GetActorLocation(), Target->GetActorLocation());
 
-	if (Distance <= AttackRange)
+	//헌호수정 - 좀비 타입별 사거리 사용 (원거리 Thrower는 크게, 근접은 데이터 값). 없으면 노드 기본값 폴백
+	float EffectiveRange = AttackRange;
+	if (AVGMonsterCharacterBase* Mon = Cast<AVGMonsterCharacterBase>(Self))
+	{
+		if (Mon->GetAttackRange() > 0.f)
+		{
+			EffectiveRange = Mon->GetAttackRange();
+		}
+	}
+
+	if (Distance <= EffectiveRange)
 	{
 		// 사거리 안 → 공격 가능
 		BB->SetValueAsBool(AVGMonsterAIControllerBase::BIsAttackKey, true);
