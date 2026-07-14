@@ -315,11 +315,12 @@ void ANCItemActor::OnConstruction(const FTransform& Transform)
 			
 			if (FoundData)
 			{
-				ItemTypeTag    = FoundData->ItemTypeTag;
-				PickupEffect   = FoundData->PickupEffect;
-				PickupSound    = FoundData->PickupSound;
-				IdleAuraEffect = FoundData->IdleAuraEffect;
-				
+				ItemTypeTag = FoundData->ItemTypeTag;
+
+				if (FoundData->PickupEffect)   PickupEffect   = FoundData->PickupEffect;
+				if (FoundData->PickupSound)    PickupSound    = FoundData->PickupSound;
+				if (FoundData->IdleAuraEffect) IdleAuraEffect = FoundData->IdleAuraEffect;
+
 				if (ItemMesh && FoundData->ItemMesh)
 				{
 					ItemMesh->SetStaticMesh(FoundData->ItemMesh);
@@ -356,9 +357,9 @@ void ANCItemActor::InitializeItemData(FName InItemID, FGameplayTag InTag, int32 
 				FItemData* FoundData = LoadedItemDataTable->FindRow<FItemData>(ItemID, TEXT("InitializeItemData"));
 				if (FoundData)
 				{
-					PickupEffect   = FoundData->PickupEffect;
-					PickupSound    = FoundData->PickupSound;
-					IdleAuraEffect = FoundData->IdleAuraEffect;
+					if (FoundData->PickupEffect)   PickupEffect   = FoundData->PickupEffect;
+					if (FoundData->PickupSound)    PickupSound    = FoundData->PickupSound;
+					if (FoundData->IdleAuraEffect) IdleAuraEffect = FoundData->IdleAuraEffect;
 
 					if (IdleAuraEffect && IdleAuraComponent)
 					{
