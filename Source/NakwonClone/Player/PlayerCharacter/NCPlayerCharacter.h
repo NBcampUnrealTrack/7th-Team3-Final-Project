@@ -111,6 +111,9 @@ public:
 
 	void StartSprint();
 	void StopSprint();
+	void ForceStopSprintForADS();
+	bool IsSprintKeyHeld() const { return bSprintKeyHeld; }
+
 	void ToggleWalk();
 	void ToggleCrouch();
 	virtual void OnDead() override;
@@ -168,6 +171,10 @@ protected:
 	void OnRep_bFlashlightOn();
 
 	void ApplyFlashlightState();
+
+	void ApplyJogGait();
+
+	bool bSprintKeyHeld = false;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
