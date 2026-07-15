@@ -443,6 +443,8 @@ void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceT
 
 void ANCPlayerCharacter::StartSprint()
 {
+    bSprintKeyHeld = true;
+
     if (UNCGunComponent* GunComp = GetGunComponent())
     {
         if (GunComp->IsADS())
@@ -468,6 +470,17 @@ void ANCPlayerCharacter::StartSprint()
 }
 
 void ANCPlayerCharacter::StopSprint()
+{
+    bSprintKeyHeld = false;
+    ApplyJogGait();
+}
+
+void ANCPlayerCharacter::ForceStopSprintForADS()
+{
+    ApplyJogGait();
+}
+
+void ANCPlayerCharacter::ApplyJogGait()
 {
     // 헌호수정
     if (LocomotionComponent)
@@ -832,7 +845,7 @@ void ANCPlayerCharacter::HandleHitReact(AActor* Attacker)
     }
 
     //헌호수정 - 피격 시 스턴 + 행동 취소
-    ApplyStun();
+    // ApplyStun(); // 하상빈 - 피격 스턴 제거 요청으로 비활성화
 }
 
 //헌호수정 - 스턴 적용: 하던 행동 취소 + 이동/시점 입력 잠금
