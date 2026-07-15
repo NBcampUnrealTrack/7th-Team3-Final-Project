@@ -59,6 +59,20 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Projectile")
     float PenetrationDamageFalloff = 0.3f;
 
+    //헌호수정 - 바렛(스나이퍼) 킬: true면 좀비 즉사 대신 "정지→순서대로 지연 죽음" (발사 시 총이 세팅)
+    UPROPERTY(BlueprintReadWrite, Category = "Projectile|SniperKill")
+    bool bSniperKill = false;
+
+    //헌호수정 - 첫 좀비 죽음까지 딜레이(초) + 관통 순번마다 추가되는 간격(초) → 도미노 연출
+    UPROPERTY(EditAnywhere, Category = "Projectile|SniperKill")
+    float SniperKillBaseDelay = 0.5f;
+
+    UPROPERTY(EditAnywhere, Category = "Projectile|SniperKill")
+    float SniperKillStagger = 0.15f;
+
+    //헌호수정 - 이 총알이 맞춘 좀비 순번(관통 순서) — 스나이퍼 킬 딜레이 계산용
+    int32 SniperHitOrder = 0;
+
     UPROPERTY(BlueprintReadWrite, Category = "Projectile")
     bool bTracePenetration = false;
 

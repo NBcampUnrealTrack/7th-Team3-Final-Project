@@ -548,6 +548,8 @@ void UNCGunComponent::FireOnce()
 			NCProj->PenetrationsRemaining = Data->PenetrationCount;
 			NCProj->PenetrationDamageFalloff = Data->PenetrationDamageFalloff;
 			NCProj->bTracePenetration     = Data->bTracePenetration;
+			//헌호수정 - 바렛(스나이퍼)이면 스나이퍼 킬 활성화 (좀비 정지→순서대로 지연 죽음)
+			NCProj->bSniperKill           = Data->GunTypeTag.MatchesTagExact(NCGun::Type_Sniper);
 			if (!Data->TracerEffect.IsNull())
 				NCProj->TracerEffect = Data->TracerEffect.LoadSynchronous();
 			NCProj->FinishSpawning(SpawnXform);

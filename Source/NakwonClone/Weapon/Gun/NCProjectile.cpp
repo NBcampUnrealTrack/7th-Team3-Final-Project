@@ -12,6 +12,7 @@
 #include "Engine/OverlapResult.h"
 #include "TimerManager.h"
 #include "Item/NCItemActor.h"
+#include "NakwonClone/Zombie/ZombieCharacter/Base/VGMonsterCharacterBase.h" //헌호수정 - 바렛 스나이퍼 킬
 
 ANCProjectile::ANCProjectile()
 {
@@ -214,6 +215,19 @@ bool ANCProjectile::CheckPointBlankOverlap()
 
 void ANCProjectile::ProcessHit(AActor* OtherActor, const FHitResult& Hit, float InDamage)
 {
+    //헌호수정 - 바렛 스나이퍼 킬: 좀비면 일반 데미지 대신 "정지→순서대로 지연 죽음" 예약하고 종료
+    // (바렛 아니거나 좀비 아니면 이 블록 건너뛰고 아래 기존 로직 그대로 실행)
+    if (bSniperKill)
+    {
+        if (AVGMonsterCharacterBase* Monster = Cast<AVGMonsterCharacterBase>(OtherActor))
+        {
+            Monster->SetLastDamageCauser(GetInstigator());   // 점수/콤보 귀속 유지
+            Monster->TriggerSniperKill(SniperKillBaseDelay + SniperHitOrder * SniperKillStagger);
+            ++SniperHitOrder;                                 // 다음 관통 좀비는 더 늦게 터짐(도미노)
+            return;                                           // 일반 데미지/이펙트 스킵
+        }
+    }
+
     // GAS 데미지 적용
     UAbilitySystemComponent* SourceASC =
         UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetInstigator());

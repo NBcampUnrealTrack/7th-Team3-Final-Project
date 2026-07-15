@@ -39,6 +39,10 @@ EBTNodeResult::Type UBTTask_AttackMode::ExecuteTask(UBehaviorTreeComponent& Owne
 		}
 	}
 
+	//헌호수정 - [임시 진단] 실제 사거리/거리 확인용. 원인 확인 후 삭제 예정
+	UE_LOG(LogTemp, Warning, TEXT("[AttackMode] %s NodeRange=%.0f EffRange=%.0f Dist=%.0f"),
+		*Self->GetName(), AttackRange, EffectiveRange, Distance);
+
 	if (Distance <= EffectiveRange)
 	{
 		// 사거리 안 → 공격 가능
