@@ -910,13 +910,25 @@ void AVGMonsterCharacterBase::SpawnProjectile()
 				ProjRoot->IgnoreActorWhenMoving(this, true);
 			}
 
-			// 계산된 포물선 속도를 투사체에 주입
-			if (bHaveArc)
+			if (UProjectileMovementComponent* PMC =
+				Proj->FindComponentByClass<UProjectileMovementComponent>())
 			{
-				if (UProjectileMovementComponent* PMC =
-					Proj->FindComponentByClass<UProjectileMovementComponent>())
+				if (bHaveArc)
 				{
+					// MaxSpeed가 계산된 속도보다 작으면 잘리므로, 넉넉히 풀어줌
+					const float NeededSpeed = TossVelocity.Size();
+					if (PMC->MaxSpeed > 0.f && PMC->MaxSpeed < NeededSpeed)
+					{
+						PMC->MaxSpeed = NeededSpeed * 1.1f;   // 여유 10%
+					}
 					PMC->Velocity = TossVelocity;
+				}
+				else
+				{
+					// 아치 계산 실패 → 원인 로그
+					UE_LOG(LogMonster, Warning,
+						TEXT("[Throw] SuggestProjectileVelocity 실패: 거리=%.0f"),
+						FVector::Dist(SpawnLoc, TargetLoc));
 				}
 			}
 		}
