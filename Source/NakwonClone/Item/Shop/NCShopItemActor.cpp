@@ -5,6 +5,28 @@
 #include "Player/PlayerCharacter/NCPlayerCharacter.h"
 #include "Framwork/GameState/NCGameState.h"
 #include "Player/PlayerController/NCPlayerController.h"
+#include "Components/TextRenderComponent.h"
+
+ANCShopItemActor::ANCShopItemActor()
+{
+	ScoreTextComponent = CreateDefaultSubobject<UTextRenderComponent>(TEXT("ScoreTextComponent"));
+	ScoreTextComponent->SetupAttachment(RootComponent);
+	ScoreTextComponent->SetRelativeLocation(FVector(0.f, 0.f, 60.f));
+	ScoreTextComponent->SetHorizontalAlignment(EHTA_Center);
+	ScoreTextComponent->SetVerticalAlignment(EVRTA_TextCenter);
+	ScoreTextComponent->SetWorldSize(30.f);
+	ScoreTextComponent->SetTextRenderColor(FColor::Green);
+}
+
+void ANCShopItemActor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (ScoreTextComponent)
+	{
+		ScoreTextComponent->SetText(FText::AsNumber(RequiredScore));
+	}
+}
 
 void ANCShopItemActor::Interact_Implementation(AActor* Interactor)
 {
