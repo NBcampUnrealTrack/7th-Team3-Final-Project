@@ -19,7 +19,6 @@ class UNCShotgunComponent;
 class UNCPistolComponent;
 class UNCSniperComponent;
 class UNCEquipmentComponent;
-class UNCFlamethrowerComponent;
 class USpotLightComponent;
 class UStaticMeshComponent;
 class UVGAttackSlotComponent; 
@@ -51,9 +50,6 @@ public:
 	// 하상빈 추가
 	UFUNCTION(BlueprintPure, Category = "Components|Equipment")
 	UNCEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
-
-	UFUNCTION(BlueprintPure, Category = "Components|Flamethrower")
-	UNCFlamethrowerComponent* GetFlamethrowerComponent() const { return FlamethrowerComponent; }
 
 	// 시환 추가
 	UFUNCTION(BlueprintPure, Category = "Components|Locomotion")
@@ -261,9 +257,6 @@ protected:
 	// 하상빈 추가 - 장착 관리
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Equipment")
 	TObjectPtr<UNCEquipmentComponent> EquipmentComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Flamethrower")
-	TObjectPtr<UNCFlamethrowerComponent> FlamethrowerComponent;
 
 	// 총기 타입별 전용 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Gun")

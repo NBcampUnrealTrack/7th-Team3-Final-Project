@@ -8,7 +8,6 @@
 #include "NakwonClone/Player/PlayerComponent/NCInteractionComponent.h"
 #include "NakwonClone/Player/PlayerAnimation/NCCombatComponent.h"
 #include "Player/PlayerComponent/NCEquipmentComponent.h" // 하상빈 추가
-#include "Player/PlayerComponent/NCFlamethrowerComponent.h"
 #include "Player/PlayerData/NCWeaponData.h" // 하상빈 추가
 #include "NakwonClone/Item/ANCLootBoxActor.h"
 #include "NakwonClone/UI/Inventroy/LootBox/NCLootBoxHud.h"
@@ -511,41 +510,15 @@ UNCEquipmentComponent* ANCPlayerController::GetGunComp() const
     return nullptr;
 }
 
-UNCFlamethrowerComponent* ANCPlayerController::GetFlamethrowerComp() const
-{
-    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
-        return PC->GetFlamethrowerComponent();
-    return nullptr;
-}
-
 void ANCPlayerController::GunStartFire()
 {
     if (IsMenuBlockingInput()) return;
     if (IsUsingItem()) return; // 소모품 사용 중 발사 차단
-
-    if (UNCFlamethrowerComponent* FT = GetFlamethrowerComp())
-    {
-        if (FT->IsActive())
-        {
-            FT->StartFire();
-            return;
-        }
-    }
-
     if (UNCEquipmentComponent* EC = GetGunComp()) EC->StartFire();
 }
 
 void ANCPlayerController::GunStopFire()
 {
-    if (UNCFlamethrowerComponent* FT = GetFlamethrowerComp())
-    {
-        if (FT->IsActive())
-        {
-            FT->StopFire();
-            return;
-        }
-    }
-
     if (UNCEquipmentComponent* EC = GetGunComp()) EC->StopFire();
 }
 
@@ -553,7 +526,6 @@ void ANCPlayerController::GunStartADS()
 {
     if (IsMenuBlockingInput()) return;
     if (IsUsingItem()) return; // 소모품 사용 중 조준 차단
-    if (UNCFlamethrowerComponent* FT = GetFlamethrowerComp(); FT && FT->IsActive()) return;
 
     UNCEquipmentComponent* EC = GetGunComp();
     if (!EC || !EC->HasActiveGun()) return;
@@ -573,7 +545,6 @@ void ANCPlayerController::GunReload()
 {
     if (IsMenuBlockingInput()) return;
     if (IsUsingItem()) return; // 소모품 사용 중 재장전 차단
-    if (UNCFlamethrowerComponent* FT = GetFlamethrowerComp(); FT && FT->IsActive()) return;
     if (UNCEquipmentComponent* EC = GetGunComp()) EC->Reload();
 }
 
@@ -581,7 +552,6 @@ void ANCPlayerController::GunToggleFireMode()
 {
     if (IsMenuBlockingInput()) return;
     if (IsUsingItem()) return; // 소모품 사용 중 발사모드 전환 차단
-    if (UNCFlamethrowerComponent* FT = GetFlamethrowerComp(); FT && FT->IsActive()) return;
     if (UNCEquipmentComponent* EC = GetGunComp()) EC->ToggleFireMode();
 }
 
@@ -615,7 +585,6 @@ void ANCPlayerController::GunSelectSlot(ENCGunSlot Slot)
     if (IsMenuBlockingInput()) return;
     if (IsAttacking()) return;
     if (IsUsingItem()) return;
-    if (UNCFlamethrowerComponent* FT = GetFlamethrowerComp(); FT && FT->IsActive()) return;
 
     ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn());
     if (!PC) return;
