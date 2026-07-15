@@ -231,6 +231,51 @@ void AVGMonsterCharacterBase::HandleDead()
 	SetLifeSpan(DeathLifeSpan);
 }
 
+//헌호수정 - 바렛 스나이퍼 킬: 그 자리 정지 → Delay초 뒤 HandleDead(기존 죽음 VFX). 첫 히트만 예약(중복 무시)
+void AVGMonsterCharacterBase::TriggerSniperKill(float Delay)
+{
+	if (bSniperKillScheduled || bIsDead || bIsBeingAssassinated) return; // 가드: 재설정/중복 방지 → 딜레이 초기화 안 됨
+	bSniperKillScheduled = true;
+
+	// 정지 연출 (모든 클라에 적용)
+	Multicast_SniperFreeze();
+
+	// AI 정지 (서버) — 추격/공격 멈춤
+	if (AIController)
+	{
+		AIController->StopMovement();
+		if (UBrainComponent* Brain = AIController->GetBrainComponent())
+		{
+			Brain->StopLogic(TEXT("SniperKill"));
+		}
+	}
+
+	// Delay 후 죽음 (기존 HandleDead 재사용 → 죽음 VFX 그대로 재생)
+	GetWorldTimerManager().SetTimer(
+		SniperKillTimerHandle, this, &AVGMonsterCharacterBase::OnSniperKillTimer,
+		FMath::Max(Delay, 0.01f), false);
+}
+
+//헌호수정 - 타이머 만료 → 죽음 처리(기존 HandleDead 재사용)
+void AVGMonsterCharacterBase::OnSniperKillTimer()
+{
+	HandleDead();
+}
+
+//헌호수정 - 정지: 이동 멈춤 + 애니 멈춤(그 자리 굳음). 모든 클라에서 실행
+void AVGMonsterCharacterBase::Multicast_SniperFreeze_Implementation()
+{
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->DisableMovement();
+	}
+	if (USkeletalMeshComponent* SkelMesh = GetMesh())
+	{
+		SkelMesh->bPauseAnims = true; // 현재 포즈로 정지
+	}
+}
+
 void AVGMonsterCharacterBase::OnStartRagdoll()
 {
 	USkeletalMeshComponent* SkelMesh = GetMesh(); 

@@ -245,18 +245,31 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster|Death")
 	float DeathLifeSpan = 3.0f;
-	
+
 	// 사망 시 드랍할 소모품 테이블 (FNCLootDropData 행, 총기 제외)
 	UPROPERTY(EditAnywhere, Category = "Monster|Loot")
 	TObjectPtr<UDataTable> LootDropTable = nullptr;
+
+	//헌호수정 - 바렛(스나이퍼) 킬: 즉사 대신 그 자리 정지 후 Delay초 뒤 죽음(기존 HandleDead VFX 재생).
+	// 첫 히트만 예약되고, 이미 예약/사망이면 무시 → 딜레이 초기화 안 됨(도미노 순서 유지)
+	void TriggerSniperKill(float Delay);
+
+	//헌호수정 - 정지 연출(이동/애니 멈춤)을 모든 클라에 적용
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SniperFreeze();
 
 private:
 	bool bIsDead = false;
 
 	UPROPERTY()
 	TObjectPtr<AActor> LastDamageCauser = nullptr;
-	
+
 	void DropLoot();
+
+	//헌호수정 - 스나이퍼 킬 예약 상태(중복/재설정 방지) + 타이머 + 만료 콜백
+	bool bSniperKillScheduled = false;
+	FTimerHandle SniperKillTimerHandle;
+	void OnSniperKillTimer();
 #pragma endregion
 
 #pragma region 충돌 감지
