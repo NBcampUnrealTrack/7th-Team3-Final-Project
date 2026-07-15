@@ -531,6 +531,9 @@ void ANCPlayerController::GunStartADS()
     if (!EC || !EC->HasActiveGun()) return;
 
     EC->StartADS();
+
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+        PC->ForceStopSprintForADS();
 }
 
 void ANCPlayerController::GunStopADS()
@@ -539,6 +542,12 @@ void ANCPlayerController::GunStopADS()
     if (!EC || !EC->HasActiveGun()) return;
 
     EC->StopADS();
+
+    if (ANCPlayerCharacter* PC = Cast<ANCPlayerCharacter>(GetPawn()))
+    {
+        if (PC->IsSprintKeyHeld())
+            PC->StartSprint();
+    }
 }
 
 void ANCPlayerController::GunReload()

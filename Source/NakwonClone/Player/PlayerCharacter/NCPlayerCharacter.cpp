@@ -443,6 +443,8 @@ void ANCPlayerCharacter::Server_SetStance_Implementation(FGameplayTag NewStanceT
 
 void ANCPlayerCharacter::StartSprint()
 {
+    bSprintKeyHeld = true;
+
     if (UNCGunComponent* GunComp = GetGunComponent())
     {
         if (GunComp->IsADS())
@@ -468,6 +470,17 @@ void ANCPlayerCharacter::StartSprint()
 }
 
 void ANCPlayerCharacter::StopSprint()
+{
+    bSprintKeyHeld = false;
+    ApplyJogGait();
+}
+
+void ANCPlayerCharacter::ForceStopSprintForADS()
+{
+    ApplyJogGait();
+}
+
+void ANCPlayerCharacter::ApplyJogGait()
 {
     // 헌호수정
     if (LocomotionComponent)
