@@ -13,7 +13,6 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Net/UnrealNetwork.h"
 #include "GAS/AttributeSet/VGPlayerAttributeSet.h"
 #include "Item/NCItemActor.h"
 #include "NakwonClone/Framwork/GameInstacne/NCGameInstance.h"
@@ -175,7 +174,10 @@ void ANCPlayerCharacter::InitComponents()
         );
 
     FlashlightLight->SetupAttachment(FlashlightMesh);
-    FlashlightLight->SetVisibility(false);
+
+    // 손전등은 게임 시작부터 항상 켜진 상태
+    FlashlightLight->SetVisibility(true);
+
     FlashlightLight->SetCastShadows(false);
 
     BackpackHPWidget =
@@ -216,6 +218,12 @@ void ANCPlayerCharacter::InitComponents()
 void ANCPlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    // 손전등은 항상 켜진 상태로 시작
+    if (FlashlightLight)
+    {
+        FlashlightLight->SetVisibility(true);
+    }
 
     bIsFirstPerson = false;
 
@@ -975,16 +983,11 @@ void ANCPlayerCharacter::Server_TryAssassinate_Implementation()
     TryAssassinate();
 }
 
-void ANCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(ANCPlayerCharacter, bFlashlightOn); //헌호수정
-}
-
 // 헌호수정 - T키 입력 시 호출
 void ANCPlayerCharacter::ToggleFlashlight()
 {
-    Server_ToggleFlashlight();
+    // 손전등 상시 점등 방식으로 변경
+    // 기존 T키 입력 호환을 위해 함수만 유지
 }
 
 void ANCPlayerCharacter::ApplyFirstPersonWeaponCameraOffset(
@@ -1071,63 +1074,67 @@ void ANCPlayerCharacter::ToggleView()
     }
 }
 
-// 헌호수정 - 서버에서 상태 토글
-void ANCPlayerCharacter::Server_ToggleFlashlight_Implementation()
-{
-    bFlashlightOn = !bFlashlightOn;
-    ApplyFlashlightState(); // 서버 적용
-}
-
-// 헌호수정 - 클라이언트 복제 콜백
-void ANCPlayerCharacter::OnRep_bFlashlightOn()
-{
-    ApplyFlashlightState();
-}
-
-// 헌호수정 - 실제 켜고 끄기 (서버/클라 공통)
-void ANCPlayerCharacter::ApplyFlashlightState()
-{
-    if (FlashlightLight)
-        FlashlightLight->SetVisibility(bFlashlightOn);
-}
-
 void ANCPlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    //헌호수정 - 백팩/ADS HUD 실시간 갱신 + 전환
+    // 백팩/ADS HUD 실시간 갱신 및 전환
     UpdateWeaponHUDs();
 
-    //헌호수정 - 플래시라이트 빛 방향만 컨트롤러(카메라) 조준 방향으로 고정
-    // (손전등 메시 모델은 어깨에 자연스럽게 유지, 빛만 안 흔들리게)
-    if (bFlashlightOn && FlashlightLight)
-    {
-        if (AController* FlashCtrl = GetController())
-        {
-            FlashlightLight->SetWorldRotation(FlashCtrl->GetControlRotation());
-        }
-    }
-    
-    // 시환 추가 - 카메라 접근 시, 플레이어 투명화
-    //const FVector ArmOrigin = CameraBoom->GetComponentLocation();
-    //const FVector CameraSocketLocation = CameraBoom->GetSocketLocation(USpringArmComponent::SocketName);
-    //const float CurrentArmLength = FVector::Dist(ArmOrigin, CameraSocketLocation);
-    //const bool bCameraTooClose = CurrentArmLength < 200.f;
-    //GetMesh()->SetVisibility(!bCameraTooClose, true);
-    
+    // 손전등은 항상 켜져 있으며 빛의 방향만
+    // 컨트롤러의 카메라 조준 방향으로 갱신
     if (FlashlightLight)
     {
-        FlashlightLight->SetVisibility(bFlashlightOn);
+        if (!FlashlightLight->IsVisible())
+        {
+            FlashlightLight->SetVisibility(true);
+        }
+
+        if (AController* FlashCtrl = GetController())
+        {
+            FlashlightLight->SetWorldRotation(
+                FlashCtrl->GetControlRotation()
+            );
+        }
     }
 
+    // 시환 추가 - 카메라 접근 시 플레이어 투명화
+    // const FVector ArmOrigin = CameraBoom->GetComponentLocation();
+    // const FVector CameraSocketLocation =
+    //     CameraBoom->GetSocketLocation(
+    //         USpringArmComponent::SocketName
+    //     );
+    //
+    // const float CurrentArmLength =
+    //     FVector::Dist(
+    //         ArmOrigin,
+    //         CameraSocketLocation
+    //     );
+    //
+    // const bool bCameraTooClose =
+    //     CurrentArmLength < 200.f;
+    //
+    // GetMesh()->SetVisibility(
+    //     !bCameraTooClose,
+    //     true
+    // );
+
     AController* OwnerController = GetController();
+
     if (!OwnerController)
     {
         return;
     }
 
-    const FRotator ControlRot = OwnerController->GetControlRotation();
-    const FRotator TargetRot = FRotator(0.f, ControlRot.Yaw, 0.f);
+    const FRotator ControlRot =
+        OwnerController->GetControlRotation();
+
+    const FRotator TargetRot =
+        FRotator(
+            0.f,
+            ControlRot.Yaw,
+            0.f
+        );
 
     SetActorRotation(TargetRot);
 }

@@ -160,17 +160,9 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_OnDead();
 
-	UFUNCTION(Server, Reliable)
-	void Server_ToggleFlashlight();
-
 	// 헌호수정 - 암살 RPC
 	UFUNCTION(Server, Reliable)
 	void Server_TryAssassinate();
-
-	UFUNCTION()
-	void OnRep_bFlashlightOn();
-
-	void ApplyFlashlightState();
 
 	void ApplyJogGait();
 
@@ -304,9 +296,6 @@ protected:
 
 	//헌호수정 - 백팩/ADS UI 전환 갱신
 	void UpdateWeaponHUDs();
-
-	UPROPERTY(ReplicatedUsing = OnRep_bFlashlightOn)
-	bool bFlashlightOn = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animation|HitReact")
 	TObjectPtr<UAnimMontage> HitReactFrontMontage;
