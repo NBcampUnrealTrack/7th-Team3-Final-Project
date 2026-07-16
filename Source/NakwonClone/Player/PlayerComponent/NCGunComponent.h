@@ -12,6 +12,7 @@ class UAnimMontage;
 class UNiagaraComponent;
 class UStaticMeshComponent;
 class USkeletalMeshComponent;
+class UMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 	FOnAmmoChanged,
@@ -143,6 +144,14 @@ public:
 	void ActivateDamageBoost(float Multiplier, float Duration);
 	void EndDamageBoost();
 
+	UMeshComponent* GetEquippedGunMeshComponent() const
+	{
+		if (EquippedGunSkelMeshComp) return EquippedGunSkelMeshComp;
+		return EquippedGunMeshComp;
+	}
+
+	UNiagaraComponent* GetMuzzleFlashComponent() const { return MuzzleFlashComp; }
+
 protected:
 	virtual void OnBeforeFire()
 	{
@@ -190,7 +199,7 @@ private:
 	void ApplyRecoil(const FNCGunData* Data);
 
 	UPROPERTY()
-	TObjectPtr<UCameraComponent> CachedCamera = nullptr;
+	TArray<TObjectPtr<UCameraComponent>> CachedCameras;
 
 	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> EquippedGunMeshComp = nullptr;

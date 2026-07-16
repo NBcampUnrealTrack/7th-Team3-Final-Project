@@ -24,6 +24,7 @@
 #include "NakwonClone/Zombie/AI/AttackSlot/VGAttackSlotComponent.h"
 #include "Player/PlayerComponent/NCEquipmentComponent.h"
 #include "Player/PlayerComponent/NCGunComponent.h"
+#include "NiagaraComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "Player/PlayerComponent/NCPistolComponent.h"
 #include "Player/PlayerComponent/NCRifleComponent.h"
@@ -1049,6 +1050,7 @@ void ANCPlayerCharacter::ToggleView()
 
     if (bIsFirstPerson)
     {
+        StartCameraSwitchBlend(FollowCamera, FirstPersonCamera);
         FollowCamera->Deactivate();
         FirstPersonCamera->Activate();
 
@@ -1060,6 +1062,7 @@ void ANCPlayerCharacter::ToggleView()
     }
     else
     {
+        StartCameraSwitchBlend(FirstPersonCamera, FollowCamera);
         FirstPersonCamera->Deactivate();
         FollowCamera->Activate();
 
@@ -1069,6 +1072,31 @@ void ANCPlayerCharacter::ToggleView()
             TEXT("Camera View Changed: Third Person")
         );
     }
+}
+
+void ANCPlayerCharacter::StartCameraSwitchBlend(UCameraComponent* OutgoingCam, UCameraComponent* IncomingCam)
+{
+    if (!OutgoingCam || !IncomingCam) return;
+
+    if (UNCGunComponent* GunComp = GetGunComponent())
+    {
+        if (GunComp->IsADS())
+        {
+            return;
+        }
+    }
+
+    const FVector OutgoingWorldLocation = OutgoingCam->GetComponentLocation();
+    const FRotator OutgoingWorldRotation = OutgoingCam->GetComponentRotation();
+
+    CameraSwitchBlendTargetLocation = IncomingCam->GetRelativeLocation();
+    CameraSwitchBlendTargetRotation = IncomingCam->GetRelativeRotation();
+
+    IncomingCam->SetWorldLocationAndRotation(OutgoingWorldLocation, OutgoingWorldRotation);
+
+    BlendingCamera = IncomingCam;
+    CameraSwitchBlendElapsed = 0.f;
+    bCameraSwitchBlending = true;
 }
 
 // 헌호수정 - 서버에서 상태 토글
@@ -1095,6 +1123,31 @@ void ANCPlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    if (bCameraSwitchBlending)
+    {
+        if (UCameraComponent* Cam = BlendingCamera.Get())
+        {
+            CameraSwitchBlendElapsed += DeltaTime;
+
+            constexpr float CameraSwitchBlendSpeed = 10.f;
+            constexpr float CameraSwitchBlendDuration = 0.2f;
+
+            Cam->SetRelativeLocation(FMath::VInterpTo(Cam->GetRelativeLocation(), CameraSwitchBlendTargetLocation, DeltaTime, CameraSwitchBlendSpeed));
+            Cam->SetRelativeRotation(FMath::RInterpTo(Cam->GetRelativeRotation(), CameraSwitchBlendTargetRotation, DeltaTime, CameraSwitchBlendSpeed));
+
+            if (CameraSwitchBlendElapsed >= CameraSwitchBlendDuration)
+            {
+                Cam->SetRelativeLocation(CameraSwitchBlendTargetLocation);
+                Cam->SetRelativeRotation(CameraSwitchBlendTargetRotation);
+                bCameraSwitchBlending = false;
+            }
+        }
+        else
+        {
+            bCameraSwitchBlending = false;
+        }
+    }
+
     //헌호수정 - 백팩/ADS HUD 실시간 갱신 + 전환
     UpdateWeaponHUDs();
 
@@ -1108,13 +1161,51 @@ void ANCPlayerCharacter::Tick(float DeltaTime)
         }
     }
     
-    // 시환 추가 - 카메라 접근 시, 플레이어 투명화
-    //const FVector ArmOrigin = CameraBoom->GetComponentLocation();
-    //const FVector CameraSocketLocation = CameraBoom->GetSocketLocation(USpringArmComponent::SocketName);
-    //const float CurrentArmLength = FVector::Dist(ArmOrigin, CameraSocketLocation);
-    //const bool bCameraTooClose = CurrentArmLength < 200.f;
-    //GetMesh()->SetVisibility(!bCameraTooClose, true);
-    
+    if (CameraBoom && FollowCamera && FirstPersonCamera && !bIsFirstPerson)
+    {
+        const FVector ArmOrigin = CameraBoom->GetComponentLocation();
+        const FVector CameraSocketLocation = CameraBoom->GetSocketLocation(USpringArmComponent::SocketName);
+        const float CurrentArmLength = FVector::Dist(ArmOrigin, CameraSocketLocation);
+        const bool bCameraSquashed = CurrentArmLength < CameraBoom->TargetArmLength * 0.3f;
+
+        if (bCameraSquashed && !bAutoFirstPersonActive)
+        {
+            bAutoFirstPersonActive = true;
+            StartCameraSwitchBlend(FollowCamera, FirstPersonCamera);
+            FollowCamera->Deactivate();
+            FirstPersonCamera->Activate();
+        }
+        else if (!bCameraSquashed && bAutoFirstPersonActive)
+        {
+            bAutoFirstPersonActive = false;
+            StartCameraSwitchBlend(FirstPersonCamera, FollowCamera);
+            FirstPersonCamera->Deactivate();
+            FollowCamera->Activate();
+        }
+
+        UNCGunComponent* GunComp = GetGunComponent();
+        UMeshComponent* CurrentGunMesh = GunComp ? GunComp->GetEquippedGunMeshComponent() : nullptr;
+
+        const bool bNeedsReapply = (bAutoFirstPersonActive != bLastAppliedNoSeeState) || (CurrentGunMesh != LastHiddenGunMesh.Get());
+        if (bNeedsReapply)
+        {
+            if (USkeletalMeshComponent* CharMesh = GetMesh())
+                CharMesh->SetOwnerNoSee(bAutoFirstPersonActive);
+
+            if (CurrentGunMesh)
+                CurrentGunMesh->SetOwnerNoSee(bAutoFirstPersonActive);
+
+            if (GunComp)
+            {
+                if (UNiagaraComponent* MuzzleFlash = GunComp->GetMuzzleFlashComponent())
+                    MuzzleFlash->SetOwnerNoSee(bAutoFirstPersonActive);
+            }
+
+            bLastAppliedNoSeeState = bAutoFirstPersonActive;
+            LastHiddenGunMesh = CurrentGunMesh;
+        }
+    }
+
     if (FlashlightLight)
     {
         FlashlightLight->SetVisibility(bFlashlightOn);

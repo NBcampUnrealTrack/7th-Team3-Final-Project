@@ -191,6 +191,16 @@ bool ANCProjectile::CheckPointBlankOverlap()
         Overlaps, GetActorLocation(), FQuat::Identity,
         FCollisionObjectQueryParams(ECC_Pawn), FCollisionShape::MakeSphere(Radius), Params);
 
+    const FVector Origin = GetActorLocation();
+    Overlaps.Sort([Origin](const FOverlapResult& A, const FOverlapResult& B)
+    {
+        const AActor* ActorA = A.GetActor();
+        const AActor* ActorB = B.GetActor();
+        const float DistA = ActorA ? FVector::DistSquared(Origin, ActorA->GetActorLocation()) : TNumericLimits<float>::Max();
+        const float DistB = ActorB ? FVector::DistSquared(Origin, ActorB->GetActorLocation()) : TNumericLimits<float>::Max();
+        return DistA < DistB;
+    });
+
     for (const FOverlapResult& Overlap : Overlaps)
     {
         AActor* OtherActor = Overlap.GetActor();

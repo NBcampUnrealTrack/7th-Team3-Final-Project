@@ -81,35 +81,42 @@ void UNCGunComponent::TickComponent(
 		return;
 	}
 
-	const float NewFOV =
-		FMath::FInterpTo(
-			Cam->FieldOfView,
-			TargetFOV,
-			DeltaTime,
-			ADSInterpSpeed
-		);
+	ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
+	ANCPlayerCharacter* OwnerPC = OwnerChar ? Cast<ANCPlayerCharacter>(OwnerChar) : nullptr;
+	const bool bSkipADSCameraZoom = OwnerPC && Cam == OwnerPC->GetFirstPersonCamera();
 
-	Cam->SetFieldOfView(NewFOV);
+	if (!bSkipADSCameraZoom)
+	{
+		const float NewFOV =
+			FMath::FInterpTo(
+				Cam->FieldOfView,
+				TargetFOV,
+				DeltaTime,
+				ADSInterpSpeed
+			);
 
-	const FVector NewLocation =
-		FMath::VInterpTo(
-			Cam->GetRelativeLocation(),
-			TargetCameraLocation,
-			DeltaTime,
-			ADSInterpSpeed
-		);
+		Cam->SetFieldOfView(NewFOV);
 
-	Cam->SetRelativeLocation(NewLocation);
+		const FVector NewLocation =
+			FMath::VInterpTo(
+				Cam->GetRelativeLocation(),
+				TargetCameraLocation,
+				DeltaTime,
+				ADSInterpSpeed
+			);
 
-	const FRotator NewRotation =
-		FMath::RInterpTo(
-			Cam->GetRelativeRotation(),
-			TargetCameraRotation,
-			DeltaTime,
-			ADSInterpSpeed
-		);
+		Cam->SetRelativeLocation(NewLocation);
 
-	Cam->SetRelativeRotation(NewRotation);
+		const FRotator NewRotation =
+			FMath::RInterpTo(
+				Cam->GetRelativeRotation(),
+				TargetCameraRotation,
+				DeltaTime,
+				ADSInterpSpeed
+			);
+
+		Cam->SetRelativeRotation(NewRotation);
+	}
 
 	if (
 		!FMath::IsNearlyZero(CurrentRecoilPitch) ||
@@ -189,6 +196,7 @@ void UNCGunComponent::TickComponent(
 	}
 
 	const bool bFOVFinished =
+		bSkipADSCameraZoom ||
 		FMath::IsNearlyEqual(
 			Cam->FieldOfView,
 			TargetFOV,
@@ -196,12 +204,14 @@ void UNCGunComponent::TickComponent(
 		);
 
 	const bool bLocationFinished =
+		bSkipADSCameraZoom ||
 		Cam->GetRelativeLocation().Equals(
 			TargetCameraLocation,
 			0.1f
 		);
 
 	const bool bRotationFinished =
+		bSkipADSCameraZoom ||
 		Cam->GetRelativeRotation().Equals(
 			TargetCameraRotation,
 			0.1f
@@ -218,15 +228,18 @@ void UNCGunComponent::TickComponent(
 		bRecoilFinished
 		)
 	{
-		Cam->SetFieldOfView(TargetFOV);
+		if (!bSkipADSCameraZoom)
+		{
+			Cam->SetFieldOfView(TargetFOV);
 
-		Cam->SetRelativeLocation(
-			TargetCameraLocation
-		);
+			Cam->SetRelativeLocation(
+				TargetCameraLocation
+			);
 
-		Cam->SetRelativeRotation(
-			TargetCameraRotation
-		);
+			Cam->SetRelativeRotation(
+				TargetCameraRotation
+			);
+		}
 
 		SetComponentTickEnabled(false);
 	}
@@ -493,6 +506,8 @@ void UNCGunComponent::FireOnce()
 	}
 
 	float MuzzleDistance = 0.f;
+	bool bHasMuzzleSocket = false;
+	FVector MuzzleWorldLocation = CamLocation;
 	{
 		UMeshComponent* MuzzleMeshComp = EquippedGunSkelMeshComp
 			? static_cast<UMeshComponent*>(EquippedGunSkelMeshComp)
@@ -501,16 +516,45 @@ void UNCGunComponent::FireOnce()
 		if (MuzzleMeshComp && !Data->MuzzleSocketName.IsNone()
 			&& MuzzleMeshComp->DoesSocketExist(Data->MuzzleSocketName))
 		{
-			const float RawMuzzleDistance = (MuzzleMeshComp->GetSocketLocation(Data->MuzzleSocketName) - CamLocation).Size();
-
-			constexpr float MaxReasonableMuzzleDistance = 200.f;
-			if (RawMuzzleDistance <= MaxReasonableMuzzleDistance)
-			{
-				MuzzleDistance = RawMuzzleDistance;
-			}
+			bHasMuzzleSocket = true;
+			MuzzleWorldLocation = MuzzleMeshComp->GetSocketLocation(Data->MuzzleSocketName);
+			MuzzleDistance = (MuzzleWorldLocation - CamLocation).Size();
 		}
 	}
-	const FVector SpreadOrigin = CamLocation + CamForward * MuzzleDistance;
+
+	constexpr float DefaultMuzzleCheckDistance = 50.f;
+	const float CheckDistance = bHasMuzzleSocket ? MuzzleDistance : DefaultMuzzleCheckDistance;
+
+	FCollisionObjectQueryParams WallObjectParams;
+	WallObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	WallObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+
+	FVector SpreadOrigin = CamLocation + CamForward * MuzzleDistance;
+	{
+		FCollisionQueryParams WallCheckParams;
+		WallCheckParams.AddIgnoredActor(Owner);
+
+		FHitResult WallHit;
+		const FVector CheckEnd = CamLocation + CamForward * CheckDistance;
+		const bool bBlocked = GetWorld()->LineTraceSingleByObjectType(WallHit, CamLocation, CheckEnd, WallObjectParams, WallCheckParams);
+		if (bBlocked)
+		{
+			const FVector FallbackOrigin = bHasMuzzleSocket ? MuzzleWorldLocation : CamLocation;
+			SpreadOrigin = FallbackOrigin + CamForward * 10.f;
+		}
+	}
+
+	{
+		FCollisionQueryParams FinalCheckParams;
+		FinalCheckParams.AddIgnoredActor(Owner);
+		const bool bOriginBlocked = GetWorld()->OverlapAnyTestByObjectType(
+			SpreadOrigin, FQuat::Identity, WallObjectParams, FCollisionShape::MakeSphere(5.f), FinalCheckParams);
+
+		if (bOriginBlocked)
+		{
+			SpreadOrigin = CamLocation;
+		}
+	}
 
 	const int32 PelletCount = FMath::Max(1, Data->NumPellets);
 	for (int32 i = 0; i < PelletCount; ++i)
@@ -767,17 +811,23 @@ void UNCGunComponent::RestoreFOV()
 }
 UCameraComponent* UNCGunComponent::FindCamera()
 {
-	if (CachedCamera)
+	if (CachedCameras.Num() == 0)
 	{
-		return CachedCamera;
+		if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
+		{
+			Char->GetComponents<UCameraComponent>(CachedCameras);
+		}
 	}
 
-	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
+	for (UCameraComponent* Cam : CachedCameras)
 	{
-		CachedCamera = Char->FindComponentByClass<UCameraComponent>();
+		if (Cam && Cam->IsActive())
+		{
+			return Cam;
+		}
 	}
 
-	return CachedCamera;
+	return CachedCameras.Num() > 0 ? CachedCameras[0].Get() : nullptr;
 }
 
 // ─────────────────────────────────────────────
