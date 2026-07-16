@@ -186,10 +186,9 @@ bool ANCProjectile::CheckPointBlankOverlap()
     Params.AddIgnoredActor(this);
     if (OwnerActor) Params.AddIgnoredActor(OwnerActor);
 
-    const float Radius = CollisionComp->GetScaledSphereRadius();
     GetWorld()->OverlapMultiByObjectType(
         Overlaps, GetActorLocation(), FQuat::Identity,
-        FCollisionObjectQueryParams(ECC_Pawn), FCollisionShape::MakeSphere(Radius), Params);
+        FCollisionObjectQueryParams(ECC_Pawn), FCollisionShape::MakeSphere(PointBlankCheckRadius), Params);
 
     const FVector Origin = GetActorLocation();
     Overlaps.Sort([Origin](const FOverlapResult& A, const FOverlapResult& B)

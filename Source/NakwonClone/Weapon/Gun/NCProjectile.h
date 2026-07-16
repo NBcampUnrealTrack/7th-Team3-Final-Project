@@ -76,6 +76,9 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Projectile")
     bool bTracePenetration = false;
 
+    UPROPERTY(EditAnywhere, Category = "Projectile")
+    float PointBlankCheckRadius = 40.f;
+
 protected:
     UPROPERTY(VisibleAnywhere, Category = "Projectile")
     TObjectPtr<USphereComponent> CollisionComp;
