@@ -31,6 +31,7 @@ void ANCGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(ANCGameState, RunnerKillCount);
 	DOREPLIFETIME(ANCGameState, WitchKillCount);
 	DOREPLIFETIME(ANCGameState, TankKillCount);
+	DOREPLIFETIME(ANCGameState, ThrowerKillCount);
 }
 
 void ANCGameState::OnRep_TotalScore(int32 OldTotalScore)

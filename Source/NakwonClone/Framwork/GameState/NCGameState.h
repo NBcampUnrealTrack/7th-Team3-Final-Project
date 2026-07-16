@@ -81,6 +81,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void AddTankKillCount() {  TankKillCount++ ;}
+	
+	UFUNCTION(BlueprintCallable)
+	void AddThrowerKillCount() {  ThrowerKillCount++ ;}
 
 	//헌호수정 - 게임 종료 점수판용 타입별 킬 카운트 getter
 	UFUNCTION(BlueprintCallable)
@@ -94,10 +97,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetTankKillCount() const { return TankKillCount; }
+	
+	UFUNCTION(BlueprintCallable)
+	int32 GetThrowerKillCount() const { return ThrowerKillCount; }
 
 	//헌호수정 - 전체 좀비 처치 수 (타입 합계)
 	UFUNCTION(BlueprintCallable)
-	int32 GetTotalKillCount() const { return WalkerKillCount + RunnerKillCount + WitchKillCount + TankKillCount; }
+	int32 GetTotalKillCount() const { return WalkerKillCount + RunnerKillCount + WitchKillCount + TankKillCount + ThrowerKillCount; }
 
 private:
 
@@ -113,4 +119,7 @@ private:
 
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Score", meta = (AllowPrivateAccess = "true"))
 	int32 TankKillCount;
+	
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Score", meta = (AllowPrivateAccess = "true"))
+	int32 ThrowerKillCount;
 };

@@ -201,6 +201,7 @@ void AVGMonsterCharacterBase::HandleDead()
 			case EVGMonsterType::Runner: GS->AddRunnerKillCount(); break;
 			case EVGMonsterType::Tank:   GS->AddTankKillCount();   break;
 			case EVGMonsterType::Witch:  GS->AddWitchKillCount();  break;
+			case EVGMonsterType::Thrower:   GS->AddThrowerKillCount();      break;
 			default: break;
 			}
 		}
