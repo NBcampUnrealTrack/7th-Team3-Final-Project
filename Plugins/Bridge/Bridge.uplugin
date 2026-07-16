@@ -1,0 +1,12 @@
+{
+	"FileVersion": 3,
+	"Version": 53,
+	"VersionName": "2025.0.3-content-only",
+	"FriendlyName": "Bridge (Content Only)",
+	"Description": "Quixel Bridge MSPresets master materials and textures required by Megascans assets (ElderboomVillage). Content-only copy from the UE 5.5 Bridge plugin so /Bridge references resolve on UE 5.6.",
+	"Category": "Content",
+	"CreatedBy": "Quixel",
+	"CreatedByURL": "https://www.quixel.se",
+	"EnabledByDefault": true,
+	"CanContainContent": true
+}
