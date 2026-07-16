@@ -23,6 +23,7 @@
 #include "NakwonClone/Zombie/AI/AttackSlot/VGAttackSlotComponent.h"
 #include "Player/PlayerComponent/NCEquipmentComponent.h"
 #include "Player/PlayerComponent/NCGunComponent.h"
+#include "NiagaraComponent.h"
 #include "Player/PlayerComponent/NCInteractionComponent.h"
 #include "Player/PlayerComponent/NCPistolComponent.h"
 #include "Player/PlayerComponent/NCRifleComponent.h"
@@ -1052,6 +1053,11 @@ void ANCPlayerCharacter::ToggleView()
 
     if (bIsFirstPerson)
     {
+        StartCameraSwitchBlend(
+            FollowCamera,
+            FirstPersonCamera
+        );
+
         FollowCamera->Deactivate();
         FirstPersonCamera->Activate();
 
@@ -1063,6 +1069,11 @@ void ANCPlayerCharacter::ToggleView()
     }
     else
     {
+        StartCameraSwitchBlend(
+            FirstPersonCamera,
+            FollowCamera
+        );
+
         FirstPersonCamera->Deactivate();
         FollowCamera->Activate();
 
@@ -1074,15 +1085,109 @@ void ANCPlayerCharacter::ToggleView()
     }
 }
 
+void ANCPlayerCharacter::StartCameraSwitchBlend(
+    UCameraComponent* OutgoingCam,
+    UCameraComponent* IncomingCam)
+{
+    if (!OutgoingCam || !IncomingCam)
+    {
+        return;
+    }
+
+    if (UNCGunComponent* GunComp = GetGunComponent())
+    {
+        if (GunComp->IsADS())
+        {
+            return;
+        }
+    }
+
+    const FVector OutgoingWorldLocation =
+        OutgoingCam->GetComponentLocation();
+
+    const FRotator OutgoingWorldRotation =
+        OutgoingCam->GetComponentRotation();
+
+    CameraSwitchBlendTargetLocation =
+        IncomingCam->GetRelativeLocation();
+
+    CameraSwitchBlendTargetRotation =
+        IncomingCam->GetRelativeRotation();
+
+    IncomingCam->SetWorldLocationAndRotation(
+        OutgoingWorldLocation,
+        OutgoingWorldRotation
+    );
+
+    BlendingCamera = IncomingCam;
+    CameraSwitchBlendElapsed = 0.f;
+    bCameraSwitchBlending = true;
+}
+
 void ANCPlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // 백팩/ADS HUD 실시간 갱신 및 전환
+    // ─────────────────────────────────────────────
+    // 1인칭/3인칭 카메라 전환 블렌드
+
+    if (bCameraSwitchBlending)
+    {
+        if (UCameraComponent* Cam = BlendingCamera.Get())
+        {
+            CameraSwitchBlendElapsed += DeltaTime;
+
+            constexpr float CameraSwitchBlendSpeed = 10.f;
+            constexpr float CameraSwitchBlendDuration = 0.2f;
+
+            Cam->SetRelativeLocation(
+                FMath::VInterpTo(
+                    Cam->GetRelativeLocation(),
+                    CameraSwitchBlendTargetLocation,
+                    DeltaTime,
+                    CameraSwitchBlendSpeed
+                )
+            );
+
+            Cam->SetRelativeRotation(
+                FMath::RInterpTo(
+                    Cam->GetRelativeRotation(),
+                    CameraSwitchBlendTargetRotation,
+                    DeltaTime,
+                    CameraSwitchBlendSpeed
+                )
+            );
+
+            if (CameraSwitchBlendElapsed >= CameraSwitchBlendDuration)
+            {
+                Cam->SetRelativeLocation(
+                    CameraSwitchBlendTargetLocation
+                );
+
+                Cam->SetRelativeRotation(
+                    CameraSwitchBlendTargetRotation
+                );
+
+                bCameraSwitchBlending = false;
+                BlendingCamera.Reset();
+            }
+        }
+        else
+        {
+            bCameraSwitchBlending = false;
+            BlendingCamera.Reset();
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // 백팩/ADS HUD 갱신
+
     UpdateWeaponHUDs();
 
-    // 손전등은 항상 켜져 있으며 빛의 방향만
-    // 컨트롤러의 카메라 조준 방향으로 갱신
+    // ─────────────────────────────────────────────
+    // 플래시라이트 상시 점등
+    // 빛의 방향만 컨트롤러 조준 방향으로 갱신
+
     if (FlashlightLight)
     {
         if (!FlashlightLight->IsVisible())
@@ -1098,26 +1203,106 @@ void ANCPlayerCharacter::Tick(float DeltaTime)
         }
     }
 
-    // 시환 추가 - 카메라 접근 시 플레이어 투명화
-    // const FVector ArmOrigin = CameraBoom->GetComponentLocation();
-    // const FVector CameraSocketLocation =
-    //     CameraBoom->GetSocketLocation(
-    //         USpringArmComponent::SocketName
-    //     );
-    //
-    // const float CurrentArmLength =
-    //     FVector::Dist(
-    //         ArmOrigin,
-    //         CameraSocketLocation
-    //     );
-    //
-    // const bool bCameraTooClose =
-    //     CurrentArmLength < 200.f;
-    //
-    // GetMesh()->SetVisibility(
-    //     !bCameraTooClose,
-    //     true
-    // );
+    // ─────────────────────────────────────────────
+    // 카메라가 벽에 밀렸을 때 자동 1인칭 처리
+
+    if (CameraBoom &&
+        FollowCamera &&
+        FirstPersonCamera &&
+        !bIsFirstPerson)
+    {
+        const FVector ArmOrigin =
+            CameraBoom->GetComponentLocation();
+
+        const FVector CameraSocketLocation =
+            CameraBoom->GetSocketLocation(
+                USpringArmComponent::SocketName
+            );
+
+        const float CurrentArmLength =
+            FVector::Dist(
+                ArmOrigin,
+                CameraSocketLocation
+            );
+
+        const bool bCameraSquashed =
+            CurrentArmLength <
+            CameraBoom->TargetArmLength * 0.3f;
+
+        if (bCameraSquashed && !bAutoFirstPersonActive)
+        {
+            bAutoFirstPersonActive = true;
+
+            StartCameraSwitchBlend(
+                FollowCamera,
+                FirstPersonCamera
+            );
+
+            FollowCamera->Deactivate();
+            FirstPersonCamera->Activate();
+        }
+        else if (!bCameraSquashed && bAutoFirstPersonActive)
+        {
+            bAutoFirstPersonActive = false;
+
+            StartCameraSwitchBlend(
+                FirstPersonCamera,
+                FollowCamera
+            );
+
+            FirstPersonCamera->Deactivate();
+            FollowCamera->Activate();
+        }
+
+        UNCGunComponent* GunComp =
+            GetGunComponent();
+
+        UMeshComponent* CurrentGunMesh =
+            GunComp
+                ? GunComp->GetEquippedGunMeshComponent()
+                : nullptr;
+
+        const bool bNeedsReapply =
+            bAutoFirstPersonActive != bLastAppliedNoSeeState ||
+            CurrentGunMesh != LastHiddenGunMesh.Get();
+
+        if (bNeedsReapply)
+        {
+            if (USkeletalMeshComponent* CharacterMesh = GetMesh())
+            {
+                CharacterMesh->SetOwnerNoSee(
+                    bAutoFirstPersonActive
+                );
+            }
+
+            if (CurrentGunMesh)
+            {
+                CurrentGunMesh->SetOwnerNoSee(
+                    bAutoFirstPersonActive
+                );
+            }
+
+            if (GunComp)
+            {
+                if (UNiagaraComponent* MuzzleFlash =
+                    GunComp->GetMuzzleFlashComponent())
+                {
+                    MuzzleFlash->SetOwnerNoSee(
+                        bAutoFirstPersonActive
+                    );
+                }
+            }
+
+            bLastAppliedNoSeeState =
+                bAutoFirstPersonActive;
+
+            LastHiddenGunMesh =
+                CurrentGunMesh;
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // 캐릭터가 컨트롤러의 Yaw 방향을 바라보도록 처리
 
     AController* OwnerController = GetController();
 
@@ -1129,16 +1314,14 @@ void ANCPlayerCharacter::Tick(float DeltaTime)
     const FRotator ControlRot =
         OwnerController->GetControlRotation();
 
-    const FRotator TargetRot =
-        FRotator(
-            0.f,
-            ControlRot.Yaw,
-            0.f
-        );
+    const FRotator TargetRot(
+        0.f,
+        ControlRot.Yaw,
+        0.f
+    );
 
     SetActorRotation(TargetRot);
 }
-
 void ANCPlayerCharacter::SetAimRotationMode(bool bEnable)
 {
     bAimRotationMode = bEnable;

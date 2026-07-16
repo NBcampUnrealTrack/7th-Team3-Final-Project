@@ -127,6 +127,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Camera")
 	bool IsFirstPerson() const { return bIsFirstPerson; }
 
+	UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
+
 	// 헌호수정 - 암살 기능
 	void TryAssassinate();
 
@@ -166,7 +168,20 @@ protected:
 
 	void ApplyJogGait();
 
+	void StartCameraSwitchBlend(class UCameraComponent* OutgoingCam, class UCameraComponent* IncomingCam);
+
+	bool bCameraSwitchBlending = false;
+	float CameraSwitchBlendElapsed = 0.f;
+	TWeakObjectPtr<class UCameraComponent> BlendingCamera;
+	FVector CameraSwitchBlendTargetLocation = FVector::ZeroVector;
+	FRotator CameraSwitchBlendTargetRotation = FRotator::ZeroRotator;
+
 	bool bSprintKeyHeld = false;
+
+	bool bAutoFirstPersonActive = false;
+
+	TWeakObjectPtr<UMeshComponent> LastHiddenGunMesh;
+	bool bLastAppliedNoSeeState = false;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
