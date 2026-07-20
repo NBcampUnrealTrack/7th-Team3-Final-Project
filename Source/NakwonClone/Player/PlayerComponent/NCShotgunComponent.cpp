@@ -84,5 +84,12 @@ void UNCShotgunComponent::OnShellInserted()
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 
 	if (CurrentAmmo >= Data->MagazineSize || ReserveAmmo <= 0)
+	{
 		StopReload();
+
+		if (bFireInputHeld && CanFire())
+		{
+			StartFire();
+		}
+	}
 }

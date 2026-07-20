@@ -169,6 +169,8 @@ protected:
 		FActorComponentTickFunction* ThisTickFunction
 	) override;
 
+	bool bFireInputHeld = false;
+
 private:
 	const FNCGunData* ActiveGunData = nullptr;
 
