@@ -338,6 +338,8 @@ float UNCGunComponent::PlayUnequipMontage(const FNCGunData* Data)
 
 void UNCGunComponent::StartFire()
 {
+	bFireInputHeld = true;
+
 	// 탄약 없을 때는 조준 여부와 상관없이 자동 재장전/빈 총 클릭음 처리
 	if (HasActiveGun() && !IsReloading() && !bInfiniteAmmoActive && CurrentAmmo <= 0)
 	{
@@ -354,7 +356,10 @@ void UNCGunComponent::StartFire()
 
 	if (!IsADS()) return;
 
-	OnBeforeFire();
+	if (CurrentAmmo > 0)
+	{
+		OnBeforeFire();
+	}
 
 	if (!CanFire()) return;
 
@@ -386,6 +391,7 @@ void UNCGunComponent::StartFire()
 
 void UNCGunComponent::StopFire()
 {
+	bFireInputHeld = false;
 	GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
 	ActiveGunActions.RemoveTag(NCGun::Action_Firing);
 }
@@ -396,7 +402,8 @@ void UNCGunComponent::FireOnce()
 	{
 		if (HasActiveGun() && !IsReloading() && CurrentAmmo <= 0)
 		{
-			StopFire();
+			GetWorld()->GetTimerManager().ClearTimer(FullAutoTimerHandle);
+			ActiveGunActions.RemoveTag(NCGun::Action_Firing);
 
 			if (ActiveGunData->bAutoReloadOnEmpty && ReserveAmmo > 0)
 			{
@@ -699,6 +706,11 @@ void UNCGunComponent::OnReloadFinished()
 	if (bWantsADS)
 	{
 		StartADS();
+	}
+
+	if (bFireInputHeld && CanFire())
+	{
+		StartFire();
 	}
 }
 
